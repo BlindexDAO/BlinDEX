@@ -2,7 +2,7 @@ const path = require('path');
 const envPath = path.join(__dirname, '../../.env');
 require('dotenv').config({ path: envPath });
 
-const constants = require(path.join(__dirname, '../../../dist/types/constants'));
+const constants = require(path.join(__dirname, '../src/types/constants'));
 
 const BigNumber = require('bignumber.js');
 require('@openzeppelin/test-helpers/configure')({
@@ -159,6 +159,17 @@ module.exports = async function(deployer, network, accounts) {
 
 	// Get the necessary instances
 	if (process.env.MIGRATION_MODE == 'ganache'){
+		let oracle_instance_FRAX_WETH;
+		let oracle_instance_FRAX_USDC;
+		let oracle_instance_FRAX_USDT;
+		
+		let oracle_instance_FRAX_FXS;
+		let oracle_instance_FXS_WETH;
+		let oracle_instance_FXS_USDC; 
+		let oracle_instance_FXS_USDT; 
+		
+		let oracle_instance_USDC_WETH;
+		let oracle_instance_USDT_WETH;
 		timelockInstance = await Timelock.deployed();
 		migrationHelperInstance = await MigrationHelper.deployed()
 		governanceInstance = await GovernorAlpha.deployed();

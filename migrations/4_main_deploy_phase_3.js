@@ -2,7 +2,7 @@ const path = require('path');
 const envPath = path.join(__dirname, '../../.env');
 require('dotenv').config({ path: envPath });
 
-const constants = require(path.join(__dirname, '../../../dist/types/constants'));
+const constants = require(path.join(__dirname, '../src/types/constants'));
 
 const BigNumber = require('bignumber.js');
 require('@openzeppelin/test-helpers/configure')({
@@ -426,8 +426,8 @@ module.exports = async function(deployer, network, accounts) {
 	// ============= Set the pool parameters so the minting and redemption fees get set ========
 	console.log(chalk.yellow('========== REFRESH POOL PARAMETERS =========='));
 	await Promise.all([
-		await pool_instance_USDC.setPoolParameters(FIVE_MILLION_DEC6, 7500, 1, { from: POOL_CREATOR }),
-		await pool_instance_USDT.setPoolParameters(FIVE_MILLION_DEC6, 7500, 1, { from: POOL_CREATOR }),
+		await pool_instance_USDC.setPoolParameters(FIVE_MILLION_DEC6, 7500, 1, 0,0,0,0, { from: POOL_CREATOR }),
+		await pool_instance_USDT.setPoolParameters(FIVE_MILLION_DEC6, 7500, 1, 0,0,0,0, { from: POOL_CREATOR }),
 	]);
 
 	// ============= Get FRAX and FXS oracles ========

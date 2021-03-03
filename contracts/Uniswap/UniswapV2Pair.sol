@@ -218,7 +218,7 @@ contract UniswapV2Pair is IUniswapV2Pair {
 
 
 
-    // Migrated over from UniswapV2ERC20. Needed for ^0.6.0
+    // Migrated over from UniswapV2ERC20. Needed for ^0.6.11
     // ===============================================
 
     function _mint(address to, uint value) internal {
