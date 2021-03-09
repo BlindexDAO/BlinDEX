@@ -1,7 +1,9 @@
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
 import 'hardhat-deploy';
-import "hardhat-typechain"
+import "hardhat-deploy-ethers";
+import "hardhat-typechain";
+import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
@@ -54,6 +56,33 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
     target: "ethers-v5",
   },
+  namedAccounts: {
+
+    DEPLOYER_ADDRESS: {
+      default: 0
+    },
+    COLLATERAL_FRAX_AND_FXS_OWNER: {
+      default: 1
+    },
+    ORACLE_ADDRESS: {
+      default: 2
+    },
+    POOL_CREATOR: {
+      default: 3
+    },
+    TIMELOCK_ADMIN: {
+      default: 4
+    },
+    GOVERNOR_GUARDIAN_ADDRESS: {
+      default: 5
+    },
+    STAKING_OWNER: {
+      default: 6
+    },
+    STAKING_REWARDS_DISTRIBUTOR: {
+      default: 7
+    }
+  }
 };
 
 export default config
