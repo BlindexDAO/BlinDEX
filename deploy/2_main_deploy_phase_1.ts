@@ -38,8 +38,7 @@ const METAMASK_ADDRESS = process.env.METAMASK_ADDRESS;;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
-	// ======== Set the addresses ========
-	debugger;
+	// ======== Set the addresses ========	
 	const {
 		DEPLOYER_ADDRESS,
 		COLLATERAL_FRAX_AND_FXS_OWNER,
