@@ -11,12 +11,8 @@ import { FakeCollateral } from '../typechain/FakeCollateral'
 import { Timelock } from '../typechain/Timelock';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import 'hardhat-deploy'
-import 'hardhat-deploy-ethers'
 import BigNumber from 'bignumber.js';
 import chalk from 'chalk';
-import { Overrides } from 'ethers';
-import { ethers } from 'hardhat';
 const { time } = require('@openzeppelin/test-helpers')
 
 const USE_MAINNET_EXISTING = true;
@@ -86,19 +82,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	let pair_instance_FXS_WETH: UniswapV2Pair;
 	let routerInstance: UniswapV2Router02;
 	//if (process.env.MIGRATION_MODE == 'ganache'){
-	timelockInstance = await hre.ethers.getContract('Timelock') as Timelock;
-	migrationHelperInstance = await hre.ethers.getContract('MigrationHelper') as MigrationHelper;
-	governanceInstance = await hre.ethers.getContract('GovernorAlpha') as GovernorAlpha;
-	fraxInstance = await hre.ethers.getContract('FRAXStablecoin') as FRAXStablecoin;
-	fxsInstance = await hre.ethers.getContract('FRAXShares') as FRAXShares;
-	wethInstance = await hre.ethers.getContract('WETH') as WETH;
-	col_instance_USDC = await hre.ethers.getContract('FakeCollateral_USDC') as FakeCollateral;
-	col_instance_USDT = await hre.ethers.getContract('FakeCollateral_USDT') as FakeCollateral;
+	timelockInstance = await hre.ethers.getContract('Timelock') as unknown as Timelock;
+	migrationHelperInstance = await hre.ethers.getContract('MigrationHelper') as unknown as MigrationHelper;
+	governanceInstance = await hre.ethers.getContract('GovernorAlpha') as unknown as GovernorAlpha;
+	fraxInstance = await hre.ethers.getContract('FRAXStablecoin') as unknown as FRAXStablecoin;
+	fxsInstance = await hre.ethers.getContract('FRAXShares') as unknown as FRAXShares;
+	wethInstance = await hre.ethers.getContract('WETH') as unknown as WETH;
+	col_instance_USDC = await hre.ethers.getContract('FakeCollateral_USDC') as unknown as FakeCollateral;
+	col_instance_USDT = await hre.ethers.getContract('FakeCollateral_USDT') as unknown as FakeCollateral;
 
 	// stakingInstance_FRAX_FXS = await hre.ethers.getContract('StakingRewards_FRAX_FXS') as StakingRewards;
 	// stakingInstance_FXS_WETH = await hre.ethers.getContract('StakingRewards_FXS_WETH') as StakingRewards;
-	uniswapFactoryInstance = await hre.ethers.getContract('UniswapV2Factory') as UniswapV2Factory;
-	routerInstance = await hre.ethers.getContract('UniswapV2Router02') as UniswapV2Router02;
+	uniswapFactoryInstance = await hre.ethers.getContract('UniswapV2Factory') as unknown as UniswapV2Factory;
+	routerInstance = await hre.ethers.getContract('UniswapV2Router02') as unknown as UniswapV2Router02;
 
 
 
@@ -106,10 +102,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	const pair_addr_FRAX_USDC = await uniswapFactoryInstance.connect(COLLATERAL_FRAX_AND_FXS_OWNER).getPair(fraxInstance.address, col_instance_USDC.address);
 	const pair_addr_FXS_WETH = await uniswapFactoryInstance.connect(COLLATERAL_FRAX_AND_FXS_OWNER).getPair(fxsInstance.address, wethInstance.address);
 	const pair_addr_FRAX_FXS = await uniswapFactoryInstance.connect(COLLATERAL_FRAX_AND_FXS_OWNER).getPair(fraxInstance.address, fxsInstance.address);
-	pair_instance_FRAX_WETH = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FRAX_WETH) as UniswapV2Pair;
-	pair_instance_FRAX_USDC = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FRAX_USDC) as UniswapV2Pair;
-	pair_instance_FRAX_FXS = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FRAX_FXS) as UniswapV2Pair;
-	pair_instance_FXS_WETH = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FXS_WETH) as UniswapV2Pair;
+	pair_instance_FRAX_WETH = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FRAX_WETH) as unknown as UniswapV2Pair;
+	pair_instance_FRAX_USDC = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FRAX_USDC) as unknown as UniswapV2Pair;
+	pair_instance_FRAX_FXS = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FRAX_FXS) as unknown as UniswapV2Pair;
+	pair_instance_FXS_WETH = await hre.ethers.getContractAt('UniswapV2Pair', pair_addr_FXS_WETH) as unknown as UniswapV2Pair;
 	//	}
 	//else {
 	// set contracts references as mainnet deployment configuration
@@ -410,11 +406,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	// Add the ETH / USD Chainlink oracle
 	if (IS_MAINNET) {
-		oracle_chainlink_ETH_USD = await ethers.getContractAt('ChainlinkETHUSDPriceConsumer', "0xBa6C6EaC41a24F9D39032513f66D738B3559f15a");
+		oracle_chainlink_ETH_USD = await hre.ethers.getContractAt('ChainlinkETHUSDPriceConsumer', "0xBa6C6EaC41a24F9D39032513f66D738B3559f15a");
 		await fraxInstance.connect(COLLATERAL_FRAX_AND_FXS_OWNER).setETHUSDOracle(oracle_chainlink_ETH_USD.address);
 	}
 	else {
-		oracle_chainlink_ETH_USD = await ethers.getContract('ChainlinkETHUSDPriceConsumerTest');
+		oracle_chainlink_ETH_USD = await hre.ethers.getContract('ChainlinkETHUSDPriceConsumerTest');
 		await fraxInstance.connect(COLLATERAL_FRAX_AND_FXS_OWNER).setETHUSDOracle(oracle_chainlink_ETH_USD.address);
 	}
 

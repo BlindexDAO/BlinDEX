@@ -6,11 +6,8 @@ import { FakeCollateral } from './../typechain/FakeCollateral'
 import { Timelock } from './../typechain/Timelock.d';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import 'hardhat-deploy'
-import 'hardhat-deploy-ethers'
 import BigNumber from 'bignumber.js';
 import chalk from 'chalk';
-import { Overrides } from 'ethers';
 import { FRAXShares } from '../typechain/FRAXShares';
 
 const USE_MAINNET_EXISTING = true;
@@ -42,6 +39,7 @@ const METAMASK_ADDRESS = process.env.METAMASK_ADDRESS;;
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	// ======== Set the addresses ========
+	debugger;
 	const {
 		DEPLOYER_ADDRESS,
 		COLLATERAL_FRAX_AND_FXS_OWNER,
@@ -133,26 +131,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
 		args: [TIMELOCK_ADMIN.address, TIMELOCK_DELAY]
 	});
-	const timelockInstance = await hre.ethers.getContract('Timelock') as Timelock
+	const timelockInstance = await hre.ethers.getContract('Timelock') as unknown as Timelock
 	const migrationHelper = await hre.deployments.deploy('MigrationHelper', {
 		from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
 		args: [TIMELOCK_ADMIN.address]
 	});
-	const migrationHelperInstance = await hre.ethers.getContract('MigrationHelper') as MigrationHelper
+	const migrationHelperInstance = await hre.ethers.getContract('MigrationHelper') as unknown as MigrationHelper
 
 	// FRAX
 	const frax = await hre.deployments.deploy('FRAXStablecoin', {
 		from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
 		args: ["Frax", "FRAX", COLLATERAL_FRAX_AND_FXS_OWNER.address, timelock.address]
 	});
-	const fraxInstance = await hre.ethers.getContract('FRAXStablecoin') as FRAXStablecoin
+	const fraxInstance = await hre.ethers.getContract('FRAXStablecoin') as unknown as FRAXStablecoin
 
 	//FXS
 	const fxs = await hre.deployments.deploy('FRAXShares', {
 		from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
 		args: ["Frax Share", "FXS", ORACLE_ADDRESS.address, COLLATERAL_FRAX_AND_FXS_OWNER.address, timelock.address]
 	});
-	const fxsInstance = await hre.ethers.getContract('FRAXShares') as FRAXShares
+	const fxsInstance = await hre.ethers.getContract('FRAXShares') as unknown as FRAXShares
 
 	console.log(chalk.yellow("===== Make sure name()'s work ====="));
 	let frax_name = await fraxInstance.name();
@@ -166,7 +164,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 		from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
 		args: [timelock.address, fxsInstance.address, GOVERNOR_GUARDIAN_ADDRESS.address]
 	});
-	const governanceInstance = await hre.ethers.getContract('GovernorAlpha') as GovernorAlpha
+	const governanceInstance = await hre.ethers.getContract('GovernorAlpha') as unknown as GovernorAlpha
 
 	await governanceInstance.connect(GOVERNOR_GUARDIAN_ADDRESS).__setTimelockAddress(timelock.address);
 
@@ -209,9 +207,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 	if (IS_MAINNET) {
 		console.log(chalk.yellow('===== REAL COLLATERAL ====='));
-		wethInstance = await hre.ethers.getContractAt('WETH', "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") as WETH;
-		col_instance_USDC = await hre.ethers.getContractAt('FakeCollateral_USDC', "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48") as FakeCollateral;
-		col_instance_USDT = await hre.ethers.getContractAt('FakeCollateral_USDT', "0xdac17f958d2ee523a2206206994597c13d831ec7") as FakeCollateral;
+		wethInstance = await hre.ethers.getContractAt('WETH', "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2") as unknown as WETH;
+		col_instance_USDC = await hre.ethers.getContractAt('FakeCollateral_USDC', "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48") as unknown as FakeCollateral;
+		col_instance_USDT = await hre.ethers.getContractAt('FakeCollateral_USDT', "0xdac17f958d2ee523a2206206994597c13d831ec7") as unknown as FakeCollateral;
 
 	}
 	else {
