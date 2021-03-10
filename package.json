@@ -2,7 +2,8 @@
   "name": "hardhat-project",
   "scripts": {
     "test:integrations": "hardhat --network mainnetFork test --deploy-fixture ./test/integration/**",
-    "test:contracts": "hardhat --network mainnetFork test ./test/contracts/**"
+    "test:contracts": "hardhat --network mainnetFork test ./test/contracts/**",
+    "node": "hardhat node --no-deploy"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
