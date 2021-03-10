@@ -5,7 +5,7 @@ import { FraxPool } from "../../typechain/FraxPool";
 
 chai.use(solidity);
 const { expect } = chai;
-describe("FRAXStablecoin", () => {
+describe("FraxPool", () => {
   let pool: FraxPool;
 
   describe("toggleCollateralPrice", async () => {
