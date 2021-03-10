@@ -1,7 +1,9 @@
 import { HardhatUserConfig, task } from "hardhat/config";
-import "@nomiclabs/hardhat-waffle";
-import 'hardhat-deploy';
+// Dirty hack to enforce hardhat-deploy-ethers type precedence over hardhat-ethers, while making hardhat-deploy-ethers extendEnvironment function execute last 
+import type * as deployEthers from "hardhat-deploy-ethers";
+import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy-ethers";
+import 'hardhat-deploy';
 import "hardhat-typechain";
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'

@@ -1,3 +1,6 @@
+
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
 import { UniswapV2Factory } from './../typechain/UniswapV2Factory.d';
 import { FRAXShares } from '../typechain/FRAXShares';
 import { WETH } from '../typechain/WETH';
@@ -6,13 +9,8 @@ import { MigrationHelper } from '../typechain/MigrationHelper';
 import { FRAXStablecoin } from '../typechain/FRAXStablecoin';
 import { FakeCollateral } from '../typechain/FakeCollateral'
 import { Timelock } from '../typechain/Timelock';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployFunction } from 'hardhat-deploy/types';
-import 'hardhat-deploy'
-import 'hardhat-deploy-ethers'
 import BigNumber from 'bignumber.js';
 import chalk from 'chalk';
-import { Overrides } from 'ethers';
 
 const USE_MAINNET_EXISTING = true;
 const IS_MAINNET = (process.env.MIGRATION_MODE == 'mainnet');
@@ -70,14 +68,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	let col_instance_USDT: FakeCollateral;
 
 	//if (process.env.MIGRATION_MODE == 'ganache'){
-	timelockInstance = await hre.ethers.getContract('Timelock') as Timelock;
-	migrationHelperInstance = await hre.ethers.getContract('MigrationHelper') as MigrationHelper;
-	governanceInstance = await hre.ethers.getContract('GovernorAlpha') as GovernorAlpha;
-	fraxInstance = await hre.ethers.getContract('FRAXStablecoin') as FRAXStablecoin;
-	fxsInstance = await hre.ethers.getContract('FRAXShares') as FRAXShares;
-	wethInstance = await hre.ethers.getContract('WETH') as WETH;
-	col_instance_USDC = await hre.ethers.getContract('FakeCollateral_USDC') as FakeCollateral;
-	col_instance_USDT = await hre.ethers.getContract('FakeCollateral_USDT') as FakeCollateral;
+	timelockInstance = await hre.ethers.getContract('Timelock') as unknown as Timelock;
+	migrationHelperInstance = await hre.ethers.getContract('MigrationHelper') as unknown as MigrationHelper;
+	governanceInstance = await hre.ethers.getContract('GovernorAlpha') as unknown as GovernorAlpha;
+	fraxInstance = await hre.ethers.getContract('FRAXStablecoin') as unknown as FRAXStablecoin;
+	fxsInstance = await hre.ethers.getContract('FRAXShares') as unknown as FRAXShares;
+	wethInstance = await hre.ethers.getContract('WETH') as unknown as WETH;
+	col_instance_USDC = await hre.ethers.getContract('FakeCollateral_USDC') as unknown as FakeCollateral;
+	col_instance_USDT = await hre.ethers.getContract('FakeCollateral_USDT') as unknown as FakeCollateral;
 	//	}
 	//else {
 	// set contracts references as mainnet deployment configuration
@@ -107,12 +105,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	if (IS_MAINNET) {
 		// Note UniswapV2Router02 vs UniswapV2Router02_Modified
 		routerInstance = await hre.ethers.getContractAt('UniswapV2Router02', "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D");
-		uniswapFactoryInstance = await hre.ethers.getContractAt('UniswapV2Factory', "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f") as UniswapV2Factory;
+		uniswapFactoryInstance = await hre.ethers.getContractAt('UniswapV2Factory', "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f") as unknown as UniswapV2Factory;
 	}
 	else if (IS_ROPSTEN) {
 		// Note UniswapV2Router02 vs UniswapV2Router02_Modified
 		routerInstance = await hre.ethers.getContractAt('UniswapV2Router02', "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D");
-		uniswapFactoryInstance = await hre.ethers.getContractAt('UniswapV2Factory', "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f") as UniswapV2Factory;
+		uniswapFactoryInstance = await hre.ethers.getContractAt('UniswapV2Factory', "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f") as unknown as UniswapV2Factory;
 	}
 	else {
 		const uniswapV2FactoryInstance = await hre.ethers.getContract('UniswapV2Factory')
@@ -122,7 +120,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 			args: [uniswapV2FactoryInstance.address, wethInstance.address]
 		})
 		routerInstance = await hre.ethers.getContract('UniswapV2Router02');
-		uniswapFactoryInstance = uniswapV2FactoryInstance as UniswapV2Factory;
+		uniswapFactoryInstance = uniswapV2FactoryInstance as unknown as UniswapV2Factory;
 	}
 
 	let swapToPriceInstance;
