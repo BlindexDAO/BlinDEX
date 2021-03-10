@@ -1,16 +1,15 @@
+
 import hre from "hardhat";
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-waffle";
 import chai from "chai";
 import { solidity, MockContract } from "ethereum-waffle";
 import { BigNumber, Signer } from "ethers";
-import ERC20abi from './erc20.abi.json'
-import { FraxPool__factory } from './../typechain/factories/FraxPool__factory';
-import { FraxPool } from "../typechain/FraxPool";
+import ERC20abi from '../erc20.abi.json'
+import { FraxPool__factory } from '../../typechain/factories/FraxPool__factory';
+import { FraxPool } from "../../typechain/FraxPool";
 
 chai.use(solidity);
 const { expect } = chai;
-describe("FRAXStablecoin", () => {
+describe("FraxPool", () => {
   let pool: FraxPool;
   let mockFRAX: MockContract;
   let mockFXS: MockContract;

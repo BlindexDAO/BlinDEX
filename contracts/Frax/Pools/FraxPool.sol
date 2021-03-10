@@ -29,6 +29,7 @@ import "../../ERC20/ERC20.sol";
 import "../../Oracle/UniswapPairOracle.sol";
 import "../../Governance/AccessControl.sol";
 import "./FraxPoolLibrary.sol";
+import "hardhat/console.sol";
 
 contract FraxPool is AccessControl {
     using SafeMath for uint256;
@@ -130,7 +131,9 @@ contract FraxPool is AccessControl {
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
         pool_ceiling = _pool_ceiling;
-        missing_decimals = uint(18).sub(collateral_token.decimals());
+        console.log(_collateral_address);
+        uint8 eee = collateral_token.decimals();
+        missing_decimals = uint(18).sub(eee);
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         grantRole(MINT_PAUSER, timelock_address);
