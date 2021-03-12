@@ -7,6 +7,7 @@ import 'hardhat-deploy';
 import "hardhat-typechain";
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
+const fs = require('fs');
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
 dotenv.config({ path: envPath });
@@ -20,6 +21,30 @@ task("accounts", "Prints the list of accounts", async (args, hre) => {
     console.log(account.address);
   }
 });
+
+task("test:dir")
+  .addPositionalParam(
+    "testDir",
+    "Directory with *.ts files. Sholud end with '/'"
+  )
+  .setAction(
+    async (
+      { testDir, noCompile },
+      { run, network }
+    ) => {
+
+    const testFiles: string[] = []
+    fs.readdir(testDir, (err: string, files: string[]) => {
+      files.forEach(file => {
+        if(file.endsWith(".ts")){
+          file = testDir + file;
+          testFiles.push(file);
+        }
+      });
+    });
+
+    await run("test", { testFiles, noCompile } );
+  });
 
 
 const config: HardhatUserConfig = {
