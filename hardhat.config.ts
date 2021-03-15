@@ -7,6 +7,8 @@ import 'hardhat-deploy';
 import "hardhat-typechain";
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
+import { BigNumber } from 'ethers';
+import { ethers } from "hardhat";
 const fs = require('fs');
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
@@ -47,6 +49,38 @@ task("test:dir")
   });
 
 
+  task("setup:account")
+    .setAction(async (args, hre) => {
+      
+      // send ether
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xbe0eb53f46cd790cd13851d5eff43d12404d33e8"]
+      });
+
+      const signer = await hre.ethers.getSigner("0xbe0eb53f46cd790cd13851d5eff43d12404d33e8");
+
+      const resp = await signer.sendTransaction({to:'0x774289Cb40c98B4f5b64a152BF7e5F94Fee38669', value: hre.ethers.utils.parseEther("7.5")});
+      console.log(resp);
+
+      // send dai
+      const dai = '0x6b175474e89094c44da98b954eedeac495271d0f'
+      const bigDaiHolder = '0x66c57bf505a85a74609d2c83e94aabb26d691e1f'
+      await hre.ethers.provider.send(
+        "hardhat_impersonateAccount",
+        [bigDaiHolder]
+      )
+      const signerLink = hre.ethers.provider.getSigner(bigDaiHolder)
+      const DaiContractFactory = await hre.ethers.getContractFactory("ERC20", signerLink);
+      const DaiContract = DaiContractFactory.attach(dai);
+      const transferTransaction = await DaiContract.transfer('0x774289Cb40c98B4f5b64a152BF7e5F94Fee38669', BigNumber.from('10000000000000000000'))
+      await hre.ethers.provider.send(
+        "hardhat_stopImpersonatingAccount",
+        [bigDaiHolder]
+      )
+    });
+  
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -62,9 +96,9 @@ const config: HardhatUserConfig = {
     },
     mainnetFork: {
       url: 'http://localhost:8545',
-      accounts: {
-        mnemonic: process.env.MNEMONIC_PHRASE!,
-      }
+      // accounts: {
+      //   mnemonic: process.env.MNEMONIC_PHRASE!,
+      // }
     },
   },
   solidity: {
