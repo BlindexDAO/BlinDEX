@@ -31,7 +31,11 @@ contract LiquidityRewardsManager is Ownable {
     // Info of each liquidity pool.
     struct PoolInfo {
         IERC20 lpToken; // Address of LP token contract.
-        uint256 allocPoint; // How many allocation points assigned to this pool. BDXs to distribute per block.
+        
+        // How many allocation points assigned to this pool.
+        // How many BDXs to distribute per block.
+        // The larger the pool (cap), the more AP it gets
+        uint256 allocPoint;
         uint256 lastRewardBlock; // Last block number that BDXs distribution occurs.
         
         //todo ag now why multiplied by 1e12? pool precision?
@@ -41,6 +45,10 @@ contract LiquidityRewardsManager is Ownable {
         // This tells us how many BDX we should reward the user for every LP token then deposit
         uint256 accBdxPerShare;
     }
+
+    event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
+    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
 
     // The BDX TOKEN!
     BdxShares public bdx;
@@ -67,6 +75,7 @@ contract LiquidityRewardsManager is Ownable {
     uint256 public constant LOCK_LIQUIDITY_BONUS_MULTIPLIER_1_YEARS = 1667;
 
     // Return BDX per block for given given _from to _to block.
+    // This is the total amount to be destributed among all LPs
     function getBdxPerBlock(uint256 _from, uint256 _to)
         public
         view
@@ -107,6 +116,21 @@ contract LiquidityRewardsManager is Ownable {
         );
     }
 
+    // Update the given pool's BDX allocation point. Can only be called by the owner.
+    function set(
+        uint256 _pid,
+        uint256 _allocPoint,
+        bool _withUpdate
+    ) public onlyOwner {
+        if (_withUpdate) {
+            massUpdatePools();
+        }
+        totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(
+            _allocPoint
+        );
+        poolInfo[_pid].allocPoint = _allocPoint;
+    }
+
     function massUpdatePools() public {
         uint256 length = poolInfo.length;
         for (uint256 pid = 0; pid < length; ++pid) {
@@ -127,17 +151,85 @@ contract LiquidityRewardsManager is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 bdxPerBlock = getBdxPerBlock(pool.lastRewardBlock, block.number);
-        uint256 bdxReward =
-            multiplier.mul(bdxPerBlock).mul(pool.allocPoint).div( //todo ag now what is pool.allocPoint?
-                totalAllocPoint //todo ag now what is totalAllocPoint?
-            );
+
+        // mul(pool.allocPoint).div(totalAllocPoint) stacurrent LP share in
+
+        uint256 bdxReward = multiplier.mul(bdxPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         
         //todo ag mint bonus for FRAX developers?
         //todo ag limit by total bdx supply
+        //togo ag limit is set by allocPoints 
         bdx.mint(address(this), bdxReward);
         pool.accBdxPerShare = pool.accBdxPerShare.add(
             bdxReward.mul(1e12).div(lpSupply) // div by lpSupply, because it's "per share" (per LP token)
         );
         pool.lastRewardBlock = block.number;
+    }
+
+    // Withdraw without caring about rewards. EMERGENCY ONLY.
+    function emergencyWithdraw(uint256 _pid) public {
+        PoolInfo storage pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][msg.sender];
+        pool.lpToken.safeTransfer(address(msg.sender), user.amount);
+        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
+        user.amount = 0;
+        user.rewardDebt = 0;
+    }
+
+    // Safe BDX transfer function, just in case if rounding error causes pool to not have enough BDXs.
+    function safeBdxTransfer(address _to, uint256 _amount) internal {
+        uint256 bdxBal = bdx.balanceOf(address(this));
+        if (_amount > bdxBal) {
+            bdx.transfer(_to, bdxBal);
+        } else {
+            bdx.transfer(_to, _amount);
+        }
+    }
+
+    function rewardPreviousDeposit(UserInfo storage _user, PoolInfo storage _pool) {
+        updatePool(_pid);
+
+        if (_user.amount > 0) {
+            uint256 pending =
+                _user.amount.mul(_pool.accBdxPerShare).div(1e12).sub(
+                    _user.rewardDebt
+                );
+            safeBdxTransfer(msg.sender, pending);
+        }
+    }
+
+    // Deposit LP tokens to LiquidityRewardsManager for BDX allocation.
+    function deposit(uint256 _pid, uint256 _amount) public {
+        PoolInfo storage pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][msg.sender];
+
+        rewardPreviousDeposit(user, pool);
+
+        pool.lpToken.safeTransferFrom(
+            address(msg.sender),
+            address(this),
+            _amount
+        );
+
+        user.amount = user.amount.add(_amount);
+        user.rewardDebt = user.amount.mul(pool.accBdxPerShare).div(1e12);
+        
+        emit Deposit(msg.sender, _pid, _amount);
+    }
+
+    // Withdraw LP tokens from LiquidityRewardsManager.
+    function withdraw(uint256 _pid, uint256 _amount) public {
+        PoolInfo storage pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][msg.sender];
+        require(user.amount >= _amount, "withdraw: insufficient user balance");
+
+        rewardPreviousDeposit(user, pool);
+        
+        user.amount = user.amount.sub(_amount);
+        user.rewardDebt = user.amount.mul(pool.accBdxPerShare).div(1e12);
+        
+        pool.lpToken.safeTransfer(address(msg.sender), _amount);
+
+        emit Withdraw(msg.sender, _pid, _amount);
     }
 }
