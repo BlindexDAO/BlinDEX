@@ -158,7 +158,7 @@ contract LiquidityRewardsManager is Ownable {
         
         //todo ag mint bonus for FRAX developers?
         //todo ag limit by total bdx supply
-        //togo ag limit is set by allocPoints 
+        //   - limit is set by allocPoints 
         bdx.mint(address(this), bdxReward);
         pool.accBdxPerShare = pool.accBdxPerShare.add(
             bdxReward.mul(1e12).div(lpSupply) // div by lpSupply, because it's "per share" (per LP token)
@@ -186,6 +186,19 @@ contract LiquidityRewardsManager is Ownable {
         }
     }
 
+    // We reward the PREVIOUS deposit to save gas
+    // Steps:
+    //    - user.rewardDebt = user.amount.mul(pool.accBdxPerShare).div(1e12);
+    //        - during previous depoist or withtrawal
+    //    - updatePool
+    //        - pending BDX is minted
+    //        - pool.accBdxPerShare is updated
+    //    - _user.amount.mul(_pool.accBdxPerShare).div(1e12).sub(_user.rewardDebt);
+    //        - this is our reward
+    //        - user.amount didn't change since last deposit
+    //        - so basically our reward is proportional to:
+    //            - _pool.accBdxPerShare change since last deposit
+    //            - user.amount since last deposit
     function rewardPreviousDeposit(UserInfo storage _user, PoolInfo storage _pool) {
         updatePool(_pid);
 
