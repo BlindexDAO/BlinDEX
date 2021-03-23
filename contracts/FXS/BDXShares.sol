@@ -30,5 +30,13 @@ import "../Math/SafeMath.sol";
 contract BDXShares is ERC20Custom {
     using SafeMath for uint256;
  
+    function mint(address to, uint256 amount) public onlyPools {
+        
+    }
 
+    modifier onlyPools() {
+        //todo
+        //require(FRAX.frax_pools(msg.sender) == true, "Only frax pools can mint new FRAX");
+        _;
+    } 
 }
