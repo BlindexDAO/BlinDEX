@@ -1,9 +1,9 @@
-import { WETH } from './../typechain/WETH.d';
-import { GovernorAlpha } from './../typechain/GovernorAlpha.d';
-import { MigrationHelper } from './../typechain/MigrationHelper.d';
-import { FRAXStablecoin } from './../typechain/FRAXStablecoin.d';
-import { FakeCollateral } from './../typechain/FakeCollateral'
-import { Timelock } from './../typechain/Timelock.d';
+import { WETH } from '../typechain/WETH';
+import { GovernorAlpha } from '../typechain/GovernorAlpha';
+import { MigrationHelper } from '../typechain/MigrationHelper';
+import { FRAXStablecoin } from '../typechain/FRAXStablecoin';
+import { FakeCollateral } from '../typechain/FakeCollateral'
+import { Timelock } from '../typechain/Timelock';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import BigNumber from 'bignumber.js';
