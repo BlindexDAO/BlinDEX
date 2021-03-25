@@ -8,6 +8,7 @@ import "../Math/SafeMath.sol";
 import "../FXS/BDXShares.sol";
 
 // based on sushiswap MasterChef
+// every token is ERC20 fixed point (1e18) uint256
 contract LiquidityRewardsManager is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -15,18 +16,18 @@ contract LiquidityRewardsManager is Ownable {
     // Info of each user.
     struct UserInfo {
         uint256 amount; // How many LP tokens the user has provided.
-        uint256 rewardDebt; // Reward debt. See explanation below.
+        uint256 rewardDebtBdx; // Reward debt. See explanation below.
         //
         // We do some fancy math here. Basically, any point in time, the amount of BDXs
         // entitled to a user but is pending to be distributed is:
         //
-        //   pending reward = (user.amount * pool.accBdxPerShare) - user.rewardDebt
+        //   pending reward = (user.amount * pool.accBdxPerShare_BDX_REWARD_PRCISION) - user.rewardDebtBdx
         //
         // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
-        //   1. The pool's `accBdxPerShare` (and `lastRewardTimestamp`) gets updated.
+        //   1. The pool's `accBdxPerShare_BDX_REWARD_PRCISION` (and `lastRewardTimestamp`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
-        //   4. User's `rewardDebt` gets updated.
+        //   4. User's `rewardDebtBdx` gets updated.
     }
 
     // Info of each liquidity pool.
@@ -39,12 +40,11 @@ contract LiquidityRewardsManager is Ownable {
         uint256 allocPoint;
         uint256 lastRewardTimestamp; // Last block number that BDXs distribution occurs.
         
-        //todo ag now why multiplied by 1e12? pool precision?
-        // Accumulated BDXs per share, times 1e12.
+        // Accumulated BDXs per share, times BDX_REWARD_PRCISION.
         // Used to calculate BDX reward for a user depositing X of LP tokens
         // Before user deposits LP tokens, pending BDX is minted, to reflect the amount of LP tokens in pool
         // This tells us how many BDX we should reward the user for every LP token then deposit
-        uint256 accBdxPerShare;
+        uint256 accBdxPerShare_BDX_REWARD_PRCISION;
     }
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -63,16 +63,18 @@ contract LiquidityRewardsManager is Ownable {
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     // used to determine a pool share in minting BDX (denominator)
     uint public totalAllocPoint = 0;
-
+    
+    uint256 public constant ERC20_PRCISON = 1e18;
+    uint256 public constant BDX_REWARD_PRCISION = 1e12;
     uint256 public constant TOTAL_LPs_BDX_SUPPLY = 10500000; // todo ag now very little bdx minted every minute ~20 on average
 
     // BDX minting schedule
-    uint256 public constant MINTING_SCHEDULE_PRECISON = 1000;
-    uint256 public immutable MINTING_SCHEDULE_YEAR_1 = TOTAL_LPs_BDX_SUPPLY.mul(200).div(MINTING_SCHEDULE_PRECISON);
-    uint256 public immutable MINTING_SCHEDULE_YEAR_2 = TOTAL_LPs_BDX_SUPPLY.mul(125).div(MINTING_SCHEDULE_PRECISON);
-    uint256 public immutable MINTING_SCHEDULE_YEAR_3 = TOTAL_LPs_BDX_SUPPLY.mul(100).div(MINTING_SCHEDULE_PRECISON);
-    uint256 public immutable MINTING_SCHEDULE_YEAR_4 = TOTAL_LPs_BDX_SUPPLY.mul(50).div(MINTING_SCHEDULE_PRECISON);
-    uint256 public immutable MINTING_SCHEDULE_YEAR_5 = TOTAL_LPs_BDX_SUPPLY.mul(25).div(MINTING_SCHEDULE_PRECISON);
+    uint256 public constant BDX_MINTING_SCHEDULE_PRECISON = 1000;
+    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
+    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_2 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(125).div(BDX_MINTING_SCHEDULE_PRECISON);
+    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_3 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(100).div(BDX_MINTING_SCHEDULE_PRECISON);
+    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_4 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(50).div(BDX_MINTING_SCHEDULE_PRECISON);
+    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_5 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(25).div(BDX_MINTING_SCHEDULE_PRECISON);
 
     uint256 private immutable DeploymentTimestamp;
     uint256 private immutable EndOfYear_1;
@@ -96,26 +98,26 @@ contract LiquidityRewardsManager is Ownable {
         EndOfYear_5 = _deploymentTimestamp + 5 * 365 days;
     }
 
-    function getBdxPerMinute() public view returns (uint256)
+    // FP at 1e18 for compatibility with ERC20 token
+    function getbdxPerMinute() public view returns (uint256)
     {
         uint256 yearSchedule = 0;
         if(block.timestamp < EndOfYear_1){
-            yearSchedule = MINTING_SCHEDULE_YEAR_1;
+            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_1;
         } else if(block.timestamp < EndOfYear_2){
-            yearSchedule = MINTING_SCHEDULE_YEAR_2;
+            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_2;
         } else if(block.timestamp < EndOfYear_3){
-            yearSchedule = MINTING_SCHEDULE_YEAR_3;
+            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_3;
         } else if(block.timestamp < EndOfYear_4){
-            yearSchedule = MINTING_SCHEDULE_YEAR_4;
+            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_4;
         } else if(block.timestamp < EndOfYear_5){
-            yearSchedule = MINTING_SCHEDULE_YEAR_5;
+            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_5;
         } else {
             yearSchedule = 0;
         }
 
         uint256 bdxPerMinute = yearSchedule.div(365*24*60);
         
-        //todo ag now use .mul(1e12)?
         return bdxPerMinute;
     }
 
@@ -132,7 +134,7 @@ contract LiquidityRewardsManager is Ownable {
                 lpToken: _lpToken,
                 allocPoint: _allocPoint,
                 lastRewardTimestamp: lastRewardTimestamp,
-                accBdxPerShare: 0
+                accBdxPerShare_BDX_REWARD_PRCISION: 0
             })
         );
     }
@@ -170,7 +172,7 @@ contract LiquidityRewardsManager is Ownable {
             pool.lastRewardTimestamp = block.timestamp;
             return;
         }
-        uint256 bdxPerMinute = getBdxPerMinute();
+        uint256 bdxPerMinute = getbdxPerMinute();
         uint256 minutesSinceLastReward = (pool.lastRewardTimestamp - block.timestamp).div(60);
 
         uint256 bdxReward = minutesSinceLastReward.mul(bdxPerMinute).mul(pool.allocPoint).div(totalAllocPoint);
@@ -179,9 +181,8 @@ contract LiquidityRewardsManager is Ownable {
         //todo ag limit by total bdx supply
         //   - limit is set by allocPoints 
         bdx.mint(address(this), bdxReward);
-        pool.accBdxPerShare = pool.accBdxPerShare.add(
-            // todo ag now why mul 1e12?
-            bdxReward.mul(1e12).div(lpSupply) // div by lpSupply, because it's "per share" (per LP token)
+        pool.accBdxPerShare_BDX_REWARD_PRCISION = pool.accBdxPerShare_BDX_REWARD_PRCISION.add(
+            bdxReward.mul(BDX_REWARD_PRCISION).div(lpSupply) // div by lpSupply, because it's "per share" (per LP token)
         );
         pool.lastRewardTimestamp = block.timestamp;
     }
@@ -193,7 +194,7 @@ contract LiquidityRewardsManager is Ownable {
         pool.lpToken.safeTransfer(address(msg.sender), user.amount);
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
         user.amount = 0;
-        user.rewardDebt = 0;
+        user.rewardDebtBdx = 0;
     }
 
     // Safe BDX transfer function, just in case if rounding error causes pool to not have enough BDXs.
@@ -208,16 +209,16 @@ contract LiquidityRewardsManager is Ownable {
 
     // We reward the PREVIOUS deposit to save gas
     // Steps:
-    //    - user.rewardDebt = user.amount.mul(pool.accBdxPerShare).div(1e12);
+    //    - user.rewardDebtBdx = user.amount.mul(pool.accBdxPerShare_BDX_REWARD_PRCISION).div(BDX_REWARD_PRCISION);
     //        - during previous depoist or withtrawal
     //    - updatePool
     //        - pending BDX is minted
-    //        - pool.accBdxPerShare is updated
-    //    - _user.amount.mul(_pool.accBdxPerShare).div(1e12).sub(_user.rewardDebt);
+    //        - pool.accBdxPerShare_BDX_REWARD_PRCISION is updated
+    //    - _user.amount.mul(_pool.accBdxPerShare_BDX_REWARD_PRCISION).div(BDX_REWARD_PRCISION).sub(_user.rewardDebtBdx);
     //        - this is our reward
     //        - user.amount didn't change since last deposit
     //        - so basically our reward is proportional to:
-    //            - _pool.accBdxPerShare change since last deposit
+    //            - _pool.accBdxPerShare_BDX_REWARD_PRCISION change since last deposit
     //            - user.amount since last deposit
     function rewardPreviousDeposit(uint256 _pid) private {
         updatePool(_pid);
@@ -226,16 +227,16 @@ contract LiquidityRewardsManager is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         if (user.amount > 0) {
-            uint256 pending =
-                user.amount.mul(pool.accBdxPerShare).div(1e12).sub(
-                    user.rewardDebt
+            uint256 pendingBdx =
+                user.amount.mul(pool.accBdxPerShare_BDX_REWARD_PRCISION).div(BDX_REWARD_PRCISION).sub(
+                    user.rewardDebtBdx
                 );
-            safeBdxTransfer(msg.sender, pending);
+            safeBdxTransfer(msg.sender, pendingBdx);
         }
     }
 
     // Deposit LP tokens to LiquidityRewardsManager for BDX allocation.
-    function deposit(uint256 _pid, uint256 _amount) public {
+    function deposit(uint256 _pid, uint256 _amountLP) public {
         PoolInfo storage pool = poolInfo[_pid]; //todo ag why storage?
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -244,28 +245,28 @@ contract LiquidityRewardsManager is Ownable {
         pool.lpToken.safeTransferFrom(
             address(msg.sender),
             address(this),
-            _amount
+            _amountLP
         );
 
-        user.amount = user.amount.add(_amount);
-        user.rewardDebt = user.amount.mul(pool.accBdxPerShare).div(1e12);
+        user.amount = user.amount.add(_amountLP);
+        user.rewardDebtBdx = user.amount.mul(pool.accBdxPerShare_BDX_REWARD_PRCISION).div(BDX_REWARD_PRCISION);
         
-        emit Deposit(msg.sender, _pid, _amount);
+        emit Deposit(msg.sender, _pid, _amountLP);
     }
 
     // Withdraw LP tokens from LiquidityRewardsManager.
-    function withdraw(uint256 _pid, uint256 _amount) public {
+    function withdraw(uint256 _pid, uint256 _amountLP) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= _amount, "withdraw: insufficient user balance");
+        require(user.amount >= _amountLP, "withdraw: insufficient user balance");
 
         rewardPreviousDeposit(_pid);
         
-        user.amount = user.amount.sub(_amount);
-        user.rewardDebt = user.amount.mul(pool.accBdxPerShare).div(1e12);
+        user.amount = user.amount.sub(_amountLP);
+        user.rewardDebtBdx = user.amount.mul(pool.accBdxPerShare_BDX_REWARD_PRCISION).div(BDX_REWARD_PRCISION);
         
-        pool.lpToken.safeTransfer(address(msg.sender), _amount);
+        pool.lpToken.safeTransfer(address(msg.sender), _amountLP);
 
-        emit Withdraw(msg.sender, _pid, _amount);
+        emit Withdraw(msg.sender, _pid, _amountLP);
     }
 }
