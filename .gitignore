@@ -40,3 +40,4 @@ typechain
 
 # Ignore for now, however mainnet/testnet deployments should be included in repository
 deployments
+package
