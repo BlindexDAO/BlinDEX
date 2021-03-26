@@ -173,8 +173,7 @@ contract LiquidityRewardsManager is Ownable {
             return;
         }
         uint256 bdxPerMinute = getbdxPerMinute();
-        uint256 minutesSinceLastReward = (pool.lastRewardTimestamp - block.timestamp).div(60);
-
+        uint256 minutesSinceLastReward = (block.timestamp - pool.lastRewardTimestamp).div(60);
         uint256 bdxReward = minutesSinceLastReward.mul(bdxPerMinute).mul(pool.allocPoint).div(totalAllocPoint);
         
         //todo ag mint bonus for FRAX developers?
@@ -241,7 +240,6 @@ contract LiquidityRewardsManager is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         rewardPreviousDeposit(_pid);
-
         pool.lpToken.safeTransferFrom(
             address(msg.sender),
             address(this),

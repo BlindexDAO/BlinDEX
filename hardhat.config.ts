@@ -25,13 +25,14 @@ task("accounts", "Prints the list of accounts", async (args, hre) => {
 });
 
 task("test:dir")
+  .addFlag("deployFixture", 'run the global fixture before tests')
   .addPositionalParam(
     "testDir",
     "Directory with *.ts files. Sholud end with '/'"
   )
   .setAction(
     async (
-      { testDir, noCompile },
+      { testDir, noCompile, deployFixture },
       { run, network }
     ) => {
 
@@ -44,8 +45,7 @@ task("test:dir")
         }
       });
     });
-
-    await run("test", { testFiles, noCompile } );
+    await run("test", { testFiles, noCompile, deployFixture } );
   });
 
 

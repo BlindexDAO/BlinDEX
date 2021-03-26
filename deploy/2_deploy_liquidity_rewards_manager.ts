@@ -3,7 +3,7 @@ import {DeployFunction} from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const [ deployer ] = await hre.getUnnamedAccounts();
+  const [ deployer ] = await hre.ethers.getSigners();
   const bdx = await hre.deployments.get('BDXShares')
   const rewardsManager = await hre.deployments.deploy('LiquidityRewardsManager', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
