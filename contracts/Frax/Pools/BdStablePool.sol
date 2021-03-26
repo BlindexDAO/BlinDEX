@@ -91,7 +91,7 @@ contract BdStablePool {
 
     // We separate out the 1t1, fractional and algorithmic minting functions for gas efficiency 
     function mintBdStable(uint256 collateral_amount) external notMintPaused {
-        collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
+        // collateral_token.transferFrom(msg.sender, address(this), collateral_amount); // todo lr
         uint256 bdstable_amount = collateral_amount;
         BDSTABLE.pool_mint(msg.sender, bdstable_amount);
     }
