@@ -142,6 +142,9 @@ const config: HardhatUserConfig = {
     },
     STAKING_REWARDS_DISTRIBUTOR: {
       default: 7
+    },
+    TEST_USER: {
+      default: 8
     }
   }
 };

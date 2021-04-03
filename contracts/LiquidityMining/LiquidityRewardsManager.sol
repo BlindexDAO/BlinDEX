@@ -1,5 +1,7 @@
 pragma solidity 0.6.11;
 
+import "hardhat/console.sol";
+
 import "../Common/Ownable.sol";
 import "../ERC20/SafeERC20.sol";
 import "../ERC20/IERC20.sol";
@@ -65,7 +67,7 @@ contract LiquidityRewardsManager is Ownable {
     uint public totalAllocPoint = 0;
     
     uint256 public constant ERC20_PRCISON = 1e18;
-    uint256 public constant BDX_REWARD_PRCISION = 1e12;
+    uint256 public constant BDX_REWARD_PRCISION = 1e18;
     uint256 public constant TOTAL_LPs_BDX_SUPPLY = 10500000; // todo ag now very little bdx minted every minute ~20 on average
 
     // BDX minting schedule
@@ -117,7 +119,7 @@ contract LiquidityRewardsManager is Ownable {
         }
 
         uint256 bdxPerMinute = yearSchedule.div(365*24*60);
-        
+
         return bdxPerMinute;
     }
 
@@ -175,7 +177,7 @@ contract LiquidityRewardsManager is Ownable {
         uint256 bdxPerMinute = getbdxPerMinute();
         uint256 minutesSinceLastReward = (block.timestamp - pool.lastRewardTimestamp).div(60);
         uint256 bdxReward = minutesSinceLastReward.mul(bdxPerMinute).mul(pool.allocPoint).div(totalAllocPoint);
-        
+
         //todo ag mint bonus for FRAX developers?
         //todo ag limit by total bdx supply
         //   - limit is set by allocPoints 
