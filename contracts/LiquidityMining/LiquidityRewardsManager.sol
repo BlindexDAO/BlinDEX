@@ -68,7 +68,7 @@ contract LiquidityRewardsManager is Ownable {
     
     uint256 public constant ERC20_PRCISON = 1e18;
     uint256 public constant BDX_REWARD_PRCISION = 1e18;
-    uint256 public constant TOTAL_LPs_BDX_SUPPLY = 10500000; // todo ag now very little bdx minted every minute ~20 on average
+    uint256 public constant TOTAL_LPs_BDX_SUPPLY = 10500000;
 
     // BDX minting schedule
     uint256 public constant BDX_MINTING_SCHEDULE_PRECISON = 1000;
@@ -238,7 +238,7 @@ contract LiquidityRewardsManager is Ownable {
 
     // Deposit LP tokens to LiquidityRewardsManager for BDX allocation.
     function deposit(uint256 _pid, uint256 _amountLP) public {
-        PoolInfo storage pool = poolInfo[_pid]; //todo ag why storage?
+        PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         rewardPreviousDeposit(_pid);
