@@ -125,5 +125,9 @@ contract BDStable is ERC20Custom {
         }
     }
 
+    function global_collateral_ratio() returns (uint 256){
+        return 1; //todo
+    }
+
     /* ========== EVENTS ========== */
 }

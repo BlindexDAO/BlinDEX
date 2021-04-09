@@ -68,9 +68,11 @@ contract LiquidityRewardsManager is Ownable {
     
     uint256 public constant ERC20_PRCISON = 1e18;
     uint256 public constant BDX_REWARD_PRCISION = 1e18;
-    uint256 public constant TOTAL_LPs_BDX_SUPPLY = 10500000;
+    uint256 public constant TOTAL_LPs_BDX_SUPPLY = 21000000;
 
     // BDX minting schedule
+    // They sum up to 50% of TOTAL_LPs_BDX_SUPPLY
+    //   as this much is reserved for liquidity mining rewards
     uint256 public constant BDX_MINTING_SCHEDULE_PRECISON = 1000;
     uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
     uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_2 = TOTAL_LPs_BDX_SUPPLY.mul(ERC20_PRCISON).mul(125).div(BDX_MINTING_SCHEDULE_PRECISON);
@@ -219,7 +221,7 @@ contract LiquidityRewardsManager is Ownable {
     //        - this is our reward
     //        - user.amount didn't change since last deposit
     //        - so basically our reward is proportional to:
-    //            - _pool.accBdxPerShare_BDX_REWARD_PRCISION change since last deposit
+    //            - _pool.accBdxPerShare_BDX_REWARD_PRCISION **change** since last deposit
     //            - user.amount since last deposit
     function rewardPreviousDeposit(uint256 _pid) private {
         updatePool(_pid);
@@ -242,6 +244,7 @@ contract LiquidityRewardsManager is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
 
         rewardPreviousDeposit(_pid);
+        
         pool.lpToken.safeTransferFrom(
             address(msg.sender),
             address(this),
