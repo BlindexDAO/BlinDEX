@@ -10,7 +10,6 @@ import "../Math/SafeMath.sol";
 import "../ERC20/ERC20.sol";
 import '../Uniswap/TransferHelper.sol';
 import "../ERC20/SafeERC20.sol";
-import "../Frax/BDStable.sol";
 import "../Utils/ReentrancyGuard.sol";
 import "../Utils/StringHelpers.sol";
 
@@ -31,7 +30,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
 
     // BDX minting schedule
-    // They sum up to 50% of TOTAL_LPs_BDX_SUPPLY
+    // They sum up to 50% of TOTAL_BDX_SUPPLY
     //   as this much is reserved for liquidity mining rewards
     uint256 public constant BDX_MINTING_SCHEDULE_PRECISON = 1000;
     uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_1;
@@ -49,7 +48,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
     /* ========== STATE VARIABLES ========== */
 
-    BdStable private bdStable;
     ERC20 public rewardsToken;
     ERC20 public stakingToken;
     uint256 public periodFinish;
@@ -91,10 +89,8 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
     constructor(
         address _owner,
-        address _rewardsDistribution,
         address _rewardsToken,
         address _stakingToken,
-        address _bdStable_address,
         address _timelock_address,
         uint256 _pool_weight_1e6,
         uint256 _deploymentTimestamp,
@@ -103,8 +99,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         owner_address = _owner;
         rewardsToken = ERC20(_rewardsToken);
         stakingToken = ERC20(_stakingToken);
-        bdStable = BDStable(_bdStable_address);
-        rewardsDistribution = _rewardsDistribution;
         lastUpdateTime = block.timestamp;
         timelock_address = _timelock_address;
         pool_weight_1e6 = _pool_weight_1e6;
