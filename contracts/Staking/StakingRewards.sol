@@ -25,10 +25,9 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     using SafeERC20 for ERC20;
 
     // Constant for various precisions
-    uint256 private constant PRICE_PRECISION = 1e6;
+    uint256 private constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
     uint256 public constant ERC20_PRCISON = 1e18;
-    uint256 public constant BDX_REWARD_PRCISION = 1e18;
     uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
 
     // BDX minting schedule
@@ -84,7 +83,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         uint256 start_timestamp;
         uint256 amount;
         uint256 ending_timestamp;
-        uint256 multiplier_PRICE_PRECISION;
+        uint256 multiplier_LOCK_MULTIPLIER_PRECISION;
     }
 
     /* ========== CONSTRUCTOR ========== */
@@ -132,7 +131,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         return _staking_token_boosted_supply;
     }
 
-    function lockedStakingMultiplier_PRICE_PRECISION(uint256 yearsNo) public pure returns (uint256) {
+    function lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(uint256 yearsNo) public pure returns (uint256) {
         if(yearsNo == 10){
             return 50000000;
         } else if(yearsNo == 5){
@@ -188,24 +187,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     }
 
     function rewardPerToken() public override view returns (uint256) {
-        // console.log("_staking_token_supply");
-        // console.log(_staking_token_supply);
-
-        // console.log("_staking_token_boosted_supply");
-        // console.log(_staking_token_boosted_supply);
-
-        // console.log("rewardPerTokenStored");
-        // console.log(rewardPerTokenStored);
-
-        console.log("lastTimeRewardApplicable");
-        console.log(lastTimeRewardApplicable());
-
-        console.log("lastUpdateTime");
-        console.log(lastUpdateTime);
-
-        // console.log("getRewardRatePerSecond");
-        // console.log(getRewardRatePerSecond());
-
         if (_staking_token_supply == 0) {
             return rewardPerTokenStored;
         }
@@ -214,7 +195,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
                 .add(lastTimeRewardApplicable()
                     .sub(lastUpdateTime)
                     .mul(getRewardRatePerSecond())
-                    .div(PRICE_PRECISION)
                     .div(_staking_token_boosted_supply)
             );
         }
@@ -225,7 +205,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             .mul(
                 rewardPerToken()
                 .sub(userRewardPerTokenPaid[account]))
-            .div(1e18)
             .add(rewards[account]);
     }
 
@@ -255,8 +234,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     // Precision 1e18 for compatibility with ERC20 token
     function getRewardForDuration() external override view returns (uint256) {
         return getRewardRatePerSecond()
-            .mul(rewardsDurationSeconds)
-            .div(PRICE_PRECISION);
+            .mul(rewardsDurationSeconds);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -297,8 +275,8 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
         uint256 secs = yearsNo * 365 * 24 * 60 * 60;
 
-        uint256 multiplier = lockedStakingMultiplier_PRICE_PRECISION(yearsNo);
-        uint256 boostedAmount = amount.mul(multiplier).div(PRICE_PRECISION);
+        uint256 multiplier = lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(yearsNo);
+        uint256 boostedAmount = amount.mul(multiplier).div(LOCK_MULTIPLIER_PRECISION);
         lockedStakes[msg.sender].push(LockedStake(
             keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
             block.timestamp,
@@ -352,7 +330,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         require(block.timestamp >= thisStake.ending_timestamp || unlockedStakes == true, "Stake is still locked!");
 
         uint256 theAmount = thisStake.amount;
-        uint256 boostedAmount = theAmount.mul(thisStake.multiplier_PRICE_PRECISION).div(PRICE_PRECISION);
+        uint256 boostedAmount = theAmount.mul(thisStake.multiplier_LOCK_MULTIPLIER_PRECISION).div(LOCK_MULTIPLIER_PRECISION);
         if (theAmount > 0){
             // Staking token balance and boosted balance
             _locked_balances[msg.sender] = _locked_balances[msg.sender].sub(theAmount);
@@ -398,25 +376,24 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 num_periods_elapsed = uint256(block.timestamp.sub(periodFinish)) / rewardsDurationSeconds; // Floor division to the nearest period
         uint balance = rewardsToken.balanceOf(address(this));
+
+        console.log("balance");
+        console.log(balance);
+        console.log("getRewardRatePerSecond()");
+        console.log(getRewardRatePerSecond());
+        console.log("rewardsDurationSeconds");
+        console.log(rewardsDurationSeconds);
+        console.log("num_periods_elapsed+1");
+        console.log(num_periods_elapsed+1);
+
         require(getRewardRatePerSecond()
             .mul(rewardsDurationSeconds)
-            .mul(num_periods_elapsed + 1)
-            .div(PRICE_PRECISION) <= balance, "Not enough BDX available for rewards!");
+            .mul(num_periods_elapsed + 1) <= balance, "Not enough BDX available for rewards!");
 
         periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
 
-        console.log("periodFinish");
-        console.log(periodFinish);
-
         rewardPerTokenStored = rewardPerToken();
-
-        console.log("rewardPerTokenStored");
-        console.log(rewardPerTokenStored);
-
         lastUpdateTime = lastTimeRewardApplicable();
-
-        console.log("lastUpdateTime");
-        console.log(lastUpdateTime);
 
         emit RewardsPeriodRenewed(address(stakingToken));
     }
@@ -470,11 +447,25 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         
         // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
         if (block.timestamp > periodFinish) {
+            console.log("+++++++++++++++++");
+            console.log("lastUpdateTime");
+            console.log(lastUpdateTime);
+
             retroCatchUp();
+
+            console.log("lastUpdateTime");
+            console.log(lastUpdateTime);
         }
         else {
+            console.log("------------------");
+            console.log("lastUpdateTime");
+            console.log(lastUpdateTime);
+            
             rewardPerTokenStored = rewardPerToken();
             lastUpdateTime = lastTimeRewardApplicable();
+
+            console.log("lastUpdateTime");
+            console.log(lastUpdateTime);
         }
 
         if (account != address(0)) {

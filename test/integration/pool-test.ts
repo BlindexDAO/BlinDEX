@@ -22,8 +22,8 @@ function toErc20(n: number): BigNumber {
 
 describe("StakingRewards", () => {
   const timeTraveler = new TimeTraveler(hre.network.provider);
-  const bdxFirstYearSchedule = toErc20(10500000).mul(20).div(100);
-  const bdxPerMinute = bdxFirstYearSchedule.div(365*24*60);
+  const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
+  const bdxPerSecond = bdxFirstYearSchedule.div(365*24*60*60);
 
   describe("BDX accruing through liquidity mining", () => {
     it("should toggle collateral price", async () => {
@@ -45,8 +45,7 @@ describe("StakingRewards", () => {
 
       async function provideLiquidity_WETH_BDEUR(
         amountWeth: number, 
-        amountBdEur: number, 
-        depositedLPToken: number, 
+        amountBdEur: number,
         user: SignerWithAddress)
       {
         // todo ag mock function, should be replaced in the future
@@ -77,10 +76,6 @@ describe("StakingRewards", () => {
 
         // approve LP tokens transfer to the liquidity rewards manager
         await lpToken_BdEur_WETH.connect(user).approve(stakingRewards_BDEUR_WETH.address, toErc20(100));
-
-        const lpTokenBalance = await lpToken_BdEur_WETH.balanceOf(user.address);
-        console.log("LP token ballance (erc20): " + lpTokenBalance);
-        console.log("To deposit (erc20): " + toErc20(depositedLPToken));
       }
 
       async function simulateTimeElapseInDays(days: number){
@@ -96,20 +91,23 @@ describe("StakingRewards", () => {
         +depositedLPTokenUser1 
         +depositedLPTokenUser2;
 
-      await provideLiquidity_WETH_BDEUR(1, 5, depositedLPTokenUser1, testUser1);
-      await provideLiquidity_WETH_BDEUR(4, 20, depositedLPTokenUser2, testUser2);
+      await provideLiquidity_WETH_BDEUR(1, 5, testUser1);
+      await provideLiquidity_WETH_BDEUR(4, 20, testUser2);
+
+      console.log("LP token ballance user1 (erc20): " + (await lpToken_BdEur_WETH.balanceOf(testUser1.address)));
+      console.log("LP token ballance user2 (erc20): " + (await lpToken_BdEur_WETH.balanceOf(testUser2.address)));
 
       await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
 
-      const days = 30;
+      const days = 7;
       await simulateTimeElapseInDays(days)
 
       await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
 
-      const minutesSinceLastReward = days*60*24;
-      const expectedReward = bdxPerMinute.mul(minutesSinceLastReward).mul(depositedLPTokenUser1).div(totalDepositedLpTokens);
+      const secondsSinceLastReward = days*24*60*60;
+      const expectedReward = bdxPerSecond.mul(secondsSinceLastReward).mul(depositedLPTokenUser1).div(totalDepositedLpTokens);
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
       console.log("Expected: "+ expectedReward);
