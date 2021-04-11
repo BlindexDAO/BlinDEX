@@ -24,12 +24,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
     await uniswapFactoryContract.createPair(bdeur.address, WETH_ADDRESS)
-    const pairAddress = await uniswapFactoryContract.getPair(bdeur.address, WETH_ADDRESS);
-
-    const liquidityRewardsManagerContract = await hre.ethers.getContract("LiquidityRewardsManager") as unknown as LiquidityRewardsManager;
-    await liquidityRewardsManagerContract.add(1000, pairAddress);
-
-
 
     // One time migration
     return true;

@@ -18,6 +18,8 @@ import "./IStakingRewards.sol";
 import "./RewardsDistributionRecipient.sol";
 import "./Pausable.sol";
 
+import "hardhat/console.sol";
+
 contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
@@ -55,7 +57,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
     uint256 public rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
 
-    uint256 public lastUpdateTime;
+    uint256 public lastUpdateTime; // time when recent reward per token has been calculated
     uint256 public rewardPerTokenStored = 0;
     uint256 public pool_weight_1e6; // This staking pool's fraction of the total FXS being distributed by all pools, 6 decimals of precision
 
@@ -92,7 +94,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         address _rewardsToken,
         address _stakingToken,
         address _timelock_address,
-        uint256 _pool_weight_1e6,
+        uint256 _pool_weight_1e6,// todo ag allow to override
         uint256 _deploymentTimestamp,
         bool _isTrueBdPool
     ) public Owned(_owner) {
@@ -186,6 +188,24 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     }
 
     function rewardPerToken() public override view returns (uint256) {
+        // console.log("_staking_token_supply");
+        // console.log(_staking_token_supply);
+
+        // console.log("_staking_token_boosted_supply");
+        // console.log(_staking_token_boosted_supply);
+
+        // console.log("rewardPerTokenStored");
+        // console.log(rewardPerTokenStored);
+
+        console.log("lastTimeRewardApplicable");
+        console.log(lastTimeRewardApplicable());
+
+        console.log("lastUpdateTime");
+        console.log(lastUpdateTime);
+
+        // console.log("getRewardRatePerSecond");
+        // console.log(getRewardRatePerSecond());
+
         if (_staking_token_supply == 0) {
             return rewardPerTokenStored;
         }
@@ -350,7 +370,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
             emit WithdrawnLocked(msg.sender, theAmount, kek_id);
         }
-
     }
 
     function getReward() public override nonReentrant updateReward(msg.sender) {
@@ -382,12 +401,22 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         require(getRewardRatePerSecond()
             .mul(rewardsDurationSeconds)
             .mul(num_periods_elapsed + 1)
-            .div(PRICE_PRECISION) <= balance, "Not enough FXS available for rewards!");
+            .div(PRICE_PRECISION) <= balance, "Not enough BDX available for rewards!");
 
         periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
 
+        console.log("periodFinish");
+        console.log(periodFinish);
+
         rewardPerTokenStored = rewardPerToken();
+
+        console.log("rewardPerTokenStored");
+        console.log(rewardPerTokenStored);
+
         lastUpdateTime = lastTimeRewardApplicable();
+
+        console.log("lastUpdateTime");
+        console.log(lastUpdateTime);
 
         emit RewardsPeriodRenewed(address(stakingToken));
     }
@@ -433,6 +462,12 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     /* ========== MODIFIERS ========== */
 
     modifier updateReward(address account) {
+        
+        // console.log("block.timestamp");
+        // console.log(block.timestamp);
+        // console.log("periodFinish");
+        // console.log(periodFinish);
+        
         // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
         if (block.timestamp > periodFinish) {
             retroCatchUp();
@@ -441,6 +476,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             rewardPerTokenStored = rewardPerToken();
             lastUpdateTime = lastTimeRewardApplicable();
         }
+
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;

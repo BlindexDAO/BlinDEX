@@ -7,7 +7,7 @@ import { WETH } from "../../typechain/WETH";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
-import { LiquidityRewardsManager } from "../../typechain/LiquidityRewardsManager";
+import { StakingRewards } from "../../typechain/StakingRewards";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import TimeTraveler from "../../utils/TimeTraveler"
@@ -20,7 +20,7 @@ function toErc20(n: number): BigNumber {
   return BigNumber.from(10).pow(18).mul(n)
 }
 
-describe("LiquidityRewardsManager", () => {
+describe("StakingRewards", () => {
   const timeTraveler = new TimeTraveler(hre.network.provider);
   const bdxFirstYearSchedule = toErc20(10500000).mul(20).div(100);
   const bdxPerMinute = bdxFirstYearSchedule.div(365*24*60);
@@ -37,13 +37,11 @@ describe("LiquidityRewardsManager", () => {
       const bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
       const bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
       const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', ownerUser) as unknown as UniswapV2Router02;
-      const liquidityRewardsManager = await hre.ethers.getContract('LiquidityRewardsManager', ownerUser) as unknown as LiquidityRewardsManager;
+      const stakingRewards_BDEUR_WETH = await hre.ethers.getContract('StakingRewards_BDEUR_WETH', ownerUser) as unknown as StakingRewards;
       const uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;  
 
       const swapPairAddress = await uniswapFactory.getPair(bdEur.address, weth.address);
       const lpToken_BdEur_WETH = await hre.ethers.getContractAt("ERC20", swapPairAddress, ownerUser) as unknown as ERC20;
-
-      const bdEurWethPid = 0;
 
       async function provideLiquidity_WETH_BDEUR(
         amountWeth: number, 
@@ -78,7 +76,7 @@ describe("LiquidityRewardsManager", () => {
           currentBlock.timestamp + 60);
 
         // approve LP tokens transfer to the liquidity rewards manager
-        await lpToken_BdEur_WETH.connect(user).approve(liquidityRewardsManager.address, toErc20(100));
+        await lpToken_BdEur_WETH.connect(user).approve(stakingRewards_BDEUR_WETH.address, toErc20(100));
 
         const lpTokenBalance = await lpToken_BdEur_WETH.balanceOf(user.address);
         console.log("LP token ballance (erc20): " + lpTokenBalance);
@@ -101,18 +99,22 @@ describe("LiquidityRewardsManager", () => {
       await provideLiquidity_WETH_BDEUR(1, 5, depositedLPTokenUser1, testUser1);
       await provideLiquidity_WETH_BDEUR(4, 20, depositedLPTokenUser2, testUser2);
 
-      await liquidityRewardsManager.connect(testUser1).deposit(bdEurWethPid, toErc20(depositedLPTokenUser1));
-      await liquidityRewardsManager.connect(testUser2).deposit(bdEurWethPid, toErc20(depositedLPTokenUser2));
+      await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
+      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
 
-      const days = 3;
+      const days = 30;
       await simulateTimeElapseInDays(days)
 
-      await liquidityRewardsManager.connect(testUser1).withdraw(bdEurWethPid, toErc20(depositedLPTokenUser1));
+      await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
+      await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
 
       const minutesSinceLastReward = days*60*24;
       const expectedReward = bdxPerMinute.mul(minutesSinceLastReward).mul(depositedLPTokenUser1).div(totalDepositedLpTokens);
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
+      console.log("Expected: "+ expectedReward);
+      console.log("Actual: "+ bdxReward);
+
       expect(bdxReward).to.eq(expectedReward);
     });
   })

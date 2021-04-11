@@ -40,7 +40,6 @@ contract BDXShares is ERC20Custom {
     
     address public owner_address;
     address public oracle_address;
-    address public _liquidity_rewards_manager;
     BDStable private BDSTABLE;
 
 
@@ -49,14 +48,16 @@ contract BDXShares is ERC20Custom {
     modifier onlyPools() {
        require(BDSTABLE.bdstable_pools(msg.sender) == true, "Only bd pools can redeem new BD stable");
         _;
-    } 
-    modifier onlyPoolsOrLiquidityRewardsManager() {
-       require(BDSTABLE.bdstable_pools(msg.sender) == true || msg.sender == _liquidity_rewards_manager, "Only bd pools or liquidity manager can mint new BD stable");
-        _;
-    } 
+    }
     
     modifier onlyByOwner() {
         require(msg.sender == owner_address, "You are not an owner");
+        _;
+    }
+
+    modifier onlyPoolsOrOwner() {
+       require(BDSTABLE.bdstable_pools(msg.sender) == true || msg.sender == owner_address,
+         "Only bd pools or owner can redeem new BD stable");
         _;
     }
 
@@ -72,7 +73,6 @@ contract BDXShares is ERC20Custom {
         symbol = _symbol;
         owner_address = _owner_address;
         oracle_address = _oracle_address;
-
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -85,16 +85,13 @@ contract BDXShares is ERC20Custom {
     function setBdStableAddress(address frax_contract_address) external onlyByOwner {
         BDSTABLE = BDStable(frax_contract_address);
     }
-    
-    function setLiquidityRewardsManagerAddress(address _liquidity_rewards_manager_address) external onlyByOwner {
-        _liquidity_rewards_manager = _liquidity_rewards_manager_address;
-    }
+
     
     function setOwner(address _owner_address) external onlyByOwner {
         owner_address = _owner_address;
     }
 
-    function mint(address to, uint256 amount) public onlyPoolsOrLiquidityRewardsManager {
+    function mint(address to, uint256 amount) public onlyPoolsOrOwner {
         _mint(to, amount);
     }
 

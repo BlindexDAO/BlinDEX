@@ -1,7 +1,8 @@
-import { BDStable } from './../typechain/BDStable.d';
-import { BDXShares } from './../typechain/BDXShares.d';
+import { BDStable } from '../typechain/BDStable';
+import { BDXShares } from '../typechain/BDXShares';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
   const wETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'; //todo ag
