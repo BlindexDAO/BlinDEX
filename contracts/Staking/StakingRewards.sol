@@ -28,6 +28,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     uint256 private constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
     uint256 public constant ERC20_PRCISON = 1e18;
+    uint256 public constant REWARD_PRECISON = 1e18;
     uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
 
     // BDX minting schedule
@@ -57,13 +58,13 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     uint256 public rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
 
     uint256 public lastUpdateTime; // time when recent reward per token has been calculated
-    uint256 public rewardPerTokenStored = 0;
+    uint256 public rewardPerTokenStored_REWARD_PRECISON = 0;
     uint256 public pool_weight_1e6; // This staking pool's fraction of the total FXS being distributed by all pools, 6 decimals of precision
 
     address public owner_address;
     address public timelock_address; // Governance timelock address
 
-    mapping(address => uint256) public userRewardPerTokenPaid;
+    mapping(address => uint256) public userRewardPerTokenPaid_REWARD_PRECISON;
     mapping(address => uint256) public rewards;
 
     uint256 private _staking_token_supply = 0;
@@ -188,23 +189,39 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
     function rewardPerToken() public override view returns (uint256) {
         if (_staking_token_supply == 0) {
-            return rewardPerTokenStored;
+            return rewardPerTokenStored_REWARD_PRECISON;
         }
         else {
-            return rewardPerTokenStored
+            console.log("------------------------");
+            console.log(lastTimeRewardApplicable().sub(lastUpdateTime));
+            console.log(_staking_token_boosted_supply);
+            console.log(rewardPerTokenStored_REWARD_PRECISON
                 .add(lastTimeRewardApplicable()
                     .sub(lastUpdateTime)
                     .mul(getRewardRatePerSecond())
+                    .mul(REWARD_PRECISON)
+                    .div(_staking_token_boosted_supply)));
+
+            return rewardPerTokenStored_REWARD_PRECISON
+                .add(lastTimeRewardApplicable()
+                    .sub(lastUpdateTime)
+                    .mul(getRewardRatePerSecond())
+                    .mul(REWARD_PRECISON)
                     .div(_staking_token_boosted_supply)
             );
         }
     }
 
     function earned(address account) public override view returns (uint256) {
+        
+        console.log("_boosted_balances[account]");
+        console.log(_boosted_balances[account]);
+
         return _boosted_balances[account]
             .mul(
                 rewardPerToken()
-                .sub(userRewardPerTokenPaid[account]))
+                .sub(userRewardPerTokenPaid_REWARD_PRECISON[account]))
+            .div(REWARD_PRECISON)
             .add(rewards[account]);
     }
 
@@ -377,22 +394,13 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         uint256 num_periods_elapsed = uint256(block.timestamp.sub(periodFinish)) / rewardsDurationSeconds; // Floor division to the nearest period
         uint balance = rewardsToken.balanceOf(address(this));
 
-        console.log("balance");
-        console.log(balance);
-        console.log("getRewardRatePerSecond()");
-        console.log(getRewardRatePerSecond());
-        console.log("rewardsDurationSeconds");
-        console.log(rewardsDurationSeconds);
-        console.log("num_periods_elapsed+1");
-        console.log(num_periods_elapsed+1);
-
         require(getRewardRatePerSecond()
             .mul(rewardsDurationSeconds)
             .mul(num_periods_elapsed + 1) <= balance, "Not enough BDX available for rewards!");
 
         periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
 
-        rewardPerTokenStored = rewardPerToken();
+        rewardPerTokenStored_REWARD_PRECISON = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
 
         emit RewardsPeriodRenewed(address(stakingToken));
@@ -440,37 +448,18 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
     modifier updateReward(address account) {
         
-        // console.log("block.timestamp");
-        // console.log(block.timestamp);
-        // console.log("periodFinish");
-        // console.log(periodFinish);
-        
         // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
         if (block.timestamp > periodFinish) {
-            console.log("+++++++++++++++++");
-            console.log("lastUpdateTime");
-            console.log(lastUpdateTime);
-
             retroCatchUp();
-
-            console.log("lastUpdateTime");
-            console.log(lastUpdateTime);
         }
         else {
-            console.log("------------------");
-            console.log("lastUpdateTime");
-            console.log(lastUpdateTime);
-            
-            rewardPerTokenStored = rewardPerToken();
+            rewardPerTokenStored_REWARD_PRECISON = rewardPerToken();
             lastUpdateTime = lastTimeRewardApplicable();
-
-            console.log("lastUpdateTime");
-            console.log(lastUpdateTime);
         }
 
         if (account != address(0)) {
             rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+            userRewardPerTokenPaid_REWARD_PRECISON[account] = rewardPerTokenStored_REWARD_PRECISON;
         }
         _;
     }

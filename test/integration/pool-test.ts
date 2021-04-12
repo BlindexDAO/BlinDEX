@@ -97,17 +97,19 @@ describe("StakingRewards", () => {
       console.log("LP token ballance user1 (erc20): " + (await lpToken_BdEur_WETH.balanceOf(testUser1.address)));
       console.log("LP token ballance user2 (erc20): " + (await lpToken_BdEur_WETH.balanceOf(testUser2.address)));
 
-      await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
+      // await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
+      await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(toErc20(depositedLPTokenUser1), 5);
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
 
-      const days = 7;
+      const days = 70;
       await simulateTimeElapseInDays(days)
 
-      await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
+      // await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
 
       const secondsSinceLastReward = days*24*60*60;
-      const expectedReward = bdxPerSecond.mul(secondsSinceLastReward).mul(depositedLPTokenUser1).div(totalDepositedLpTokens);
+      // const expectedReward = bdxPerSecond.mul(secondsSinceLastReward).mul(depositedLPTokenUser1).div(totalDepositedLpTokens);
+      const expectedReward = bdxPerSecond.mul(secondsSinceLastReward).mul(depositedLPTokenUser1*10).div(depositedLPTokenUser1*10+depositedLPTokenUser2);
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
       console.log("Expected: "+ expectedReward);
