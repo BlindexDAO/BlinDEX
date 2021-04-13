@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const StakingRewards_BDEUR_WETH = await hre.deployments.deploy('StakingRewards_BDEUR_WETH', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     contract: "StakingRewards",
-    args: [deployer.address, bdx.address, pairAddress, hre.ethers.constants.AddressZero, 1e6, Date.now(), false]
+    args: [deployer.address, bdx.address, pairAddress, hre.ethers.constants.AddressZero, 1e6, false]
   });
 
   const stakingRewards_BDEUR_WETH = await hre.ethers.getContract("StakingRewards_BDEUR_WETH") as unknown as StakingRewards;

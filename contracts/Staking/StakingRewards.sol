@@ -95,7 +95,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         address _stakingToken,
         address _timelock_address,
         uint256 _pool_weight_1e6,// todo ag allow to override
-        uint256 _deploymentTimestamp,
         bool _isTrueBdPool
     ) public Owned(_owner) {
         owner_address = _owner;
@@ -104,7 +103,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         lastUpdateTime = block.timestamp;
         timelock_address = _timelock_address;
         pool_weight_1e6 = _pool_weight_1e6;
-        DeploymentTimestamp = _deploymentTimestamp;
+        DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
         unlockedStakes = false;
@@ -115,11 +114,11 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         BDX_MINTING_SCHEDULE_YEAR_4 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(50).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
         BDX_MINTING_SCHEDULE_YEAR_5 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(25).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
 
-        EndOfYear_1 = _deploymentTimestamp + 365 days;
-        EndOfYear_2 = _deploymentTimestamp + 2 * 365 days;
-        EndOfYear_3 = _deploymentTimestamp + 3 * 365 days;
-        EndOfYear_4 = _deploymentTimestamp + 4 * 365 days;
-        EndOfYear_5 = _deploymentTimestamp + 5 * 365 days;
+        EndOfYear_1 = block.timestamp + 365 days;
+        EndOfYear_2 = block.timestamp + 2 * 365 days;
+        EndOfYear_3 = block.timestamp + 3 * 365 days;
+        EndOfYear_4 = block.timestamp + 4 * 365 days;
+        EndOfYear_5 = block.timestamp + 5 * 365 days;
     }
 
     /* ========== VIEWS ========== */
@@ -192,16 +191,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
             return rewardPerTokenStored_REWARD_PRECISON;
         }
         else {
-            console.log("------------------------");
-            console.log(lastTimeRewardApplicable().sub(lastUpdateTime));
-            console.log(_staking_token_boosted_supply);
-            console.log(rewardPerTokenStored_REWARD_PRECISON
-                .add(lastTimeRewardApplicable()
-                    .sub(lastUpdateTime)
-                    .mul(getRewardRatePerSecond())
-                    .mul(REWARD_PRECISON)
-                    .div(_staking_token_boosted_supply)));
-
             return rewardPerTokenStored_REWARD_PRECISON
                 .add(lastTimeRewardApplicable()
                     .sub(lastUpdateTime)
@@ -213,10 +202,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     }
 
     function earned(address account) public override view returns (uint256) {
-        
-        console.log("_boosted_balances[account]");
-        console.log(_boosted_balances[account]);
-
         return _boosted_balances[account]
             .mul(
                 rewardPerToken()
@@ -401,6 +386,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
 
         rewardPerTokenStored_REWARD_PRECISON = rewardPerToken();
+
         lastUpdateTime = lastTimeRewardApplicable();
 
         emit RewardsPeriodRenewed(address(stakingToken));
