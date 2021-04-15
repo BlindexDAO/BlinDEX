@@ -23,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const stakingRewards_BDEUR_WETH = await hre.ethers.getContract("StakingRewards_BDEUR_WETH") as unknown as StakingRewards;
-  stakingRewards_BDEUR_WETH.initializeDefault(); // todo ag use proxy instead
+  stakingRewards_BDEUR_WETH.initializeDefault();
 
   await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
     StakingRewards_BDEUR_WETH.address,

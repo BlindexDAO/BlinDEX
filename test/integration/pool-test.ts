@@ -28,6 +28,7 @@ let WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const timeTraveler = new TimeTraveler(hre.network.provider);
 const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
+const rewardsSupply =  toErc20(21e6/2)
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
@@ -61,7 +62,7 @@ async function initialize(){
   lpToken_BdEur_WETH = await hre.ethers.getContractAt("ERC20", swapPairAddress, ownerUser) as unknown as ERC20;
 }
 
-before(async function() {
+before(function() {
   return initialize();
 })
 
@@ -116,15 +117,14 @@ describe("StakingRewards", () => {
       await hre.deployments.fixture();
     });
 
-    it("should get first reward", async () => {
-      
-      const depositedLPTokenUser1 = 2;
-      const depositedLPTokenUser2 = 6;
-  
-      const totalDepositedLpTokens =
-        +depositedLPTokenUser1 
-        +depositedLPTokenUser2;
-  
+    const depositedLPTokenUser1 = 2;
+    const depositedLPTokenUser2 = 6;
+
+    const totalDepositedLpTokens =
+      +depositedLPTokenUser1 
+      +depositedLPTokenUser2;
+
+    it("should get first reward", async () => {  
       await provideLiquidity_WETH_BDEUR(1, 5, testUser1);
       await provideLiquidity_WETH_BDEUR(4, 20, testUser2);
   
@@ -150,8 +150,13 @@ describe("StakingRewards", () => {
       expect(diff).to.lt(toErc20(1));
     });
 
-    it("should reward all rewards", async () => {
-      await simulateTimeElapseInDays(365*6);
+    it("should reward at least 99% of rewards supply", async () => {
+
+      // we need to recalculate rewards every now and than
+      for(let i = 1; i <= 5; i++){
+        await simulateTimeElapseInDays(365);
+        await (await stakingRewards_BDEUR_WETH.connect(ownerUser).renewIfApplicable()).wait();
+      }
 
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
       await (await stakingRewards_BDEUR_WETH.connect(testUser2).getReward()).wait();
@@ -159,10 +164,29 @@ describe("StakingRewards", () => {
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
-      console.log("Total rewards user1:" + bdxRewardUser1);
-      console.log("Total rewards user2:" + bdxRewardUser2);
+      const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
+      const unrewarded = rewardsSupply.sub(totalRewards);
+      const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupply).toNumber() / 1e6 * 100;
 
-      expect(bdxRewardUser1.add(bdxRewardUser2)).to.eq(toErc20(21e6/2));
+      console.log("Unrewarded %: "+ unrewardedPct +"%");
+
+      expect(unrewardedPct).to.gte(0);
+      expect(unrewardedPct).to.lt(1);
+    });
+
+    it("should be able to withdraw LP tokens", async () => {
+      await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1))).wait();
+      await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(toErc20(depositedLPTokenUser2))).wait();
+    });
+
+    it("should not be able to withdraw LP tokens when balance is empty", async () => {
+      await expect(async () => {
+        await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
+      }).to.throw();
+
+      await expect(async () => {
+        await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(1)).wait()
+      }).to.throw();
     });
   })
   
@@ -171,12 +195,12 @@ describe("StakingRewards", () => {
       await hre.deployments.fixture();
     });
     
+    const depositedLPTokenUser1 = 2;
+    const depositedLPTokenUser2 = 6;
+
     it("should get reward", async () => {
       const user1YearsLocked = 5;
-      const user1LockBonusMultiplier = 10; // to 
-
-      const depositedLPTokenUser1 = 2;
-      const depositedLPTokenUser2 = 6;
+      const user1LockBonusMultiplier = 10;
 
       await provideLiquidity_WETH_BDEUR(1, 5, testUser1);
       await provideLiquidity_WETH_BDEUR(4, 20, testUser2);
@@ -184,7 +208,7 @@ describe("StakingRewards", () => {
       await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(toErc20(depositedLPTokenUser1), user1YearsLocked);
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
 
-      const days = 70;
+      const days = 360;
       await simulateTimeElapseInDays(days)
 
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
@@ -202,7 +226,56 @@ describe("StakingRewards", () => {
       console.log("Actual:   "+ bdxReward);
       console.log("Diff:     "+ erc20ToNumber(diff));
 
+      expect(diff).to.gte(0);
       expect(diff).to.lt(toErc20(1));
+    });
+
+    it("should reward at least 99% of rewards supply", async () => {
+
+      // we need to recalculate rewards every now and than
+      for(let i = 1; i <= 5; i++){
+        await simulateTimeElapseInDays(365);
+        await (await stakingRewards_BDEUR_WETH.connect(ownerUser).renewIfApplicable()).wait();
+      }
+
+      await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
+      await (await stakingRewards_BDEUR_WETH.connect(testUser2).getReward()).wait();
+
+      const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
+      const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
+
+      const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
+      const unrewarded = rewardsSupply.sub(totalRewards);
+      const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupply).toNumber() / 1e6 * 100;
+
+      console.log("Total rewards user1: "+ bdxRewardUser1);
+      console.log("Total rewards user2: "+ bdxRewardUser2);
+      console.log("Unrewarded %: "+ unrewardedPct +"%");
+
+      expect(unrewardedPct).to.gte(0);
+      expect(unrewardedPct).to.lt(1);
+    });
+
+    it("should not be able to withdraw locked LP tokens", async () => {
+      await expect(async () => {
+        await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
+      }).to.throw();
+    });
+
+    it("should be able to withdraw LP tokens", async () => {
+      const kekId = "???"; // todo ad how to get it?
+      await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdrawLocked(kekId)).wait();
+      await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(toErc20(depositedLPTokenUser2))).wait();
+    });
+
+    it("should not be able to withdraw LP tokens when balance is empty", async () => {
+      await expect(async () => {
+        await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
+      }).to.throw();
+
+      await expect(async () => {
+        await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(1)).wait()
+      }).to.throw();
     });
   })
 });

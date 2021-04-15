@@ -196,8 +196,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
                     .sub(lastUpdateTime)
                     .mul(getRewardRatePerSecond())
                     .mul(REWARD_PRECISON)
-                    .div(_staking_token_boosted_supply)
-            );
+                    .div(_staking_token_boosted_supply));
         }
     }
 
@@ -412,6 +411,8 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     }
 
     function initializeDefault() external onlyByOwnerOrGovernance {
+        // todo ag once only
+
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
         emit DefaultInitialization();
