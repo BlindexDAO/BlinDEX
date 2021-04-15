@@ -12,6 +12,9 @@ import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import TimeTraveler from "../../utils/TimeTraveler"
 import { BDXShares } from '../../typechain/BDXShares';
+import cap from "chai-as-promised";
+
+chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
@@ -180,13 +183,13 @@ describe("StakingRewards", () => {
     });
 
     it("should not be able to withdraw LP tokens when balance is empty", async () => {
-      await expect(async () => {
+      await expect((async () => {
         await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
-      }).to.throw();
+      })()).to.be.rejectedWith("subtraction overflow");
 
-      await expect(async () => {
+      await expect((async () => {
         await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(1)).wait()
-      }).to.throw();
+      })()).to.be.rejectedWith("subtraction overflow");
     });
   })
   
@@ -256,26 +259,29 @@ describe("StakingRewards", () => {
       expect(unrewardedPct).to.lt(1);
     });
 
-    it("should not be able to withdraw locked LP tokens", async () => {
-      await expect(async () => {
+    it("should not be able to withdraw (normal withdraw) locked LP tokens", async () => {
+      await expect((async () => {
         await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
-      }).to.throw();
+      })()).to.be.rejectedWith("subtraction overflow");
     });
 
-    it("should be able to withdraw LP tokens", async () => {
-      const kekId = "???"; // todo ad how to get it?
+    it("should be able to withdraw (withdrawLocked) LP tokens", async () => {
+      const lockedStakes = await stakingRewards_BDEUR_WETH.lockedStakesOf(testUser1.address)
+      const onlyStake = lockedStakes[0];
+
+      const kekId = onlyStake.kek_id;
+
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdrawLocked(kekId)).wait();
-      await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(toErc20(depositedLPTokenUser2))).wait();
     });
 
-    it("should not be able to withdraw LP tokens when balance is empty", async () => {
-      await expect(async () => {
+    it("should not be able to withdraw LP tokens after all locked stakes have been withdrawn", async () => {
+      const lockedStakes = await stakingRewards_BDEUR_WETH.lockedStakesOf(testUser1.address)
+      
+      expect(lockedStakes[0].kek_id).to.eq(BigNumber.from(0)); // deletion only fills whole object with 0s
+
+      await expect((async () => {
         await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
-      }).to.throw();
-
-      await expect(async () => {
-        await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(1)).wait()
-      }).to.throw();
+      })()).to.be.rejectedWith("subtraction overflow");
     });
-  })
+  });
 });

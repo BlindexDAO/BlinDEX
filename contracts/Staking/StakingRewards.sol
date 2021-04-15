@@ -332,6 +332,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
         uint256 theAmount = thisStake.amount;
         uint256 boostedAmount = theAmount.mul(thisStake.multiplier_LOCK_MULTIPLIER_PRECISION).div(LOCK_MULTIPLIER_PRECISION);
+
         if (theAmount > 0){
             // Staking token balance and boosted balance
             _locked_balances[msg.sender] = _locked_balances[msg.sender].sub(theAmount);
