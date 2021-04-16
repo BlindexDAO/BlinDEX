@@ -13,15 +13,21 @@ import "../ERC20/SafeERC20.sol";
 import "../Utils/ReentrancyGuard.sol";
 import "../Utils/StringHelpers.sol";
 
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+
 // Inheritance
-import "./IStakingRewards.sol";
 import "./RewardsDistributionRecipient.sol";
 import "./Pausable.sol";
 
 import "hardhat/console.sol";
 
-contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, ReentrancyGuard, Pausable {
-    using SafeMath for uint256;
+contract StakingRewards is 
+    RewardsDistributionRecipient, 
+    ReentrancyGuard, 
+    Pausable, 
+    ERC20Upgradeable 
+{
+    // using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
     // Constant for various precisions
@@ -119,11 +125,14 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         EndOfYear_3 = block.timestamp + 3 * 365 days;
         EndOfYear_4 = block.timestamp + 4 * 365 days;
         EndOfYear_5 = block.timestamp + 5 * 365 days;
+
+        lastUpdateTime = block.timestamp;
+        periodFinish = block.timestamp.add(rewardsDurationSeconds);
     }
 
     /* ========== VIEWS ========== */
 
-    function totalSupply() external override view returns (uint256) {
+    function totalSupply() public override view returns (uint256) {
         return _staking_token_supply;
     }
 
@@ -149,7 +158,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     }
 
     // Total unlocked and locked liquidity tokens
-    function balanceOf(address account) external override view returns (uint256) {
+    function balanceOf(address account) public override view returns (uint256) {
         return (_unlocked_balances[account]).add(_locked_balances[account]);
     }
 
@@ -182,11 +191,11 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         return rewards[account];
     }
 
-    function lastTimeRewardApplicable() public override view returns (uint256) {
+    function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
 
-    function rewardPerToken() public override view returns (uint256) {
+    function rewardPerToken() public view returns (uint256) {
         if (_staking_token_supply == 0) {
             return rewardPerTokenStored_REWARD_PRECISON;
         }
@@ -200,7 +209,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         }
     }
 
-    function earned(address account) public override view returns (uint256) {
+    function earned(address account) public view returns (uint256) {
         return _boosted_balances[account]
             .mul(
                 rewardPerToken()
@@ -233,14 +242,14 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     }
 
     // Precision 1e18 for compatibility with ERC20 token
-    function getRewardForDuration() external override view returns (uint256) {
+    function getRewardForDuration() external view returns (uint256) {
         return getRewardRatePerSecond()
             .mul(rewardsDurationSeconds);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external override nonReentrant notPaused updateReward(msg.sender) {
+    function stake(uint256 amount) external nonReentrant notPaused updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
         require(greylist[msg.sender] == false, "address has been greylisted");
 
@@ -300,7 +309,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         emit StakeLocked(msg.sender, amount, secs);
     }
 
-    function withdraw(uint256 amount) public override nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
         require(amount > 0, "Cannot withdraw 0");
 
         // Staking token balance and boosted balance
@@ -352,7 +361,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         }
     }
 
-    function getReward() public override nonReentrant updateReward(msg.sender) {
+    function getReward() public nonReentrant updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -409,14 +418,6 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         );
         rewardsDurationSeconds = _rewardsDurationSeconds;
         emit RewardsDurationUpdated(rewardsDurationSeconds);
-    }
-
-    function initializeDefault() external onlyByOwnerOrGovernance {
-        // todo ag once only
-
-        lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp.add(rewardsDurationSeconds);
-        emit DefaultInitialization();
     }
 
     function greylistAddress(address _address) external onlyByOwnerOrGovernance {

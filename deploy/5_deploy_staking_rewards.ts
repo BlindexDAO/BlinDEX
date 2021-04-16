@@ -1,5 +1,6 @@
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
-import {DeployFunction} from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
+import { ethers, upgrades } from "hardhat";
 import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { BigNumber } from 'ethers';
@@ -16,11 +17,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(bdeur.address, WETH_ADDRESS); 
 
-  const StakingRewards_BDEUR_WETH = await hre.deployments.deploy('StakingRewards_BDEUR_WETH', {
+  const stakingRewards_BDEUR_WETH_Factory = await ethers.getContractFactory("StakingRewards",);
+
+  const StakingRewards_BDEUR_WETH_Proxy = await upgrades.deployProxy(stakingRewards_BDEUR_WETH_Factory, )
+    
+  const tmp = await hre.deployments.deploy(
+    'StakingRewards_BDEUR_WETH', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     contract: "StakingRewards",
     args: [deployer.address, bdx.address, pairAddress, hre.ethers.constants.AddressZero, 1e6, false]
   });
+
+  
+
 
   const stakingRewards_BDEUR_WETH = await hre.ethers.getContract("StakingRewards_BDEUR_WETH") as unknown as StakingRewards;
   stakingRewards_BDEUR_WETH.initializeDefault();
