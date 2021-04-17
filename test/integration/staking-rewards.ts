@@ -10,28 +10,19 @@ import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { StakingRewards } from "../../typechain/StakingRewards";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
-import TimeTraveler from "../../utils/TimeTraveler"
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
+import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../helpers"
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-function toErc20(n: number): BigNumber {
-  return BigNumber.from(10).pow(18).mul(n)
-}
-
-function erc20ToNumber(n: BigNumber): Number {
-  return Number(n.toString()) / 1e18;
-}
-
 let WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-const timeTraveler = new TimeTraveler(hre.network.provider);
 const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
-const rewardsSupply =  toErc20(21e6/2)
+const rewardsSupply = toErc20(21e6/2)
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
@@ -102,16 +93,6 @@ async function provideLiquidity_WETH_BDEUR(
 
   // approve LP tokens transfer to the liquidity rewards manager
   await lpToken_BdEur_WETH.connect(user).approve(stakingRewards_BDEUR_WETH.address, toErc20(100));
-}
-
-async function simulateTimeElapseInDays(days: number){
-  const minutesInDay = 60*24;
-  const secondsInDay = minutesInDay*60;
-  await timeTraveler.increaseTime(days*secondsInDay);
-}
-
-async function simulateTimeElapseInSeconds(seconds: number){
-  await timeTraveler.increaseTime(seconds);
 }
 
 describe("StakingRewards", () => {

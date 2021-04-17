@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
     StakingRewards_BDEUR_WETH.address,
-    BigNumber.from(21).mul(BigNumber.from(10).pow(6+18)).div(2));
+    BigNumber.from(21).mul(BigNumber.from(10).pow(6+18)).div(2)); // todo ag remove?
 
   console.log("StakingRewards deployed to:", StakingRewards_BDEUR_WETH.address);
 
