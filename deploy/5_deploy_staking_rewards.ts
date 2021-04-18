@@ -17,21 +17,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(bdeur.address, WETH_ADDRESS); 
 
-  const stakingRewards_BDEUR_WETH_Proxy = await hre.deployments.deploy(
+  const stakingRewards_BDEUR_WETH_ProxyDeployment = await hre.deployments.deploy(
     'StakingRewards_BDEUR_WETH', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
     },
     contract: "StakingRewards",
-    args: [deployer.address, bdx.address, pairAddress, hre.ethers.constants.AddressZero, 1e6, false]
+    args: []
   });
 
+  const stakingRewards_BDEUR_WETH_Proxy = await hre.ethers.getContract("StakingRewards_BDEUR_WETH") as unknown as StakingRewards;
+
+  // await(await stakingRewards_BDEUR_WETH_Proxy.initialize(
+  //   bdx.address,
+  //   pairAddress,
+  //   hre.ethers.constants.AddressZero, //todo ag use actual contract
+  //   1e6,
+  //   false)).wait();
+
   await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
-    stakingRewards_BDEUR_WETH_Proxy.address,
+    stakingRewards_BDEUR_WETH_ProxyDeployment.address,
     BigNumber.from(21).mul(BigNumber.from(10).pow(6+18)).div(2));
 
-  console.log("StakingRewards deployed to:", stakingRewards_BDEUR_WETH_Proxy.address);
+  console.log("StakingRewards deployed to:", stakingRewards_BDEUR_WETH_ProxyDeployment.address);
 
   console.log("Bdx shares connected with StakingRewards");
 

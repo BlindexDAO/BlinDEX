@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers';
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -13,6 +12,7 @@ import { ERC20 } from "../../typechain/ERC20";
 import TimeTraveler from "../../utils/TimeTraveler"
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
+import { BigNumber } from "ethers/lib/ethers";
 
 chai.use(cap);
 

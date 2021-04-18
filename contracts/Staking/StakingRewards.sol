@@ -14,18 +14,20 @@ import "../Utils/ReentrancyGuard.sol";
 import "../Utils/StringHelpers.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // Inheritance
-import "./RewardsDistributionRecipient.sol";
-import "./Pausable.sol";
-
 import "hardhat/console.sol";
 
+//todo ag remove all unupgradable dependencies
+//https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/master/contracts/access/OwnableUpgradeable.sol
+//https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/master/contracts/security/PausableUpgradeable.sol
 contract StakingRewards is 
-    RewardsDistributionRecipient, 
     ReentrancyGuard, 
-    Pausable, 
-    ERC20Upgradeable 
+    PausableUpgradeable,
+    OwnableUpgradeable,
+    ERC20Upgradeable
 {
     // using SafeMath for uint256;
     using SafeERC20 for ERC20;
@@ -41,18 +43,18 @@ contract StakingRewards is
     // They sum up to 50% of TOTAL_BDX_SUPPLY
     //   as this much is reserved for liquidity mining rewards
     uint256 public constant BDX_MINTING_SCHEDULE_PRECISON = 1000;
-    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_1;
-    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_2;
-    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_3;
-    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_4;
-    uint256 public immutable BDX_MINTING_SCHEDULE_YEAR_5;
+    uint256 public BDX_MINTING_SCHEDULE_YEAR_1;
+    uint256 public BDX_MINTING_SCHEDULE_YEAR_2;
+    uint256 public BDX_MINTING_SCHEDULE_YEAR_3;
+    uint256 public BDX_MINTING_SCHEDULE_YEAR_4;
+    uint256 public BDX_MINTING_SCHEDULE_YEAR_5;
 
-    uint256 private immutable DeploymentTimestamp;
-    uint256 private immutable EndOfYear_1;
-    uint256 private immutable EndOfYear_2;
-    uint256 private immutable EndOfYear_3;
-    uint256 private immutable EndOfYear_4;
-    uint256 private immutable EndOfYear_5;
+    uint256 private DeploymentTimestamp;
+    uint256 private EndOfYear_1;
+    uint256 private EndOfYear_2;
+    uint256 private EndOfYear_3;
+    uint256 private EndOfYear_4;
+    uint256 private EndOfYear_5;
 
     /* ========== STATE VARIABLES ========== */
 
@@ -60,21 +62,21 @@ contract StakingRewards is
     ERC20 public stakingToken;
     uint256 public periodFinish;
     bool isTrueBdPool;
+    bool isInitialized;
 
-    uint256 public rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
+    uint256 public rewardsDurationSeconds;
 
     uint256 public lastUpdateTime; // time when recent reward per token has been calculated
-    uint256 public rewardPerTokenStored_REWARD_PRECISON = 0;
+    uint256 public rewardPerTokenStored_REWARD_PRECISON;
     uint256 public pool_weight_1e6; // This staking pool's fraction of the total FXS being distributed by all pools, 6 decimals of precision
 
-    address public owner_address;
     address public timelock_address; // Governance timelock address
 
     mapping(address => uint256) public userRewardPerTokenPaid_REWARD_PRECISON;
     mapping(address => uint256) public rewards;
 
-    uint256 private _staking_token_supply = 0;
-    uint256 private _staking_token_boosted_supply = 0;
+    uint256 private _staking_token_supply;
+    uint256 private _staking_token_boosted_supply;
     mapping(address => uint256) private _unlocked_balances;
     mapping(address => uint256) private _locked_balances;
     mapping(address => uint256) private _boosted_balances;
@@ -95,15 +97,17 @@ contract StakingRewards is
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        address _owner,
+    function initialize(
         address _rewardsToken,
         address _stakingToken,
         address _timelock_address,
         uint256 _pool_weight_1e6,// todo ag allow to override
         bool _isTrueBdPool
-    ) public Owned(_owner) {
-        owner_address = _owner;
+    ) 
+        external
+    {
+        require(!isInitialized, "contract can be initialized once only");
+
         rewardsToken = ERC20(_rewardsToken);
         stakingToken = ERC20(_stakingToken);
         lastUpdateTime = block.timestamp;
@@ -112,6 +116,7 @@ contract StakingRewards is
         DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
+        rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
         unlockedStakes = false;
 
         BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(200).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
@@ -128,6 +133,8 @@ contract StakingRewards is
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
+
+        isInitialized = true;
     }
 
     /* ========== VIEWS ========== */
@@ -249,7 +256,7 @@ contract StakingRewards is
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external nonReentrant notPaused updateReward(msg.sender) {
+    function stake(uint256 amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
         require(greylist[msg.sender] == false, "address has been greylisted");
 
@@ -267,7 +274,7 @@ contract StakingRewards is
         emit Staked(msg.sender, amount);
     }
 
-    function stakeLocked(uint256 amount, uint256 yearsNo) external nonReentrant notPaused updateReward(msg.sender) {
+    function stakeLocked(uint256 amount, uint256 yearsNo) external nonReentrant whenNotPaused updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
         if(yearsNo == 10){
             require(
@@ -407,7 +414,7 @@ contract StakingRewards is
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwnerOrGovernance {
         // Admin cannot withdraw the staking token from the contract
         require(tokenAddress != address(stakingToken));
-        ERC20(tokenAddress).transfer(owner_address, tokenAmount);
+        ERC20(tokenAddress).transfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
@@ -429,7 +436,7 @@ contract StakingRewards is
     }
 
     function setOwnerAndTimelock(address _new_owner, address _new_timelock) external onlyByOwnerOrGovernance {
-        owner_address = _new_owner;
+        transferOwnership(_new_owner);
         timelock_address = _new_timelock;
     }
 
@@ -454,7 +461,7 @@ contract StakingRewards is
     }
 
     modifier onlyByOwnerOrGovernance() {
-        require(msg.sender == owner_address || msg.sender == timelock_address, "You are not the owner or the governance timelock");
+        require(msg.sender == owner() || msg.sender == timelock_address, "You are not the owner or the governance timelock");
         _;
     }
 
