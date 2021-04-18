@@ -16,4 +16,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 	return true;
 };
 func.id = __filename
+func.tags = ['BDX'];
+func.dependencies = [];
 export default func;

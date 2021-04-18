@@ -29,4 +29,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return true;
 };
 func.id = __filename
+func.tags = ['LiquidityPools'];
+func.dependencies = ['BdxMint'];
 export default func;
