@@ -5,6 +5,7 @@ import { ChainlinkBasedCryptoFiatFeed } from '../typechain/ChainlinkBasedCryptoF
 
 const EUR_USD_CHAINLINK_FEED = "0xb49f677943BC038e9857d61E7d053CaA2C1734C1";
 const ETH_USD_CHAINLINK_FEED = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
+const BTC_USD_CHAINLINK_FEED = "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [ deployer ] = await hre.ethers.getSigners();
