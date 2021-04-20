@@ -12,7 +12,7 @@ import { ERC20 } from "../../typechain/ERC20";
 import TimeTraveler from "../../utils/TimeTraveler"
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { BigNumber } from "ethers/lib/ethers";
+import { BigNumber } from "ethers";
 
 chai.use(cap);
 
