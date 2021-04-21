@@ -5,8 +5,7 @@ import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { StakingRewards } from '../typechain/StakingRewards';
 import { BigNumber } from 'ethers';
-
-const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"; // todo ag
+import * as constants from '../utils/Constatnts'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [ deployer ] = await hre.ethers.getSigners();
@@ -15,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
 
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
-  const pairAddress = await uniswapFactoryContract.getPair(bdeur.address, WETH_ADDRESS); 
+  const pairAddress = await uniswapFactoryContract.getPair(bdeur.address, constants.wETH_address); 
 
   const stakingRewards_BDEUR_WETH_ProxyDeployment = await hre.deployments.deploy(
     'StakingRewards_BDEUR_WETH', {

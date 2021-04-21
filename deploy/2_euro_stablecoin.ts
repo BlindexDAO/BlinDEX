@@ -2,10 +2,11 @@ import { BDStable } from '../typechain/BDStable';
 import { BDXShares } from '../typechain/BDXShares';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
+import * as constants from '../utils/Constatnts'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
-  const wETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'; //todo ag
+
   const bdx = await hre.ethers.getContract('BDXShares', deployer) as unknown as BDXShares;
   const bdeurDeployment = await hre.deployments.deploy('BDEUR', {
     from: deployer,
@@ -15,9 +16,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur_weth_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WETH_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, wETH, deployer]
+    args: [bdeurDeployment.address, bdx.address, constants.wETH_address, deployer]
   });
   console.log("BDEUR deployed to:", bdeurDeployment.address);
+
+
   const bdeur = await hre.ethers.getContract('BDEUR') as unknown as BDStable;
   await bdeur.addPool(bdeur_weth_BdStablePoolDeployment.address)
   await bdx.setBdStableAddress(bdeurDeployment.address)

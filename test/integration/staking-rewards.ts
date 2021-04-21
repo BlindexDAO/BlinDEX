@@ -13,13 +13,13 @@ import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
 import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../helpers"
 import { BigNumber } from "ethers";
+import * as constants from '../../utils/Constatnts';
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-let WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
 const rewardsSupply = toErc20(21e6/2)
@@ -43,8 +43,7 @@ async function initialize(){
   ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
-  WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-  weth = await hre.ethers.getContractAt("WETH", WETH_ADDRESS, ownerUser) as unknown as WETH;
+  weth = await hre.ethers.getContractAt("WETH", constants.wETH_address, ownerUser) as unknown as WETH;
   bdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
   bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
   bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
