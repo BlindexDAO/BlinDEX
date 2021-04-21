@@ -2,6 +2,7 @@ import { HardhatUserConfig, task } from "hardhat/config";
 // Dirty hack to enforce hardhat-deploy-ethers type precedence over hardhat-ethers, while making hardhat-deploy-ethers extendEnvironment function execute last 
 import type * as deployEthers from "hardhat-deploy-ethers";
 import "@nomiclabs/hardhat-ethers";
+import '@openzeppelin/hardhat-upgrades';
 import "hardhat-deploy-ethers";
 import 'hardhat-deploy';
 import "hardhat-typechain";
@@ -80,7 +81,6 @@ task("test:dir")
       )
     });
   
-
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -102,13 +102,17 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    version: "0.6.11",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200
+    compilers: [
+      {
+        version: "0.6.11",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       }
-    }
+    ]
   },
   mocha: {
     timeout: 20000000
