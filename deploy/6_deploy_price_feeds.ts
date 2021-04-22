@@ -20,16 +20,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("ChainlinkBasedCryptoFiatFeed_ETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
-  await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_BTC_EUR', {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
-    contract: "ChainlinkBasedCryptoFiatFeed",
-    args: [EUR_USD_CHAINLINK_FEED, BTC_USD_CHAINLINK_FEED]
-  });
-
-  const chainlinkBasedCryptoFiatFeed_BTC_EUR = await hre.ethers.getContract("ChainlinkBasedCryptoFiatFeed_BTC_EUR") as unknown as ChainlinkBasedCryptoFiatFeed;
-
-  console.log("ChainlinkBasedCryptoFiatFeed_BTC_EUR deployed to:", chainlinkBasedCryptoFiatFeed_BTC_EUR.address);
-
 	// One time migration
 	return true;
 };
