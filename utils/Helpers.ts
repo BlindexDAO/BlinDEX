@@ -1,6 +1,6 @@
 import hre from "hardhat";
 import { BigNumber } from 'ethers';
-import TimeTraveler from "../utils/TimeTraveler"
+import TimeTraveler from "./TimeTraveler"
 
 const timeTraveler = new TimeTraveler(hre.network.provider);
 
@@ -15,7 +15,11 @@ export async function simulateTimeElapseInSeconds(seconds: number){
 }
 
 export function toErc20(n: number): BigNumber {
-    return BigNumber.from(10).pow(18).mul(n)
+    return numberToBigNumberFixed(n, 18)
+}
+
+export function numberToBigNumberFixed(n: number, decimals: number): BigNumber {
+    return BigNumber.from(10).pow(decimals).mul(n)
 }
   
 export function erc20ToNumber(n: BigNumber): Number {

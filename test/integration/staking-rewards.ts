@@ -11,9 +11,10 @@ import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../helpers"
+import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../../utils/Helpers"
 import { BigNumber } from "ethers";
 import * as constants from '../../utils/Constatnts';
+import { numberToBigNumberFixed } from '../../utils/Helpers';
 
 chai.use(cap);
 
@@ -22,7 +23,8 @@ const { expect } = chai;
 
 const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
-const rewardsSupply = toErc20(21e6/2)
+const rewardsSupply = toErc20(21e6/2);
+const rewardsSupplyPerPool = rewardsSupply.div(constants.numberOfLPs);
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
@@ -121,7 +123,13 @@ describe("StakingRewards", () => {
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
   
       const secondsSinceLastReward = days*24*60*60;
-      const expectedReward = bdxPerSecondFirstYear.mul(secondsSinceLastReward).mul(depositedLPTokenUser1).div(totalDepositedLpTokens);
+      
+      const expectedReward = bdxPerSecondFirstYear
+        .mul(secondsSinceLastReward)
+        .mul(depositedLPTokenUser1)
+        .div(totalDepositedLpTokens)
+        .div(constants.numberOfLPs);
+
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
       const diff = bdxReward.sub(expectedReward);
@@ -148,8 +156,8 @@ describe("StakingRewards", () => {
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
-      const unrewarded = rewardsSupply.sub(totalRewards);
-      const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupply).toNumber() / 1e6 * 100;
+      const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
+      const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupplyPerPool).toNumber() / 1e6 * 100;
 
       console.log("Unrewarded %: "+ unrewardedPct +"%");
 
@@ -197,19 +205,21 @@ describe("StakingRewards", () => {
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
 
       const secondsSinceLastReward = days*24*60*60;
+      
       const expectedReward = bdxPerSecondFirstYear
         .mul(secondsSinceLastReward)
         .mul(depositedLPTokenUser1*user1LockBonusMultiplier)
-        .div(depositedLPTokenUser1*user1LockBonusMultiplier + depositedLPTokenUser2);
+        .div(depositedLPTokenUser1*user1LockBonusMultiplier + depositedLPTokenUser2)
+        .div(constants.numberOfLPs);
+      
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
-      const diff = bdxReward.sub(expectedReward);
+      const diff = bdxReward.sub(expectedReward).abs();
 
       console.log("Expected: "+ expectedReward);
       console.log("Actual:   "+ bdxReward);
       console.log("Diff:     "+ erc20ToNumber(diff));
 
-      expect(diff).to.gte(0);
       expect(diff).to.lt(toErc20(1));
     });
 
@@ -228,8 +238,8 @@ describe("StakingRewards", () => {
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
-      const unrewarded = rewardsSupply.sub(totalRewards);
-      const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupply).toNumber() / 1e6 * 100;
+      const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
+      const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupplyPerPool).toNumber() / 1e6 * 100;
 
       console.log("Total rewards user1: "+ bdxRewardUser1);
       console.log("Total rewards user2: "+ bdxRewardUser2);

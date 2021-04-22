@@ -5,7 +5,7 @@ import { solidity } from "ethereum-waffle";
 import { ChainlinkBasedCryptoFiatFeed } from '../../typechain/ChainlinkBasedCryptoFiatFeed';
 import cap from "chai-as-promised";
 
-import { bigNumberToDecmal } from "../helpers";
+import { bigNumberToDecmal } from "../../utils/Helpers";
 import { experimentalAddHardhatNetworkMessageTraceHook } from 'hardhat/config';
 
 chai.use(cap);

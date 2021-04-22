@@ -17,10 +17,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     console.log("UniswapV2Factory deployed to:", uniswapV2Factory.address);
 
+    const bdx = await hre.deployments.get('BDXShares')
     const bdeur = await hre.deployments.get('BDEUR')
 
     const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
-    await uniswapFactoryContract.createPair(bdeur.address, constants.wETH_address)
+    await uniswapFactoryContract.createPair(bdx.address, bdeur.address);
+    await uniswapFactoryContract.createPair(bdx.address, constants.wETH_address);
+    await uniswapFactoryContract.createPair(bdx.address, constants.wBTC_address);
+
+    await uniswapFactoryContract.createPair(bdeur.address, constants.wETH_address);
+    await uniswapFactoryContract.createPair(bdeur.address, constants.wBTC_address);
 
     // One time migration
     return true;
