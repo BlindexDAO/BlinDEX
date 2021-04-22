@@ -44,6 +44,9 @@ contract BDStable is ERC20Custom {
     address public owner_address;
     address public bdx_address;
 
+    UniswapPairOracle bdstableWethOracle;
+    UniswapPairOracle bdxWethOracle;
+
     // The addresses in this array are added by the oracle and these contracts are able to mint frax
     address[] public bdstable_pools_array;
 
@@ -123,6 +126,14 @@ contract BDStable is ERC20Custom {
                 break;
             }
         }
+    }
+
+    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr) public onlyByOwnerOrGovernance {
+        bdstableWethOracle = UniswapPairOracle(_bdstable_oracle_addr); 
+    }
+
+    function setBDX_WETH_Oracle(address _bdx_oracle_addr) public onlyByOwnerOrGovernance {
+        bdxWethOracle = UniswapPairOracle(_bdx_oracle_addr);
     }
 
     /* ========== EVENTS ========== */
