@@ -128,11 +128,11 @@ contract BDStable is ERC20Custom {
         }
     }
 
-    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr) public onlyByOwnerOrGovernance {
+    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr) public { //todo onlyByOwnerOrGovernance
         bdstableWethOracle = UniswapPairOracle(_bdstable_oracle_addr); 
     }
 
-    function setBDX_WETH_Oracle(address _bdx_oracle_addr) public onlyByOwnerOrGovernance {
+    function setBDX_WETH_Oracle(address _bdx_oracle_addr) public { // todo onlyByOwnerOrGovernance
         bdxWethOracle = UniswapPairOracle(_bdx_oracle_addr);
     }
 

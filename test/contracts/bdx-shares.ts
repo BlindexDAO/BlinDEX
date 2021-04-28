@@ -45,6 +45,7 @@ describe("BdxShares", () => {
       // await pool.setCollatETHOracle(mockUniPairOracle.address, mockWETH.address);
       // let count = await pool.getCollateralPrice();
       // expect(count).to.eq(100000);
+      expect(1).to.eq(2) // todo 
     });
   })
 });

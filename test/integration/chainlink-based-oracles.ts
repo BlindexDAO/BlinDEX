@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers';
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -6,18 +5,23 @@ import { ChainlinkBasedCryptoFiatFeed } from '../../typechain/ChainlinkBasedCryp
 import cap from "chai-as-promised";
 
 import { bigNumberToDecmal } from "../../utils/Helpers";
-import { experimentalAddHardhatNetworkMessageTraceHook } from 'hardhat/config';
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-describe("Oracles", async () => {
-    const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+describe("Chainlink besed Oracles", () => {
+    before(async () => {
+        await hre.deployments.fixture();
+    });
 
     it("should get eth/eur price", async () => {
-        const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract('ChainlinkBasedCryptoFiatFeed_ETH_EUR', ownerUser) as unknown as ChainlinkBasedCryptoFiatFeed;
+        const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+        
+        const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
+            'ChainlinkBasedCryptoFiatFeed_WETH_EUR', 
+            ownerUser) as unknown as ChainlinkBasedCryptoFiatFeed;;
 
         const price = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
         

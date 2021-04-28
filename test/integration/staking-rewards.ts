@@ -14,7 +14,7 @@ import cap from "chai-as-promised";
 import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../../utils/Helpers"
 import { BigNumber } from "ethers";
 import * as constants from '../../utils/Constatnts';
-import { numberToBigNumberFixed } from '../../utils/Helpers';
+import { provideLiquidity_WETH_BDEUR } from "../helpers/liquidity-providing"
 
 chai.use(cap);
 
@@ -51,52 +51,17 @@ async function initialize(){
   bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
   uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', ownerUser) as unknown as UniswapV2Router02;
   stakingRewards_BDEUR_WETH = await hre.ethers.getContract('StakingRewards_BDEUR_WETH', ownerUser) as unknown as StakingRewards;
-  uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;  
+  uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;
 
   swapPairAddress = await uniswapFactory.getPair(bdEur.address, weth.address);
   lpToken_BdEur_WETH = await hre.ethers.getContractAt("ERC20", swapPairAddress, ownerUser) as unknown as ERC20;
 }
 
-before(function() {
-  return initialize();
-})
-
-async function provideLiquidity_WETH_BDEUR(
-  amountWeth: number, 
-  amountBdEur: number,
-  user: SignerWithAddress)
-{
-  // todo ag mock function, should be replaced in the future
-  // extracts collateral form user's account
-  // assings bdeur to the user
-  await bdStablePool.connect(user).mintBdStable(toErc20(amountBdEur));
-
-  // mint WETH fromETH
-  await weth.connect(user).deposit({ value: toErc20(amountWeth) });
-  
-  // add liquidity to the uniswap pool (weth-bdeur)
-  // reveive LP tokens
-  await weth.connect(user).approve(uniswapV2Router02.address, toErc20(amountWeth));
-  await bdEur.connect(user).approve(uniswapV2Router02.address, toErc20(amountBdEur));
-  
-  const currentBlock = await hre.ethers.provider.getBlock("latest");
-
-  // router routes to the proper pair
-  await uniswapV2Router02.connect(user).addLiquidity(
-    weth.address, 
-    bdEur.address, 
-    toErc20(amountWeth), 
-    toErc20(amountBdEur), 
-    toErc20(amountWeth), 
-    toErc20(amountBdEur), 
-    user.address, 
-    currentBlock.timestamp + 60);
-
-  // approve LP tokens transfer to the liquidity rewards manager
-  await lpToken_BdEur_WETH.connect(user).approve(stakingRewards_BDEUR_WETH.address, toErc20(100));
-}
-
 describe("StakingRewards", () => {
+  before(function() {
+    return initialize();
+  })
+
   describe("Normal staking", () => {
     before(async () => {
       await hre.deployments.fixture();
@@ -110,8 +75,8 @@ describe("StakingRewards", () => {
       +depositedLPTokenUser2;
 
     it("should get first reward", async () => {  
-      await provideLiquidity_WETH_BDEUR(1, 5, testUser1);
-      await provideLiquidity_WETH_BDEUR(4, 20, testUser2);
+      await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
+      await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
   
       await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
@@ -193,8 +158,8 @@ describe("StakingRewards", () => {
       const user1YearsLocked = 5;
       const user1LockBonusMultiplier = 10;
 
-      await provideLiquidity_WETH_BDEUR(1, 5, testUser1);
-      await provideLiquidity_WETH_BDEUR(4, 20, testUser2);
+      await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
+      await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
 
       await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(toErc20(depositedLPTokenUser1), user1YearsLocked);
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));

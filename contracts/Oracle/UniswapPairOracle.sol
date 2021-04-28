@@ -8,6 +8,8 @@ import '../Math/FixedPoint.sol';
 import '../Uniswap/UniswapV2OracleLibrary.sol';
 import '../Uniswap/UniswapV2Library.sol';
 
+import "hardhat/console.sol";
+
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract UniswapPairOracle {
@@ -37,6 +39,7 @@ contract UniswapPairOracle {
 
     constructor(address factory, address tokenA, address tokenB, address _owner_address, address _timelock_address) public {
         IUniswapV2Pair _pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, tokenA, tokenB));
+
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
@@ -88,8 +91,27 @@ contract UniswapPairOracle {
 
         // Overflow is desired, casting never truncates
         // Cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+
         price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
         price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
+
+        console.log("--------------------------");
+        console.log("timeElapsed");
+        console.log(timeElapsed);
+        console.log("(price0Cumulative - price0CumulativeLast) / timeElapsed");
+        console.log((price0Cumulative - price0CumulativeLast) / timeElapsed);
+        console.log("price0Cumulative");
+        console.log(price0Cumulative);
+        console.log("price1Cumulative");
+        console.log(price1Cumulative);
+        console.log("price0CumulativeLast");
+        console.log(price0CumulativeLast);
+        console.log("price1CumulativeLast");
+        console.log(price1CumulativeLast);
+        console.log("price0Average");
+        console.log(FixedPoint.decode(price0Average));
+        console.log("price1Average");
+        console.log(FixedPoint.decode(price1Average));
 
         price0CumulativeLast = price0Cumulative;
         price1CumulativeLast = price1Cumulative;
@@ -98,11 +120,26 @@ contract UniswapPairOracle {
 
     // Note this will always return 0 before update has been called successfully for the first time.
     function consult(address token, uint amountIn) external view returns (uint amountOut) {
+        
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
-
+        
         // Ensure that the price is not stale
         require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS, 'UniswapPairOracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
+        
+        console.log("-------------------------------");
+        console.log("price0Average");
+        console.log(FixedPoint.decode(price0Average));
+        console.log("price1Average");
+        console.log(FixedPoint.decode(price1Average));
+        console.log("amountIn");
+        console.log(amountIn);
+        console.log("token");
+        console.log(token);
+        console.log("token0");
+        console.log(token0);
+        console.log("token1");
+        console.log(token1);
 
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();

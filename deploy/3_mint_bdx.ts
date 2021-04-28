@@ -1,8 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
-import { UniswapV2Router02 } from '../typechain/UniswapV2Router02';
-import { LiquidityRewardsManager } from '../typechain/LiquidityRewardsManager';
 import { BDXShares } from '../typechain/BDXShares';
 import { BigNumber } from 'ethers';
 
