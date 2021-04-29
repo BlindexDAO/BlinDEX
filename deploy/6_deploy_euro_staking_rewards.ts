@@ -69,13 +69,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const poolFraction = BigNumber.from(1e6).div(constants.numberOfLPs);
 
+  console.log("Setting up staking contracts");
+
   await setupStakingContract(hre, bdx.address, constants.wETH_address, bdx.address, "BDX", "WETH", poolFraction, false);
+  console.log("Set up statking: BDX/WETH");
+
   await setupStakingContract(hre, bdx.address, constants.wBTC_address, bdx.address, "BDX", "WBTC", poolFraction, false);
+  console.log("Set up statking: BDX/WBTC");
 
   await setupStakingContract(hre, bdx.address, bdeur.address, bdx.address, "BDX", "BDEUR", poolFraction, true);
+  console.log("Set up statking: BDX/BDEUR");
 
   await setupStakingContract(hre, bdeur.address, constants.wETH_address, bdx.address, "BDEUR", "WETH", poolFraction, false);
+  console.log("Set up statking: BDEUR/WETH");
+
   await setupStakingContract(hre, bdeur.address, constants.wBTC_address, bdx.address, "BDEUR", "WBTC", poolFraction, false);
+  console.log("Set up statking: BDEUR/WBTC");
 
   console.log("Bdx shares connected with StakingRewards");
 

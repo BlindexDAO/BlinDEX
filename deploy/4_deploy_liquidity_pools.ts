@@ -4,19 +4,6 @@ import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import * as constants from '../utils/Constatnts'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
-    const uniswapV2Factory = await hre.deployments.deploy('UniswapV2Factory', {
-        from: deployer,
-        args: [deployer]
-    });    
-    
-    const uniswapV2Router02 = await hre.deployments.deploy('UniswapV2Router02', {
-        from: deployer,
-        args: [uniswapV2Factory.address, constants.wETH_address]
-    });
-
-    console.log("UniswapV2Factory deployed to:", uniswapV2Factory.address);
-
     const bdx = await hre.deployments.get('BDXShares')
     const bdeur = await hre.deployments.get('BDEUR')
 
@@ -33,5 +20,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename
 func.tags = ['LiquidityPools'];
-func.dependencies = ['BdxMint'];
+func.dependencies = ['BDX', 'BDEUR', 'BdxMint'];
 export default func;

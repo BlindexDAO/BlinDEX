@@ -100,6 +100,8 @@ contract UniswapPairOracle {
         console.log(timeElapsed);
         console.log("(price0Cumulative - price0CumulativeLast) / timeElapsed");
         console.log((price0Cumulative - price0CumulativeLast) / timeElapsed);
+        console.log("(price1Cumulative - price1CumulativeLast) / timeElapsed");
+        console.log((price1Cumulative - price1CumulativeLast) / timeElapsed);
         console.log("price0Cumulative");
         console.log(price0Cumulative);
         console.log("price1Cumulative");
