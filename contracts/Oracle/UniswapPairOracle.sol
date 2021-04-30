@@ -95,26 +95,6 @@ contract UniswapPairOracle {
         price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
         price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
 
-        console.log("--------------------------");
-        console.log("timeElapsed");
-        console.log(timeElapsed);
-        console.log("(price0Cumulative - price0CumulativeLast) / timeElapsed");
-        console.log((price0Cumulative - price0CumulativeLast) / timeElapsed);
-        console.log("(price1Cumulative - price1CumulativeLast) / timeElapsed");
-        console.log((price1Cumulative - price1CumulativeLast) / timeElapsed);
-        console.log("price0Cumulative");
-        console.log(price0Cumulative);
-        console.log("price1Cumulative");
-        console.log(price1Cumulative);
-        console.log("price0CumulativeLast");
-        console.log(price0CumulativeLast);
-        console.log("price1CumulativeLast");
-        console.log(price1CumulativeLast);
-        console.log("price0Average");
-        console.log(FixedPoint.decode(price0Average));
-        console.log("price1Average");
-        console.log(FixedPoint.decode(price1Average));
-
         price0CumulativeLast = price0Cumulative;
         price1CumulativeLast = price1Cumulative;
         blockTimestampLast = blockTimestamp;
@@ -128,20 +108,6 @@ contract UniswapPairOracle {
         
         // Ensure that the price is not stale
         require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS, 'UniswapPairOracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
-        
-        console.log("-------------------------------");
-        console.log("price0Average");
-        console.log(FixedPoint.decode(price0Average));
-        console.log("price1Average");
-        console.log(FixedPoint.decode(price1Average));
-        console.log("amountIn");
-        console.log(amountIn);
-        console.log("token");
-        console.log(token);
-        console.log("token0");
-        console.log(token0);
-        console.log("token1");
-        console.log(token1);
 
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
