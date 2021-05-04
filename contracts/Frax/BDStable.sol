@@ -32,6 +32,7 @@ import "./Pools/FraxPool.sol";
 import "../Oracle/UniswapPairOracle.sol";
 import "../Oracle/ChainlinkETHFIATPriceConsumer.sol";
 import "../Governance/AccessControl.sol";
+import "../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
 
 contract BDStable is ERC20Custom {
     using SafeMath for uint256;
@@ -44,8 +45,8 @@ contract BDStable is ERC20Custom {
     address public owner_address;
     address public bdx_address;
 
-    UniswapPairOracle bdstableWethOracle;
-    UniswapPairOracle bdxWethOracle;
+    IUniswapV2PairOracle bdstableWethOracle;
+    IUniswapV2PairOracle bdxWethOracle;
 
     // The addresses in this array are added by the oracle and these contracts are able to mint frax
     address[] public bdstable_pools_array;
@@ -129,11 +130,11 @@ contract BDStable is ERC20Custom {
     }
 
     function setBDStable_WETH_Oracle(address _bdstable_oracle_addr) public { //todo onlyByOwnerOrGovernance
-        bdstableWethOracle = UniswapPairOracle(_bdstable_oracle_addr); 
+        bdstableWethOracle = IUniswapV2PairOracle(_bdstable_oracle_addr); 
     }
 
     function setBDX_WETH_Oracle(address _bdx_oracle_addr) public { // todo onlyByOwnerOrGovernance
-        bdxWethOracle = UniswapPairOracle(_bdx_oracle_addr);
+        bdxWethOracle = IUniswapV2PairOracle(_bdx_oracle_addr);
     }
 
     /* ========== EVENTS ========== */
