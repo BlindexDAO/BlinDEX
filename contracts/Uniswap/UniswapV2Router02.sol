@@ -6,9 +6,12 @@ import './TransferHelper.sol';
 
 import './Interfaces/IUniswapV2Router02.sol';
 import './UniswapV2Library.sol';
+import './UniswapV2Pair.sol';
 import '../Math/SafeMath.sol';
 import '../ERC20/IERC20.sol';
 import '../ERC20/IWETH.sol';
+
+import "hardhat/console.sol";
 
 contract UniswapV2Router02 is IUniswapV2Router02 {
     using SafeMath for uint;
@@ -231,9 +234,11 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         amounts = UniswapV2Library.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
+
         _swap(amounts, path, to);
     }
     function swapTokensForExactTokens(
@@ -443,5 +448,15 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         returns (uint[] memory amounts)
     {
         return UniswapV2Library.getAmountsIn(factory, amountOut, path);
+    }
+
+    function consult(address tokenIn, uint amountIn, address tokenOut)
+        external
+        view
+        override
+        returns (uint amountOut)
+    {
+        IUniswapV2PairOracle pair = IUniswapV2PairOracle(IUniswapV2Factory(factory).getPair(tokenIn, tokenOut));
+        amountOut = pair.consult(tokenIn, amountIn);
     }
 }

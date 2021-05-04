@@ -60,21 +60,34 @@ contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
         ALLOW_STALE_CONSULTS = _allow_stale_consults;
     }
 
-    function updateOracle() internal {
+    function updateOracle() public {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
         if(timeElapsed >= PERIOD) {
-            price0AverageOracle = FixedPoint.uq112x112(uint224((price0CumulativeLast - price0CumulativeLastOracle) / timeElapsed));
-            price1AverageOracle = FixedPoint.uq112x112(uint224((price1CumulativeLast - price1CumulativeLastOracle) / timeElapsed));
+            uint price0Cumulative = price0CumulativeLast;
+            uint price1Cumulative = price1CumulativeLast;
 
-            price0CumulativeLastOracle = price0CumulativeLast;
-            price1CumulativeLastOracle = price1CumulativeLast;
+            if (blockTimestampLast != blockTimestamp) {
+                // subtraction overflow is desired
+                uint32 timeElapsed = blockTimestamp - blockTimestampLast;
+                // addition overflow is desired
+                // counterfactual
+                price0Cumulative += uint(FixedPoint.fraction(reserve1, reserve0)._x) * timeElapsed;
+                // counterfactual
+                price1Cumulative += uint(FixedPoint.fraction(reserve0, reserve1)._x) * timeElapsed;
+            }
+
+            price0AverageOracle = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLastOracle) / timeElapsed));
+            price1AverageOracle = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLastOracle) / timeElapsed));
+
+            price0CumulativeLastOracle = price0Cumulative;
+            price1CumulativeLastOracle = price1Cumulative;
             blockTimestampLastOracle = blockTimestamp;
         }
     }
 
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) external view returns (uint amountOut) {
+    function consult(address token, uint amountIn) external view override returns (uint amountOut) {
         
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
@@ -86,7 +99,7 @@ contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
             amountOut = price0AverageOracle.mul(amountIn).decode144();
         } else {
             require(token == token1, 'UniswapPairOracle: INVALID_TOKEN');
-            amountOut = price0AverageOracle.mul(amountIn).decode144();
+            amountOut = price1AverageOracle.mul(amountIn).decode144();
         }
     }
 

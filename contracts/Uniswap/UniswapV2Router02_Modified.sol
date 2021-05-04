@@ -5,6 +5,7 @@ import './Interfaces/IUniswapV2Factory.sol';
 import './TransferHelper.sol';
 
 import './Interfaces/IUniswapV2Router02.sol';
+import './Interfaces/IUniswapV2PairOracle.sol';
 import './UniswapV2Library.sol';
 import '../Math/SafeMath.sol';
 import '../ERC20/IERC20.sol';
@@ -452,5 +453,15 @@ contract UniswapV2Router02_Modified is IUniswapV2Router02 {
         returns (uint[] memory amounts)
     {
         return UniswapV2Library.getAmountsIn(factory, amountOut, path);
+    }
+
+    function consult(address tokenIn, uint amountIn, address tokenOut)
+        external
+        view
+        override
+        returns (uint amountOut)
+    {
+        IUniswapV2PairOracle pair = IUniswapV2PairOracle(IUniswapV2Factory(factory).getPair(tokenIn, tokenOut));
+        amountOut = pair.consult(tokenIn, amountIn);
     }
 }

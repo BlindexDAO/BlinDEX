@@ -28,16 +28,13 @@ contract UniswapV2PairOriginal is IUniswapV2Pair {
     bytes32 public constant override PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
     mapping(address => uint) public override nonces;
 
-
-    
-
     address public override factory;
     address public override token0;
     address public override token1;
 
-    uint112 private reserve0;           // uses single storage slot, accessible via getReserves
-    uint112 private reserve1;           // uses single storage slot, accessible via getReserves
-    uint32  private blockTimestampLast; // uses single storage slot, accessible via getReserves
+    uint112 internal reserve0;           // uses single storage slot, accessible via getReserves
+    uint112 internal reserve1;           // uses single storage slot, accessible via getReserves
+    uint32  internal blockTimestampLast; // uses single storage slot, accessible via getReserves
 
     uint public override price0CumulativeLast;
     uint public override price1CumulativeLast;
