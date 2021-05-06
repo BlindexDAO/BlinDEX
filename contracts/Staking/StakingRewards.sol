@@ -12,6 +12,7 @@ import '../Uniswap/TransferHelper.sol';
 import "../ERC20/SafeERC20.sol";
 import "../Utils/ReentrancyGuard.sol";
 import "../Utils/StringHelpers.sol";
+import "./StakingRewardsDistribution.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -35,31 +36,16 @@ contract StakingRewards is
     // Constant for various precisions
     uint256 private constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
-    uint256 public constant ERC20_PRCISON = 1e18;
     uint256 public constant REWARD_PRECISON = 1e18;
-    uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
-
-    // BDX minting schedule
-    // They sum up to 50% of TOTAL_BDX_SUPPLY
-    //   as this much is reserved for liquidity mining rewards
-    uint256 public constant BDX_MINTING_SCHEDULE_PRECISON = 1000;
-    uint256 public BDX_MINTING_SCHEDULE_YEAR_1;
-    uint256 public BDX_MINTING_SCHEDULE_YEAR_2;
-    uint256 public BDX_MINTING_SCHEDULE_YEAR_3;
-    uint256 public BDX_MINTING_SCHEDULE_YEAR_4;
-    uint256 public BDX_MINTING_SCHEDULE_YEAR_5;
 
     uint256 private DeploymentTimestamp;
-    uint256 private EndOfYear_1;
-    uint256 private EndOfYear_2;
-    uint256 private EndOfYear_3;
-    uint256 private EndOfYear_4;
-    uint256 private EndOfYear_5;
 
     /* ========== STATE VARIABLES ========== */
 
-    ERC20 public rewardsToken;
     ERC20 public stakingToken;
+    address public timelock_address; // Governance timelock address
+    StakingRewardsDistribution stakingRewardsDistribution;
+
     uint256 public periodFinish;
     bool isTrueBdPool;
     bool isInitialized;
@@ -68,9 +54,6 @@ contract StakingRewards is
 
     uint256 public lastUpdateTime; // time when recent reward per token has been calculated
     uint256 public rewardPerTokenStored_REWARD_PRECISON;
-    uint256 public pool_weight_1e6; // This staking pool's fraction of the total FXS being distributed by all pools, 6 decimals of precision
-
-    address public timelock_address; // Governance timelock address
 
     mapping(address => uint256) public userRewardPerTokenPaid_REWARD_PRECISON;
     mapping(address => uint256) public rewards;
@@ -98,38 +81,24 @@ contract StakingRewards is
     /* ========== CONSTRUCTOR ========== */
 
     function initialize(
-        address _rewardsToken,
         address _stakingToken,
         address _timelock_address,
-        uint256 _pool_weight_1e6,// todo ag allow to override
+        address _stakingRewardsDistribution,
         bool _isTrueBdPool
     ) 
         external
     {
         require(!isInitialized, "contract can be initialized once only");
 
-        rewardsToken = ERC20(_rewardsToken);
         stakingToken = ERC20(_stakingToken);
-        lastUpdateTime = block.timestamp;
         timelock_address = _timelock_address;
-        pool_weight_1e6 = _pool_weight_1e6;
+        stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
+        lastUpdateTime = block.timestamp;
         DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
         rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
         unlockedStakes = false;
-
-        BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(200).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_2 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(125).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_3 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(100).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_4 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(50).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_5 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(25).mul(_pool_weight_1e6).div(1e6).div(BDX_MINTING_SCHEDULE_PRECISON);
-
-        EndOfYear_1 = block.timestamp + 365 days;
-        EndOfYear_2 = block.timestamp + 2 * 365 days;
-        EndOfYear_3 = block.timestamp + 3 * 365 days;
-        EndOfYear_4 = block.timestamp + 4 * 365 days;
-        EndOfYear_5 = block.timestamp + 5 * 365 days;
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
@@ -210,7 +179,7 @@ contract StakingRewards is
             return rewardPerTokenStored_REWARD_PRECISON
                 .add(lastTimeRewardApplicable()
                     .sub(lastUpdateTime)
-                    .mul(getRewardRatePerSecond())
+                    .mul(stakingRewardsDistribution.getRewardRatePerSecond(address(this)))
                     .mul(REWARD_PRECISON)
                     .div(_staking_token_boosted_supply));
         }
@@ -226,31 +195,8 @@ contract StakingRewards is
     }
 
     // Precision 1e18 for compatibility with ERC20 token
-    function getRewardRatePerSecond() internal view returns (uint256) {
-        uint256 yearSchedule = 0;
-
-        if(block.timestamp < EndOfYear_1){
-            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_1;
-        } else if(block.timestamp < EndOfYear_2){
-            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_2;
-        } else if(block.timestamp < EndOfYear_3){
-            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_3;
-        } else if(block.timestamp < EndOfYear_4){
-            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_4;
-        } else if(block.timestamp < EndOfYear_5){
-            yearSchedule = BDX_MINTING_SCHEDULE_YEAR_5;
-        } else {
-            yearSchedule = 0;
-        }
-
-        uint256 bdxPerSecond = yearSchedule.div(365*24*60*60);
-
-        return bdxPerSecond;
-    }
-
-    // Precision 1e18 for compatibility with ERC20 token
     function getRewardForDuration() external view returns (uint256) {
-        return getRewardRatePerSecond()
+        return stakingRewardsDistribution.getRewardRatePerSecond(address(this))
             .mul(rewardsDurationSeconds);
     }
 
@@ -372,7 +318,7 @@ contract StakingRewards is
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            rewardsToken.transfer(msg.sender, reward);
+            stakingRewardsDistribution.transferRewards(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -388,16 +334,7 @@ contract StakingRewards is
         // Failsafe check
         require(block.timestamp > periodFinish, "Period has not expired yet!");
 
-        // Ensure the provided reward amount is not more than the balance in the contract.
-        // This keeps the reward rate in the right range, preventing overflows due to
-        // very high values of getRewardRatePerSecond() in the earned and rewardsPerToken functions;
-        // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 num_periods_elapsed = uint256(block.timestamp.sub(periodFinish)) / rewardsDurationSeconds; // Floor division to the nearest period
-        uint balance = rewardsToken.balanceOf(address(this));
-
-        require(getRewardRatePerSecond()
-            .mul(rewardsDurationSeconds)
-            .mul(num_periods_elapsed + 1) <= balance, "Not enough BDX available for rewards!");
 
         periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
 

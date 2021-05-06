@@ -15,6 +15,7 @@ import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../../utils/He
 import { BigNumber } from "ethers";
 import * as constants from '../../utils/Constatnts';
 import { provideLiquidity_WETH_BDEUR } from "../helpers/liquidity-providing"
+import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 
 chai.use(cap);
 
@@ -24,7 +25,6 @@ const { expect } = chai;
 const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
 const rewardsSupply = toErc20(21e6/2);
-const rewardsSupplyPerPool = rewardsSupply.div(constants.numberOfLPs);
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
@@ -37,6 +37,7 @@ let bdx: BDXShares;
 let uniswapV2Router02: UniswapV2Router02;
 let stakingRewards_BDEUR_WETH: StakingRewards;
 let uniswapFactory: UniswapV2Factory;  
+let stakingRewardsDistribution: StakingRewardsDistribution;  
 
 let swapPairAddress: string;
 let lpToken_BdEur_WETH: ERC20;
@@ -52,9 +53,22 @@ async function initialize(){
   uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', ownerUser) as unknown as UniswapV2Router02;
   stakingRewards_BDEUR_WETH = await hre.ethers.getContract('StakingRewards_BDEUR_WETH', ownerUser) as unknown as StakingRewards;
   uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;
+  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", ownerUser) as unknown as StakingRewardsDistribution;
 
   swapPairAddress = await uniswapFactory.getPair(bdEur.address, weth.address);
   lpToken_BdEur_WETH = await hre.ethers.getContractAt("ERC20", swapPairAddress, ownerUser) as unknown as ERC20;
+}
+
+async function get_BDEUR_WETH_poolWeight(){
+  const poolWeight = await stakingRewardsDistribution.stakingRewardsWeights(stakingRewards_BDEUR_WETH.address);
+  return poolWeight;
+}
+
+async function adjustRewardsFor_BDEUR_WETH_pool(n: BigNumber){
+  const totalWitghts = await stakingRewardsDistribution.stakingRewardsWeightsTotal();
+  const poolWeight = await get_BDEUR_WETH_poolWeight();
+
+  return n.mul(poolWeight).div(totalWitghts)
 }
 
 describe("StakingRewards", () => {
@@ -74,26 +88,35 @@ describe("StakingRewards", () => {
       +depositedLPTokenUser1 
       +depositedLPTokenUser2;
 
-    it("should get first reward", async () => {  
+    it.only("should get first reward", async () => {  
+      console.log("---------------------> berofe provide liq");
       await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
       await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
   
+      console.log("---------------------> after provide liq");
+
       await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
   
+      console.log("---------------------> after stake");
+
       const days = 360;
       await simulateTimeElapseInDays(days)
   
       // await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
   
+      console.log("---------------------> after reward");
+
       const secondsSinceLastReward = days*24*60*60;
       
-      const expectedReward = bdxPerSecondFirstYear
+      const expectedReward = await adjustRewardsFor_BDEUR_WETH_pool(
+        bdxPerSecondFirstYear
         .mul(secondsSinceLastReward)
         .mul(depositedLPTokenUser1)
-        .div(totalDepositedLpTokens)
-        .div(constants.numberOfLPs);
+        .div(totalDepositedLpTokens));
+
+        console.log("---------------------> expected calculated");
 
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
@@ -119,6 +142,8 @@ describe("StakingRewards", () => {
 
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
+
+      const rewardsSupplyPerPool = await get_BDEUR_WETH_poolWeight();
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
@@ -171,11 +196,11 @@ describe("StakingRewards", () => {
 
       const secondsSinceLastReward = days*24*60*60;
       
-      const expectedReward = bdxPerSecondFirstYear
+      const expectedReward = await adjustRewardsFor_BDEUR_WETH_pool(
+        bdxPerSecondFirstYear
         .mul(secondsSinceLastReward)
         .mul(depositedLPTokenUser1*user1LockBonusMultiplier)
-        .div(depositedLPTokenUser1*user1LockBonusMultiplier + depositedLPTokenUser2)
-        .div(constants.numberOfLPs);
+        .div(depositedLPTokenUser1*user1LockBonusMultiplier + depositedLPTokenUser2));
       
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
@@ -201,6 +226,8 @@ describe("StakingRewards", () => {
 
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
+
+      const rewardsSupplyPerPool = await get_BDEUR_WETH_poolWeight();
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);

@@ -1,26 +1,10 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { ethers, upgrades } from "hardhat";
 import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { StakingRewards } from '../typechain/StakingRewards';
-import { BigNumber } from 'ethers';
+import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import * as constants from '../utils/Constatnts'
-
-async function feedStakeRewards(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string) {
-  const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
-
-  const contractName = `StakingRewards_${nameA}_${nameB}`;
-
-  const stakingRewards_BDEUR_WETH_Proxy = await hre.ethers.getContract(
-    contractName) as unknown as StakingRewards;
-
-  await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
-    stakingRewards_BDEUR_WETH_Proxy.address,
-    BigNumber.from(21).mul(BigNumber.from(10).pow(6+18)).div(2).div(constants.numberOfLPs));
-
-  console.log("Fed Staking Rewards: " + contractName);
-}
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -29,7 +13,6 @@ async function setupStakingContract(
   addressBdx: string,
   nameA: string,
   nameB: string,
-  poolFraction_1e6: BigNumber,
   isTrueBdPool: boolean)
 {
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
@@ -45,18 +28,18 @@ async function setupStakingContract(
     args: []
   });
 
+  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as unknown as StakingRewardsDistribution;
   const stakingRewards_Proxy = await hre.ethers.getContract(`StakingRewards_${nameA}_${nameB}`) as unknown as StakingRewards;
 
   await stakingRewards_Proxy.initialize(
-    addressBdx,
     pairAddress,
     hre.ethers.constants.AddressZero, //todo ag use actual contract
-    poolFraction_1e6,
+    stakingRewardsDistribution.address,
     isTrueBdPool);
 
-  console.log(`StakingRewards (${nameA}/${nameB}) deployed to:`, stakingRewards_ProxyDeployment.address);
+  stakingRewardsDistribution.registerPools([stakingRewards_Proxy.address], [1e6]);
 
-  await feedStakeRewards(hre, nameA, nameB);
+  console.log(`StakingRewards (${nameA}/${nameB}) deployed to:`, stakingRewards_ProxyDeployment.address);
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -67,23 +50,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   //todo ag set true pools rewards proportions
 
-  const poolFraction = BigNumber.from(1e6).div(constants.numberOfLPs);
-
   console.log("Setting up staking contracts");
 
-  await setupStakingContract(hre, bdx.address, constants.wETH_address, bdx.address, "BDX", "WETH", poolFraction, false);
+  await setupStakingContract(hre, bdx.address, constants.wETH_address, bdx.address, "BDX", "WETH", false);
   console.log("Set up statking: BDX/WETH");
 
-  await setupStakingContract(hre, bdx.address, constants.wBTC_address, bdx.address, "BDX", "WBTC", poolFraction, false);
+  await setupStakingContract(hre, bdx.address, constants.wBTC_address, bdx.address, "BDX", "WBTC", false);
   console.log("Set up statking: BDX/WBTC");
 
-  await setupStakingContract(hre, bdx.address, bdeur.address, bdx.address, "BDX", "BDEUR", poolFraction, true);
+  await setupStakingContract(hre, bdx.address, bdeur.address, bdx.address, "BDX", "BDEUR", true);
   console.log("Set up statking: BDX/BDEUR");
 
-  await setupStakingContract(hre, bdeur.address, constants.wETH_address, bdx.address, "BDEUR", "WETH", poolFraction, false);
+  await setupStakingContract(hre, bdeur.address, constants.wETH_address, bdx.address, "BDEUR", "WETH", false);
   console.log("Set up statking: BDEUR/WETH");
 
-  await setupStakingContract(hre, bdeur.address, constants.wBTC_address, bdx.address, "BDEUR", "WBTC", poolFraction, false);
+  await setupStakingContract(hre, bdeur.address, constants.wBTC_address, bdx.address, "BDEUR", "WBTC", false);
   console.log("Set up statking: BDEUR/WBTC");
 
   console.log("Bdx shares connected with StakingRewards");
@@ -93,5 +74,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename
 func.tags = ['StakingRewards'];
-func.dependencies = ['LiquidityPools'];
+func.dependencies = ['LiquidityPools', 'StakingRewardsDistribution'];
 export default func;
