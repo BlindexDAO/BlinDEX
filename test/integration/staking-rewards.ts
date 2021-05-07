@@ -88,26 +88,19 @@ describe("StakingRewards", () => {
       +depositedLPTokenUser1 
       +depositedLPTokenUser2;
 
-    it.only("should get first reward", async () => {  
-      console.log("---------------------> berofe provide liq");
+    it("should get first reward", async () => {  
       await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
       await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
   
-      console.log("---------------------> after provide liq");
-
       await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
       await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
   
-      console.log("---------------------> after stake");
-
       const days = 360;
       await simulateTimeElapseInDays(days)
   
       // await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
   
-      console.log("---------------------> after reward");
-
       const secondsSinceLastReward = days*24*60*60;
       
       const expectedReward = await adjustRewardsFor_BDEUR_WETH_pool(
@@ -115,8 +108,6 @@ describe("StakingRewards", () => {
         .mul(secondsSinceLastReward)
         .mul(depositedLPTokenUser1)
         .div(totalDepositedLpTokens));
-
-        console.log("---------------------> expected calculated");
 
       const bdxReward = await bdx.balanceOf(testUser1.address);
       

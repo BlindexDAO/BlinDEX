@@ -21,13 +21,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
 
-  const stakingRewardsDistribution = await hre.deployments.deploy('StakingRewardsDistribution', {
-    from: deployer.address,
-    args: [
-      hre.ethers.constants.AddressZero, //todo ag use actual contract
-      bdx.address
-    ]
+  const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
+    "StakingRewardsDistribution", {
+    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    proxy: {
+      proxyContract: 'OptimizedTransparentProxy',
+    },
+    contract: "StakingRewardsDistribution",
+    args: []
   });
+
+  const stakingRewardsDistribution_Proxy = await hre.ethers.getContract("StakingRewardsDistribution") as unknown as StakingRewardsDistribution;
+  await stakingRewardsDistribution_Proxy.initialize(
+    hre.ethers.constants.AddressZero, //todo ag use actual contract
+    bdx.address);
 
   console.log("Deployed StakingRewardsDistribution");
 

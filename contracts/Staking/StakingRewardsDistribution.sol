@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
 import "../Math/Math.sol";
 import "../Math/SafeMath.sol";
 import "../ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "hardhat/console.sol";
 
-contract StakingRewardsDistribution is OwnableUpgradeable{
+contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
 
     uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
     uint256 ERC20_PRCISON = 1e18;
+
+    bool isInitialized;
 
     // BDX minting schedule
     // They sum up to 50% of TOTAL_BDX_SUPPLY
@@ -35,9 +36,12 @@ contract StakingRewardsDistribution is OwnableUpgradeable{
     ERC20 rewardsToken;
 
     mapping(address => uint256) public stakingRewardsWeights;
+    address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
-    constructor(address _timelock_address, address _rewardsToken) public {
+    function initialize(address _timelock_address, address _rewardsToken) external {
+        require(!isInitialized, "contract can be initialized once only");
+        __Ownable_init();
 
         timelock_address = _timelock_address;
         rewardsToken = ERC20(_rewardsToken);
@@ -56,7 +60,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable{
     }
 
     // Precision 1e18 for compatibility with ERC20 token
-    function getRewardRatePerSecond(address _poolAddress) external view returns (uint256) {
+    function getRewardRatePerSecond(address _stakingRewardsAddress) external view returns (uint256) {
         uint256 yearSchedule = 0;
 
         if(block.timestamp < EndOfYear_1){
@@ -73,7 +77,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable{
             yearSchedule = 0;
         }
 
-        uint256 bdxPerSecond = yearSchedule.div(365*24*60*60).mul(stakingRewardsWeights[_poolAddress]).div(stakingRewardsWeightsTotal);
+        uint256 bdxPerSecond = yearSchedule.div(365*24*60*60).mul(stakingRewardsWeights[_stakingRewardsAddress]).div(stakingRewardsWeightsTotal);
 
         return bdxPerSecond;
     }
@@ -82,10 +86,22 @@ contract StakingRewardsDistribution is OwnableUpgradeable{
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
         for(uint i = 0; i < _stakingRewardsAddresses.length; i++){
+            if(stakingRewardsWeights[_stakingRewardsAddresses[i]] == 0) { // to avoid duplicates
+                stakingRewardsAddresses.push(_stakingRewardsAddresses[i]);
+            }
+
             stakingRewardsWeightsTotal -= stakingRewardsWeights[_stakingRewardsAddresses[i]]; // to support override
             stakingRewardsWeights[_stakingRewardsAddresses[i]] = _stakingRewardsWeights[i];
             stakingRewardsWeightsTotal += _stakingRewardsWeights[i];
         }
+    }
+
+    function resetRewardsWeights() external onlyByOwnerOrGovernance {
+        for(uint i = 0; i < stakingRewardsAddresses.length; i++){
+            stakingRewardsWeights[stakingRewardsAddresses[i]] = 0;
+        }
+
+        delete stakingRewardsAddresses;
     }
 
     function transferRewards(address _recepient, uint256 amountErc20) external onlyStakingRewards {

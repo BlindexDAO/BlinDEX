@@ -90,6 +90,8 @@ contract StakingRewards is
     {
         require(!isInitialized, "contract can be initialized once only");
 
+        __Ownable_init();
+
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
