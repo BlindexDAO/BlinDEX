@@ -80,17 +80,20 @@ contract StakingRewards is
 
     /* ========== CONSTRUCTOR ========== */
 
-    function initialize(
+    function initialize (
         address _stakingToken,
         address _timelock_address,
         address _stakingRewardsDistribution,
         bool _isTrueBdPool
     ) 
         external
+        initializer
     {
         require(!isInitialized, "contract can be initialized once only");
 
         __Ownable_init();
+        __Pausable_init();
+        __ERC20_init("BdxStakingRewars", "BdxStakingRewars");
 
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
