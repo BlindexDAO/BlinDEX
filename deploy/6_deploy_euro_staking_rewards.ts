@@ -41,9 +41,10 @@ async function setupStakingContract(
     stakingRewardsDistribution.address,
     isTrueBdPool);
 
-  stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.implementation], [1e6]);
+  stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6]);
 
-  console.log(`${stakingRewardsContractName} deployed to:`, stakingRewards_ProxyDeployment.address);
+  console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
+  console.log(`${stakingRewardsContractName} deployed to impl: `, stakingRewards_ProxyDeployment.implementation);
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {  

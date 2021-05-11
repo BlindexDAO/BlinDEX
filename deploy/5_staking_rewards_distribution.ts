@@ -9,7 +9,9 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 
   const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as unknown as StakingRewardsDistribution;
 
-  await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
+  const treasury = await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER");
+
+  await bdx.connect(treasury).transfer(
     stakingRewardsDistribution.address,
     toErc20(21).mul(1e6).div(2));
 

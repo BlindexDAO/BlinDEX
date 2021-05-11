@@ -24,7 +24,7 @@ const { expect } = chai;
 
 const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
-const rewardsSupply = toErc20(21e6/2);
+const totalRewardsSupply = toErc20(21e6/2);
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
@@ -65,10 +65,10 @@ async function get_BDEUR_WETH_poolWeight(){
 }
 
 async function adjustRewardsFor_BDEUR_WETH_pool(n: BigNumber){
-  const totalWitghts = await stakingRewardsDistribution.stakingRewardsWeightsTotal();
+  const totalWeights = await stakingRewardsDistribution.stakingRewardsWeightsTotal();
   const poolWeight = await get_BDEUR_WETH_poolWeight();
 
-  return n.mul(poolWeight).div(totalWitghts)
+  return n.mul(poolWeight).div(totalWeights);
 }
 
 describe("StakingRewards", () => {
@@ -117,6 +117,7 @@ describe("StakingRewards", () => {
       console.log("Actual:   "+ bdxReward);
       console.log("Diff:     "+ erc20ToNumber(diff));
 
+      expect(diff).to.gte(0);
       expect(diff).to.lt(toErc20(1));
     });
 
@@ -134,7 +135,7 @@ describe("StakingRewards", () => {
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
-      const rewardsSupplyPerPool = await get_BDEUR_WETH_poolWeight();
+      const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply);
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
@@ -201,6 +202,7 @@ describe("StakingRewards", () => {
       console.log("Actual:   "+ bdxReward);
       console.log("Diff:     "+ erc20ToNumber(diff));
 
+      expect(diff).to.gte(0);
       expect(diff).to.lt(toErc20(1));
     });
 
@@ -218,7 +220,7 @@ describe("StakingRewards", () => {
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
-      const rewardsSupplyPerPool = await get_BDEUR_WETH_poolWeight();
+      const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply);
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);

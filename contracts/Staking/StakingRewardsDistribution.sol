@@ -12,7 +12,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
 
     uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
-    uint256 ERC20_PRCISON = 1e18;
+    uint256 private constant ERC20_PRCISON = 1e18;
 
     bool isInitialized;
 
