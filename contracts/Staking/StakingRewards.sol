@@ -93,7 +93,7 @@ contract StakingRewards is
 
         __Ownable_init();
         __Pausable_init();
-        __ERC20_init("BdxStakingRewars", "BdxStakingRewars");
+        __ERC20_init("BdxStakingRewards", "BdxStakingRewards");
 
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
