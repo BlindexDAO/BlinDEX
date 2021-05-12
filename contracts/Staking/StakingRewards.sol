@@ -27,11 +27,11 @@ import "hardhat/console.sol";
 contract StakingRewards is 
     ReentrancyGuard, 
     PausableUpgradeable,
-    OwnableUpgradeable,
-    ERC20Upgradeable
+    OwnableUpgradeable
 {
     // using SafeMath for uint256;
     using SafeERC20 for ERC20;
+    using SafeMath for uint256;
 
     // Constant for various precisions
     uint256 private constant LOCK_MULTIPLIER_PRECISION = 1e6;
@@ -93,7 +93,6 @@ contract StakingRewards is
 
         __Ownable_init();
         __Pausable_init();
-        __ERC20_init("BdxStakingRewards", "BdxStakingRewards");
 
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
@@ -113,7 +112,7 @@ contract StakingRewards is
 
     /* ========== VIEWS ========== */
 
-    function totalSupply() public override view returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         return _staking_token_supply;
     }
 
@@ -139,7 +138,7 @@ contract StakingRewards is
     }
 
     // Total unlocked and locked liquidity tokens
-    function balanceOf(address account) public override view returns (uint256) {
+    function balanceOf(address account) public view returns (uint256) {
         return (_unlocked_balances[account]).add(_locked_balances[account]);
     }
 
