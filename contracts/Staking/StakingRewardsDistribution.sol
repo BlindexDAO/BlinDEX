@@ -39,7 +39,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
-    function initialize(address _timelock_address, address _rewardsToken) external {
+    function initialize(address _timelock_address, address _rewardsToken) external initializer {
         require(!isInitialized, "contract can be initialized once only");
         __Ownable_init();
 
