@@ -5,7 +5,7 @@ import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { StakingRewards } from '../typechain/StakingRewards';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import * as constants from '../utils/Constatnts'
-import { Contract } from 'ethers';
+import { Timelock } from '../typechain/TimeLock';
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -35,9 +35,11 @@ async function setupStakingContract(
 
   const [ deployer ] = await hre.ethers.getSigners();
 
+  const timelock = await hre.ethers.getContract("Timelock") as unknown as Timelock;
+
   await stakingRewards_Proxy.initialize(
     pairAddress,
-    hre.ethers.constants.AddressZero, //todo ag use actual contract
+    timelock.address,
     stakingRewardsDistribution.address,
     isTrueBdPool);
 

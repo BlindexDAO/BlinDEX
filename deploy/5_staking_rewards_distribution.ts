@@ -3,6 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { toErc20 } from '../utils/Helpers'
+import { Timelock } from '../typechain/TimeLock';
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
@@ -33,9 +34,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: []
   });
 
+  const timelock = await hre.ethers.getContract("Timelock") as unknown as Timelock;
+
   const stakingRewardsDistribution_Proxy = await hre.ethers.getContract("StakingRewardsDistribution") as unknown as StakingRewardsDistribution;
   await stakingRewardsDistribution_Proxy.initialize(
-    hre.ethers.constants.AddressZero, //todo ag use actual contract
+    timelock.address,
     bdx.address);
 
   console.log("Deployed StakingRewardsDistribution");
@@ -47,5 +50,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename
 func.tags = ['StakingRewardsDistribution'];
-func.dependencies = ['BDX', 'BdxMint'];
+func.dependencies = ['BDX', 'BdxMint', 'Timelock'];
 export default func;
