@@ -1,7 +1,5 @@
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
-import { BDXShares } from '../typechain/BDXShares';
-import { BigNumber } from 'ethers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [ deployer ] = await hre.ethers.getSigners();
