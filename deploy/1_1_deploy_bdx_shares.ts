@@ -10,8 +10,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [
       'BDXShares',
       'BDX',
-      hre.ethers.constants.AddressZero, //todo ag use actual contract (owner)
-      deployer.address]
+      deployer.address
+    ]
   });
 
   console.log("BDXShares deployed to:", bdx.address);
