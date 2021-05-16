@@ -75,12 +75,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ]
   });
 
-  if (!['rinkeby', 'kovan', 'mainnet'].includes(hre.network.name)) {
-    const btc_eth_oracle_instance = await hre.ethers.getContract('UniswapPairOracle_WBTC_WETH') as UniswapPairOracle
-    const timeTraveler = new TimeTraveler(hre.network.provider);
-    await timeTraveler.increaseTime(3600);
-    await (await btc_eth_oracle_instance.update()).wait()
-  }
   const bdeurWethPool = await hre.ethers.getContract('BDEUR_WETH_POOL') as BdStablePool;
   const bdeurWbtcPool = await hre.ethers.getContract('BDEUR_WBTC_POOL') as BdStablePool;
   const weth_to_weth_oracle = await hre.deployments.deploy('WethToWethOracle', {

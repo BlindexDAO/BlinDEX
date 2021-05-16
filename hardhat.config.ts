@@ -202,7 +202,7 @@ const config: HardhatUserConfig = {
       default: 8
     },
     TEST2: {
-      default: 8
+      default: 9
     }
   }
 };
