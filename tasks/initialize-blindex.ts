@@ -71,7 +71,7 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
       account.address, Date.now() + 3600
     )).wait()
     
-    Get some wBTC
+    //Get some wBTC
     const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, account)
     await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], account.address,  Date.now() + 3600, {
       value: BigNumber.from(10).pow(20)
