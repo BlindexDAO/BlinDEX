@@ -1,4 +1,4 @@
-import { HardhatUserConfig, task } from "hardhat/config";
+import { extendEnvironment, HardhatUserConfig, task } from "hardhat/config";
 // Dirty hack to enforce hardhat-deploy-ethers type precedence over hardhat-ethers, while making hardhat-deploy-ethers extendEnvironment function execute last 
 import type * as deployEthers from "hardhat-deploy-ethers";
 import "@nomiclabs/hardhat-ethers";
@@ -6,15 +6,22 @@ import '@openzeppelin/hardhat-upgrades';
 import "hardhat-deploy-ethers";
 import 'hardhat-deploy';
 import "hardhat-typechain";
+//import "hardhat-ethernal";
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 import { BigNumber } from 'ethers';
 import { ethers } from "hardhat";
+
+import './tasks/initialize-blindex'
+
 const fs = require('fs');
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
 dotenv.config({ path: envPath });
-
+// extendEnvironment((hre) => {
+//   hre.ethernalSync = true;
+//   hre.ethernalWorkspace = 'local';
+// });
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (args, hre) => {
@@ -50,6 +57,39 @@ task("test:dir")
   });
 
 
+  task(
+    "npm-package",
+    "Packages type definitions and abis into npm package"
+  ).setAction(async () => {
+    const rimraf = require("rimraf");
+    const fs = require("fs");
+    const fsExtra = require("fs-extra");
+    try {
+    rimraf.sync("./package");
+    }catch{}
+    fs.mkdirSync("./package");
+    fsExtra.copySync("./typechain", "./package/typings");
+    const klaw = require("klaw-sync");
+    const contracts = klaw("./artifacts/contracts")
+      .filter((x: { path: string }) => x.path.endsWith(".json") && !x.path.endsWith(".dbg.json"))
+      .map((x: { path: string }) => {
+        const { abi, contractName: name } = fsExtra.readJsonSync(x.path);
+        return { abi, name };
+      });
+      fs.mkdirSync('./package/abis')
+    for (const contract of contracts) {
+      fs.writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
+        encoding: "utf8",
+      });
+    }
+    fsExtra.writeJsonSync('./package/package.json', {
+      name: "@blindex/stablecoins",
+      version: "0.0.1",
+      types: "typings/index.d.ts"
+    }
+  )
+  });
+  
   task("setup:account")
     .setAction(async (args, hre) => {
       
@@ -80,7 +120,7 @@ task("test:dir")
         [bigDaiHolder]
       )
     });
-  
+  console.log(process.env.MAINNET_URL)
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -96,15 +136,26 @@ const config: HardhatUserConfig = {
     },
     mainnetFork: {
       url: 'http://localhost:8545',
+      timeout: 60000
       // accounts: {
       //   mnemonic: process.env.MNEMONIC_PHRASE!,
       // }
     },
+
   },
   solidity: {
     compilers: [
       {
         version: "0.6.11",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      {
+        version: "0.8.0",
         settings: {
           optimizer: {
             enabled: true,
@@ -151,7 +202,7 @@ const config: HardhatUserConfig = {
       default: 8
     },
     TEST2: {
-      default: 9
+      default: 8
     }
   }
 };

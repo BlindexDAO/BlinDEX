@@ -9,9 +9,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bdxInstance = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
 
     // mint all BDX up front
-    await bdxInstance.connect(deployer).mint(
+    await (await bdxInstance.connect(deployer).mint(
         (await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER")).address,
-        BigNumber.from(21).mul(BigNumber.from(10).pow(6 + 18)));
+        BigNumber.from(21).mul(BigNumber.from(10).pow(6 + 18)))).wait();
 
     // One time migration
     return true;

@@ -2,10 +2,15 @@ import { BDStable } from '../typechain/BDStable';
 import { BDXShares } from '../typechain/BDXShares';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
-import * as constants from '../utils/Constatnts'
+import * as constants from '../utils/Constants'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+
+  //todo: extract into separate file
+  const bdPoolLibraryDeployment = await hre.deployments.deploy('BdPoolLibrary', {
+    from: deployer
+  });
 
   const bdx = await hre.ethers.getContract('BDXShares', deployer) as unknown as BDXShares;
 
@@ -20,7 +25,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur_weth_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WETH_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, constants.wETH_address, deployer]
+    args: [bdeurDeployment.address, bdx.address, constants.wETH_address[['rinkeby', 'kovan'].includes(hre.network.name) ?hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet'], deployer],
+    libraries: {
+      BdPoolLibrary: bdPoolLibraryDeployment.address
+    }
   });
   
   console.log("BDEUR WETH Pool deployed to:", bdeur_weth_BdStablePoolDeployment.address);
@@ -28,16 +36,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur_wbtc_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WBTC_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, constants.wBTC_address, deployer]
+    args: [bdeurDeployment.address, bdx.address, constants.wBTC_address[['rinkeby', 'kovan'].includes(hre.network.name) ?hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet'], deployer],
+    libraries: {
+      BdPoolLibrary: bdPoolLibraryDeployment.address
+    }
   });
   
   console.log("BDEUR WBTC Pool deployed to:", bdeur_wbtc_BdStablePoolDeployment.address);
 
   const bdeur = await hre.ethers.getContract('BDEUR') as unknown as BDStable;
-  await bdeur.addPool(bdeur_weth_BdStablePoolDeployment.address)
-  await bdeur.addPool(bdeur_wbtc_BdStablePoolDeployment.address)
+  await (await bdeur.addPool(bdeur_weth_BdStablePoolDeployment.address)).wait()
+  await (await bdeur.addPool(bdeur_wbtc_BdStablePoolDeployment.address)).wait()
 
-  await bdx.setBdStableAddress(bdeurDeployment.address)
+  await (await bdx.setBdStableAddress(bdeurDeployment.address)).wait()
 
 	// One time migration
 	return true;

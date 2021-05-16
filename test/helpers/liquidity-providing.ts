@@ -4,7 +4,7 @@ import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
 import { toErc20 } from "../../utils/Helpers";
-import * as constants from '../../utils/Constatnts';
+import * as constants from '../../utils/Constants';
 import { WETH } from "../../typechain/WETH";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { StakingRewards } from "../../typechain/StakingRewards";

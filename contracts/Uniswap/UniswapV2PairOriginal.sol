@@ -14,8 +14,8 @@ contract UniswapV2PairOriginal is IUniswapV2Pair {
     using SafeMath  for uint;
     using UQ112x112 for uint224;
 
-    string public override constant name = 'Uniswap V2';
-    string public override constant symbol = 'UNI-V2';
+    string public override constant name = 'Blindex Swap';
+    string public override constant symbol = 'BDSWAP';
     uint8 public override constant decimals = 18;
     uint  public override totalSupply;
     mapping(address => uint) public override balanceOf;

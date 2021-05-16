@@ -13,7 +13,7 @@ import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
 import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../../utils/Helpers"
 import { BigNumber } from "ethers";
-import * as constants from '../../utils/Constatnts';
+import * as constants from '../../utils/Constants';
 import { provideLiquidity_WETH_BDEUR } from "../helpers/liquidity-providing"
 
 chai.use(cap);

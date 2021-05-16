@@ -5,7 +5,7 @@ import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { StakingRewards } from '../typechain/StakingRewards';
 import { BigNumber } from 'ethers';
-import * as constants from '../utils/Constatnts'
+import * as constants from '../utils/Constants'
 
 async function feedStakeRewards(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string) {
   const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
@@ -15,9 +15,9 @@ async function feedStakeRewards(hre: HardhatRuntimeEnvironment, nameA: string, n
   const stakingRewards_BDEUR_WETH_Proxy = await hre.ethers.getContract(
     contractName) as unknown as StakingRewards;
 
-  await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
+  await (await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
     stakingRewards_BDEUR_WETH_Proxy.address,
-    BigNumber.from(21).mul(BigNumber.from(10).pow(6+18)).div(2).div(constants.numberOfLPs));
+    BigNumber.from(21).mul(BigNumber.from(10).pow(6 + 18)).div(2).div(constants.numberOfLPs))).wait();
 
   console.log("Fed Staking Rewards: " + contractName);
 }
@@ -47,12 +47,12 @@ async function setupStakingContract(
 
   const stakingRewards_Proxy = await hre.ethers.getContract(`StakingRewards_${nameA}_${nameB}`) as unknown as StakingRewards;
 
-  await stakingRewards_Proxy.initialize(
+  await (await stakingRewards_Proxy.initialize(
     addressBdx,
     pairAddress,
-    hre.ethers.constants.AddressZero, //todo ag use actual contract
+    hre.ethers.constants.AddressZero,
     poolFraction_1e6,
-    isTrueBdPool);
+    isTrueBdPool)).wait();
 
   console.log(`StakingRewards (${nameA}/${nameB}) deployed to:`, stakingRewards_ProxyDeployment.address);
 
@@ -60,6 +60,7 @@ async function setupStakingContract(
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  const networkName = ['rinkeby', 'kovan'].includes(hre.network.name) ?hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet';
   const [ deployer ] = await hre.ethers.getSigners();
   
   const bdeur = await hre.deployments.get('BDEUR');
@@ -71,20 +72,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Setting up staking contracts");
 
-  await setupStakingContract(hre, bdx.address, constants.wETH_address, bdx.address, "BDX", "WETH", poolFraction, false);
-  console.log("Set up statking: BDX/WETH");
+  await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], bdx.address, "BDX", "WETH", poolFraction, false);
+  console.log("Set up staking: BDX/WETH");
 
-  await setupStakingContract(hre, bdx.address, constants.wBTC_address, bdx.address, "BDX", "WBTC", poolFraction, false);
-  console.log("Set up statking: BDX/WBTC");
+  await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], bdx.address, "BDX", "WBTC", poolFraction, false);
+  console.log("Set up staking: BDX/WBTC");
 
   await setupStakingContract(hre, bdx.address, bdeur.address, bdx.address, "BDX", "BDEUR", poolFraction, true);
-  console.log("Set up statking: BDX/BDEUR");
+  console.log("Set up staking: BDX/BDEUR");
 
-  await setupStakingContract(hre, bdeur.address, constants.wETH_address, bdx.address, "BDEUR", "WETH", poolFraction, false);
-  console.log("Set up statking: BDEUR/WETH");
+  await setupStakingContract(hre, bdeur.address, constants.wETH_address[networkName], bdx.address, "BDEUR", "WETH", poolFraction, false);
+  console.log("Set up staking: BDEUR/WETH");
 
-  await setupStakingContract(hre, bdeur.address, constants.wBTC_address, bdx.address, "BDEUR", "WBTC", poolFraction, false);
-  console.log("Set up statking: BDEUR/WBTC");
+  await setupStakingContract(hre, bdeur.address, constants.wBTC_address[networkName], bdx.address, "BDEUR", "WBTC", poolFraction, false);
+  console.log("Set up staking: BDEUR/WBTC");
 
   console.log("Bdx shares connected with StakingRewards");
 

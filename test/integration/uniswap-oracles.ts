@@ -8,7 +8,7 @@ import { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
 
 import { BDXShares } from "../../typechain/BDXShares";
 import { BDStable } from "../../typechain/BDStable";
-import * as constants from '../../utils/Constatnts'
+import * as constants from '../../utils/Constants'
 import { provideLiquidity_WETH_BDEUR, provideLiquidity_BDX_WETH} from "../helpers/liquidity-providing"
 import { simulateTimeElapseInDays, simulateTimeElapseInSeconds, toErc20 } from "../../utils/Helpers"
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";

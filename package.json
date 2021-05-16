@@ -3,7 +3,10 @@
   "scripts": {
     "test:integrations": "hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
     "test:contracts": "hardhat --network mainnetFork test:dir ./test/contracts/",
-    "node": "hardhat node --no-deploy"
+    "node": "hardhat node --no-deploy",
+    "deploy:fork": "hardhat --network mainnetFork deploy",
+    "deploy:rinkeby": "hardhat --network rinkeby deploy",
+    "deploy:kovan": "hardhat --network kovan deploy"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
@@ -23,6 +26,7 @@
     "hardhat": "^2.0.11",
     "hardhat-deploy": "^0.7.5",
     "hardhat-deploy-ethers": "^0.3.0-beta.7",
+    "hardhat-ethernal": "^0.2.3",
     "hardhat-typechain": "^0.3.5",
     "truffle": "^5.2.2",
     "truffle-hdwallet-provider": "^1.0.17",
@@ -33,6 +37,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts-upgradeable": "3.4.0",
+    "@ethersproject/providers": "5.1.1",
+    "@nomiclabs/ethereumjs-vm": "4.2.2",
     "bignumber.js": "^9.0.1",
     "chai-as-promised": "^7.1.1"
   }

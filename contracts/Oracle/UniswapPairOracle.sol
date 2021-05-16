@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import '../Uniswap/Interfaces/IUniswapV2Factory.sol';
 import '../Uniswap/Interfaces/IUniswapV2Pair.sol';
+import '../Uniswap/Interfaces/IUniswapV2PairOracle.sol';
 import '../Math/FixedPoint.sol';
 
 import '../Uniswap/UniswapV2OracleLibrary.sol';
@@ -12,7 +13,7 @@ import "hardhat/console.sol";
 
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
-contract UniswapPairOracle {
+contract UniswapPairOracle is IUniswapV2PairOracle {
     using FixedPoint for *;
     
     address owner_address;
@@ -39,7 +40,10 @@ contract UniswapPairOracle {
 
     constructor(address factory, address tokenA, address tokenB, address _owner_address, address _timelock_address) public {
         IUniswapV2Pair _pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, tokenA, tokenB));
-
+        console.log("Pair");
+        console.log(address(_pair));
+        console.log(tokenA);
+        console.log(tokenB);
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
@@ -48,7 +52,7 @@ contract UniswapPairOracle {
         uint112 reserve0;
         uint112 reserve1;
         (reserve0, reserve1, blockTimestampLast) = _pair.getReserves();
-        require(reserve0 != 0 && reserve1 != 0, 'UniswapPairOracle: NO_RESERVES'); // Ensure that there's liquidity in the pair
+        //require(reserve0 != 0 && reserve1 != 0, 'UniswapPairOracle: NO_RESERVES'); // Ensure that there's liquidity in the pair
 
         owner_address = _owner_address;
         timelock_address = _timelock_address;
@@ -91,7 +95,10 @@ contract UniswapPairOracle {
 
         // Overflow is desired, casting never truncates
         // Cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-
+        console.log("price0Cumulative");
+        console.log(price0Cumulative);
+        console.log("price0CumulativeLast");
+        console.log(price0CumulativeLast);
         price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
         price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
 
@@ -101,14 +108,18 @@ contract UniswapPairOracle {
     }
 
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) external view returns (uint amountOut) {
-        
+    function consult(address token, uint amountIn) external view override returns (uint amountOut) {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
         
         // Ensure that the price is not stale
         require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS, 'UniswapPairOracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
-
+        console.log("price0Average");
+        console.log(price0Average.mul(10**12).decode144());
+        console.log("price1Average");
+        console.log(price1Average.mul(10**12).decode144());
+        console.log("amountIn");
+        console.log(amountIn);
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
         } else {

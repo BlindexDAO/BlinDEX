@@ -131,8 +131,7 @@ contract FraxPool is AccessControl {
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
         pool_ceiling = _pool_ceiling;
-        uint8 eee = collateral_token.decimals();
-        missing_decimals = uint(18).sub(eee);
+        missing_decimals = uint(18).sub(collateral_token.decimals());
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         grantRole(MINT_PAUSER, timelock_address);
