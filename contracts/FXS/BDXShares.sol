@@ -39,7 +39,6 @@ contract BDXShares is ERC20Custom {
     address public FRAXStablecoinAdd;
     
     address public owner_address;
-    address public oracle_address;
     BDStable private BDSTABLE;
 
 
@@ -66,22 +65,15 @@ contract BDXShares is ERC20Custom {
     constructor(
         string memory _name,
         string memory _symbol, 
-        address _oracle_address,
         address _owner_address
     ) public {
         name = _name;
         symbol = _symbol;
         owner_address = _owner_address;
-        oracle_address = _oracle_address;
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setOracle(address new_oracle) external onlyByOwner {
-        oracle_address = new_oracle;
-    }
-
-    
     function setBdStableAddress(address frax_contract_address) external onlyByOwner {
         BDSTABLE = BDStable(frax_contract_address);
     }
