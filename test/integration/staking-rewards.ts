@@ -46,7 +46,7 @@ async function initialize(){
   ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
-  weth = await hre.ethers.getContractAt("WETH", constants.wETH_address, ownerUser) as unknown as WETH;
+  weth = await hre.ethers.getContractAt("WETH", constants.wETH_address['mainnet'], ownerUser) as unknown as WETH;
   bdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
   bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
   bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
@@ -221,7 +221,7 @@ describe("StakingRewards", () => {
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
       const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply);
-
+      
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
       const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupplyPerPool).toNumber() / 1e6 * 100;

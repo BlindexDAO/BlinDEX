@@ -28,7 +28,7 @@ export async function provideLiquidity_WETH_BDEUR(
     // assings bdeur to the user
     await bdStablePool.connect(user).mintBdStable(toErc20(amountBdEur));
   
-    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address, ownerUser) as unknown as WETH;
+    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address['mainnet'], ownerUser) as unknown as WETH;
     // mint WETH fromETH
     await weth.connect(user).deposit({ value: toErc20(amountWeth) });
     
@@ -77,11 +77,11 @@ export async function provideLiquidity_WETH_BDEUR(
     bdx.mint(user.address, toErc20(100));
 
     const uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;
-    const swapPairAddress = await uniswapFactory.getPair(bdx.address, constants.wETH_address);
+    const swapPairAddress = await uniswapFactory.getPair(bdx.address, constants.wETH_address['mainnet']);
 
     const lpToken_Bdx_WETH = await hre.ethers.getContractAt("ERC20", swapPairAddress, ownerUser) as unknown as ERC20;
 
-    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address, ownerUser) as unknown as WETH;
+    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address['mainnet'], ownerUser) as unknown as WETH;
     // mint WETH fromETH
     await weth.connect(user).deposit({ value: toErc20(amountWeth) });
     
