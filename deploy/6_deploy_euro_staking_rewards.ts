@@ -66,7 +66,7 @@ async function setupStakingContract(
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const networkName = ['rinkeby', 'kovan'].includes(hre.network.name) ?hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet';
+  const networkName = hre.network.name;
   const [ deployer ] = await hre.ethers.getSigners();
   
   const bdeur = await hre.deployments.get('BDEUR');

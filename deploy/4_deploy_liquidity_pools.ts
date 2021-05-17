@@ -9,11 +9,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
     await (await uniswapFactoryContract.createPair(bdx.address, bdeur.address)).wait();
-    await (await uniswapFactoryContract.createPair(bdx.address, constants.wETH_address[['rinkeby', 'kovan'].includes(hre.network.name) ? hre.network.name as 'rinkeby' | 'kovan' : 'mainnet'])).wait();
-    await (await uniswapFactoryContract.createPair(bdx.address, constants.wBTC_address[['rinkeby', 'kovan'].includes(hre.network.name) ? hre.network.name as 'rinkeby' | 'kovan' : 'mainnet'])).wait();
+    await (await uniswapFactoryContract.createPair(bdx.address, constants.wETH_address[hre.network.name])).wait();
+    await (await uniswapFactoryContract.createPair(bdx.address, constants.wBTC_address[hre.network.name])).wait();
 
-    await (await uniswapFactoryContract.createPair(bdeur.address, constants.wETH_address[['rinkeby', 'kovan'].includes(hre.network.name) ? hre.network.name as 'rinkeby' | 'kovan' : 'mainnet'])).wait();
-    await (await uniswapFactoryContract.createPair(bdeur.address, constants.wBTC_address[['rinkeby', 'kovan'].includes(hre.network.name) ? hre.network.name as 'rinkeby' | 'kovan' : 'mainnet'])).wait();
+    await (await uniswapFactoryContract.createPair(bdeur.address, constants.wETH_address[hre.network.name])).wait();
+    await (await uniswapFactoryContract.createPair(bdeur.address, constants.wBTC_address[hre.network.name])).wait();
 
     // One time migration
     return true;

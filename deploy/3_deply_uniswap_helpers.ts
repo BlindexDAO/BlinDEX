@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const uniswapV2Router02 = await hre.deployments.deploy('UniswapV2Router02', {
         from: deployer,
-        args: [uniswapV2Factory.address, constants.wETH_address["mainnet"]]
+        args: [uniswapV2Factory.address, constants.wETH_address[hre.network.name]]
     });
 
     console.log("UniswapV2Router02 deployed to:", uniswapV2Router02.address);

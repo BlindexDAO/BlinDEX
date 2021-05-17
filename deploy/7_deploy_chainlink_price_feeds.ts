@@ -34,7 +34,7 @@ async function deployUniswapOracle(hre: HardhatRuntimeEnvironment, token0Address
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const networkName = ['rinkeby', 'kovan'].includes(hre.network.name) ? hre.network.name as 'rinkeby' | 'kovan' : 'mainnet';
+  const networkName = hre.network.name;
   const [deployer] = await hre.ethers.getSigners();
 
   const weth_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_WETH_EUR', {

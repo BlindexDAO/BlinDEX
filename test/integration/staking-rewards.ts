@@ -46,7 +46,7 @@ async function initialize(){
   ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
-  weth = await hre.ethers.getContractAt("WETH", constants.wETH_address['mainnet'], ownerUser) as unknown as WETH;
+  weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
   bdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
   bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
   bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;

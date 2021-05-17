@@ -15,7 +15,7 @@ import TimeTraveler from '../utils/TimeTraveler';
 import { UniswapPairOracle } from '../typechain/UniswapPairOracle';
 
 task("initialize-blindex", "initialized blindex environment", async (args, hre) => {
-    const networkName = ['rinkeby', 'kovan'].includes(hre.network.name) ? hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet';
+    const networkName = hre.network.name;
     const [account] = await hre.ethers.getSigners();
   
     //Get some weth
@@ -52,7 +52,7 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
     await (await stakingReward.stake(lpTokenBalance)).wait();
     
     //Accrue some BDX
-    if (!['rinkeby', 'kovan', 'mainnet'].includes(hre.network.name)) {
+    if (!['rinkeby', 'kovan', 'mainnetFork'].includes(hre.network.name)) {
       const timeTraveler = new TimeTraveler(hre.network.provider);
       await timeTraveler.increaseTime(3600);
     }

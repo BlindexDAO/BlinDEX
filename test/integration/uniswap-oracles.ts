@@ -31,14 +31,14 @@ async function swapWethFor(bdStableName: string, wEthToSwap: number) {
 
     const currentBlock = await hre.ethers.provider.getBlock("latest");
 
-    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address['mainnet'], testUser.address) as unknown as WETH;
+    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], testUser.address) as unknown as WETH;
     await weth.deposit({ value: toErc20(100) });
 
     await weth.approve(uniswapV2Router02.address, toErc20(wEthToSwap));
     await uniswapV2Router02.swapExactTokensForTokens(
         toErc20(wEthToSwap),
         1,
-        [constants.wETH_address['mainnet'], bdStable.address],
+        [constants.wETH_address[hre.network.name], bdStable.address],
         testUser.address,
         currentBlock.timestamp + 24*60*60*7);
 
@@ -52,8 +52,8 @@ async function getPrices(bdStableName: string) {
 
     const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as unknown as UniswapV2Router02;
 
-    const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address['mainnet'], toErc20(1), bdStable.address);
-    const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, toErc20(1), constants.wETH_address['mainnet']);
+    const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], toErc20(1), bdStable.address);
+    const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, toErc20(1), constants.wETH_address[hre.network.name]);
 
     const wethInBdStablePriceDecimal = bigNumberToDecmal(wethInBdStablePrice, 18);
     const bdStableInWethPriceDecimal = bigNumberToDecmal(bdStableWethPrice, 18);
@@ -70,7 +70,7 @@ async function getWethPair(tokenName: string): Promise<UniswapV2Pair> {
 
     const token = await hre.ethers.getContract(tokenName) as unknown as BDStable;
 
-    const pairAddress = await uniswapFactory.getPair(token.address, constants.wETH_address['mainnet']);
+    const pairAddress = await uniswapFactory.getPair(token.address, constants.wETH_address[hre.network.name]);
 
     const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as unknown as UniswapV2Pair;
 
@@ -101,7 +101,7 @@ describe("Uniswap Oracles", () => {
 
         const bdeurWethOracle = await getWethPair("BDEUR");
         
-        bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address['mainnet']);
+        bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address[hre.network.name]);
 
         await swapWethFor("BDEUR", 5);
         await updatePair("BDEUR");
@@ -117,7 +117,7 @@ describe("Uniswap Oracles", () => {
 
         const bdxWethOracle = await getWethPair("BDXShares");
         
-        bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address['mainnet']);
+        bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[hre.network.name]);
 
         await swapWethFor("BDXShares", 5);
         await updatePair("BDXShares");

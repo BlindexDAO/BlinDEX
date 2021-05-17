@@ -25,7 +25,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur_weth_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WETH_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, constants.wETH_address[['rinkeby', 'kovan'].includes(hre.network.name) ?hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet'], deployer],
+    args: [bdeurDeployment.address, bdx.address, constants.wETH_address[hre.network.name], deployer],
     libraries: {
       BdPoolLibrary: bdPoolLibraryDeployment.address
     }
@@ -36,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur_wbtc_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WBTC_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, constants.wBTC_address[['rinkeby', 'kovan'].includes(hre.network.name) ?hre.network.name as 'rinkeby' | 'kovan'  : 'mainnet'], deployer],
+    args: [bdeurDeployment.address, bdx.address, constants.wBTC_address[hre.network.name], deployer],
     libraries: {
       BdPoolLibrary: bdPoolLibraryDeployment.address
     }
