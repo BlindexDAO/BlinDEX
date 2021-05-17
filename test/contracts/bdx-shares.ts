@@ -2,10 +2,7 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity, MockContract } from "ethereum-waffle";
-import { BigNumber, Signer } from "ethers";
-import ERC20abi from '../erc20.abi.json'
-import { FraxPool__factory } from '../../typechain/factories/FraxPool__factory';
-import { FraxPool } from "../../typechain/FraxPool";
+import { Signer } from "ethers"
 import { BDXShares } from "../../typechain/BDXShares";
 
 chai.use(solidity);
