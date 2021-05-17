@@ -101,6 +101,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             stakingRewardsWeights[stakingRewardsAddresses[i]] = 0;
         }
 
+        stakingRewardsWeightsTotal = 0;
+
         delete stakingRewardsAddresses;
     }
 
