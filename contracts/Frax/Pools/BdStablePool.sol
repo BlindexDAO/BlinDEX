@@ -26,7 +26,7 @@ import "../../Math/SafeMath.sol";
 import "../../FXS/BDXShares.sol";
 import "../../Frax/BDStable.sol";
 import "../../ERC20/ERC20.sol";
-import "../../Oracle/UniswapPairOracle.sol";
+import "../../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
 import "../../Governance/AccessControl.sol";
 import "./BdPoolLibrary.sol";
 import "hardhat/console.sol";
@@ -46,7 +46,7 @@ contract BdStablePool {
     BDXShares private BDX;
     BDStable private BDSTABLE;
 
-    UniswapPairOracle private collatWEthOracle;
+    IUniswapV2PairOracle private collatWEthOracle;
     address public collat_weth_oracle_address;
     // Number of decimals needed to get to 18
     uint256 private immutable missing_decimals;
@@ -192,9 +192,11 @@ contract BdStablePool {
             BDSTABLE.global_collateral_ratio() >= COLLATERAL_RATIO_MAX,
             "Collateral ratio must be >= 1"
         );
-        // require((collateral_token.balanceOf(address(this)))
-        // .sub(unclaimedPoolCollateral)
-        // .add(collateral_amount) <= pool_ceiling, "[Pool's Closed]: Ceiling reached");
+        // require(
+        //     (collateral_token.balanceOf(address(this)))
+        //         .sub(unclaimedPoolCollateral)
+        //         .add(collateral_amount) <= pool_ceiling,
+        //  "[Pool's Closed]: Ceiling reached"); //todo ag
 
         uint256 bd_amount_d18 =
             BdPoolLibrary.calcMint1t1BD(
@@ -202,9 +204,7 @@ contract BdStablePool {
                 collateral_amount_d18
             ); //1 BD for each $1/€1/etc worth of collateral
 
-        bd_amount_d18 = (bd_amount_d18.mul(uint256(1e12).sub(minting_fee))).div(
-            1e12
-        ); //remove precision at the end
+        bd_amount_d18 = (bd_amount_d18.mul(uint256(1e12).sub(minting_fee))).div(1e12); //remove precision at the end
         require(BD_out_min <= bd_amount_d18, "Slippage limit reached");
 
         collateral_token.transferFrom(
@@ -314,10 +314,10 @@ contract BdStablePool {
 
     function setCollatWETHOracle(
         address _collateral_weth_oracle_address,
-        address _weth_address //onlyByOwnerOrGovernance
+        address _weth_address //onlyByOwnerOrGovernance todo ag
     ) external {
         collat_weth_oracle_address = _collateral_weth_oracle_address;
-        collatWEthOracle = UniswapPairOracle(_collateral_weth_oracle_address);
+        collatWEthOracle = IUniswapV2PairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
     }
 

@@ -95,10 +95,7 @@ contract UniswapPairOracle is IUniswapV2PairOracle {
 
         // Overflow is desired, casting never truncates
         // Cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-        console.log("price0Cumulative");
-        console.log(price0Cumulative);
-        console.log("price0CumulativeLast");
-        console.log(price0CumulativeLast);
+
         price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
         price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
 
@@ -114,12 +111,7 @@ contract UniswapPairOracle is IUniswapV2PairOracle {
         
         // Ensure that the price is not stale
         require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS, 'UniswapPairOracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
-        console.log("price0Average");
-        console.log(price0Average.mul(10**12).decode144());
-        console.log("price1Average");
-        console.log(price1Average.mul(10**12).decode144());
-        console.log("amountIn");
-        console.log(amountIn);
+
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
         } else {

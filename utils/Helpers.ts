@@ -29,3 +29,7 @@ export function erc20ToNumber(n: BigNumber): Number {
 export function bigNumberToDecmal(n: BigNumber, decimals: number){
     return Number(n.toString()) / 10**decimals;
 }
+
+export function diffPct(a: BigNumber, b: BigNumber){
+    return a.sub(b).mul(1e6).div(a).toNumber() / 1e6 * 100;
+}

@@ -7,16 +7,17 @@ import '../Math/FixedPoint.sol';
 
 import '../Uniswap/UniswapV2OracleLibrary.sol';
 import '../Uniswap/UniswapV2Library.sol';
+import "../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
 
 import "hardhat/console.sol";
 
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
-contract WethToWethOracle {
+contract WethToWethOracle is IUniswapV2PairOracle {
     
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) external view returns (uint amountOut) {
-        //require(token == WETH)
+    function consult(address token, uint amountIn) override external view returns (uint amountOut) {
+        //require(token == WETH) todo ag
         return amountIn;
     }
 }

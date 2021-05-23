@@ -21,7 +21,7 @@ describe("Chainlink besed Oracles", () => {
         
         const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
             'ChainlinkBasedCryptoFiatFeed_WETH_EUR', 
-            ownerUser) as unknown as ChainlinkBasedCryptoFiatFeed;;
+            ownerUser) as unknown as ChainlinkBasedCryptoFiatFeed;
 
         const price = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
         
