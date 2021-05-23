@@ -29,6 +29,7 @@ import "../../ERC20/ERC20.sol";
 import "../../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
 import "../../Governance/AccessControl.sol";
 import "./BdPoolLibrary.sol";
+
 import "hardhat/console.sol";
 
 contract BdStablePool {
@@ -140,10 +141,7 @@ contract BdStablePool {
                 weth_address,
                 PRICE_PRECISION * (10**missing_decimals)
             );
-        console.log("Collat eth price");
-        console.log(collat_eth_price);
-        console.log("eth fiat price");
-        console.log(eth_fiat_price);
+
         return eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price);
         //}
     }
@@ -160,12 +158,7 @@ contract BdStablePool {
                 weth_address,
                 (PRICE_PRECISION * (10**missing_decimals))
             );
-        console.log("eth_fiat_price");
-        console.log(eth_fiat_price);
-        console.log("eth_collat_price");
-        console.log(eth_collat_price);
-        console.log("balanceOf");
-        console.log(collateral_token.balanceOf(address(this)));
+
         uint256 collat_usd_price =
             eth_fiat_price.mul(PRICE_PRECISION).div(eth_collat_price);
         return
@@ -232,8 +225,7 @@ contract BdStablePool {
                 getCollateralPrice(),
                 BD_amount_precision
             );
-        console.log("collateral_needed");
-        console.log(collateral_needed);
+
         collateral_needed = (
             collateral_needed.mul(uint256(1e6).sub(redemption_fee))
         )

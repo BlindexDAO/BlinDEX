@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   console.log("BDEUR deployed to:", bdeurDeployment.address);
-
+  
   const bdeur_weth_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WETH_POOL', {
     from: deployer,
     contract: 'BdStablePool',

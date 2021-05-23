@@ -35,6 +35,8 @@ import "../Governance/AccessControl.sol";
 import "../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
 import "./Pools/BdStablePool.sol";
 
+import "hardhat/console.sol";
+
 contract BDStable is ERC20Custom {
     using SafeMath for uint256;
 
@@ -107,13 +109,13 @@ contract BDStable is ERC20Custom {
         bdx_address = _bdx_address;
 
         //Move from here:
-        global_collateral_ratio = 1e6;
+        global_collateral_ratio = 1e12;
 
-        bdstable_step = 2500; // 6 decimals of precision, equal to 0.25%
-        global_collateral_ratio = 1000000; // Bdstable system starts off fully collateralized (6 decimals of precision)
+        bdstable_step = uint256(1e12).mul(25).div(100); // 12 decimals of precision, equal to 0.25%
+        global_collateral_ratio = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
+        price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
+        price_band = uint256(1e12).mul(50).div(100); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
-        price_target = 1000000; // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
-        price_band = 5000; // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
     }
 
     /* ========== VIEWS ========== */
@@ -139,13 +141,11 @@ contract BDStable is ERC20Custom {
 
     // Choice = 'BDSTABLE' or 'BDX' for now
     function oracle_price(PriceChoice choice) internal view returns (uint256) {
-        console.log("weth_fiat_pricer_decimals");
-        console.log(weth_fiat_pricer_decimals);
-        // Get the ETH / USD price first, and cut it down to 1e6 precision
+
+        // Get the ETH / USD price first, and cut it down to 1e12 precision
         uint256 weth_fiat_price = uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
         uint256 price_vs_weth;
-        console.log("weth_fiat_price");
-        console.log(weth_fiat_price);
+
         if (choice == PriceChoice.BDSTABLE) {
             price_vs_weth = uint256(bdstableWethOracle.consult(weth_address, PRICE_PRECISION)); // How much BDSTABLE if you put in PRICE_PRECISION WETH
         }
@@ -153,9 +153,8 @@ contract BDStable is ERC20Custom {
             price_vs_weth = uint256(bdxWethOracle.consult(weth_address, PRICE_PRECISION)); // How much BDX if you put in PRICE_PRECISION WETH
         }
         else revert("INVALID PRICE CHOICE. Needs to be either 0 (BDSTABLE) or 1 (BDX)");
-        console.log("price_vs_weth");
-        console.log(price_vs_weth);
-        // Will be in 1e6 format
+
+        // Will be in 1e12 format
         return weth_fiat_price.mul(PRICE_PRECISION).div(price_vs_weth);
     }
     // Returns X BDSTABLE = 1 <fiat>
@@ -174,11 +173,19 @@ contract BDStable is ERC20Custom {
     uint256 public last_call_time; // Last time the refreshCollateralRatio function was called
     function refreshCollateralRatio() public {
         //require(collateral_ratio_paused == false, "Collateral Ratio has been paused");
+
         uint256 bdstable_price_cur = bdstable_price();
+
         require(block.timestamp - last_call_time >= refresh_cooldown, "Must wait for the refresh cooldown since last refresh");
 
         // Step increments are 0.25% (upon genesis, changable by setFraxStep()) 
         
+        console.log("----------------------------------");
+        console.log(bdstable_price_cur);
+        console.log(price_target);
+        console.log(price_band);
+        console.log(price_target.add(price_band));
+
         if (bdstable_price_cur > price_target.add(price_band)) { //decrease collateral ratio
             if(global_collateral_ratio <= bdstable_step){ //if within a step of 0, go to 0
                 global_collateral_ratio = 0;
@@ -197,8 +204,6 @@ contract BDStable is ERC20Custom {
     }
     
     function weth_fiat_price() public view returns (uint256) {
-        console.log("weth_fiat_pricer_decimals");
-        console.log(weth_fiat_pricer_decimals);
         return uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
     }
     

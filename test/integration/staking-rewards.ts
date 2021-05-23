@@ -14,7 +14,7 @@ import cap from "chai-as-promised";
 import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../../utils/Helpers"
 import { BigNumber } from "ethers";
 import * as constants from '../../utils/Constants';
-import { provideLiquidity_WETH_BDEUR } from "../helpers/liquidity-providing"
+import { provideLiquidity_WETH_BDEUR } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 
 chai.use(cap);

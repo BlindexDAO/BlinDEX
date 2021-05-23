@@ -3,35 +3,10 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { ChainlinkBasedCryptoFiatFeed } from '../typechain/ChainlinkBasedCryptoFiatFeed';
 import * as constants from '../utils/Constants'
+import { getWethPair } from '../utils/Swaps'
 import { BDStable } from '../typechain/BDStable';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { BdStablePool } from '../typechain/BdStablePool';
-import { UniswapPairOracle } from '../typechain/UniswapPairOracle';
-import TimeTraveler from '../utils/TimeTraveler';
-
-async function deployUniswapOracle(hre: HardhatRuntimeEnvironment, token0Address: string, token1Address: string, token0Name: string, token1Name: string): Promise<UniswapPairOracle> {
-  const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
-
-  const pairAddress = await uniswapFactoryContract.getPair(token0Address, token1Address);
-
-  await hre.deployments.deploy(`UniswapPairOracle_${token0Name}_${token1Name}`, {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
-    contract: "UniswapPairOracle",
-    args: [
-      uniswapFactoryContract.address,
-      token0Address,
-      token1Address,
-      (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
-      hre.ethers.constants.AddressZero, //todo ag use actual contract
-    ]
-  });
-
-  const oracle = await hre.ethers.getContract(`UniswapPairOracle_${token0Name}_${token1Name}`) as unknown as UniswapPairOracle;
-
-  console.log(`Deplyed ${token0Name} ${token1Name} Uniswap oracle`);
-
-  return oracle;
-}
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
@@ -53,11 +28,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (await bdeur.setETHFIATOracle(chainlinkBasedCryptoFiatFeed_ETH_EUR.address)).wait();
   console.log(`Added WETH EUR oracle to BDEUR`)
 
-  const bdxWethOracle = await deployUniswapOracle(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH");
+  const bdxWethOracle = await getWethPair(hre,"BDXShares");
   bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName]);
   console.log(`Added BDX WETH Uniswap oracle`);
 
-  const bdeurWethOracle = await deployUniswapOracle(hre, bdeur.address, constants.wETH_address[networkName], "BDEUR", "WETH");
+  const bdeurWethOracle = await getWethPair(hre,"BDEUR");
   bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address[networkName]);
   console.log(`Added BDEUR WETH Uniswap oracle`);
 

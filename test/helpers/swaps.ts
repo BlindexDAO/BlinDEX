@@ -10,7 +10,56 @@ import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { StakingRewards } from "../../typechain/StakingRewards";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
-import { BigNumber } from "@ethersproject/bignumber";
+import { bigNumberToDecmal } from "../../utils/Helpers";
+import { getWethPair } from "../../utils/Swaps";
+
+export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
+  var pair = await getWethPair(hre, tokenName);
+
+  await pair.updateOracle();
+}
+
+export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: string, wEthToSwap: number) {
+  const bdStable = await hre.ethers.getContract(bdStableName) as unknown as BDStable;
+
+  const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as unknown as UniswapV2Router02;
+
+  const currentBlock = await hre.ethers.provider.getBlock("latest");
+
+  const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], testUser.address) as unknown as WETH;
+  await weth.deposit({ value: toErc20(100) });
+
+  await weth.approve(uniswapV2Router02.address, toErc20(wEthToSwap));
+  await uniswapV2Router02.swapExactTokensForTokens(
+      toErc20(wEthToSwap),
+      1,
+      [constants.wETH_address[hre.network.name], bdStable.address],
+      testUser.address,
+      currentBlock.timestamp + 24*60*60*7);
+
+  console.log("Swapped WETH for " + bdStableName);
+}
+
+export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: string) {
+  const bdStable = await hre.ethers.getContract(bdStableName) as unknown as BDStable;
+
+  const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as unknown as UniswapV2Router02;
+
+  const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], toErc20(1), bdStable.address);
+  const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, toErc20(1), constants.wETH_address[hre.network.name]);
+
+  const wethInBdStablePriceDecimal = bigNumberToDecmal(wethInBdStablePrice, 18);
+  const bdStableInWethPriceDecimal = bigNumberToDecmal(bdStableWethPrice, 18);
+
+  console.log(`WETH in ${bdStableName} price: ` + wethInBdStablePriceDecimal);
+  console.log(`${bdStableName} in WETH price: ` + bdStableInWethPriceDecimal);
+
+  return [wethInBdStablePriceDecimal, bdStableInWethPriceDecimal];
+}
 
 export async function provideLiquidity_WETH_BDEUR(
     hre: HardhatRuntimeEnvironment,

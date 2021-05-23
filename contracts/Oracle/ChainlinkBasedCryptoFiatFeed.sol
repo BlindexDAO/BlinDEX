@@ -19,10 +19,6 @@ contract ChainlinkBasedCryptoFiatFeed {
     function getPrice_1e12() public view returns (uint256) {       
         uint256 fiatUsdPrice = getLatestPrice(fiatToUsdFeed);
         uint256 cryptoUsdPrice = getLatestPrice(cryptoToUsdFeed);
-        console.log("fiatUsdPrice");
-        console.log(fiatUsdPrice);
-        console.log("cryptoUsdPrice");
-        console.log(cryptoUsdPrice);
 
         return uint256(1e12)
             .mul(cryptoUsdPrice)
@@ -32,8 +28,7 @@ contract ChainlinkBasedCryptoFiatFeed {
     }
     function consult(address token, uint amountIn) external view returns (uint256) {     
         //require(token == WETH); // todo lw
-        console.log("Price fiat");
-        console.log(getPrice_1e12());
+
         return getPrice_1e12().mul(amountIn);
     }
 
