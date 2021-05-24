@@ -93,7 +93,7 @@ describe("BDStable 1to1", () => {
         expect(diff).to.be.closeTo(0, 1);
     });
 
-    it("should throw when CR > 1", async () => {
+    it("minting should throw when CR > 1", async () => {
         const { ethInEurPrice_1e12, ethInEurPrice } = await getOnChainEthEurPrice();
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
@@ -109,5 +109,14 @@ describe("BDStable 1to1", () => {
         await expect((async () => {
             await (await performMinting(testUser, collateralAmount))
         })()).to.be.rejectedWith("revert Collateral ratio must be >= 1");
+    });
+
+    it("should redeem bdeur when CR close to 1", async () => {
+        expect(1).to.eq(2);
+    });
+
+    it("redeeming should throw when CR != 1", async () => {
+        expect(1).to.eq(2);
+        //fail with: "Collateral ratio must be == 1"
     });
 })

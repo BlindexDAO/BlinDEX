@@ -192,7 +192,7 @@ contract BdStablePool {
         //     (collateral_token.balanceOf(address(this)))
         //         .sub(unclaimedPoolCollateral)
         //         .add(collateral_amount) <= pool_ceiling,
-        //  "[Pool's Closed]: Ceiling reached"); //todo ag
+        //  "[Pool's Closed]: Ceiling reached"); //todo lw
 
         uint256 bd_amount_d18 =
             BdPoolLibrary.calcMint1t1BD(
