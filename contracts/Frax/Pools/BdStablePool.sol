@@ -64,8 +64,8 @@ contract BdStablePool {
 
     // Constants for various precisions
     uint256 private constant PRICE_PRECISION = 1e12;
-    uint256 private constant COLLATERAL_RATIO_PRECISION = 1e6;
-    uint256 private constant COLLATERAL_RATIO_MAX = 1e6;
+    uint256 private constant COLLATERAL_RATIO_PRECISION = 1e12;
+    uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
 
     // Number of blocks to wait before being able to collectRedemption() - do we need that? hmmm
     uint256 public redemption_delay = 0; //1;
@@ -151,7 +151,7 @@ contract BdStablePool {
         //Expressed in collateral token decimals
         // if(collateralPricePaused == true){
         //     return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(pausedPrice).div(PRICE_PRECISION);
-        // } else {
+        // } else { //todo lw
         uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
         uint256 eth_collat_price =
             collatWEthOracle.consult(
@@ -169,7 +169,7 @@ contract BdStablePool {
             )
                 .mul(10**missing_decimals)
                 .mul(collat_usd_price)
-                .div(PRICE_PRECISION); //.mul(getCollateralPrice()).div(1e6);
+                .div(PRICE_PRECISION); //.mul(getCollateralPrice()).div(1e12);//todo lw
         //}
     }
 
@@ -180,6 +180,9 @@ contract BdStablePool {
     {
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
+
+        console.log("++++++++++++++++++++++++++");
+        console.log(BDSTABLE.global_collateral_ratio());
 
         require(
             BDSTABLE.global_collateral_ratio() >= COLLATERAL_RATIO_MAX,
@@ -227,9 +230,9 @@ contract BdStablePool {
             );
 
         collateral_needed = (
-            collateral_needed.mul(uint256(1e6).sub(redemption_fee))
-        )
-            .div(1e6);
+            collateral_needed.mul(uint256(1e12).sub(redemption_fee))
+        ).div(1e12);
+
         require(
             collateral_needed <=
                 collateral_token.balanceOf(address(this)).sub(
@@ -295,6 +298,7 @@ contract BdStablePool {
         }
     }
 
+    // todo ag replace with 1to1, fractional and algorythmic variants form frax
     // We separate out the 1t1, fractional and algorithmic minting functions for gas efficiency
     function mintBdStable(uint256 collateral_amount) external notMintPaused {
         // collateral_token.transferFrom(msg.sender, address(this), collateral_amount); // todo lr

@@ -111,10 +111,10 @@ contract BDStable is ERC20Custom {
         //Move from here:
         global_collateral_ratio = 1e12;
 
-        bdstable_step = uint256(1e12).mul(25).div(100); // 12 decimals of precision, equal to 0.25%
+        bdstable_step = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
         global_collateral_ratio = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
         price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
-        price_band = uint256(1e12).mul(50).div(100); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
+        price_band = uint256(1e12).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
     }
 
@@ -172,19 +172,13 @@ contract BDStable is ERC20Custom {
     // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
     uint256 public last_call_time; // Last time the refreshCollateralRatio function was called
     function refreshCollateralRatio() public {
-        //require(collateral_ratio_paused == false, "Collateral Ratio has been paused");
+        //require(collateral_ratio_paused == false, "Collateral Ratio has been paused");//todo lw
 
         uint256 bdstable_price_cur = bdstable_price();
 
         require(block.timestamp - last_call_time >= refresh_cooldown, "Must wait for the refresh cooldown since last refresh");
 
         // Step increments are 0.25% (upon genesis, changable by setFraxStep()) 
-        
-        console.log("----------------------------------");
-        console.log(bdstable_price_cur);
-        console.log(price_target);
-        console.log(price_band);
-        console.log(price_target.add(price_band));
 
         if (bdstable_price_cur > price_target.add(price_band)) { //decrease collateral ratio
             if(global_collateral_ratio <= bdstable_step){ //if within a step of 0, go to 0
@@ -193,8 +187,8 @@ contract BDStable is ERC20Custom {
                 global_collateral_ratio = global_collateral_ratio.sub(bdstable_step);
             }
         } else if (bdstable_price_cur < price_target.sub(price_band)) { //increase collateral ratio
-            if(global_collateral_ratio.add(bdstable_step) >= 1000000){
-                global_collateral_ratio = 1000000; // cap collateral ratio at 1.000000
+            if(global_collateral_ratio.add(bdstable_step) >= 1e12){
+                global_collateral_ratio = 1e12; // cap collateral ratio at 1.000000
             } else {
                 global_collateral_ratio = global_collateral_ratio.add(bdstable_step);
             }
