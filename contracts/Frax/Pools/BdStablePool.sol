@@ -181,9 +181,6 @@ contract BdStablePool {
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
 
-        console.log("++++++++++++++++++++++++++");
-        console.log(BDSTABLE.global_collateral_ratio());
-
         require(
             BDSTABLE.global_collateral_ratio() >= COLLATERAL_RATIO_MAX,
             "Collateral ratio must be >= 1"
@@ -245,10 +242,9 @@ contract BdStablePool {
             "Slippage limit reached"
         );
 
-        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[
-            msg.sender
-        ]
+        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender]
             .add(collateral_needed);
+
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(
             collateral_needed
         );
