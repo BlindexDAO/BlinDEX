@@ -254,9 +254,46 @@ contract BdStablePool {
         BDSTABLE.pool_burn_from(msg.sender, BD_amount);
     }
 
+    // 0% collateral-backed
+    function mintAlgorithmicBdStable(uint256 bdx_amount_d18, uint256 bdStable_out_min) external notMintPaused {
+        uint256 bdx_price = BDSTABLE.BDX_price();
+        require(BDSTABLE.global_collateral_ratio() == 0, "Collateral ratio must be 0");
+
+        (uint256 bdStable_amount_d18) = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_amount_d18);
+
+        bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(1e12).sub(minting_fee))).div(1e12);
+        require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
+
+        BDX.pool_burn_from(msg.sender, bdx_amount_d18);
+        BDSTABLE.pool_mint(msg.sender, bdStable_amount_d18);
+    }
+
+    // Redeem BDSTABLE for BDX. 0% collateral-backed
+    function redeemAlgorithmicBdStable(uint256 bdStable_amount, uint256 bdx_out_min) external notRedeemPaused {
+        uint256 bdx_price = BDSTABLE.BDX_price();
+        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+
+        require(global_collateral_ratio == 0, "Collateral ratio must be 0"); 
+        uint256 bdx_dollar_value_d18 = bdStable_amount;
+
+        bdx_dollar_value_d18 = (bdx_dollar_value_d18.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION); //apply fees
+
+        uint256 bdx_amount = bdx_dollar_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        
+        redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+        unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+        
+        lastRedeemed[msg.sender] = block.number;
+        
+        require(bdx_out_min <= bdx_amount, "Slippage limit reached");
+        // Move all external functions to the end
+        BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
+        BDX.pool_mint(address(this), bdx_amount);
+    }
+
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
     // contract to the user. Redemption is split into two functions to prevent flash loans from being able
-    // to take out FRAX/collateral from the system, use an AMM to trade the new price, and then mint back into the system.
+    // to take out BdStable/collateral from the system, use an AMM to trade the new price, and then mint back into the system.
     function collectRedemption() external {
         require(
             (lastRedeemed[msg.sender].add(redemption_delay)) <= block.number,
