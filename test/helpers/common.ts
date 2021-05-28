@@ -1,10 +1,23 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
+import { BDXShares } from "../../typechain/BDXShares";
 import { ChainlinkBasedCryptoFiatFeed } from "../../typechain/ChainlinkBasedCryptoFiatFeed";
+import { WETH } from "../../typechain/WETH";
+import * as constants from '../../utils/Constants'
 
 export async function getBdEur(hre: HardhatRuntimeEnvironment){
   const [ ownerUser ] = await hre.ethers.getSigners();
   return await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
+}
+
+export async function getBdx(hre: HardhatRuntimeEnvironment){
+  const [ ownerUser ] = await hre.ethers.getSigners();
+  return await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
+}
+
+export async function getWeth(hre: HardhatRuntimeEnvironment){
+  const [ ownerUser ] = await hre.ethers.getSigners();
+  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
 }
 
 export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){

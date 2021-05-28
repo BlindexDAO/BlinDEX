@@ -6,7 +6,7 @@ import { BDStable } from "../../typechain/BDStable";
 import * as constants from '../../utils/Constants'
 import { 
     provideLiquidity_WETH_BDEUR,
-    provideLiquidity_BDX_WETH,
+    provideLiquidity_WETH_BDX,
     updateWethPair,
     swapWethFor,
     getPrices
@@ -49,7 +49,7 @@ describe("Uniswap Oracles", () => {
 
         const testUser1 = await hre.ethers.getNamedSigner('TEST1');
         
-        await provideLiquidity_BDX_WETH(hre, 20, 80, testUser1);
+        await provideLiquidity_WETH_BDX(hre, 20, 80, testUser1);
 
         const bdxWethOracle = await getWethPair(hre, "BDXShares");
         

@@ -111,13 +111,19 @@ export async function provideLiquidity_WETH_BDEUR(
   await lpToken_BdEur_WETH.connect(user).approve(stakingRewards_BDEUR_WETH.address, toErc20(100));
 }
 
-export async function provideLiquidity_BDX_WETH_userTest1(hre: HardhatRuntimeEnvironment, eurToEth: number){
+export async function provideLiquidity_BDEUR_WETH_userTest1(hre: HardhatRuntimeEnvironment, eurToEth: number){
   const userLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
 
-  await provideLiquidity_WETH_BDEUR(hre, 1, eurToEth, userLiquidityProvider);
+  await provideLiquidity_WETH_BDEUR(hre, 100, 100*eurToEth, userLiquidityProvider);
 }
 
-export async function provideLiquidity_BDX_WETH(
+export async function provideLiquidity_BDX_WETH_userTest1(hre: HardhatRuntimeEnvironment, bdxToEth: number){
+  const userLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
+
+  await provideLiquidity_WETH_BDX(hre, 100, 100*bdxToEth, userLiquidityProvider);
+}
+
+export async function provideLiquidity_WETH_BDX(
   hre: HardhatRuntimeEnvironment,
   amountWeth: number, 
   amountBdx: number,

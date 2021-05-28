@@ -10,6 +10,8 @@ import '../ERC20/IERC20.sol';
 import './Interfaces/IUniswapV2Factory.sol';
 import './Interfaces/IUniswapV2Callee.sol';
 
+import "hardhat/console.sol";
+
 contract UniswapV2PairOriginal is IUniswapV2Pair {
     using SafeMath  for uint;
     using UQ112x112 for uint224;
@@ -124,6 +126,14 @@ contract UniswapV2PairOriginal is IUniswapV2Pair {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         uint balance0 = IERC20(token0).balanceOf(address(this));
         uint balance1 = IERC20(token1).balanceOf(address(this));
+
+        console.log("------------------------------------");
+        console.log(_reserve0);
+        console.log(_reserve1);
+        console.log(balance0);
+        console.log(balance1);
+        console.log(totalSupply);
+
         uint amount0 = balance0.sub(_reserve0);
         uint amount1 = balance1.sub(_reserve1);
         bool feeOn = _mintFee(_reserve0, _reserve1);
@@ -136,6 +146,10 @@ contract UniswapV2PairOriginal is IUniswapV2Pair {
             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
         }
 
+
+        console.log(amount0);
+        console.log(amount1);        
+        
         require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(to, liquidity);
 

@@ -11,7 +11,7 @@ import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { refreshRatios } from "../helpers/bdStable";
 import { getBdEur, getOnChainEthEurPrice } from "../helpers/common";
-import { provideLiquidity_BDX_WETH_userTest1 } from "../helpers/swaps";
+import { provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 
 chai.use(cap);
 
@@ -47,7 +47,7 @@ describe("BDStable 1to1", () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
         const collateralAmount = 10;
 
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInEurPrice);
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice);
         await performMinting(testUser, collateralAmount);
 
         const expected = ethInEurPrice_1e12.mul(toErc20(collateralAmount)).div(1e12);
@@ -65,7 +65,7 @@ describe("BDStable 1to1", () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
         const collateralAmount = 10;
 
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInEurPrice * 0.5);
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice * 0.5);
         
         // refresh ratios a couple times to CR has chance to change
         await refreshRatios(hre);
@@ -87,7 +87,7 @@ describe("BDStable 1to1", () => {
 
         const collateralAmount = 10;
 
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInEurPrice);
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice);
         await performMinting(testUser, collateralAmount);
 
         const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
@@ -128,7 +128,7 @@ describe("BDStable 1to1", () => {
 
         const collateralAmount = 10;
 
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInEurPrice);
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice);
         await performMinting(testUser, collateralAmount);
         
         await swapWethFor(hre, "BDEUR", collateralAmount * 0.5);
