@@ -40,10 +40,6 @@ contract UniswapPairOracle is IUniswapV2PairOracle {
 
     constructor(address factory, address tokenA, address tokenB, address _owner_address, address _timelock_address) public {
         IUniswapV2Pair _pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, tokenA, tokenB));
-        console.log("Pair");
-        console.log(address(_pair));
-        console.log(tokenA);
-        console.log(tokenB);
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();

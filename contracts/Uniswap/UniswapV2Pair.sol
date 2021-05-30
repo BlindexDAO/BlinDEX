@@ -66,7 +66,6 @@ contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
         if(timeElapsed >= PERIOD) {
             uint price0Cumulative = price0CumulativeLast;
             uint price1Cumulative = price1CumulativeLast;
-
             if (blockTimestampLast != blockTimestamp) {
                 // subtraction overflow is desired
                 uint32 timeElapsed = blockTimestamp - blockTimestampLast;
@@ -76,7 +75,6 @@ contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
                 // counterfactual
                 price1Cumulative += uint(FixedPoint.fraction(reserve0, reserve1)._x) * timeElapsed;
             }
-
             price0AverageOracle = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLastOracle) / timeElapsed));
             price1AverageOracle = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLastOracle) / timeElapsed));
 
@@ -87,10 +85,9 @@ contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
     }
 
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) external view override returns (uint amountOut) {
-        
-        uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
-        uint32 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
+    function consult(address token, uint256 amountIn) external view override returns (uint256 amountOut) {
+        uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
+        uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
         // Ensure that the price is not stale
         require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS, 'UniswapPairOracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');

@@ -6,9 +6,9 @@ import { diffPct } from "../../utils/Helpers";
 import { toErc20, erc20ToNumber, numberToBigNumberFixed } from "../../utils/Helpers"
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { refreshRatios } from "../helpers/bdStable";
+import { refreshRatiosBdEur } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth } from "../helpers/common";
-import { provideLiquidity_BDX_WETH_userTest1 } from "../helpers/swaps";
+import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
 
 chai.use(cap);
@@ -21,8 +21,8 @@ async function performMinting(testUser: SignerWithAddress, collateralAmount: num
 
     const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
 
-    await refreshRatios(hre);
-    
+    await refreshRatiosBdEur(hre);
+
     await bdEurPool.connect(testUser).mintAlgorithmicBdStable((toErc20(collateralAmount)), (toErc20(1)));
 }
 
@@ -32,7 +32,7 @@ describe("BDStable algorythmic", () => {
         await hre.deployments.fixture();
     });
 
-    it.only("should mint bdeur when CR = 0", async () => {
+    it("should mint bdeur when CR = 0", async () => {
         const [ ownerUser ] = await hre.ethers.getSigners();
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
@@ -40,7 +40,7 @@ describe("BDStable algorythmic", () => {
         const weth = await getWeth(hre);
         const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
 
-        await bdx.mint(testUser.address, toErc20(10000));
+        await bdx.mint(testUser.address, toErc20(1000000));
 
         const ethInBdxPrice = 1000;
         const ethInBdxPrice_1e12 = numberToBigNumberFixed(ethInBdxPrice, 12);
@@ -49,9 +49,10 @@ describe("BDStable algorythmic", () => {
 
         const expectedWeth = await weth.balanceOf(testUser.address);
 
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInBdxPrice); // togo ag is it needed?
         await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
 
-        await bdx.connect(testUser).approve(bdEurPool.address, toErc20(10*ethInBdxPrice));
+        await bdx.connect(testUser).approve(bdEurPool.address, toErc20(2*collateralAmount*ethInBdxPrice));
         await performMinting(testUser, collateralAmount);
 
         const expectedBdx = ethInBdxPrice_1e12.mul(toErc20(collateralAmount)).div(1e12);

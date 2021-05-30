@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
-import { toErc20 } from "../../utils/Helpers";
+import { erc20ToNumber, toErc20 } from "../../utils/Helpers";
 import * as constants from '../../utils/Constants';
 import { WETH } from "../../typechain/WETH";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
@@ -70,11 +70,13 @@ export async function provideLiquidity_WETH_BDEUR(
   const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
   const bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
 
-  const bdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
+  // minting from BDEUR_WBTC_POOL in order to not modifty the state of the tested pool (BDEUR_WETH_POOL)
+  const bdStablePool = await hre.ethers.getContract('BDEUR_WBTC_POOL', ownerUser) as unknown as BdStablePool;
   
   // todo ag mock function, should be replaced in the future
   // extracts collateral form user's account
   // assings bdeur to the user
+  // probably use mint1to1
   await bdStablePool.connect(user).mintBdStable(toErc20(amountBdEur));
 
   const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
@@ -120,7 +122,10 @@ export async function provideLiquidity_BDEUR_WETH_userTest1(hre: HardhatRuntimeE
 export async function provideLiquidity_BDX_WETH_userTest1(hre: HardhatRuntimeEnvironment, bdxToEth: number){
   const userLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
 
-  await provideLiquidity_WETH_BDX(hre, 100, 100*bdxToEth, userLiquidityProvider);
+  const ethAmount = 100;
+  const bdxAmount = ethAmount * bdxToEth;
+
+  await provideLiquidity_WETH_BDX(hre, ethAmount, bdxAmount, userLiquidityProvider);
 }
 
 export async function provideLiquidity_WETH_BDX(
@@ -132,10 +137,7 @@ export async function provideLiquidity_WETH_BDX(
   const ownerUser = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS
   const bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
 
-  // on production this SHOULDN'T be minted manually.
-  // firstly only by providing liquidity to swaps
-  // later on as a part of minting BdStable
-  bdx.mint(user.address, toErc20(100));
+  bdx.mint(user.address, toErc20(amountBdx));
 
   const uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;
   const swapPairAddress = await uniswapFactory.getPair(bdx.address, constants.wETH_address[hre.network.name]);

@@ -108,9 +108,6 @@ contract BDStable is ERC20Custom {
         owner_address = _owner_address;
         bdx_address = _bdx_address;
 
-        //Move from here:
-        global_collateral_ratio = 1e12;
-
         bdstable_step = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
         global_collateral_ratio = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
         price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
@@ -245,9 +242,14 @@ contract BDStable is ERC20Custom {
         bdxWethOracle = IUniswapV2PairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
     }
+    
     function setETHFIATOracle(address _eth_fiat_consumer_address) public onlyByOwner {
         weth_fiat_pricer = ChainlinkBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals(); // IS that true? weth_usd_pricer.getDecimals();
+    }
+
+    function setBdstable_step_d12(uint256 _bdstable_step) external onlyByOwner {
+        bdstable_step = _bdstable_step;
     }
 
     /* ========== EVENTS ========== */
