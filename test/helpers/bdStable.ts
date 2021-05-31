@@ -9,7 +9,6 @@ export async function refreshRatiosBdEur(hre: HardhatRuntimeEnvironment){
   await simulateTimeElapseInSeconds(oneHour*2);
 
   await updateWethPair(hre, "BDEUR");
-  // await updateWethPair(hre, "BDXShares");
 
   const bdEur = await getBdEur(hre);
   await bdEur.refreshCollateralRatio();

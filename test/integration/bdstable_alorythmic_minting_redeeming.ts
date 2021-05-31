@@ -10,20 +10,22 @@ import { refreshRatiosBdEur } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth } from "../helpers/common";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
+import { updateWethPair } from "../helpers/swaps";
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-async function performMinting(testUser: SignerWithAddress, collateralAmount: number){
+async function performMinting(testUser: SignerWithAddress, bdxAmount: number){
     const [ ownerUser ] = await hre.ethers.getSigners();
 
     const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
 
     await refreshRatiosBdEur(hre);
+    await updateWethPair(hre, "BDXShares");
 
-    await bdEurPool.connect(testUser).mintAlgorithmicBdStable((toErc20(collateralAmount)), (toErc20(1)));
+    await bdEurPool.connect(testUser).mintAlgorithmicBdStable((toErc20(bdxAmount)), (toErc20(1)));
 }
 
 describe("BDStable algorythmic", () => {
@@ -38,34 +40,41 @@ describe("BDStable algorythmic", () => {
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
+        const bdEur = getBdEur(hre);
         const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
+    
+        // set step to 1 to get CR = 0 after first refresh
+        await (await bdEur).setBdstable_step_d12(numberToBigNumberFixed(1, 12));
 
-        await bdx.mint(testUser.address, toErc20(1000000));
+        const bdxBalanceBeforeMinting = toErc20(1000000);
+        await bdx.mint(testUser.address, bdxBalanceBeforeMinting);
 
-        const ethInBdxPrice = 1000;
-        const ethInBdxPrice_1e12 = numberToBigNumberFixed(ethInBdxPrice, 12);
+        const ethInBdEurPrice = 1000;
+        const ethInBdxPrice = 100;
 
-        const collateralAmount = 10;
+        const bdxAmountForMintigBdEur = 10;
 
         const expectedWeth = await weth.balanceOf(testUser.address);
 
-        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInBdxPrice); // togo ag is it needed?
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInBdEurPrice);
         await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
 
-        await bdx.connect(testUser).approve(bdEurPool.address, toErc20(2*collateralAmount*ethInBdxPrice));
-        await performMinting(testUser, collateralAmount);
+        await bdx.connect(testUser).approve(bdEurPool.address, toErc20(bdxAmountForMintigBdEur)); 
+        await performMinting(testUser, bdxAmountForMintigBdEur);
 
-        const expectedBdx = ethInBdxPrice_1e12.mul(toErc20(collateralAmount)).div(1e12);
-        const actualBdx = await bdx.balanceOf(testUser.address);  
-        const diffBdx = diffPct(actualBdx, expectedBdx);
+        const expectedBdxCost = toErc20(bdxAmountForMintigBdEur);
+
+        const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
+        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
+        const diffBdxCost = diffPct(actualBdxCost, expectedBdxCost);
 
         const actualWeth = await weth.balanceOf(testUser.address);
         const diffWeth = diffPct(expectedWeth, actualWeth);
 
-        console.log(`Diff BDX: ${diffBdx}%`);
-        console.log(`Diff Weth: ${diffWeth}%`);
+        console.log(`Diff BDX cost: ${diffBdxCost}%`);
+        console.log(`Diff Weth balance: ${diffWeth}%`);
 
-        expect(diffBdx).to.be.closeTo(0, 0.1);
+        expect(diffBdxCost).to.be.closeTo(0, 0.1);
         expect(diffWeth).to.be.closeTo(0, 0.1);
     });
 
