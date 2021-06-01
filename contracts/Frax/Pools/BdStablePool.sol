@@ -134,7 +134,7 @@ contract BdStablePool {
     function getCollateralPrice() public view returns (uint256) {
         // if(collateralPricePaused == true){
         //     return pausedPrice;
-        // } else {
+        // } else { //todo lw more paused handling commented out?
         uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
         uint256 collat_eth_price =
             collatWEthOracle.consult(
@@ -256,7 +256,7 @@ contract BdStablePool {
 
     // 0% collateral-backed
     function mintAlgorithmicBdStable(uint256 bdx_amount_d18, uint256 bdStable_out_min) external notMintPaused {
-        uint256 bdx_price = BDSTABLE.BDX_price();
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
         require(BDSTABLE.global_collateral_ratio() == 0, "Collateral ratio must be 0");
 
         (uint256 bdStable_amount_d18) = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_amount_d18);
@@ -270,7 +270,7 @@ contract BdStablePool {
 
     // Redeem BDSTABLE for BDX. 0% collateral-backed
     function redeemAlgorithmicBdStable(uint256 bdStable_amount, uint256 bdx_out_min) external notRedeemPaused {
-        uint256 bdx_price = BDSTABLE.BDX_price();
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
 
         require(global_collateral_ratio == 0, "Collateral ratio must be 0"); 

@@ -138,7 +138,6 @@ contract BDStable is ERC20Custom {
 
     // Choice = 'BDSTABLE' or 'BDX' for now
     function oracle_price(PriceChoice choice) internal view returns (uint256) {
-
         // Get the ETH / USD price first, and cut it down to 1e12 precision
         uint256 weth_fiat_price = uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
         uint256 price_vs_weth;
@@ -155,12 +154,12 @@ contract BDStable is ERC20Custom {
         return weth_fiat_price.mul(PRICE_PRECISION).div(price_vs_weth);
     }
     // Returns X BDSTABLE = 1 <fiat>
-    function bdstable_price() public view returns (uint256) {
+    function bdstable_price_d12() public view returns (uint256) {
         return oracle_price(PriceChoice.BDSTABLE);
     }
 
     // Returns X BDX = 1 <fiat>
-    function BDX_price()  public view returns (uint256) {
+    function BDX_price_d12()  public view returns (uint256) {
         return oracle_price(PriceChoice.BDX);
     }
     /* ========== PUBLIC FUNCTIONS ========== */
@@ -171,7 +170,7 @@ contract BDStable is ERC20Custom {
     function refreshCollateralRatio() public {
         //require(collateral_ratio_paused == false, "Collateral Ratio has been paused");//todo lw
 
-        uint256 bdstable_price_cur = bdstable_price();
+        uint256 bdstable_price_cur = bdstable_price_d12();
 
         require(block.timestamp - last_call_time >= refresh_cooldown, "Must wait for the refresh cooldown since last refresh");
 

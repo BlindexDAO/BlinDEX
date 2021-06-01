@@ -9,7 +9,7 @@ import { toErc20, erc20ToNumber } from "../../utils/Helpers"
 import { WETH } from "../../typechain/WETH";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { refreshRatiosBdEur } from "../helpers/bdStable";
+import { updateBdxOracleRefreshRatiosBdEur } from "../helpers/bdStable";
 import { getBdEur, getOnChainEthEurPrice } from "../helpers/common";
 import { provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 
@@ -23,7 +23,7 @@ async function performMinting(testUser: SignerWithAddress, collateralAmount: num
 
     const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
 
-    await refreshRatiosBdEur(hre);
+    await updateBdxOracleRefreshRatiosBdEur(hre);
 
     const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
     await weth.connect(testUser).deposit({ value: toErc20(1000) });
@@ -68,9 +68,9 @@ describe("BDStable 1to1", () => {
         await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice * 0.5);
         
         // refresh ratios a couple times to CR has chance to change
-        await refreshRatiosBdEur(hre);
-        await refreshRatiosBdEur(hre);
-        await refreshRatiosBdEur(hre);
+        await updateBdxOracleRefreshRatiosBdEur(hre);
+        await updateBdxOracleRefreshRatiosBdEur(hre);
+        await updateBdxOracleRefreshRatiosBdEur(hre);
 
         await expect((async () => {
             await (await performMinting(testUser, collateralAmount))
@@ -134,9 +134,9 @@ describe("BDStable 1to1", () => {
         await swapWethFor(hre, "BDEUR", collateralAmount * 0.5);
 
         // refresh ratios a couple times to CR has chance to change
-        await refreshRatiosBdEur(hre);
-        await refreshRatiosBdEur(hre);
-        await refreshRatiosBdEur(hre);
+        await updateBdxOracleRefreshRatiosBdEur(hre);
+        await updateBdxOracleRefreshRatiosBdEur(hre);
+        await updateBdxOracleRefreshRatiosBdEur(hre);
 
         const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
         

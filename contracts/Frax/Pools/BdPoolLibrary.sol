@@ -61,8 +61,8 @@ library BdPoolLibrary {
         return BD_amount.mul(1e12).div(col_price);
     }
 
-    function calcMintAlgorithmicBD(uint256 bdx_price_usd, uint256 bdx_amount_d18) public pure returns (uint256) {
-        return bdx_amount_d18.mul(bdx_price_usd).div(1e12);
+    function calcMintAlgorithmicBD(uint256 bdx_price_fiat, uint256 bdx_amount_d18) public pure returns (uint256) {
+        return bdx_amount_d18.mul(bdx_price_fiat).div(1e12);
     }
 
     // // Must be internal because of the struct

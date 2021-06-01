@@ -2,15 +2,16 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct } from "../../utils/Helpers";
+import { diffPct, simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/Helpers";
 import { toErc20, erc20ToNumber, numberToBigNumberFixed } from "../../utils/Helpers"
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { refreshRatiosBdEur } from "../helpers/bdStable";
+import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth } from "../helpers/common";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
 import { updateWethPair } from "../helpers/swaps";
+import { BigNumber } from "ethers";
 
 chai.use(cap);
 
@@ -22,7 +23,7 @@ async function performMinting(testUser: SignerWithAddress, bdxAmount: number){
 
     const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
 
-    await refreshRatiosBdEur(hre);
+    await updateBdxOracleRefreshRatiosBdEur(hre);
     await updateWethPair(hre, "BDXShares");
 
     await bdEurPool.connect(testUser).mintAlgorithmicBdStable((toErc20(bdxAmount)), (toErc20(1)));
@@ -40,42 +41,55 @@ describe("BDStable algorythmic", () => {
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
-        const bdEur = getBdEur(hre);
+        const bdEur = await getBdEur(hre);
         const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
     
         // set step to 1 to get CR = 0 after first refresh
-        await (await bdEur).setBdstable_step_d12(numberToBigNumberFixed(1, 12));
+        await bdEur.setBdstable_step_d12(numberToBigNumberFixed(1, 12));
 
         const bdxBalanceBeforeMinting = toErc20(1000000);
         await bdx.mint(testUser.address, bdxBalanceBeforeMinting);
 
-        const ethInBdEurPrice = 1000;
         const ethInBdxPrice = 100;
 
         const bdxAmountForMintigBdEur = 10;
 
         const expectedWeth = await weth.balanceOf(testUser.address);
+        const bdEurlBalanceBeforeMinting = await bdEur.balanceOf(testUser.address);
 
-        await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInBdEurPrice);
+        await provideLiquidity_BDEUR_WETH_userTest1(hre, 1000);
         await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
+
+        await updateBdxOracleRefreshRatiosBdEur(hre);
+        await updateBdxOracle(hre);
+
+        const bdxInEurPrice = await bdEur.BDX_price_d12();
 
         await bdx.connect(testUser).approve(bdEurPool.address, toErc20(bdxAmountForMintigBdEur)); 
         await performMinting(testUser, bdxAmountForMintigBdEur);
 
         const expectedBdxCost = toErc20(bdxAmountForMintigBdEur);
+        const expectedBdEurDiff = toErc20(bdxAmountForMintigBdEur).mul(bdxInEurPrice).div(1e12);
+
+        const bdEurBalanceAfterMinting = await bdEur.balanceOf(testUser.address);
+
+        const diffPctBdEur = diffPct(bdEurBalanceAfterMinting.sub(bdEurlBalanceBeforeMinting), expectedBdEurDiff);
 
         const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
         const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
-        const diffBdxCost = diffPct(actualBdxCost, expectedBdxCost);
-
+        
+        const diffPctBdxCost = diffPct(actualBdxCost, expectedBdxCost);
         const actualWeth = await weth.balanceOf(testUser.address);
-        const diffWeth = diffPct(expectedWeth, actualWeth);
 
-        console.log(`Diff BDX cost: ${diffBdxCost}%`);
-        console.log(`Diff Weth balance: ${diffWeth}%`);
+        const diffPctWethBalance = diffPct(expectedWeth, actualWeth);
 
-        expect(diffBdxCost).to.be.closeTo(0, 0.1);
-        expect(diffWeth).to.be.closeTo(0, 0.1);
+        console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
+        console.log(`Diff BdEur balance: ${diffPctBdEur}%`);
+        console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
+
+        expect(diffPctBdxCost).to.be.closeTo(0, 0.01);
+        expect(diffPctWethBalance).to.be.closeTo(0, 0.01);
+        expect(diffPctBdEur).to.be.closeTo(0, 0.01);
     });
 
     it("should redeem bdeur when CR = 0", async () => {

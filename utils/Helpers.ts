@@ -19,10 +19,10 @@ export function toErc20(n: number): BigNumber {
 }
 
 export function numberToBigNumberFixed(n: number, decimals: number): BigNumber {
-    return BigNumber.from(10).pow(decimals).mul(n)
+    return BigNumber.from(10).pow(decimals).mul(n);
 }
   
-export function erc20ToNumber(n: BigNumber): Number {
+export function erc20ToNumber(n: BigNumber): number {
     return bigNumberToDecmal(n, 18)
 }
 
@@ -31,5 +31,13 @@ export function bigNumberToDecmal(n: BigNumber, decimals: number){
 }
 
 export function diffPct(a: BigNumber, b: BigNumber){
-    return a.sub(b).mul(1e6).div(a).toNumber() / 1e6 * 100;
+    if(a.toString() === "0" && b.toString() === "0"){
+        return 0;
+    }
+    else if(a.toString() === "0"){
+        return Infinity;
+    }
+    else{
+        return a.sub(b).mul(1e6).div(a).toNumber() / 1e6 * 100;
+    }
 }
