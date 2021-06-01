@@ -66,7 +66,16 @@ contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
         if(timeElapsed >= PERIOD) {
             uint price0Cumulative = price0CumulativeLast;
             uint price1Cumulative = price1CumulativeLast;
+
             if (blockTimestampLast != blockTimestamp) {
+                // This if (coppied form original UniswapV2OracleLibrary) handles the case
+                // when oracle update is called some time after swap update this compensates 
+                // for the elapsed time.
+                // Execution only enters this if when update oracle is called manually
+                // when called as a part of minting, redeeming, swapping, etc., this if is skipped.
+                // Which is fine since in the cases above happen in the same blocka as oracle
+                // update, so there is nothing to compensate for.
+
                 // subtraction overflow is desired
                 uint32 timeElapsed = blockTimestamp - blockTimestampLast;
                 // addition overflow is desired
