@@ -7,18 +7,20 @@ import { toErc20, erc20ToNumber, numberToBigNumberFixed } from "../../utils/Help
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
-import { getBdEur, getBdx, getWeth } from "../helpers/common";
+import { getBdEur, getBdx, getWeth, getBdEurPool } from "../helpers/common";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
 import { updateWethPair } from "../helpers/swaps";
 import { BigNumber } from "ethers";
+import { BDXShares } from "../../typechain/BDXShares";
+import { BDStable } from "../../typechain/BdStable";
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-async function performMinting(testUser: SignerWithAddress, bdxAmount: number){
+async function performAlgorithmicMinting(testUser: SignerWithAddress, bdxAmount: number){
     const [ ownerUser ] = await hre.ethers.getSigners();
 
     const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
@@ -35,38 +37,43 @@ describe("BDStable algorythmic", () => {
         await hre.deployments.fixture();
     });
 
-    it("should mint bdeur when CR = 0", async () => {
-        const [ ownerUser ] = await hre.ethers.getSigners();
-        const testUser = await hre.ethers.getNamedSigner('TEST2');
-
-        const bdx = await getBdx(hre);
-        const weth = await getWeth(hre);
-        const bdEur = await getBdEur(hre);
-        const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
-    
+    async function mintInitalBdx_MoveCrTo0(bdEur: BDStable, bdx: BDXShares, user: SignerWithAddress, startingBdxBalance: BigNumber) {
         // set step to 1 to get CR = 0 after first refresh
         await bdEur.setBdstable_step_d12(numberToBigNumberFixed(1, 12));
 
-        const bdxBalanceBeforeMinting = toErc20(1000000);
-        await bdx.mint(testUser.address, bdxBalanceBeforeMinting);
+        await bdx.mint(user.address, startingBdxBalance);
 
         const ethInBdxPrice = 100;
 
-        const bdxAmountForMintigBdEur = 10;
-
-        const expectedWeth = await weth.balanceOf(testUser.address);
-        const bdEurlBalanceBeforeMinting = await bdEur.balanceOf(testUser.address);
-
+        // liquidity provided by another user!
         await provideLiquidity_BDEUR_WETH_userTest1(hre, 1000);
         await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
 
         await updateBdxOracleRefreshRatiosBdEur(hre);
         await updateBdxOracle(hre);
+    }
+
+    it("should mint bdeur when CR = 0", async () => {
+        const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
+        const bdEur = await getBdEur(hre);
+        const bdEurPool = await getBdEurPool(hre);
+
+        const bdxBalanceBeforeMintingWithCR0 = toErc20(1000000);
+
+        await mintInitalBdx_MoveCrTo0(bdEur, bdx, testUser, bdxBalanceBeforeMintingWithCR0);
+
+        const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
+        const bdEurlBalanceBeforeMinting = await bdEur.balanceOf(testUser.address);
 
         const bdxInEurPrice = await bdEur.BDX_price_d12();
 
+        const bdxAmountForMintigBdEur = 10;
+
         await bdx.connect(testUser).approve(bdEurPool.address, toErc20(bdxAmountForMintigBdEur)); 
-        await performMinting(testUser, bdxAmountForMintigBdEur);
+        await performAlgorithmicMinting(testUser, bdxAmountForMintigBdEur);
 
         const expectedBdxCost = toErc20(bdxAmountForMintigBdEur);
         const expectedBdEurDiff = toErc20(bdxAmountForMintigBdEur).mul(bdxInEurPrice).div(1e12);
@@ -76,12 +83,12 @@ describe("BDStable algorythmic", () => {
         const diffPctBdEur = diffPct(bdEurBalanceAfterMinting.sub(bdEurlBalanceBeforeMinting), expectedBdEurDiff);
 
         const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
-        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
+        const actualBdxCost = bdxBalanceBeforeMintingWithCR0.sub(bdxBalanceAfterMinting);  
         
         const diffPctBdxCost = diffPct(actualBdxCost, expectedBdxCost);
         const actualWeth = await weth.balanceOf(testUser.address);
 
-        const diffPctWethBalance = diffPct(expectedWeth, actualWeth);
+        const diffPctWethBalance = diffPct(wethBalanceBeforeMinting, actualWeth);
 
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
         console.log(`Diff BdEur balance: ${diffPctBdEur}%`);
@@ -92,29 +99,30 @@ describe("BDStable algorythmic", () => {
         expect(diffPctBdEur).to.be.closeTo(0, 0.01);
     });
 
-    it("should redeem bdeur when CR = 0", async () => {
-        const [ ownerUser ] = await hre.ethers.getSigners();
-        const weth = await getWeth(hre);
-
+    it.only("should redeem bdeur when CR = 0", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
-        const { ethInEurPrice_1e12, ethInEurPrice } = await getOnChainEthEurPrice(hre);
-
-        const collateralAmount = 10;
-
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInEurPrice);
-        await performMinting(testUser, collateralAmount);
-
-        const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
-        
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
         const bdEur = await getBdEur(hre);
+        const bdEurPool = await getBdEurPool(hre);
+
+        await weth.connect(testUser).approve(bdEurPool.address, 10);
+        await bdEurPool.connect(testUser).mint1t1BD(10, 1);
+
+        const bdxBalanceBeforeMintingWithCR0 = toErc20(1000000);
+
+        await mintInitalBdx_MoveCrTo0(bdEur, bdx, testUser, bdxBalanceBeforeMintingWithCR0);
+
+        const bdxAmount = 10;
+        await performAlgorithmicMinting(testUser, bdxAmount);
 
         var bdEurBalanceBeforeRedeem = await bdEur.balanceOf(testUser.address);
         var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
 
         await bdEur.connect(testUser).approve(bdEurPool.address, bdEurBalanceBeforeRedeem);
 
-        await bdEurPool.connect(testUser).redeem1t1BD(bdEurBalanceBeforeRedeem, toErc20(1));
+        await bdEurPool.connect(testUser).redeemAlgorithmicBdStable(bdEurBalanceBeforeRedeem, toErc20(1));
         await bdEurPool.connect(testUser).collectRedemption();
 
         var bdEurBalanceAfterRedeem = await bdEur.balanceOf(testUser.address);
@@ -131,6 +139,6 @@ describe("BDStable algorythmic", () => {
 
         expect(bdEurBalanceBeforeRedeem).to.be.gt(0);
         expect(bdEurBalanceAfterRedeem).to.eq(0);
-        expect(wethDelta).to.eq(collateralAmount)
+        expect(wethDelta).to.eq(bdxAmount)
     });
 })

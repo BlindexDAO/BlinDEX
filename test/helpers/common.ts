@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
+import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
 import { ChainlinkBasedCryptoFiatFeed } from "../../typechain/ChainlinkBasedCryptoFiatFeed";
 import { WETH } from "../../typechain/WETH";
@@ -8,6 +9,11 @@ import * as constants from '../../utils/Constants'
 export async function getBdEur(hre: HardhatRuntimeEnvironment){
   const [ ownerUser ] = await hre.ethers.getSigners();
   return await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
+}
+
+export async function getBdEurPool(hre: HardhatRuntimeEnvironment){
+  const [ ownerUser ] = await hre.ethers.getSigners();
+  return await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment){
