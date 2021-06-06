@@ -21,13 +21,13 @@ chai.use(solidity);
 const { expect } = chai;
 
 async function performAlgorithmicMinting(testUser: SignerWithAddress, bdxAmount: number){
-    const [ ownerUser ] = await hre.ethers.getSigners();
-
-    const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
+    const bdx = await getBdx(hre);
+    const bdEurPool = await getBdEurPool(hre);
 
     await updateBdxOracleRefreshRatiosBdEur(hre);
     await updateWethPair(hre, "BDXShares");
 
+    await bdx.connect(testUser).approve(bdEurPool.address, toErc20(bdxAmount)); 
     await bdEurPool.connect(testUser).mintAlgorithmicBdStable((toErc20(bdxAmount)), (toErc20(1)));
 }
 
@@ -72,7 +72,6 @@ describe("BDStable algorythmic", () => {
 
         const bdxAmountForMintigBdEur = 10;
 
-        await bdx.connect(testUser).approve(bdEurPool.address, toErc20(bdxAmountForMintigBdEur)); 
         await performAlgorithmicMinting(testUser, bdxAmountForMintigBdEur);
 
         const expectedBdxCost = toErc20(bdxAmountForMintigBdEur);
@@ -99,7 +98,7 @@ describe("BDStable algorythmic", () => {
         expect(diffPctBdEur).to.be.closeTo(0, 0.01);
     });
 
-    it.only("should redeem bdeur when CR = 0", async () => {
+    it("should redeem bdeur when CR = 0", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
         const bdx = await getBdx(hre);
@@ -117,16 +116,25 @@ describe("BDStable algorythmic", () => {
         const bdxAmount = 10;
         await performAlgorithmicMinting(testUser, bdxAmount);
 
-        var bdEurBalanceBeforeRedeem = await bdEur.balanceOf(testUser.address);
-        var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
+        const bdEurBalanceBeforeRedeem = await bdEur.balanceOf(testUser.address);
+        const bdxBalanceBeforeRedeem = await bdx.balanceOf(testUser.address);
+        const wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
+
+        const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
+        console.log("bdxInEurPrice           : " + bdxInEurPrice_d12);
+        console.log("bdEurBalanceBeforeRedeem: " + bdEurBalanceBeforeRedeem);
+
+        // mul 1e12 do compensate for bdxInEurPrice_d12
+        const expectedBdxDelta = erc20ToNumber(bdEurBalanceBeforeRedeem.mul(1e12).div(bdxInEurPrice_d12));
 
         await bdEur.connect(testUser).approve(bdEurPool.address, bdEurBalanceBeforeRedeem);
 
         await bdEurPool.connect(testUser).redeemAlgorithmicBdStable(bdEurBalanceBeforeRedeem, toErc20(1));
         await bdEurPool.connect(testUser).collectRedemption();
 
-        var bdEurBalanceAfterRedeem = await bdEur.balanceOf(testUser.address);
-        var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
+        const bdEurBalanceAfterRedeem = await bdEur.balanceOf(testUser.address);
+        const bdxBalanceAfterRedeem = await bdx.balanceOf(testUser.address);
+        const wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
 
         console.log("bdEur balance before redeem: " + erc20ToNumber(bdEurBalanceBeforeRedeem));
         console.log("bdEur balance after redeem:  " + erc20ToNumber(bdEurBalanceAfterRedeem));
@@ -136,9 +144,14 @@ describe("BDStable algorythmic", () => {
 
         const wethDelta = erc20ToNumber(wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem));
         console.log("weth balance delta: " + wethDelta);
+        
+        const bdxDelta = erc20ToNumber(bdxBalanceAfterRedeem.sub(bdxBalanceBeforeRedeem));
+        console.log("bdx balance delta:          " + bdxDelta);
+        console.log("expected bdx balance delta: " + expectedBdxDelta);
 
         expect(bdEurBalanceBeforeRedeem).to.be.gt(0);
         expect(bdEurBalanceAfterRedeem).to.eq(0);
-        expect(wethDelta).to.eq(bdxAmount)
+        expect(wethDelta).to.eq(0);
+        expect(bdxDelta).to.be.closeTo(expectedBdxDelta, 0.1);
     });
 })
