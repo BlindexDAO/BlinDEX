@@ -59,20 +59,34 @@ contract BdStablePool {
     uint256 public unclaimedPoolBDX;
     mapping(address => uint256) public lastRedeemed;
 
-    uint256 public minting_fee;
-    uint256 public redemption_fee;
-
     // Constants for various precisions
     uint256 private constant PRICE_PRECISION = 1e12;
     uint256 private constant COLLATERAL_RATIO_PRECISION = 1e12;
     uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
 
-    // Number of blocks to wait before being able to collectRedemption() - do we need that? hmmm
-    uint256 public redemption_delay = 0; //1;
-
     // AccessControl state variables
     bool public mintPaused = false;
     bool public redeemPaused = false;
+    bool public recollateralizePaused = false;
+    bool public buyBackPaused = false;
+    bool public collateralPricePaused = false;
+
+    uint256 public minting_fee;
+    uint256 public redemption_fee;
+    uint256 public buyback_fee;
+    uint256 public recollat_fee;
+
+    // Pool_ceiling is the total units of collateral that a pool contract can hold
+    uint256 public pool_ceiling = 0;
+
+    // Stores price of the collateral, if price is paused
+    uint256 public pausedPrice = 0;
+
+    // Bonus rate on FXS minted during recollateralizeFRAX(); 6 decimals of precision, set to 0.75% on genesis
+    uint256 public bonus_rate = 7500;
+
+    // Number of blocks to wait before being able to collectRedemption()
+    uint256 public redemption_delay = 1;
 
     /* ========== MODIFIERS ========== */
 
@@ -111,7 +125,21 @@ contract BdStablePool {
 
     /* ========== VIEWS ========== */
 
-    // Returns the value of excess collateral held in this Frax pool, compared to what is needed to maintain the global collateral ratio
+    //todo ag
+    // Returns dollar value of collateral held in this Frax pool
+    // function collatDollarBalance() public view returns (uint256) {
+    //     if(collateralPricePaused == true){
+    //         return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(pausedPrice).div(PRICE_PRECISION);
+    //     } else {
+    //         uint256 eth_usd_price = FRAX.eth_usd_price();
+    //         uint256 eth_collat_price = collatEthOracle.consult(weth_address, (PRICE_PRECISION * (10 ** missing_decimals)));
+
+    //         uint256 collat_usd_price = eth_usd_price.mul(PRICE_PRECISION).div(eth_collat_price);
+    //         return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(collat_usd_price).div(PRICE_PRECISION); //.mul(getCollateralPrice()).div(1e6);    
+    //     }
+    // }
+
+    // Returns the value of excess collateral held in this BdStable pool, compared to what is needed to maintain the global collateral ratio
     function availableExcessCollatDV() public view returns (uint256) {
         uint256 total_supply = BDSTABLE.totalSupply();
         uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
@@ -122,7 +150,7 @@ contract BdStablePool {
         uint256 required_collat_dollar_value_d18 =
             (total_supply.mul(global_collateral_ratio)).div(
                 COLLATERAL_RATIO_PRECISION
-            ); // Calculates collateral needed to back each 1 FRAX with $1 of collateral at current collat ratio
+            ); // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
         if (global_collat_value > required_collat_dollar_value_d18)
             return global_collat_value.sub(required_collat_dollar_value_d18);
         else return 0;
@@ -132,18 +160,18 @@ contract BdStablePool {
 
     // Returns the price of the pool collateral in USD
     function getCollateralPrice() public view returns (uint256) {
-        // if(collateralPricePaused == true){
-        //     return pausedPrice;
-        // } else { //todo lw more paused handling commented out?
-        uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
-        uint256 collat_eth_price =
-            collatWEthOracle.consult(
-                weth_address,
-                PRICE_PRECISION * (10**missing_decimals)
-            );
+        if(collateralPricePaused == true){
+            return pausedPrice;
+        } else {
+            uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
+            uint256 collat_eth_price =
+                collatWEthOracle.consult(
+                    weth_address,
+                    PRICE_PRECISION * (10**missing_decimals)
+                );
 
-        return eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price);
-        //}
+            return eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price);
+        }
     }
 
     // Returns fiat value of collateral held in this Frax pool
@@ -291,6 +319,78 @@ contract BdStablePool {
         BDX.pool_mint(address(this), bdx_amount);
     }
 
+    // Will fail if fully collateralized or fully algorithmic
+    // > 0% and < 100% collateral-backed
+    function mintFractionalBdStable(uint256 collateral_amount, uint256 bdx_amount, uint256 bdStable_out_min) external notMintPaused {
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
+        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+
+        require(global_collateral_ratio < COLLATERAL_RATIO_MAX && global_collateral_ratio > 0, 
+            "Collateral ratio needs to be between .000001 and .999999");
+        require(collateral_token
+            .balanceOf(address(this))
+            .sub(unclaimedPoolCollateral)
+            .add(collateral_amount) <= pool_ceiling,
+            "Pool ceiling reached, no more FRAX can be minted with this collateral");
+
+        uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
+        BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
+            bdx_price,
+            getCollateralPrice(),
+            bdx_amount,
+            collateral_amount_d18,
+            global_collateral_ratio
+        );
+
+        (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(input_params);
+
+        mint_amount = (mint_amount.mul(uint(1e6).sub(minting_fee))).div(1e6);
+        require(bdStable_out_min <= mint_amount, "Slippage limit reached");
+        require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
+
+        BDX.pool_burn_from(msg.sender, bdx_needed);
+        collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
+        BDSTABLE.pool_mint(msg.sender, mint_amount);
+    }
+
+    // todo ag
+    // Will fail if fully collateralized or algorithmic
+    // Redeem FRAX for collateral and FXS. > 0% and < 100% collateral-backed
+    // function redeemFractionalFRAX(uint256 FRAX_amount, uint256 FXS_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
+    //     uint256 fxs_price = FRAX.fxs_price();
+    //     uint256 global_collateral_ratio = FRAX.global_collateral_ratio();
+
+    //     require(global_collateral_ratio < COLLATERAL_RATIO_MAX && global_collateral_ratio > 0, "Collateral ratio needs to be between .000001 and .999999");
+    //     uint256 col_price_usd = getCollateralPrice();
+
+    //     uint256 FRAX_amount_post_fee = (FRAX_amount.mul(uint(1e6).sub(redemption_fee))).div(PRICE_PRECISION);
+
+    //     uint256 fxs_dollar_value_d18 = FRAX_amount_post_fee.sub(FRAX_amount_post_fee.mul(global_collateral_ratio).div(PRICE_PRECISION));
+    //     uint256 fxs_amount = fxs_dollar_value_d18.mul(PRICE_PRECISION).div(fxs_price);
+
+    //     // Need to adjust for decimals of collateral
+    //     uint256 FRAX_amount_precision = FRAX_amount_post_fee.div(10 ** missing_decimals);
+    //     uint256 collateral_dollar_value = FRAX_amount_precision.mul(global_collateral_ratio).div(PRICE_PRECISION);
+    //     uint256 collateral_amount = collateral_dollar_value.mul(PRICE_PRECISION).div(col_price_usd);
+
+
+    //     require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
+    //     require(COLLATERAL_out_min <= collateral_amount, "Slippage limit reached [collateral]");
+    //     require(FXS_out_min <= fxs_amount, "Slippage limit reached [FXS]");
+
+    //     redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_amount);
+    //     unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_amount);
+
+    //     redeemFXSBalances[msg.sender] = redeemFXSBalances[msg.sender].add(fxs_amount);
+    //     unclaimedPoolFXS = unclaimedPoolFXS.add(fxs_amount);
+
+    //     lastRedeemed[msg.sender] = block.number;
+        
+    //     // Move all external functions to the end
+    //     FRAX.pool_burn_from(msg.sender, FRAX_amount);
+    //     FXS.pool_mint(address(this), fxs_amount);
+    // }
+
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
     // contract to the user. Redemption is split into two functions to prevent flash loans from being able
     // to take out BdStable/collateral from the system, use an AMM to trade the new price, and then mint back into the system.
@@ -339,15 +439,124 @@ contract BdStablePool {
         BDSTABLE.pool_mint(msg.sender, bdstable_amount);
     }
 
+    // todo ag
+    // When the protocol is recollateralizing, we need to give a discount of FXS to hit the new CR target
+    // Thus, if the target collateral ratio is higher than the actual value of collateral, minters get FXS for adding collateral
+    // This function simply rewards anyone that sends collateral to a pool with the same amount of FXS + the bonus rate
+    // Anyone can call this function to recollateralize the protocol and take the extra FXS value from the bonus rate as an arb opportunity
+    // function recollateralizeFRAX(uint256 collateral_amount, uint256 FXS_out_min) external {
+    //     require(recollateralizePaused == false, "Recollateralize is paused");
+    //     uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
+    //     uint256 fxs_price = FRAX.fxs_price();
+    //     uint256 frax_total_supply = FRAX.totalSupply();
+    //     uint256 global_collateral_ratio = FRAX.global_collateral_ratio();
+    //     uint256 global_collat_value = FRAX.globalCollateralValue();
+
+    //     (uint256 collateral_units, uint256 amount_to_recollat) = FraxPoolLibrary.calcRecollateralizeFRAXInner(
+    //         collateral_amount_d18,
+    //         getCollateralPrice(),
+    //         global_collat_value,
+    //         frax_total_supply,
+    //         global_collateral_ratio
+    //     ); 
+
+    //     uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
+
+    //     uint256 fxs_paid_back = amount_to_recollat.mul(uint(1e6).add(bonus_rate).sub(recollat_fee)).div(fxs_price);
+
+    //     require(FXS_out_min <= fxs_paid_back, "Slippage limit reached");
+    //     collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
+    //     FXS.pool_mint(msg.sender, fxs_paid_back);
+        
+    // }
+
+    // todo ag
+    // Function can be called by an FXS holder to have the protocol buy back FXS with excess collateral value from a desired collateral pool
+    // This can also happen if the collateral ratio > 1
+    // function buyBackFXS(uint256 FXS_amount, uint256 COLLATERAL_out_min) external {
+    //     require(buyBackPaused == false, "Buyback is paused");
+    //     uint256 fxs_price = FRAX.fxs_price();
+    
+    //     FraxPoolLibrary.BuybackFXS_Params memory input_params = FraxPoolLibrary.BuybackFXS_Params(
+    //         availableExcessCollatDV(),
+    //         fxs_price,
+    //         getCollateralPrice(),
+    //         FXS_amount
+    //     );
+
+    //     (uint256 collateral_equivalent_d18) = (FraxPoolLibrary.calcBuyBackFXS(input_params)).mul(uint(1e6).sub(buyback_fee)).div(1e6);
+    //     uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
+
+    //     require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
+    //     // Give the sender their desired collateral and burn the FXS
+    //     FXS.pool_burn_from(msg.sender, FXS_amount);
+    //     collateral_token.transfer(msg.sender, collateral_precision);
+    // }
+
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function setCollatWETHOracle(
         address _collateral_weth_oracle_address,
-        address _weth_address //onlyByOwnerOrGovernance todo ag
-    ) external {
+        address _weth_address
+    ) 
+        external
+        onlyByOwner 
+    {
         collat_weth_oracle_address = _collateral_weth_oracle_address;
         collatWEthOracle = IUniswapV2PairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
+    }
+
+    function toggleMinting() external onlyByOwner {
+        mintPaused = !mintPaused;
+    }
+
+    function toggleRedeeming() external onlyByOwner {
+        redeemPaused = !redeemPaused;
+    }
+
+    function toggleRecollateralize() external onlyByOwner {
+        recollateralizePaused = !recollateralizePaused;
+    }
+    
+    function toggleBuyBack() external onlyByOwner {
+        buyBackPaused = !buyBackPaused;
+    }
+
+    function toggleCollateralPrice(uint256 _new_price) external onlyByOwner {
+        // If pausing, set paused price; else if unpausing, clear pausedPrice
+        if(collateralPricePaused == false){
+            pausedPrice = _new_price;
+        } else {
+            pausedPrice = 0;
+        }
+        collateralPricePaused = !collateralPricePaused;
+    }
+
+    // Combined into one function due to 24KiB contract memory limit
+    function setPoolParameters(
+        uint256 new_ceiling, 
+        uint256 new_bonus_rate, 
+        uint256 new_redemption_delay, 
+        uint256 new_mint_fee,
+        uint256 new_redeem_fee, 
+        uint256 new_buyback_fee,
+        uint256 new_recollat_fee
+    )
+        external
+        onlyByOwner 
+    {
+        pool_ceiling = new_ceiling;
+        bonus_rate = new_bonus_rate;
+        redemption_delay = new_redemption_delay;
+        minting_fee = new_mint_fee;
+        redemption_fee = new_redeem_fee;
+        buyback_fee = new_buyback_fee;
+        recollat_fee = new_recollat_fee;
+    }
+
+    function setOwner(address _owner_address) external onlyByOwner {
+        owner_address = _owner_address;
     }
 
     /* ========== EVENTS ========== */
