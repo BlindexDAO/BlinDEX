@@ -27,14 +27,11 @@ library BdPoolLibrary {
         return (collateral_amount_d18.mul(col_price)).div(1e12);
     }
 
-    // function calcMintAlgorithmicFRAX(uint256 fxs_price_usd, uint256 fxs_amount_d18) public pure returns (uint256) {
-    //     return fxs_amount_d18.mul(fxs_price_usd).div(1e12);
-    // }
-
+    // todo ag fix naming (fxs)
     // Must be internal because of the struct
     function calcMintFractionalBD(MintFBD_Params memory params) internal pure returns (uint256, uint256) {
         // Since solidity truncates division, every division operation must be the last operation in the equation to ensure minimum error
-        // The contract must check the proper ratio was sent to mint FRAX. We do this by seeing the minimum mintable FRAX based on each amount 
+        // The contract must check the proper ratio was sent to mint BdStable. We do this by seeing the minimum mintable BdStable based on each amount 
         uint256 bdx_fiat_value_d18;
         uint256 c_fiat_value_d18;
         

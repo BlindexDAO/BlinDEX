@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import { ChainlinkBasedCryptoFiatFeed } from '../../typechain/ChainlinkBasedCryptoFiatFeed';
 import cap from "chai-as-promised";
 
-import { bigNumberToDecmal } from "../../utils/Helpers";
+import { bigNumberToDecimal } from "../../utils/Helpers";
 
 chai.use(cap);
 
@@ -25,7 +25,7 @@ describe("Chainlink besed Oracles", () => {
 
         const price = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
         
-        const priceDecimal = bigNumberToDecmal(price, 12);
+        const priceDecimal = bigNumberToDecimal(price, 12);
 
         console.log("ETH/EUR price: " + priceDecimal);
 

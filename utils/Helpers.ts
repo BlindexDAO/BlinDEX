@@ -23,10 +23,10 @@ export function numberToBigNumberFixed(n: number, decimals: number): BigNumber {
 }
   
 export function erc20ToNumber(n: BigNumber): number {
-    return bigNumberToDecmal(n, 18)
+    return bigNumberToDecimal(n, 18)
 }
 
-export function bigNumberToDecmal(n: BigNumber, decimals: number){
+export function bigNumberToDecimal(n: BigNumber, decimals: number){
     return Number(n.toString()) / 10**decimals;
 }
 

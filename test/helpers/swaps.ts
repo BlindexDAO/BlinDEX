@@ -10,7 +10,7 @@ import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { StakingRewards } from "../../typechain/StakingRewards";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
-import { bigNumberToDecmal } from "../../utils/Helpers";
+import { bigNumberToDecimal } from "../../utils/Helpers";
 import { getWethPair } from "../../utils/Swaps";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
@@ -52,8 +52,8 @@ export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: str
   const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], toErc20(1), bdStable.address);
   const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, toErc20(1), constants.wETH_address[hre.network.name]);
 
-  const wethInBdStablePriceDecimal = bigNumberToDecmal(wethInBdStablePrice, 18);
-  const bdStableInWethPriceDecimal = bigNumberToDecmal(bdStableWethPrice, 18);
+  const wethInBdStablePriceDecimal = bigNumberToDecimal(wethInBdStablePrice, 18);
+  const bdStableInWethPriceDecimal = bigNumberToDecimal(bdStableWethPrice, 18);
 
   console.log(`WETH in ${bdStableName} price: ` + wethInBdStablePriceDecimal);
   console.log(`${bdStableName} in WETH price: ` + bdStableInWethPriceDecimal);

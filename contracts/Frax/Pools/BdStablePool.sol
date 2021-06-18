@@ -77,7 +77,7 @@ contract BdStablePool {
     uint256 public recollat_fee;
 
     // Pool_ceiling is the total units of collateral that a pool contract can hold
-    uint256 public pool_ceiling = 0;
+    uint256 public pool_ceiling = 1e36;
 
     // Stores price of the collateral, if price is paused
     uint256 public pausedPrice = 0;
@@ -331,7 +331,7 @@ contract BdStablePool {
             .balanceOf(address(this))
             .sub(unclaimedPoolCollateral)
             .add(collateral_amount) <= pool_ceiling,
-            "Pool ceiling reached, no more FRAX can be minted with this collateral");
+            "Pool ceiling reached, no more BdStable can be minted with this collateral");
 
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
@@ -346,11 +346,17 @@ contract BdStablePool {
 
         mint_amount = (mint_amount.mul(uint(1e6).sub(minting_fee))).div(1e6);
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
+
         require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
 
         BDX.pool_burn_from(msg.sender, bdx_needed);
+        console.log("-------------------2");
+        console.log(collateral_amount);
+        console.log(collateral_token.balanceOf(msg.sender));
         collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
+        console.log("-------------------3");
         BDSTABLE.pool_mint(msg.sender, mint_amount);
+        console.log("-------------------4");
     }
 
     // todo ag
