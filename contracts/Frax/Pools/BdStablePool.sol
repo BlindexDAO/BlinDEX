@@ -71,19 +71,19 @@ contract BdStablePool {
     bool public buyBackPaused = false;
     bool public collateralPricePaused = false;
 
-    uint256 public minting_fee;
-    uint256 public redemption_fee;
-    uint256 public buyback_fee;
-    uint256 public recollat_fee;
+    uint256 public minting_fee; //d12
+    uint256 public redemption_fee; //d12
+    uint256 public buyback_fee; //d12
+    uint256 public recollat_fee; //d12
 
     // Pool_ceiling is the total units of collateral that a pool contract can hold
-    uint256 public pool_ceiling = 1e36;
+    uint256 public pool_ceiling = 1e36; // d18
 
     // Stores price of the collateral, if price is paused
     uint256 public pausedPrice = 0;
 
-    // Bonus rate on FXS minted during recollateralizeFRAX(); 6 decimals of precision, set to 0.75% on genesis
-    uint256 public bonus_rate = 7500;
+    // Bonus rate on FXS minted during recollateralizeFRAX(); 12 decimals of precision, set to 0.75% on genesis
+    uint256 public bonus_rate = 7500000000; // d12
 
     // Number of blocks to wait before being able to collectRedemption()
     uint256 public redemption_delay = 1;
@@ -225,7 +225,7 @@ contract BdStablePool {
                 collateral_amount_d18
             ); //1 BD for each $1/€1/etc worth of collateral
 
-        bd_amount_d18 = (bd_amount_d18.mul(uint256(1e12).sub(minting_fee))).div(1e12); //remove precision at the end
+        bd_amount_d18 = (bd_amount_d18.mul(uint256(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION); //remove precision at the end
         require(BD_out_min <= bd_amount_d18, "Slippage limit reached");
 
         collateral_token.transferFrom(
@@ -255,8 +255,8 @@ contract BdStablePool {
             );
 
         collateral_needed = (
-            collateral_needed.mul(uint256(1e12).sub(redemption_fee))
-        ).div(1e12);
+            collateral_needed.mul(uint256(PRICE_PRECISION).sub(redemption_fee))
+        ).div(PRICE_PRECISION);
 
         require(
             collateral_needed <=
@@ -289,7 +289,7 @@ contract BdStablePool {
 
         (uint256 bdStable_amount_d18) = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_amount_d18);
 
-        bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(1e12).sub(minting_fee))).div(1e12);
+        bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION);
         require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
 
         BDX.pool_burn_from(msg.sender, bdx_amount_d18);
@@ -344,58 +344,51 @@ contract BdStablePool {
 
         (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(input_params);
 
-        mint_amount = (mint_amount.mul(uint(1e6).sub(minting_fee))).div(1e6);
+        mint_amount = (mint_amount.mul(uint(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION);
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
 
         require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
 
         BDX.pool_burn_from(msg.sender, bdx_needed);
-        console.log("-------------------2");
-        console.log(collateral_amount);
-        console.log(collateral_token.balanceOf(msg.sender));
         collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
-        console.log("-------------------3");
         BDSTABLE.pool_mint(msg.sender, mint_amount);
-        console.log("-------------------4");
     }
 
-    // todo ag
     // Will fail if fully collateralized or algorithmic
-    // Redeem FRAX for collateral and FXS. > 0% and < 100% collateral-backed
-    // function redeemFractionalFRAX(uint256 FRAX_amount, uint256 FXS_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
-    //     uint256 fxs_price = FRAX.fxs_price();
-    //     uint256 global_collateral_ratio = FRAX.global_collateral_ratio();
+    // Redeem BDSTABLE for collateral and FXS. > 0% and < 100% collateral-backed
+    function redeemFractionalBdStable(uint256 BdStable_amount, uint256 BDX_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
+        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
 
-    //     require(global_collateral_ratio < COLLATERAL_RATIO_MAX && global_collateral_ratio > 0, "Collateral ratio needs to be between .000001 and .999999");
-    //     uint256 col_price_usd = getCollateralPrice();
+        require(global_collateral_ratio < COLLATERAL_RATIO_MAX && global_collateral_ratio > 0, "Collateral ratio needs to be between .000001 and .999999");
+        uint256 col_price_fiat = getCollateralPrice();
 
-    //     uint256 FRAX_amount_post_fee = (FRAX_amount.mul(uint(1e6).sub(redemption_fee))).div(PRICE_PRECISION);
+        uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION);
 
-    //     uint256 fxs_dollar_value_d18 = FRAX_amount_post_fee.sub(FRAX_amount_post_fee.mul(global_collateral_ratio).div(PRICE_PRECISION));
-    //     uint256 fxs_amount = fxs_dollar_value_d18.mul(PRICE_PRECISION).div(fxs_price);
+        uint256 bdx_dollar_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(global_collateral_ratio).div(PRICE_PRECISION));
+        uint256 bdx_amount = bdx_dollar_value_d18.mul(PRICE_PRECISION).div(bdx_price);
 
-    //     // Need to adjust for decimals of collateral
-    //     uint256 FRAX_amount_precision = FRAX_amount_post_fee.div(10 ** missing_decimals);
-    //     uint256 collateral_dollar_value = FRAX_amount_precision.mul(global_collateral_ratio).div(PRICE_PRECISION);
-    //     uint256 collateral_amount = collateral_dollar_value.mul(PRICE_PRECISION).div(col_price_usd);
+        // Need to adjust for decimals of collateral
+        uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
+        uint256 collateral_dollar_value = BdStable_amount_precision.mul(global_collateral_ratio).div(PRICE_PRECISION);
+        uint256 collateral_amount = collateral_dollar_value.mul(PRICE_PRECISION).div(col_price_fiat);
 
+        require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
+        require(COLLATERAL_out_min <= collateral_amount, "Slippage limit reached [collateral]");
+        require(BDX_out_min <= bdx_amount, "Slippage limit reached [FXS]");
 
-    //     require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
-    //     require(COLLATERAL_out_min <= collateral_amount, "Slippage limit reached [collateral]");
-    //     require(FXS_out_min <= fxs_amount, "Slippage limit reached [FXS]");
+        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_amount);
+        unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_amount);
 
-    //     redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_amount);
-    //     unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_amount);
+        redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+        unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
 
-    //     redeemFXSBalances[msg.sender] = redeemFXSBalances[msg.sender].add(fxs_amount);
-    //     unclaimedPoolFXS = unclaimedPoolFXS.add(fxs_amount);
-
-    //     lastRedeemed[msg.sender] = block.number;
+        lastRedeemed[msg.sender] = block.number;
         
-    //     // Move all external functions to the end
-    //     FRAX.pool_burn_from(msg.sender, FRAX_amount);
-    //     FXS.pool_mint(address(this), fxs_amount);
-    // }
+        // Move all external functions to the end
+        BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
+        BDX.pool_mint(address(this), bdx_amount);
+    }
 
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
     // contract to the user. Redemption is split into two functions to prevent flash loans from being able
