@@ -40,11 +40,16 @@ describe("BDStable fractional", () => {
         await hre.deployments.fixture();
     });
 
-    async function mintInitalBdx_MoveCrTo0_7(bdEur: BDStable, bdx: BDXShares, user: SignerWithAddress, startingBdxBalance: BigNumber) {
+    async function mintInitalBdx_MoveCrTo0_7(user: SignerWithAddress) {
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
+        const bdEur = await getBdEur(hre);
+
         // set step to 1 to get CR = 0 after first refresh
         await bdEur.setBdstable_step_d12(numberToBigNumberFixed(1, 12).mul(3).div(10));
 
-        await bdx.mint(user.address, startingBdxBalance);
+        await weth.connect(user).deposit({ value: toErc20(10000) });
+        await bdx.mint(user.address, toErc20(1000000));
 
         const ethInBdxPrice = 100;
 
@@ -66,54 +71,47 @@ describe("BDStable fractional", () => {
         const bdEur = await getBdEur(hre);
         const bdEurPool = await getBdEurPool(hre);
 
-        await weth.connect(testUser).deposit({ value: toErc20(10000) });
-
-        const bdxBalanceBeforeMintingWithCR0 = toErc20(1000000);
-
-        await mintInitalBdx_MoveCrTo0_7(bdEur, bdx, testUser, bdxBalanceBeforeMintingWithCR0);
+        await mintInitalBdx_MoveCrTo0_7(testUser);
 
         const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
         const bdEurlBalanceBeforeMinting = await bdEur.balanceOf(testUser.address);
+        const bdxlBalanceBeforeMinting = await bdx.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
         const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice();
-
         const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInEurPrice_d12).div(bdxInEurPrice_d12);
 
-        const wethAmountForMintigBdEur_d18 = toErc20(10); // 70% of total
+        // calculate how much is needed to mint
+        const wethAmountForMintigBdEur_d18 = toErc20(10); // 70% of total value
         const bdxAmountForMintigBdEur_d18 = wethAmountForMintigBdEur_d18.mul(30).div(70).mul(bdxPriceInWeth_d12).div(1e12);
 
         const excessiveBdxAmountForMintigBdEur_d18 = bdxAmountForMintigBdEur_d18.mul(3); // the excess should be ignored
-        await performFractionalMinting(testUser, wethAmountForMintigBdEur_d18, excessiveBdxAmountForMintigBdEur_d18);
+        await performFractionalMinting(testUser, wethAmountForMintigBdEur_d18, excessiveBdxAmountForMintigBdEur_d18);        
         
-        const bdEurFromBdx = bdxAmountForMintigBdEur_d18.mul(bdxInEurPrice_d12).div(1e12);
-        const bdEurFromWeth = wethAmountForMintigBdEur_d18.mul(wethInEurPrice_d12).div(1e12);
-        const expectedBdEurDiff = bdEurFromBdx.add(bdEurFromWeth);
-
-        const bdEurBalanceAfterMinting = await bdEur.balanceOf(testUser.address);
-
-        const diffPctBdEur = diffPct(bdEurBalanceAfterMinting.sub(bdEurlBalanceBeforeMinting), expectedBdEurDiff);
-
+        // asserts
+    
         const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
-        const actualBdxCost = bdxBalanceBeforeMintingWithCR0.sub(bdxBalanceAfterMinting);  
-        
+        const actualBdxCost = bdxlBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
         const diffPctBdxCost = diffPct(actualBdxCost, bdxAmountForMintigBdEur_d18);
-        const wethBalanceAfterMinging = await weth.balanceOf(testUser.address);
-
-        const actualWethCost = wethBalanceBeforeMinting.sub(wethBalanceAfterMinging);
-        const diffPctWethBalance = diffPct(actualWethCost, wethAmountForMintigBdEur_d18);
-
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
         expect(diffPctBdxCost).to.be.closeTo(0, 0.1);
 
+        const wethBalanceAfterMinging = await weth.balanceOf(testUser.address);
+        const actualWethCost = wethBalanceBeforeMinting.sub(wethBalanceAfterMinging);
+        const diffPctWethBalance = diffPct(actualWethCost, wethAmountForMintigBdEur_d18);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
         expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
 
+        const bdEurFromBdx = bdxAmountForMintigBdEur_d18.mul(bdxInEurPrice_d12).div(1e12);
+        const bdEurFromWeth = wethAmountForMintigBdEur_d18.mul(wethInEurPrice_d12).div(1e12);
+        const expectedBdEurDiff = bdEurFromBdx.add(bdEurFromWeth);
+        const bdEurBalanceAfterMinting = await bdEur.balanceOf(testUser.address);
+        const diffPctBdEur = diffPct(bdEurBalanceAfterMinting.sub(bdEurlBalanceBeforeMinting), expectedBdEurDiff);
         console.log(`Diff BdEur balance: ${diffPctBdEur}%`);
         expect(diffPctBdEur).to.be.closeTo(0, 0.1);
     });
 
-    it("should redeem bdeur when CR > 0 & CR < 1", async () => {
+    it.only("should redeem bdeur when CR > 0 & CR < 1", async () => {
         expect(1).to.be.eq(2);
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
@@ -128,7 +126,7 @@ describe("BDStable fractional", () => {
 
         const bdxBalanceBeforeMintingWithCR0 = toErc20(1000000);
 
-        await mintInitalBdx_MoveCrTo0_7(bdEur, bdx, testUser, bdxBalanceBeforeMintingWithCR0);
+        await mintInitalBdx_MoveCrTo0_7(testUser);
 
         const bdxAmount_d18 = toErc20(10);
         const ethAmount_d18 = toErc20(10);
