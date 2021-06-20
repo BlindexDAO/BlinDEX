@@ -158,7 +158,7 @@ contract BdStablePool {
 
     /* ========== PUBLIC FUNCTIONS ========== */
 
-    // Returns the price of the pool collateral in USD
+    // Returns the price of the pool collateral in fiat
     function getCollateralPrice() public view returns (uint256) {
         if(collateralPricePaused == true){
             return pausedPrice;
@@ -345,6 +345,7 @@ contract BdStablePool {
         (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(input_params);
 
         mint_amount = (mint_amount.mul(uint(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION);
+
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
 
         require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
@@ -365,13 +366,13 @@ contract BdStablePool {
 
         uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION);
 
-        uint256 bdx_dollar_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(global_collateral_ratio).div(PRICE_PRECISION));
-        uint256 bdx_amount = bdx_dollar_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(global_collateral_ratio).div(PRICE_PRECISION));
+        uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
-        uint256 collateral_dollar_value = BdStable_amount_precision.mul(global_collateral_ratio).div(PRICE_PRECISION);
-        uint256 collateral_amount = collateral_dollar_value.mul(PRICE_PRECISION).div(col_price_fiat);
+        uint256 collateral_fiat_value = BdStable_amount_precision.mul(global_collateral_ratio).div(PRICE_PRECISION);
+        uint256 collateral_amount = collateral_fiat_value.mul(PRICE_PRECISION).div(col_price_fiat);
 
         require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
         require(COLLATERAL_out_min <= collateral_amount, "Slippage limit reached [collateral]");

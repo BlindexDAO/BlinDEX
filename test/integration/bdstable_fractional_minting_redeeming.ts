@@ -111,7 +111,7 @@ describe("BDStable fractional", () => {
         expect(diffPctBdEur).to.be.closeTo(0, 0.1);
     });
 
-    it.only("should redeem bdeur when CR > 0 & CR < 1", async () => {
+    it("should redeem bdeur when CR > 0 & CR < 1", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
         const bdx = await getBdx(hre);
@@ -119,9 +119,9 @@ describe("BDStable fractional", () => {
         const bdEur = await getBdEur(hre);
         const bdEurPool = await getBdEurPool(hre);
 
-        await weth.connect(testUser).deposit({ value: toErc20(10000) });
-        await weth.connect(testUser).approve(bdEurPool.address, 10000);
-        await bdEurPool.connect(testUser).mint1t1BD(1000, 1);
+        await weth.connect(testUser).deposit({ value: toErc20(10) });
+        await weth.connect(testUser).approve(bdEurPool.address, toErc20(10));
+        await bdEurPool.connect(testUser).mint1t1BD(toErc20(10), 1);
 
         await mintInitalBdx_MoveCrTo0_7(testUser);
 
@@ -131,23 +131,17 @@ describe("BDStable fractional", () => {
 
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
         const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice();
-        const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInEurPrice_d12).div(bdxInEurPrice_d12);
 
-        const bdEurToRedeem = toErc20(100);
+        const bdEurToRedeem = toErc20(10000);
 
         // calculate how much is needed to mint
         const expectedWethRedeemingCost_d18 = bdEurToRedeem.mul(70).div(100).mul(1e12).div(wethInEurPrice_d12);
-        const expectedBdxRedeemingCost_d18 = bdEurToRedeem.mul(30).div(100).mul(1e12).div(bdxPriceInWeth_d12);
-
-        console.log("--------------------");
-        console.log(bdEurToRedeem);
-        console.log(expectedWethRedeemingCost_d18);
-        console.log(expectedBdxRedeemingCost_d18);
+        const expectedBdxRedeemingCost_d18 = bdEurToRedeem.mul(30).div(100).mul(1e12).div(bdxInEurPrice_d12);
 
         await bdEur.connect(testUser).approve(bdEurPool.address, bdEurBalanceBeforeRedeem);
-        await bdEurPool.connect(testUser).redeemFractionalBdStable(bdEurToRedeem, toErc20(1), toErc20(1));
+        await bdEurPool.connect(testUser).redeemFractionalBdStable(bdEurToRedeem, 1, 1);
         await bdEurPool.connect(testUser).collectRedemption();
-
+        
         // asserts
 
         const bdEurBalanceAfterRedeem = await bdEur.balanceOf(testUser.address);
@@ -155,15 +149,19 @@ describe("BDStable fractional", () => {
         expect(bdEurBalanceAfterRedeem).to.eq(bdEurBalanceBeforeRedeem.sub(bdEurToRedeem));
         
         const wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
-        const wethDelta = erc20ToNumber(wethBalanceBeforeRedeem.sub(wethBalanceAfterRedeem));
+        const wethDelta = wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem);
+        const wethDiffPct = diffPct(expectedWethRedeemingCost_d18, wethDelta);
         console.log("expected weth redeeming cost: " + expectedWethRedeemingCost_d18);
         console.log("weth balance delta:           " + wethDelta);
-        expect(wethDelta).to.eq(expectedWethRedeemingCost_d18);
+        console.log("weth diff pct:                " + wethDiffPct);
+        expect(wethDiffPct).to.be.closeTo(0, 0.1);
         
         const bdxBalanceAfterRedeem = await bdx.balanceOf(testUser.address);
-        const bdxDelta = erc20ToNumber(bdxBalanceBeforeRedeem.sub(bdxBalanceAfterRedeem));
+        const bdxDelta = bdxBalanceAfterRedeem.sub(bdxBalanceBeforeRedeem);
+        const bdxDiffPct = diffPct(expectedBdxRedeemingCost_d18, bdxDelta);
         console.log("expected bdx balance delta: " + expectedBdxRedeemingCost_d18);
         console.log("bdx balance delta:          " + bdxDelta);
-        expect(bdxDelta).to.eq(expectedBdxRedeemingCost_d18);
+        console.log("bdx diff pct:               " + bdxDiffPct);
+        expect(bdxDiffPct).to.be.closeTo(0, 0.1);
     });
 })
