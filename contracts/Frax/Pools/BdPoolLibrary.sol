@@ -62,6 +62,27 @@ library BdPoolLibrary {
         return bdx_amount_d18.mul(bdx_price_fiat).div(1e12);
     }
 
+    function calcRecollateralizeBdStableInner(
+        uint256 collateral_amount, 
+        uint256 col_price,
+        uint256 global_collat_value,
+        uint256 bdStable_total_supply,
+        uint256 global_collateral_ratio
+    ) public pure returns (uint256, uint256) {
+        uint256 collat_value_attempted = collateral_amount.mul(col_price).div(1e12);
+        uint256 effective_collateral_ratio = global_collat_value.mul(1e12).div(bdStable_total_supply); //returns it in 1e12
+        uint256 recollat_possible = (global_collateral_ratio.mul(bdStable_total_supply).sub(bdStable_total_supply.mul(effective_collateral_ratio))).div(1e12);
+
+        uint256 amount_to_recollat;
+        if(collat_value_attempted <= recollat_possible){
+            amount_to_recollat = collat_value_attempted;
+        } else {
+            amount_to_recollat = recollat_possible;
+        }
+
+        return (amount_to_recollat.mul(1e12).div(col_price), amount_to_recollat);
+    }
+
     // // Must be internal because of the struct
     // function calcBuyBackFXS(BuybackFXS_Params memory params) internal pure returns (uint256) {
     //     // If the total collateral value is higher than the amount required at the current collateral ratio then buy back up to the possible FXS with the desired collateral

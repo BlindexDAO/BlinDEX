@@ -439,36 +439,34 @@ contract BdStablePool {
         BDSTABLE.pool_mint(msg.sender, bdstable_amount);
     }
 
-    // todo ag
     // When the protocol is recollateralizing, we need to give a discount of FXS to hit the new CR target
     // Thus, if the target collateral ratio is higher than the actual value of collateral, minters get FXS for adding collateral
     // This function simply rewards anyone that sends collateral to a pool with the same amount of FXS + the bonus rate
     // Anyone can call this function to recollateralize the protocol and take the extra FXS value from the bonus rate as an arb opportunity
-    // function recollateralizeFRAX(uint256 collateral_amount, uint256 FXS_out_min) external {
-    //     require(recollateralizePaused == false, "Recollateralize is paused");
-    //     uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
-    //     uint256 fxs_price = FRAX.fxs_price();
-    //     uint256 frax_total_supply = FRAX.totalSupply();
-    //     uint256 global_collateral_ratio = FRAX.global_collateral_ratio();
-    //     uint256 global_collat_value = FRAX.globalCollateralValue();
+    function recollateralizeBdStable(uint256 collateral_amount, uint256 BDX_out_min) external {
+        require(recollateralizePaused == false, "Recollateralize is paused");
+        uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
+        uint256 bdStable_total_supply = BDSTABLE.totalSupply();
+        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+        uint256 global_collat_value = BDSTABLE.globalCollateralValue();
 
-    //     (uint256 collateral_units, uint256 amount_to_recollat) = FraxPoolLibrary.calcRecollateralizeFRAXInner(
-    //         collateral_amount_d18,
-    //         getCollateralPrice(),
-    //         global_collat_value,
-    //         frax_total_supply,
-    //         global_collateral_ratio
-    //     ); 
+        (uint256 collateral_units, uint256 amount_to_recollat) = BdPoolLibrary.calcRecollateralizeBdStableInner(
+            collateral_amount_d18,
+            getCollateralPrice(),
+            global_collat_value,
+            bdStable_total_supply,
+            global_collateral_ratio
+        ); 
 
-    //     uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
+        uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
-    //     uint256 fxs_paid_back = amount_to_recollat.mul(uint(1e6).add(bonus_rate).sub(recollat_fee)).div(fxs_price);
+        uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
 
-    //     require(FXS_out_min <= fxs_paid_back, "Slippage limit reached");
-    //     collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
-    //     FXS.pool_mint(msg.sender, fxs_paid_back);
-        
-    // }
+        require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
+        collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
+        BDX.pool_mint(msg.sender, bdx_paid_back);
+    }
 
     // todo ag
     // Function can be called by an FXS holder to have the protocol buy back FXS with excess collateral value from a desired collateral pool
