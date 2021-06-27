@@ -14,15 +14,19 @@ export async function simulateTimeElapseInSeconds(seconds: number){
     await timeTraveler.increaseTime(seconds);
 }
 
-export function toErc20(n: number): BigNumber {
+export function to_d18(n: number): BigNumber {
     return numberToBigNumberFixed(n, 18)
+}
+
+export function to_d8(n: number): BigNumber {
+    return numberToBigNumberFixed(n, 8)
 }
 
 export function numberToBigNumberFixed(n: number, decimals: number): BigNumber {
     return BigNumber.from(10).pow(decimals).mul(n);
 }
   
-export function erc20ToNumber(n: BigNumber): number {
+export function d18_ToNumber(n: BigNumber): number {
     return bigNumberToDecimal(n, 18)
 }
 

@@ -10,13 +10,13 @@ import '../Math/FixedPoint.sol';
 import '../ERC20/IERC20.sol';
 import './Interfaces/IUniswapV2Factory.sol';
 import './Interfaces/IUniswapV2Callee.sol';
-import './Interfaces/IUniswapV2PairOracle.sol';
+import '../Oracle/ICryptoPairOracle.sol';
 import './UniswapV2OracleLibrary.sol';
 import './UniswapV2PairOriginal.sol';
 
 import "hardhat/console.sol";
 
-contract UniswapV2Pair is UniswapV2PairOriginal, IUniswapV2PairOracle {
+contract UniswapV2Pair is UniswapV2PairOriginal, ICryptoPairOracle {
     using FixedPoint for *;
     using SafeMath  for uint;
     using UQ112x112 for uint224;

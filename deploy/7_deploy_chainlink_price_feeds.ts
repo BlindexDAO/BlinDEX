@@ -38,16 +38,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const uniswapFactoryContract = await hre.ethers.getContractAt("UniswapV2Factory", constants.uniswapFactoryAddress) as unknown as UniswapV2Factory;
 
-  const btc_eth_oracle = await hre.deployments.deploy('UniswapPairOracle_WBTC_WETH', {
+  //todo ag replace with a better implementaion (price from uniswap3?)
+  const btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
-    contract: "UniswapPairOracle",
-    args: [
-      constants.uniswapFactoryAddress,
-      constants.wBTC_address[networkName],
-      constants.wETH_address[networkName],
-      (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
-      hre.ethers.constants.AddressZero, //todo ag use actual contract
-    ]
+    args: [constants.BTC_ETH_CHAINLINK_FEED[networkName]]
   });
 
   const bdeurWethPool = await hre.ethers.getContract('BDEUR_WETH_POOL') as BdStablePool;

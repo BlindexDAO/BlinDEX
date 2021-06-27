@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { simulateTimeElapseInSeconds, toErc20, erc20ToNumber } from "../../utils/Helpers"
+import { simulateTimeElapseInSeconds, to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { getBdEur, getBdx } from "./common"
 import { updateWethPair } from "./swaps";
 

@@ -26,10 +26,11 @@ contract ChainlinkBasedCryptoFiatFeed {
             .div(fiatUsdPrice)
             .div(uint256(10)**cryptoToUsdFeed.decimals());
     }
+
     function consult(address token, uint amountIn) external view returns (uint256) {     
         //require(token == WETH); // todo lw
 
-        return getPrice_1e12().mul(amountIn);
+        return getPrice_1e12().mul(amountIn).div(1e12);
     }
 
     function getLatestPrice(AggregatorV3Interface feed) internal view returns (uint256) {
@@ -42,6 +43,7 @@ contract ChainlinkBasedCryptoFiatFeed {
         ) = feed.latestRoundData();
         return uint256(price);
     }
+    
     function getDecimals()  public view returns (uint8) {
         return 12 + fiatToUsdFeed.decimals() - cryptoToUsdFeed.decimals();
     }

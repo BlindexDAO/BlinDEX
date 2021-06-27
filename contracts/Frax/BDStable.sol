@@ -32,7 +32,7 @@ import "./Pools/FraxPool.sol";
 import "../Oracle/ChainlinkETHFIATPriceConsumer.sol";
 import "../Oracle/ChainlinkBasedCryptoFiatFeed.sol";
 import "../Governance/AccessControl.sol";
-import "../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
+import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
 
 import "hardhat/console.sol";
@@ -49,8 +49,8 @@ contract BDStable is ERC20Custom {
     address public owner_address;
     address public bdx_address;
 
-    IUniswapV2PairOracle bdstableWethOracle;
-    IUniswapV2PairOracle bdxWethOracle;
+    ICryptoPairOracle bdstableWethOracle;
+    ICryptoPairOracle bdxWethOracle;
 
     ChainlinkBasedCryptoFiatFeed private weth_fiat_pricer;
     uint8 private weth_fiat_pricer_decimals;
@@ -233,12 +233,12 @@ contract BDStable is ERC20Custom {
     }
 
     function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) public onlyByOwner {
-        bdstableWethOracle = IUniswapV2PairOracle(_bdstable_oracle_addr); 
+        bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
         weth_address = _weth_address;
     }
 
     function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) public onlyByOwner {
-        bdxWethOracle = IUniswapV2PairOracle(_bdx_oracle_addr);
+        bdxWethOracle = ICryptoPairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
     }
     

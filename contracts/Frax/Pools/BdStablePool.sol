@@ -26,7 +26,7 @@ import "../../Math/SafeMath.sol";
 import "../../FXS/BDXShares.sol";
 import "../../Frax/BDStable.sol";
 import "../../ERC20/ERC20.sol";
-import "../../Uniswap/Interfaces/IUniswapV2PairOracle.sol";
+import "../../Oracle/ICryptoPairOracle.sol";
 import "../../Governance/AccessControl.sol";
 import "./BdPoolLibrary.sol";
 
@@ -47,7 +47,7 @@ contract BdStablePool {
     BDXShares private BDX;
     BDStable private BDSTABLE;
 
-    IUniswapV2PairOracle private collatWEthOracle;
+    ICryptoPairOracle private collatWEthOracle;
     address public collat_weth_oracle_address;
     // Number of decimals needed to get to 18
     uint256 private immutable missing_decimals;
@@ -169,6 +169,13 @@ contract BdStablePool {
                     weth_address,
                     PRICE_PRECISION * (10**missing_decimals)
                 );
+
+            console.log("--------------------------");
+            console.log(PRICE_PRECISION);
+            console.log(missing_decimals);
+            console.log(eth_fiat_price);
+            console.log(collat_eth_price);
+            console.log(eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price));
 
             return eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price);
         }
@@ -501,7 +508,7 @@ contract BdStablePool {
         onlyByOwner 
     {
         collat_weth_oracle_address = _collateral_weth_oracle_address;
-        collatWEthOracle = IUniswapV2PairOracle(_collateral_weth_oracle_address);
+        collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
     }
 

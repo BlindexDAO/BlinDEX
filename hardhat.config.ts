@@ -130,16 +130,13 @@ const config: HardhatUserConfig = {
       },
       accounts: {
         mnemonic: process.env.MNEMONIC_PHRASE!,
-        accountsBalance: '134439500000000000000000',
+        accountsBalance: '13443950000000000000000000',
       },
       chainId: 1337
     },
     mainnetFork: {
       url: 'http://localhost:8545',
       timeout: 60000
-      // accounts: {
-      //   mnemonic: process.env.MNEMONIC_PHRASE!,
-      // }
     },
 
   },

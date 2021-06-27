@@ -5,6 +5,7 @@ import './Interfaces/IUniswapV2Factory.sol';
 import './TransferHelper.sol';
 
 import './Interfaces/IUniswapV2Router02.sol';
+import './Interfaces/IUniswapV2PairOracle.sol';
 import './UniswapV2Library.sol';
 import './UniswapV2Pair.sol';
 import '../Math/SafeMath.sol';
@@ -265,6 +266,7 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
     {
         require(path[0] == WETH, 'UniswapV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsOut(factory, msg.value, path);
+
         require(amounts[amounts.length - 1] >= amountOutMin, 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
@@ -279,6 +281,7 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
     {
         require(path[path.length - 1] == WETH, 'UniswapV2Router: INVALID_PATH');
         amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
+        
         require(amounts[0] <= amountInMax, 'UniswapV2Router: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]

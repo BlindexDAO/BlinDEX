@@ -11,7 +11,7 @@ import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { simulateTimeElapseInDays, toErc20, erc20ToNumber } from "../../utils/Helpers"
+import { simulateTimeElapseInDays, to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { BigNumber } from "ethers";
 import * as constants from '../../utils/Constants';
 import { provideLiquidity_WETH_BDEUR } from "../helpers/swaps"
@@ -22,9 +22,9 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-const bdxFirstYearSchedule = toErc20(21000000).mul(20).div(100);
+const bdxFirstYearSchedule = to_d18(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
-const totalRewardsSupply = toErc20(21e6/2);
+const totalRewardsSupply = to_d18(21e6/2);
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
@@ -92,13 +92,13 @@ describe("StakingRewards", () => {
       await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
       await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
   
-      await stakingRewards_BDEUR_WETH.connect(testUser1).stake(toErc20(depositedLPTokenUser1));
-      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
+      await stakingRewards_BDEUR_WETH.connect(testUser1).stake(to_d18(depositedLPTokenUser1));
+      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(to_d18(depositedLPTokenUser2));
   
       const days = 360;
       await simulateTimeElapseInDays(days)
   
-      // await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1));
+      // await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(to_d_18(depositedLPTokenUser1));
       await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
   
       const secondsSinceLastReward = days*24*60*60;
@@ -115,10 +115,10 @@ describe("StakingRewards", () => {
 
       console.log("Expected: "+ expectedReward);
       console.log("Actual:   "+ bdxReward);
-      console.log("Diff:     "+ erc20ToNumber(diff));
+      console.log("Diff:     "+ d18_ToNumber(diff));
 
       expect(diff).to.gte(0);
-      expect(diff).to.lt(toErc20(1));
+      expect(diff).to.lt(to_d18(1));
     });
 
     it("should reward at least 99% of rewards supply", async () => {
@@ -148,8 +148,8 @@ describe("StakingRewards", () => {
     });
 
     it("should be able to withdraw LP tokens", async () => {
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(toErc20(depositedLPTokenUser1))).wait();
-      await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(toErc20(depositedLPTokenUser2))).wait();
+      await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(to_d18(depositedLPTokenUser1))).wait();
+      await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(to_d18(depositedLPTokenUser2))).wait();
     });
 
     it("should not be able to withdraw LP tokens when balance is empty", async () => {
@@ -178,8 +178,8 @@ describe("StakingRewards", () => {
       await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
       await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
 
-      await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(toErc20(depositedLPTokenUser1), user1YearsLocked);
-      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(toErc20(depositedLPTokenUser2));
+      await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(to_d18(depositedLPTokenUser1), user1YearsLocked);
+      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(to_d18(depositedLPTokenUser2));
 
       const days = 360;
       await simulateTimeElapseInDays(days)
@@ -200,10 +200,10 @@ describe("StakingRewards", () => {
 
       console.log("Expected: "+ expectedReward);
       console.log("Actual:   "+ bdxReward);
-      console.log("Diff:     "+ erc20ToNumber(diff));
+      console.log("Diff:     "+ d18_ToNumber(diff));
 
       expect(diff).to.gte(0);
-      expect(diff).to.lt(toErc20(1));
+      expect(diff).to.lt(to_d18(1));
     });
 
     it("should reward at least 99% of rewards supply", async () => {

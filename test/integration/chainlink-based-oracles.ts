@@ -2,6 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { ChainlinkBasedCryptoFiatFeed } from '../../typechain/ChainlinkBasedCryptoFiatFeed';
+import { BtcToEthOracle } from '../../typechain/BtcToEthOracle';
 import cap from "chai-as-promised";
 
 import { bigNumberToDecimal } from "../../utils/Helpers";
@@ -31,5 +32,20 @@ describe("Chainlink besed Oracles", () => {
 
         expect(priceDecimal).to.be.gt(1000);
         expect(priceDecimal).to.be.lt(5000);
+    })
+
+    it("should get btc/eth price", async () => {
+        const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+        const btcToEthOracle = await hre.ethers.getContract(
+            'BtcToEthOracle', 
+            ownerUser) as unknown as BtcToEthOracle;
+
+        const price = await btcToEthOracle.getPrice_1e12();
+
+        const priceDecimal = bigNumberToDecimal(price, 12);
+
+        console.log("BTC/ETH price: " + priceDecimal);
+
+        expect(priceDecimal).to.be.closeTo(20, 10);
     })
 })

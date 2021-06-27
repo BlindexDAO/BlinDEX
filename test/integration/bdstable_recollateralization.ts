@@ -3,12 +3,12 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { diffPct, simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/Helpers";
-import { toErc20, erc20ToNumber, numberToBigNumberFixed, bigNumberToDecimal } from "../../utils/Helpers"
+import { to_d18 as to_d18, d18_ToNumber, numberToBigNumberFixed, bigNumberToDecimal } from "../../utils/Helpers"
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
-import { getBdEur, getBdx, getWeth, getBdEurPool } from "../helpers/common";
-import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_WETH_BDEUR } from "../helpers/swaps";
+import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, swapEthForWbtc } from "../helpers/common";
+import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_WETH_BDEUR, provideLiquidity_WBTC_BDEUR } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
 import { updateWethPair } from "../helpers/swaps";
 import { BigNumber } from "ethers";
@@ -20,7 +20,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-async function mintInitalBdx_MoveCrTo0_7(user: SignerWithAddress, wethToLiquidity: number, bdEurTotal: number, ethInBdxPrice: number) {
+async function mintInitalBdx_MoveCrTo0_7(user: SignerWithAddress, wethToLiquidity: number, bdEurWeth: number, wbtcToLiquidity: number, bdEurWbtc: number, ethInBdxPrice: number) {
     const bdx = await getBdx(hre);
     const weth = await getWeth(hre);
     const bdEur = await getBdEur(hre);
@@ -28,12 +28,16 @@ async function mintInitalBdx_MoveCrTo0_7(user: SignerWithAddress, wethToLiquidit
     // set step to 1 to get CR = 0 after first refresh
     await bdEur.setBdstable_step_d12(numberToBigNumberFixed(1, 12).mul(3).div(10));
 
-    await weth.connect(user).deposit({ value: toErc20(10000) });
-    await bdx.mint(user.address, toErc20(1000000));      
+    await weth.connect(user).deposit({ value: to_d18(10000) });
+    await bdx.mint(user.address, to_d18(1000000));      
 
     // liquidity provided by another user!
     const liquidityProvider = await hre.ethers.getNamedSigner('TEST1');
-    await provideLiquidity_WETH_BDEUR(hre, wethToLiquidity, bdEurTotal, liquidityProvider);
+    await provideLiquidity_WETH_BDEUR(hre, wethToLiquidity, bdEurWeth, liquidityProvider);
+    
+    await swapEthForWbtc(hre, liquidityProvider, to_d18(1000));
+    await provideLiquidity_WBTC_BDEUR(hre, wbtcToLiquidity, bdEurWbtc, liquidityProvider);
+    
     await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
 
     await updateBdxOracleRefreshRatiosBdEur(hre);
@@ -48,42 +52,66 @@ describe("Recollateralization", () => {
         await hre.deployments.fixture();
     });
 
-    it.only("should recollateralize when efCR < CR", async () => {
+    it("should recollateralize when efCR < CR", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
         const bdEur = await getBdEur(hre);
-        const bdEurPool = await getBdEurPool(hre);
+        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEurWbtcPool = await getBdEurWbtcPool(hre);
 
         const ethInBdxPrice = 100;
-        const bdEurTotal = 10000;
+        const bdEurTotalInWethPool = 10000;
         const ethInBdEurPrice = 1000;
-        const wethToLiquidity = bdEurTotal/ethInBdEurPrice;
+        const bdEurTotalInWbtcPool = 200000;
+        const btcInBdEurPrice = 100000;
+        const wethToLiquidity = bdEurTotalInWethPool/ethInBdEurPrice;
+        const wbtcToLiquidity = bdEurTotalInWbtcPool/btcInBdEurPrice;
 
-        await mintInitalBdx_MoveCrTo0_7(testUser, wethToLiquidity, bdEurTotal, ethInBdxPrice);
+        const totalBdEur = bdEurTotalInWethPool + bdEurTotalInWbtcPool;
 
-        const wethPoolBalanceBeforeRecolat = await weth.balanceOf(bdEurPool.address);
+        await mintInitalBdx_MoveCrTo0_7(testUser, wethToLiquidity, bdEurTotalInWethPool, wbtcToLiquidity, bdEurTotalInWbtcPool, ethInBdxPrice);
+
+        const wethPoolBalanceBeforeRecolat = await weth.balanceOf(bdEurWethPool.address);
         const wethUserBalanceBeforeRecolat = await weth.balanceOf(testUser.address);
         const bdEurlBalanceBeforeRecolat = await bdEur.balanceOf(testUser.address);
         const bdxlBalanceBeforeRecolat = await bdx.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice();
+        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice();
+        const wbtcInEurPrice_d12 = await bdEurWbtcPool.getCollateralPrice();
         const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInEurPrice_d12).div(bdxInEurPrice_d12);
 
-        const effectviveCR = bigNumberToDecimal(toErc20(bdEurTotal).mul(1e12).div(wethInEurPrice_d12.mul(toErc20(wethToLiquidity)).div(1e12)), 12);
+        console.log("--------------------");
+        console.log("wethInEurPrice_d12: " + bigNumberToDecimal(wethInEurPrice_d12, 12));
+        console.log("wbtcInEurPrice_d12: " + bigNumberToDecimal(wbtcInEurPrice_d12, 12));
+        console.log("wbtcInEurPrice_d12: " + wbtcInEurPrice_d12);
+        console.log("wethToLiquidity: " + wethToLiquidity);
+        console.log("wbtcToLiquidity: " + wbtcToLiquidity);
+
+        const effectviveCR = bigNumberToDecimal(
+            to_d18(bdEurTotalInWbtcPool)
+                .mul(1e12)
+                .div(
+                    wethInEurPrice_d12.mul(to_d18(wethToLiquidity))
+                        .add(wbtcInEurPrice_d12.mul(to_d18(wbtcToLiquidity)))
+                .div(1e12)),
+             12);
         const targetCR = 0.7
+
+        console.log("Effective CR: " + effectviveCR);
 
         // assert test is valid in terms of real ETH price form oracle
         expect(targetCR - effectviveCR).to.be.gt(0, "If fails, ETH went very cheap and 'ethInBdEurPrice' needs to be updated");
+        // expect(targetCR - effectviveCR).to.be.gt(0, "If fails, BTC went very cheap and 'ethInBdEurPrice' needs to be updated");
 
-        const maxPossibleRecollateral_d18 = BigNumber.from(Math.round((targetCR - effectviveCR)*1e12)).mul(toErc20(bdEurTotal)).div(1e12);
+        const maxPossibleRecollateral_d18 = BigNumber.from(Math.round((targetCR - effectviveCR)*1e12)).mul(to_d18(totalBdEur)).div(1e12);
 
         // recollateralization
         const toRecollatInEur_d18 = maxPossibleRecollateral_d18.div(2);
         const toRecollatInEth_d18 = wethInEurPrice_d12.mul(toRecollatInEur_d18).div(1e12);
-        const toRecollatInEth = erc20ToNumber(toRecollatInEth_d18);
+        const toRecollatInEth = d18_ToNumber(toRecollatInEth_d18);
 
         console.log("-----------------------1");
 
@@ -92,17 +120,17 @@ describe("Recollateralization", () => {
 
         console.log("-----------------------2");
 
-        await bdEur.connect(testUser).approve(bdEurPool.address, toRecollatInEth_d18); 
-        await bdEurPool.recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await bdEur.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
+        await bdEurWethPool.recollateralizeBdStable(toRecollatInEth_d18, 1);
 
         console.log("-----------------------3");
         // asserts
     
-        const wethPoolBalanceAfterRecolat = await weth.balanceOf(bdEurPool.address);
+        const wethPoolBalanceAfterRecolat = await weth.balanceOf(bdEurWethPool.address);
         console.log("wethPoolBalanceAfterRecolat: " + wethPoolBalanceAfterRecolat);
         const wethPoolBalanceDelta_d18 = wethPoolBalanceAfterRecolat.sub(wethPoolBalanceBeforeRecolat);
         console.log("wethPoolBalanceDelta_d18: " + wethPoolBalanceDelta_d18);
-        const wethPoolBalanceDelta = erc20ToNumber(wethPoolBalanceDelta_d18);
+        const wethPoolBalanceDelta = d18_ToNumber(wethPoolBalanceDelta_d18);
         expect(wethPoolBalanceDelta).to.be.closeTo(toRecollatInEth, 0.001);
 
         const wethUserBalanceAfterRecolat = await weth.balanceOf(testUser.address);

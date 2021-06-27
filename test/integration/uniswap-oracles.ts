@@ -12,7 +12,7 @@ import {
     getPrices
 } from "../helpers/swaps"
 import { getWethPair } from "../../utils/Swaps"
-import { simulateTimeElapseInSeconds, toErc20 } from "../../utils/Helpers"
+import { simulateTimeElapseInSeconds, to_d18 } from "../../utils/Helpers"
 
 chai.use(cap);
 

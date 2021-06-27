@@ -29,6 +29,12 @@ export const WBTC_USD_CHAINLINK_FEED = <any>{
     rinkeby: "0xECe365B379E1dD183B20fc5f022230C044d51404",
     kovan: "0x6135b13325bfC4B00278B4abC5e20bbce2D6580e",
 };
+export const BTC_ETH_CHAINLINK_FEED = <any>{
+    localhost: "0xdeb288F737066589598e9214E782fa5A8eD689e8",
+    mainnetFork: "0xdeb288F737066589598e9214E782fa5A8eD689e8",
+    rinkeby: "0x2431452A0010a43878bF198e170F6319Af6d27F4",
+    kovan: "0xF7904a295A029a3aBDFFB6F12755974a958C7C25",
+};
 
 export const uniswapFactoryAddress = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'

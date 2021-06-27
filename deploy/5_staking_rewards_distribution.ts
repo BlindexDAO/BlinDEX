@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
-import { toErc20 } from '../utils/Helpers'
+import { to_d18 } from '../utils/Helpers'
 import { Timelock } from '../typechain/TimeLock';
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
@@ -14,7 +14,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 
   await bdx.connect(treasury).transfer(
     stakingRewardsDistribution.address,
-    toErc20(21).mul(1e6).div(2));
+    to_d18(21).mul(1e6).div(2));
 
   console.log("Fed Staking Rewards Distribution");
 }
