@@ -52,7 +52,7 @@ describe("Recollateralization", () => {
         await hre.deployments.fixture();
     });
 
-    it("should recollateralize when efCR < CR", async () => {
+    it.only("should recollateralize when efCR < CR", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
         const bdx = await getBdx(hre);
@@ -65,7 +65,7 @@ describe("Recollateralization", () => {
         const bdEurTotalInWethPool = 10000;
         const ethInBdEurPrice = 1000;
         const bdEurTotalInWbtcPool = 200000;
-        const btcInBdEurPrice = 100000;
+        const btcInBdEurPrice = 20000;
         const wethToLiquidity = bdEurTotalInWethPool/ethInBdEurPrice;
         const wbtcToLiquidity = bdEurTotalInWbtcPool/btcInBdEurPrice;
 
@@ -86,7 +86,6 @@ describe("Recollateralization", () => {
         console.log("--------------------");
         console.log("wethInEurPrice_d12: " + bigNumberToDecimal(wethInEurPrice_d12, 12));
         console.log("wbtcInEurPrice_d12: " + bigNumberToDecimal(wbtcInEurPrice_d12, 12));
-        console.log("wbtcInEurPrice_d12: " + wbtcInEurPrice_d12);
         console.log("wethToLiquidity: " + wethToLiquidity);
         console.log("wbtcToLiquidity: " + wbtcToLiquidity);
 
@@ -119,9 +118,10 @@ describe("Recollateralization", () => {
         await updateWethPair(hre, "BDXShares");
 
         console.log("-----------------------2");
+        console.log("weth bal: " + await weth.balanceOf(testUser.address));
 
-        await bdEur.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
-        await bdEurWethPool.recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await weth.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
+        await bdEurWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
 
         console.log("-----------------------3");
         // asserts

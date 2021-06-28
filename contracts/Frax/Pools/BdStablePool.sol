@@ -163,19 +163,12 @@ contract BdStablePool {
         if(collateralPricePaused == true){
             return pausedPrice;
         } else {
-            uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
+            uint256 eth_fiat_price = BDSTABLE.weth_fiat_price(); //d12
             uint256 collat_eth_price =
                 collatWEthOracle.consult(
                     weth_address,
-                    PRICE_PRECISION * (10**missing_decimals)
+                    PRICE_PRECISION //* (10**missing_decimals) todo ag?
                 );
-
-            console.log("--------------------------");
-            console.log(PRICE_PRECISION);
-            console.log(missing_decimals);
-            console.log(eth_fiat_price);
-            console.log(collat_eth_price);
-            console.log(eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price));
 
             return eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price);
         }
@@ -191,7 +184,7 @@ contract BdStablePool {
         uint256 eth_collat_price =
             collatWEthOracle.consult(
                 weth_address,
-                (PRICE_PRECISION * (10**missing_decimals))
+                PRICE_PRECISION // * (10**missing_decimals)) todo ag
             );
 
         uint256 collat_usd_price =
@@ -465,11 +458,9 @@ contract BdStablePool {
             bdStable_total_supply,
             global_collateral_ratio
         ); 
-
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
-
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
         collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
         BDX.pool_mint(msg.sender, bdx_paid_back);

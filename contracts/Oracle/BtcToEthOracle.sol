@@ -29,7 +29,8 @@ contract BtcToEthOracle is ICryptoPairOracle {
     function consult(address token, uint amountIn) external view override returns (uint256) {     
         //require(token == WBTC); // todo lw
 
-        return getPrice_1e12().mul(amountIn).div(1e12);
+        // return getPrice_1e12().mul(amountIn).div(1e12);
+        return amountIn.mul(1e12).div(getPrice_1e12());
     }
 
     function getLatestPrice(AggregatorV3Interface feed) internal view returns (uint256) {
