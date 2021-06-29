@@ -82,7 +82,7 @@ contract BdStablePool {
     // Stores price of the collateral, if price is paused
     uint256 public pausedPrice = 0;
 
-    // Bonus rate on FXS minted during recollateralizeFRAX(); 12 decimals of precision, set to 0.75% on genesis
+    // Bonus rate on BDX minted during recollateralizeFRAX(); 12 decimals of precision, set to 0.75% on genesis
     uint256 public bonus_rate = 7500000000; // d12
 
     // Number of blocks to wait before being able to collectRedemption()
@@ -461,6 +461,7 @@ contract BdStablePool {
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
+
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
         collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
         BDX.pool_mint(msg.sender, bdx_paid_back);

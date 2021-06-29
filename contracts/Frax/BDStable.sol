@@ -153,12 +153,13 @@ contract BDStable is ERC20Custom {
         // Will be in 1e12 format
         return weth_fiat_price.mul(PRICE_PRECISION).div(price_vs_weth);
     }
-    // Returns X BDSTABLE = 1 <fiat>
+    
+    // Returns BDSTABLE / <fiat>
     function bdstable_price_d12() public view returns (uint256) {
         return oracle_price(PriceChoice.BDSTABLE);
     }
 
-    // Returns X BDX = 1 <fiat>
+    // Returns BDX / <fiat>
     function BDX_price_d12()  public view returns (uint256) {
         return oracle_price(PriceChoice.BDX);
     }

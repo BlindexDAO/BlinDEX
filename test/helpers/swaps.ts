@@ -116,7 +116,8 @@ export async function provideLiquidity_WETH_BDEUR(
 export async function provideLiquidity_BDEUR_WETH_userTest1(hre: HardhatRuntimeEnvironment, eurToEth: number){
   const userLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
 
-  await provideLiquidity_WETH_BDEUR(hre, 100, 100*eurToEth, userLiquidityProvider);
+  const amountWeth = 10;
+  await provideLiquidity_WETH_BDEUR(hre, amountWeth, amountWeth*eurToEth, userLiquidityProvider);
 }
 
 export async function provideLiquidity_BDX_WETH_userTest1(hre: HardhatRuntimeEnvironment, bdxToEth: number){

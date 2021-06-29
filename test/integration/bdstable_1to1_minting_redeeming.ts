@@ -9,7 +9,7 @@ import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { WETH } from "../../typechain/WETH";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { updateBdxOracleRefreshRatiosBdEur } from "../helpers/bdStable";
+import { updateBdxOracleRefreshRatiosBdEur, perform1To1Minting } from "../helpers/bdStable";
 import { getBdEur, getOnChainEthEurPrice } from "../helpers/common";
 import { provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 
@@ -17,21 +17,6 @@ chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
-
-async function performMinting(testUser: SignerWithAddress, collateralAmount: number){
-    const [ ownerUser ] = await hre.ethers.getSigners();
-
-    const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
-
-    await updateBdxOracleRefreshRatiosBdEur(hre);
-
-    const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
-    await weth.connect(testUser).deposit({ value: to_d18(1000) });
-
-    await weth.connect(testUser).approve(bdEurPool.address, to_d18(collateralAmount));
-    
-    await bdEurPool.connect(testUser).mint1t1BD((to_d18(collateralAmount)), (to_d18(1)));
-}
 
 describe("BDStable 1to1", () => {
 
@@ -48,7 +33,7 @@ describe("BDStable 1to1", () => {
         const collateralAmount = 10;
 
         await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice);
-        await performMinting(testUser, collateralAmount);
+        await perform1To1Minting(hre, testUser, collateralAmount);
 
         const expected = ethInEurPrice_1e12.mul(to_d18(collateralAmount)).div(1e12);
         const actual = await bdEur.balanceOf(testUser.address);
@@ -73,7 +58,7 @@ describe("BDStable 1to1", () => {
         await updateBdxOracleRefreshRatiosBdEur(hre);
 
         await expect((async () => {
-            await (await performMinting(testUser, collateralAmount))
+            await (await perform1To1Minting(hre, testUser, collateralAmount))
         })()).to.be.rejectedWith("revert Collateral ratio must be >= 1");
     });
 
@@ -88,7 +73,7 @@ describe("BDStable 1to1", () => {
         const collateralAmount = 10;
 
         await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice);
-        await performMinting(testUser, collateralAmount);
+        await perform1To1Minting(hre, testUser, collateralAmount);
 
         const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
         
@@ -129,7 +114,7 @@ describe("BDStable 1to1", () => {
         const collateralAmount = 10;
 
         await provideLiquidity_BDEUR_WETH_userTest1(hre, ethInEurPrice);
-        await performMinting(testUser, collateralAmount);
+        await perform1To1Minting(hre, testUser, collateralAmount);
         
         await swapWethFor(hre, "BDEUR", collateralAmount * 0.5);
 
