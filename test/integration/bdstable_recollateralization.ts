@@ -52,7 +52,7 @@ describe("Recollateralization", () => {
         await hre.deployments.fixture();
     });
 
-    it.only("should recollateralize when efCR < CR", async () => {
+    it("should recollateralize when efCR < CR", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
         const bdx = await getBdx(hre);
@@ -73,11 +73,9 @@ describe("Recollateralization", () => {
 
         await mintInitalBdx_MoveCrTo0_7(testUser, wethToLiquidity, bdEurTotalInWethPool, wbtcToLiquidity, bdEurTotalInWbtcPool, ethInBdxPrice);
 
-        const wethPoolBalanceBeforeRecolat = await weth.balanceOf(bdEurWethPool.address);
-        const wethUserBalanceBeforeRecolat = await weth.balanceOf(testUser.address);
-        const bdEurBalanceBeforeRecolat = await bdEur.balanceOf(testUser.address);
+        const wethPoolBalanceBeforeRecolat_d18 = await weth.balanceOf(bdEurWethPool.address);
+        const wethUserBalanceBeforeRecolat_d18 = await weth.balanceOf(testUser.address);
         
-
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
         const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice();
         const wbtcInEurPrice_d12 = await bdEurWbtcPool.getCollateralPrice();
@@ -122,13 +120,13 @@ describe("Recollateralization", () => {
         // asserts
     
         const wethPoolBalanceAfterRecolat = await weth.balanceOf(bdEurWethPool.address);
-        console.log("wethPoolBalanceBeforeRecolat: " + wethPoolBalanceBeforeRecolat);
+        console.log("wethPoolBalanceBeforeRecolat: " + wethPoolBalanceBeforeRecolat_d18);
         console.log("wethPoolBalanceAfterRecolat:  " + wethPoolBalanceAfterRecolat);
-        const wethPoolBalanceDelta_d18 = wethPoolBalanceAfterRecolat.sub(wethPoolBalanceBeforeRecolat);
+        const wethPoolBalanceDelta_d18 = wethPoolBalanceAfterRecolat.sub(wethPoolBalanceBeforeRecolat_d18);
         console.log("wethPoolBalanceDelta_d18:     " + wethPoolBalanceDelta_d18);
         const wethPoolBalanceDelta = d18_ToNumber(wethPoolBalanceDelta_d18);
         expect(wethPoolBalanceDelta).to.be.closeTo(toRecollatInEth, 0.001);
-        
+
         const expectedBdxBack_d18 = toRecollatInEur_d18.mul(1e12).div(bdxInEurPrice_d12).mul(10075).div(10000); // +0.75% reward
         const expectedBdxBack = d18_ToNumber(expectedBdxBack_d18);
         
@@ -137,24 +135,10 @@ describe("Recollateralization", () => {
         console.log(`Expected BDX reward: ${expectedBdxBack}`);
         expect(actualBdxReward).to.be.closeTo(expectedBdxBack, 0.1);
 
-        // const wethBalanceAfterMinging = await weth.balanceOf(testUser.address);
-        // const actualWethCost = wethBalanceBeforeMinting.sub(wethBalanceAfterMinging);
-        // const diffPctWethBalance = diffPct(actualWethCost, wethAmountForMintigBdEur_d18);
-        // console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
-        // expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
-
-        // const bdEurFromBdx = bdxAmountForMintigBdEur_d18.mul(bdxInEurPrice_d12).div(1e12);
-        // const bdEurFromWeth = wethAmountForMintigBdEur_d18.mul(wethInEurPrice_d12).div(1e12);
-        // const expectedBdEurDiff = bdEurFromBdx.add(bdEurFromWeth);
-        // const bdEurBalanceAfterMinting = await bdEur.balanceOf(testUser.address);
-        // const diffPctBdEur = diffPct(bdEurBalanceAfterMinting.sub(bdEurlBalanceBeforeMinting), expectedBdEurDiff);
-        // console.log(`Diff BdEur balance: ${diffPctBdEur}%`);
-        // expect(diffPctBdEur).to.be.closeTo(0, 0.1);
-
-        expect(1).to.be.eq(2, "safety fail");
-    });
-
-    it("should NOT recollateralize when efCR > CR", async () => {
-        expect(1).to.be.eq(2);
+        const wethUserBalanceAfterRecolat_d18 = await weth.balanceOf(testUser.address);
+        const actualWethCost = wethUserBalanceBeforeRecolat_d18.sub(wethUserBalanceAfterRecolat_d18);
+        const diffPctWethBalance = diffPct(actualWethCost, toRecollatInEth_d18);
+        console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
+        expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
     });
 })
