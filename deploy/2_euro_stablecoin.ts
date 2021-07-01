@@ -3,6 +3,7 @@ import { BDXShares } from '../typechain/BDXShares';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
+import { to_d18 } from '../utils/Helpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
@@ -14,10 +15,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const bdx = await hre.ethers.getContract('BDXShares', deployer) as unknown as BDXShares;
 
+
   const bdeurDeployment = await hre.deployments.deploy('BDEUR', {
     from: deployer,
     contract: 'BDStable',
-    args: ['BlindexEuro', 'BDEUR', 'EURO', deployer, bdx.address]
+    args: ['BlindexEuro', 'BDEUR', 'EURO', deployer, bdx.address, constants.initalBdStableToOwner_d18]
   });
 
   console.log("BDEUR deployed to:", bdeurDeployment.address);
@@ -33,6 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   console.log("BDEUR WETH Pool deployed to:", bdeur_weth_BdStablePoolDeployment.address);
 
+  
   const bdeur_wbtc_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WBTC_POOL', {
     from: deployer,
     contract: 'BdStablePool',

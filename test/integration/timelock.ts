@@ -2,7 +2,8 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { simulateTimeElapseInDays, simulateTimeElapseInSeconds, to_d18 } from "../../utils/Helpers"
+import { to_d18 } from "../../utils/Helpers"
+import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
 import { Timelock } from "../../typechain/TimeLock";
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import TimeTraveler from "../../utils/TimeTraveler";

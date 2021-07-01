@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { simulateTimeElapseInSeconds, to_d18, d18_ToNumber } from "../../utils/Helpers"
+import {  to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
 import { getBdEur, getBdx } from "./common"
 import { updateWethPair } from "./swaps";
 import * as constants from '../../utils/Constants'

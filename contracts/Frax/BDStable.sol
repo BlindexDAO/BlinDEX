@@ -100,7 +100,8 @@ contract BDStable is ERC20Custom {
         string memory _symbol,
         string memory _fiat,
         address _owner_address,
-        address _bdx_address
+        address _bdx_address,
+        uint256 _initalBdStableToOwner_d18
     ) public {
         name = _name;
         symbol = _symbol;
@@ -113,6 +114,10 @@ contract BDStable is ERC20Custom {
         price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
         price_band = uint256(1e12).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
+
+        if(_initalBdStableToOwner_d18 > 0) {
+            _mint(_owner_address, _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps
+        }
     }
 
     /* ========== VIEWS ========== */

@@ -11,7 +11,8 @@ import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { simulateTimeElapseInDays, to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from "ethers";
 import * as constants from '../../utils/Constants';
 import { provideLiquidity_WETH_BDEUR } from "../helpers/swaps"

@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/Helpers";
+import { diffPct } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, numberToBigNumberFixed, bigNumberToDecimal } from "../../utils/Helpers"
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
@@ -145,6 +145,6 @@ describe("Recollateralization", () => {
 
     it.only("tmp", async () => {
         const user = await hre.ethers.getNamedSigner('TEST1');
-        await setUpFunctionalSystem(hre, user);
+        await setUpFunctionalSystem(hre);
     })
 })

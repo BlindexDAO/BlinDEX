@@ -431,14 +431,6 @@ contract BdStablePool {
         }
     }
 
-    // todo ag replace with 1to1, fractional and algorythmic variants form frax
-    // We separate out the 1t1, fractional and algorithmic minting functions for gas efficiency
-    function mintBdStable(uint256 collateral_amount) external notMintPaused {
-        // collateral_token.transferFrom(msg.sender, address(this), collateral_amount); // todo lr
-        uint256 bdstable_amount = collateral_amount;
-        BDSTABLE.pool_mint(msg.sender, bdstable_amount);
-    }
-
     // When the protocol is recollateralizing, we need to give a discount of FXS to hit the new CR target
     // Thus, if the target collateral ratio is higher than the actual value of collateral, minters get FXS for adding collateral
     // This function simply rewards anyone that sends collateral to a pool with the same amount of FXS + the bonus rate

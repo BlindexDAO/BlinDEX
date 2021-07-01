@@ -1,3 +1,5 @@
+import { to_d18 } from "./Helpers";
+
 export const wETH_address = <any>{
     localhost: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     mainnetFork: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
@@ -40,3 +42,4 @@ export const uniswapFactoryAddress = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
 export const numberOfLPs = 11;
+export const initalBdStableToOwner_d18 = to_d18(10000); // todo ag remember to recollaterize
