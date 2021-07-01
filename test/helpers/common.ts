@@ -7,12 +7,18 @@ import { BDXShares } from "../../typechain/BDXShares";
 import { ChainlinkBasedCryptoFiatFeed } from "../../typechain/ChainlinkBasedCryptoFiatFeed";
 import { ERC20 } from "../../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
+import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { WETH } from "../../typechain/WETH";
 import * as constants from '../../utils/Constants'
 
 export async function getBdEur(hre: HardhatRuntimeEnvironment){
   const [ ownerUser ] = await hre.ethers.getSigners();
   return await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
+}
+
+export async function getUniswapRouter(hre: HardhatRuntimeEnvironment){
+  const [ ownerUser ] = await hre.ethers.getSigners();
+  return await hre.ethers.getContract('UniswapV2Router02', ownerUser) as unknown as UniswapV2Router02;
 }
 
 export async function getBdEurWethPool(hre: HardhatRuntimeEnvironment){
@@ -32,7 +38,7 @@ export async function getBdx(hre: HardhatRuntimeEnvironment){
 
 export async function getWeth(hre: HardhatRuntimeEnvironment){
   const [ ownerUser ] = await hre.ethers.getSigners();
-  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
+  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as ERC20;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment){

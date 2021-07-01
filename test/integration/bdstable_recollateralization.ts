@@ -8,6 +8,7 @@ import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle, perform1To1Minting as performBdEur1To1Minting } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, swapEthForWbtc } from "../helpers/common";
+import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_WETH_BDEUR, provideLiquidity_WBTC_BDEUR, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
 import { updateWethPair } from "../helpers/swaps";
@@ -141,4 +142,9 @@ describe("Recollateralization", () => {
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
         expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
     });
+
+    it.only("tmp", async () => {
+        const user = await hre.ethers.getNamedSigner('TEST1');
+        await setUpFunctionalSystem(hre, user);
+    })
 })
