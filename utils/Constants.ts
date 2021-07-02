@@ -42,4 +42,10 @@ export const uniswapFactoryAddress = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
 export const numberOfLPs = 11;
-export const initalBdStableToOwner_d18 = to_d18(10000); // todo ag remember to recollaterize
+
+export const initalBdStableToOwner_d18 = <any>{ // todo ag remember to recollaterize
+    localhost: to_d18(1000000000),
+    mainnetFork: to_d18(1000000000),
+    rinkeby: to_d18(10000),
+    kovan: to_d18(10000)
+};

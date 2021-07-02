@@ -35,10 +35,11 @@ async function mintInitalBdx_MoveCrTo0_7(user: SignerWithAddress, wethToLiquidit
     // liquidity provided by another user!
     const liquidityProvider = await hre.ethers.getNamedSigner('TEST1');
     await provideLiquidity_WETH_BDEUR(hre, wethToLiquidity, bdEurWeth, liquidityProvider);
-    
+
     await swapEthForWbtc(hre, liquidityProvider, to_d18(1000));
+
     await provideLiquidity_WBTC_BDEUR(hre, wbtcToLiquidity, bdEurWbtc, liquidityProvider);
-    
+
     await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
 
     await updateBdxOracleRefreshRatiosBdEur(hre);
@@ -63,9 +64,9 @@ describe("Recollateralization", () => {
         const bdEurWbtcPool = await getBdEurWbtcPool(hre);
 
         const ethInBdxPrice = 100;
-        const bdEurTotalInWethPool = 10000;
+        const bdEurTotalInWethPool = 1000;
         const ethInBdEurPrice = 1000;
-        const bdEurTotalInWbtcPool = 200000;
+        const bdEurTotalInWbtcPool = 2000;
         const btcInBdEurPrice = 20000;
         const wethToLiquidity = bdEurTotalInWethPool/ethInBdEurPrice;
         const wbtcToLiquidity = bdEurTotalInWbtcPool/btcInBdEurPrice;
@@ -114,8 +115,10 @@ describe("Recollateralization", () => {
         await updateWethPair(hre, "BDXShares");
 
         const bdxBalanceBeforeRecolat = await bdx.balanceOf(testUser.address);
+
         await weth.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
         await bdEurWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+
         const bdxBalanceAfterRecolat = await bdx.balanceOf(testUser.address);
 
         // asserts
@@ -143,8 +146,8 @@ describe("Recollateralization", () => {
         expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
     });
 
-    it.only("tmp", async () => {
+    it("tmp", async () => {
         const user = await hre.ethers.getNamedSigner('TEST1');
-        await setUpFunctionalSystem(hre);
+        // await setUpFunctionalSystem(hre);
     })
 })

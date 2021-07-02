@@ -15,11 +15,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const bdx = await hre.ethers.getContract('BDXShares', deployer) as unknown as BDXShares;
 
-
   const bdeurDeployment = await hre.deployments.deploy('BDEUR', {
     from: deployer,
     contract: 'BDStable',
-    args: ['BlindexEuro', 'BDEUR', 'EURO', deployer, bdx.address, constants.initalBdStableToOwner_d18]
+    args: ['BlindexEuro', 'BDEUR', 'EURO', deployer, bdx.address, constants.initalBdStableToOwner_d18[hre.network.name]]
   });
 
   console.log("BDEUR deployed to:", bdeurDeployment.address);

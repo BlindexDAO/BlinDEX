@@ -46,7 +46,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment) {
     provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).div(initialWbtcBdxPrice), to_d18(1000));
 
     // recollateralize missing value for initial BdStable for the owner
-    
+    await bdEurPool.recollateralizeBdStable(constants.initalBdStableToOwner_d18[hre.network.name].div(initialWethBdEurPrice), to_d18(1))
 }
 
 async function provideLiquidity(

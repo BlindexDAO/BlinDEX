@@ -67,17 +67,10 @@ export async function provideLiquidity_WETH_BDEUR(
   amountBdEur: number,
   user: SignerWithAddress)
 {   
-  const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+  const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
   const bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
 
-  // minting from BDEUR_WBTC_POOL in order to not modifty the state of the tested pool (BDEUR_WETH_POOL)
-  const bdStablePool = await hre.ethers.getContract('BDEUR_WBTC_POOL', ownerUser) as unknown as BdStablePool;
-
-  // todo ag mock function, should be replaced in the future
-  // extracts collateral form user's account
-  // assings bdeur to the user
-  // probably use mint1to1
-  await bdStablePool.connect(user).mintBdStable(to_d18(amountBdEur));
+  bdEur.transfer(user.address, to_d18(amountBdEur));
 
   const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
   // mint WETH fromETH
@@ -181,17 +174,10 @@ export async function provideLiquidity_WBTC_BDEUR(
   amountBdEur: number,
   user: SignerWithAddress)
 {   
-  const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+  const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
   const bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
 
-  // minting from BDEUR_WETH_POOL in order to not modifty the state of the tested pool (BDEUR_WBTC_POOL)
-  const bdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
-
-  // todo ag mock function, should be replaced in the future
-  // extracts collateral form user's account
-  // assings bdeur to the user
-  // probably use mint1to1
-  await bdStablePool.connect(user).mintBdStable(to_d18(amountBdEur));
+  bdEur.transfer(user.address, to_d18(amountBdEur));
 
   const wbtc = await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], ownerUser) as unknown as ERC20;
 

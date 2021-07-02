@@ -9,7 +9,9 @@ export function to_d8(n: number): BigNumber {
 }
 
 export function numberToBigNumberFixed(n: number, decimals: number): BigNumber {
-    return BigNumber.from(10).pow(decimals).mul(n);
+    const precision = 1e6;
+    n = Math.round(n*precision)
+    return BigNumber.from(10).pow(decimals).mul(n).div(precision);
 }
   
 export function d18_ToNumber(n: BigNumber): number {
