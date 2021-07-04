@@ -26,7 +26,7 @@ contract BtcToEthOracle is ICryptoPairOracle {
             .div(uint256(10)**feed.decimals());
     }
 
-    function consult(address token, uint amountIn) external view override returns (uint256) {     
+    function consult(address token, uint256 amountIn) external view override returns (uint256) {     
         //require(token == WBTC); // todo lw
 
         // return getPrice_1e12().mul(amountIn).div(1e12);
@@ -42,5 +42,11 @@ contract BtcToEthOracle is ICryptoPairOracle {
             
         ) = feed.latestRoundData();
         return uint256(price);
+    }
+
+    function updateOracle() public override {}
+
+    function shouldUpdateOracle() public view override returns (bool) {
+        return false;
     }
 }

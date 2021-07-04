@@ -158,6 +158,13 @@ contract BdStablePool {
 
     /* ========== PUBLIC FUNCTIONS ========== */
 
+    function updateOraclesIfNeeded() public {
+        BDSTABLE.updateOraclesIfNeeded();
+        if(collatWEthOracle.shouldUpdateOracle()){
+            collatWEthOracle.updateOracle();
+        }
+    }
+
     // Returns the price of the pool collateral in fiat
     function getCollateralPrice() public view returns (uint256) {
         if(collateralPricePaused == true){
@@ -206,6 +213,8 @@ contract BdStablePool {
         external
         notMintPaused
     {
+        updateOraclesIfNeeded();
+
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
 
@@ -241,6 +250,8 @@ contract BdStablePool {
         external
         notRedeemPaused
     {
+        updateOraclesIfNeeded();
+
         require(
             BDSTABLE.global_collateral_ratio() == COLLATERAL_RATIO_MAX,
             "Collateral ratio must be == 1"
@@ -284,6 +295,8 @@ contract BdStablePool {
 
     // 0% collateral-backed
     function mintAlgorithmicBdStable(uint256 bdx_amount_d18, uint256 bdStable_out_min) external notMintPaused {
+        updateOraclesIfNeeded();
+
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         require(BDSTABLE.global_collateral_ratio() == 0, "Collateral ratio must be 0");
 
@@ -298,6 +311,8 @@ contract BdStablePool {
 
     // Redeem BDSTABLE for BDX. 0% collateral-backed
     function redeemAlgorithmicBdStable(uint256 bdStable_amount, uint256 bdx_out_min) external notRedeemPaused {
+        updateOraclesIfNeeded();
+
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
 
@@ -322,6 +337,8 @@ contract BdStablePool {
     // Will fail if fully collateralized or fully algorithmic
     // > 0% and < 100% collateral-backed
     function mintFractionalBdStable(uint256 collateral_amount, uint256 bdx_amount, uint256 bdStable_out_min) external notMintPaused {
+        updateOraclesIfNeeded();
+
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
 
@@ -358,6 +375,8 @@ contract BdStablePool {
     // Will fail if fully collateralized or algorithmic
     // Redeem BDSTABLE for collateral and FXS. > 0% and < 100% collateral-backed
     function redeemFractionalBdStable(uint256 BdStable_amount, uint256 BDX_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
+        updateOraclesIfNeeded();
+
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
 
@@ -436,6 +455,8 @@ contract BdStablePool {
     // This function simply rewards anyone that sends collateral to a pool with the same amount of FXS + the bonus rate
     // Anyone can call this function to recollateralize the protocol and take the extra FXS value from the bonus rate as an arb opportunity
     function recollateralizeBdStable(uint256 collateral_amount, uint256 BDX_out_min) external {
+        updateOraclesIfNeeded();
+
         require(recollateralizePaused == false, "Recollateralize is paused");
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
@@ -454,9 +475,21 @@ contract BdStablePool {
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
 
+        console.log("-------------------1");
+        console.log(bdx_price);
+        console.log(bdx_paid_back);
+        console.log(missing_decimals);
+        console.log(collateral_amount);
+        console.log(collateral_units_precision);
+        console.log(collateral_units);
+        console.log(amount_to_recollat);
+
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
+        console.log("-------------------2");
         collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
+        console.log("-------------------3");
         BDX.pool_mint(msg.sender, bdx_paid_back);
+        console.log("-------------------4");
     }
 
     // todo ag

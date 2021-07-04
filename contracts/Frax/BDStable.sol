@@ -159,6 +159,20 @@ contract BDStable is ERC20Custom {
         return weth_fiat_price.mul(PRICE_PRECISION).div(price_vs_weth);
     }
     
+    function updateOraclesIfNeeded() public {
+        if(bdxWethOracle.shouldUpdateOracle()){
+            bdxWethOracle.updateOracle();
+        }
+
+        if(bdstableWethOracle.shouldUpdateOracle()){
+            bdstableWethOracle.updateOracle();
+        } 
+    }
+
+    function shouldUpdateOracles() public view returns (bool) {
+        return bdxWethOracle.shouldUpdateOracle() || bdstableWethOracle.shouldUpdateOracle(); 
+    }
+
     // Returns BDSTABLE / <fiat>
     function bdstable_price_d12() public view returns (uint256) {
         return oracle_price(PriceChoice.BDSTABLE);

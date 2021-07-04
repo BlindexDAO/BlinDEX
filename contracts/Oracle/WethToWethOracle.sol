@@ -16,8 +16,14 @@ import "hardhat/console.sol";
 contract WethToWethOracle is ICryptoPairOracle {
     
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) override external view returns (uint amountOut) {
+    function consult(address token, uint256 amountIn) override view external returns (uint amountOut) {
         //require(token == WETH) todo ag
         return amountIn;
+    }
+
+    function updateOracle() public override {}
+
+    function shouldUpdateOracle() public view override returns (bool) {
+        return false;
     }
 }

@@ -146,8 +146,7 @@ describe("Recollateralization", () => {
         expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
     });
 
-    it("tmp", async () => {
-        const user = await hre.ethers.getNamedSigner('TEST1');
-        // await setUpFunctionalSystem(hre);
+    it("tmp", async () => {        
+        await setUpFunctionalSystem(hre);
     })
 })
