@@ -3,17 +3,13 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { diffPct } from "../../utils/Helpers";
-import { to_d18, d18_ToNumber, numberToBigNumberFixed } from "../../utils/Helpers"
-import { BdStablePool } from "../../typechain/BdStablePool";
+import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
-import { getBdEur, getBdx, getWeth, getBdEurWethPool } from "../helpers/common";
-import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
-import { getOnChainEthEurPrice } from "../helpers/common";
+import { updateBdxOracleRefreshRatiosBdEur } from "../helpers/bdStable";
+import { getBdEur, getBdx, getWeth, getBdEurWethPool, getUser } from "../helpers/common";
 import { updateWethPair } from "../helpers/swaps";
-import { BigNumber } from "ethers";
-import { BDXShares } from "../../typechain/BDXShares";
-import { BDStable } from "../../typechain/BdStable";
+import { lockBdEurCrAt } from "../helpers/bdStable";
+import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 
 chai.use(cap);
 
@@ -24,9 +20,6 @@ async function performAlgorithmicMinting(testUser: SignerWithAddress, bdxAmount:
     const bdx = await getBdx(hre);
     const bdEurPool = await getBdEurWethPool(hre);
 
-    await updateBdxOracleRefreshRatiosBdEur(hre);
-    await updateWethPair(hre, "BDXShares");
-
     await bdx.connect(testUser).approve(bdEurPool.address, to_d18(bdxAmount)); 
     await bdEurPool.connect(testUser).mintAlgorithmicBdStable((to_d18(bdxAmount)), (to_d18(1)));
 }
@@ -35,35 +28,20 @@ describe("BDStable algorythmic", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
+        await setUpFunctionalSystem(hre);
     });
 
-    async function mintInitalBdx_MoveCrTo0(bdEur: BDStable, bdx: BDXShares, user: SignerWithAddress, startingBdxBalance: BigNumber) {
-        // set step to 1 to get CR = 0 after first refresh
-        await bdEur.setBdstable_step_d12(numberToBigNumberFixed(1, 12));
-
-        await bdx.mint(user.address, startingBdxBalance);
-
-        const ethInBdxPrice = 100;
-
-        // liquidity provided by another user!
-        await provideLiquidity_BDEUR_WETH_userTest1(hre, 1000);
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
-
-        await updateBdxOracleRefreshRatiosBdEur(hre);
-        await updateBdxOracle(hre);
-    }
-
     it("should mint bdeur when CR = 0", async () => {
-        const testUser = await hre.ethers.getNamedSigner('TEST2');
+        const testUser = await getUser(hre);
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
         const bdEur = await getBdEur(hre);
-        const bdEurPool = await getBdEurWethPool(hre);
 
-        const bdxBalanceBeforeMintingWithCR0 = to_d18(1000000);
+        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdx to user, so user can mint
+        const bdxBalanceBeforeMinting = await bdx.balanceOf(testUser.address);
 
-        await mintInitalBdx_MoveCrTo0(bdEur, bdx, testUser, bdxBalanceBeforeMintingWithCR0);
+        await lockBdEurCrAt(hre, 0);
 
         const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
         const bdEurlBalanceBeforeMinting = await bdEur.balanceOf(testUser.address);
@@ -82,7 +60,7 @@ describe("BDStable algorythmic", () => {
         const diffPctBdEur = diffPct(bdEurBalanceAfterMinting.sub(bdEurlBalanceBeforeMinting), expectedBdEurDiff);
 
         const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
-        const actualBdxCost = bdxBalanceBeforeMintingWithCR0.sub(bdxBalanceAfterMinting);  
+        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
         
         const diffPctBdxCost = diffPct(actualBdxCost, expectedBdxCost);
         const actualWeth = await weth.balanceOf(testUser.address);
@@ -99,59 +77,58 @@ describe("BDStable algorythmic", () => {
     });
 
     it("should redeem bdeur when CR = 0", async () => {
-        const testUser = await hre.ethers.getNamedSigner('TEST2');
+        const testUser = await getUser(hre);
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
         const bdEur = await getBdEur(hre);
         const bdEurPool = await getBdEurWethPool(hre);
 
-        await weth.connect(testUser).approve(bdEurPool.address, 10);
-        await bdEurPool.connect(testUser).mint1t1BD(10, 1);
+        await lockBdEurCrAt(hre, 0);
 
-        const bdxBalanceBeforeMintingWithCR0 = to_d18(1000000);
+        await bdEur.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeur to user, so user can redeem
 
-        await mintInitalBdx_MoveCrTo0(bdEur, bdx, testUser, bdxBalanceBeforeMintingWithCR0);
-
-        const bdxAmount = 10;
-        await performAlgorithmicMinting(testUser, bdxAmount);
-
-        const bdEurBalanceBeforeRedeem = await bdEur.balanceOf(testUser.address);
-        const bdxBalanceBeforeRedeem = await bdx.balanceOf(testUser.address);
-        const wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
+        const bdEurBalanceBeforeRedeem_d18 = await bdEur.balanceOf(testUser.address);
+        const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
+        const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
         console.log("bdxInEurPrice           : " + bdxInEurPrice_d12);
-        console.log("bdEurBalanceBeforeRedeem: " + bdEurBalanceBeforeRedeem);
+        console.log("bdEurBalanceBeforeRedeem: " + bdEurBalanceBeforeRedeem_d18);
 
-        // mul 1e12 do compensate for bdxInEurPrice_d12
-        const expectedBdxDelta = d18_ToNumber(bdEurBalanceBeforeRedeem.mul(1e12).div(bdxInEurPrice_d12));
+        const bdEurToRedeem_d18 = to_d18(100);
 
-        await bdEur.connect(testUser).approve(bdEurPool.address, bdEurBalanceBeforeRedeem);
+        const expectedBdxDelta = d18_ToNumber(bdEurToRedeem_d18.mul(1e12).div(bdxInEurPrice_d12));
+        const expectedBdEurDelta = d18_ToNumber(bdEurToRedeem_d18);
 
-        await bdEurPool.connect(testUser).redeemAlgorithmicBdStable(bdEurBalanceBeforeRedeem, to_d18(1));
+        await bdEur.connect(testUser).approve(bdEurPool.address, bdEurToRedeem_d18);
+
+        await bdEurPool.connect(testUser).redeemAlgorithmicBdStable(bdEurToRedeem_d18, 1);
         await bdEurPool.connect(testUser).collectRedemption();
 
-        const bdEurBalanceAfterRedeem = await bdEur.balanceOf(testUser.address);
-        const bdxBalanceAfterRedeem = await bdx.balanceOf(testUser.address);
-        const wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
+        const bdEurBalanceAfterRedeem_d18 = await bdEur.balanceOf(testUser.address);
+        const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
+        const wethBalanceAfterRedeem_d18 = await weth.balanceOf(testUser.address);
 
-        console.log("bdEur balance before redeem: " + d18_ToNumber(bdEurBalanceBeforeRedeem));
-        console.log("bdEur balance after redeem:  " + d18_ToNumber(bdEurBalanceAfterRedeem));
+        console.log("bdEur balance before redeem: " + d18_ToNumber(bdEurBalanceBeforeRedeem_d18));
+        console.log("bdEur balance after redeem:  " + d18_ToNumber(bdEurBalanceAfterRedeem_d18));
         
-        console.log("weth balance before redeem:  " + d18_ToNumber(wethBalanceBeforeRedeem));
-        console.log("weth balance after redeem:   " + d18_ToNumber(wethBalanceAfterRedeem));
+        console.log("weth balance before redeem:  " + d18_ToNumber(wethBalanceBeforeRedeem_d18));
+        console.log("weth balance after redeem:   " + d18_ToNumber(wethBalanceAfterRedeem_d18));
 
-        const wethDelta = d18_ToNumber(wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem));
+        const wethDelta = d18_ToNumber(wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18));
         console.log("weth balance delta: " + wethDelta);
         
-        const bdxDelta = d18_ToNumber(bdxBalanceAfterRedeem.sub(bdxBalanceBeforeRedeem));
+        const bdxDelta = d18_ToNumber(bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18));
         console.log("bdx balance delta:          " + bdxDelta);
         console.log("expected bdx balance delta: " + expectedBdxDelta);
 
-        expect(bdEurBalanceBeforeRedeem).to.be.gt(0);
-        expect(bdEurBalanceAfterRedeem).to.eq(0);
+        const bdEurDelta = d18_ToNumber(bdEurBalanceBeforeRedeem_d18.sub(bdEurBalanceAfterRedeem_d18));
+        console.log("bdEur balance delta:          " + bdEurDelta);
+        console.log("expected bdEu balance delta: " + expectedBdEurDelta);
+
         expect(wethDelta).to.eq(0);
         expect(bdxDelta).to.be.closeTo(expectedBdxDelta, 0.1);
+        expect(bdEurDelta).to.be.closeTo(expectedBdEurDelta, 0.1);
     });
 })
