@@ -55,7 +55,7 @@ contract BDStable is ERC20Custom {
     ChainlinkBasedCryptoFiatFeed private weth_fiat_pricer;
     uint8 private weth_fiat_pricer_decimals;
 
-    uint256 public global_collateral_ratio; // 6 decimals of precision, e.g. 924102 = 0.924102
+    uint256 public global_collateral_ratio; // 12 decimals of precision
     
     address public weth_address;
 

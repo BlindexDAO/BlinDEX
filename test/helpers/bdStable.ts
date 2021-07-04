@@ -1,12 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import {  to_d18, d18_ToNumber } from "../../utils/Helpers"
+import {  numberToBigNumberFixed, to_d18, to_d12, bigNumberToDecimal } from "../../utils/Helpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { getBdEur, getBdx } from "./common"
-import { updateWethPair } from "./swaps";
-import * as constants from '../../utils/Constants'
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { WETH } from "../../typechain/WETH";
-import { BdStablePool } from "../../typechain/BdStablePool";
+import { getBdEur, getBdEurWbtcPool, getBdx, getWeth } from "./common"
+import { swapForWethAsDeployer, swapWethAsDeployer, updateWethPair } from "./swaps";
 
 const oneHour = 60*60;
 
@@ -25,17 +21,34 @@ export async function updateBdxOracle(hre: HardhatRuntimeEnvironment){
   await updateWethPair(hre, "BDXShares");
 }
 
-export async function perform1To1Minting(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, collateralAmount: number){
-  const [ ownerUser ] = await hre.ethers.getSigners();
+export async function lockBdEurCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+  if(targetCR < 0){
+    throw new Error("targetCR must >= 0");
+  }
 
-  const bdEurPool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
+  if(targetCR > 1){
+    throw new Error("targetCR must <= 1");
+  }
+
+  const bdEur = await getBdEur(hre);
+
+  const currentCR_d12 = await bdEur.global_collateral_ratio();
+  const currentCR = bigNumberToDecimal(currentCR_d12, 12);
+
+  let step = Math.abs(targetCR - currentCR); // step is always positive
+  let step_d12 = to_d12(step);
+
+  // set step to 1 to get CR = 0 after first refresh
+  await bdEur.setBdstable_step_d12(step_d12);
+
+  if(targetCR > currentCR){
+    await swapForWethAsDeployer(hre, "BDEUR", 500, 0.0001); // decrease bdeur price (give bdeur, take weth)
+  } else {
+    await swapWethAsDeployer(hre, "BDEUR", 0.5, 1); // increase bdeur price (give weth, take bdeur)
+  }
 
   await updateBdxOracleRefreshRatiosBdEur(hre);
-
-  const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
-  await weth.connect(user).deposit({ value: to_d18(1000) });
-
-  await weth.connect(user).approve(bdEurPool.address, to_d18(collateralAmount));
+  await updateBdxOracle(hre);
   
-  await bdEurPool.connect(user).mint1t1BD((to_d18(collateralAmount)), (to_d18(1)));
+  await bdEur.setBdstable_step_d12(0); // lock CR
 }

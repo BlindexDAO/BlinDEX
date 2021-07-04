@@ -6,7 +6,7 @@ import { diffPct } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, numberToBigNumberFixed, bigNumberToDecimal } from "../../utils/Helpers"
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle, perform1To1Minting as performBdEur1To1Minting } from "../helpers/bdStable";
+import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, swapEthForWbtc } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_WETH_BDEUR, provideLiquidity_WBTC_BDEUR, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";

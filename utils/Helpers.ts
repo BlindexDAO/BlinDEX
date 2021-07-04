@@ -4,6 +4,10 @@ export function to_d18(n: number): BigNumber {
     return numberToBigNumberFixed(n, 18)
 }
 
+export function to_d12(n: number): BigNumber {
+    return numberToBigNumberFixed(n, 12)
+}
+
 export function to_d8(n: number): BigNumber {
     return numberToBigNumberFixed(n, 8)
 }

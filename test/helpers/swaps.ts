@@ -12,6 +12,7 @@ import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import { bigNumberToDecimal } from "../../utils/Helpers";
 import { getWethPair } from "../../utils/Swaps";
+import { getDeployer, getUniswapRouter, getWeth } from "./common";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
   var pair = await getWethPair(hre, tokenName);
@@ -20,15 +21,15 @@ export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: 
 }
 
 export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: string, wEthToSwap: number) {
-  const bdStable = await hre.ethers.getContract(bdStableName) as unknown as BDStable;
+  const bdStable = await hre.ethers.getContract(bdStableName) as BDStable;
 
   const testUser = await hre.ethers.getNamedSigner('TEST2');
 
-  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as unknown as UniswapV2Router02;
+  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as UniswapV2Router02;
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");
 
-  const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], testUser.address) as unknown as WETH;
+  const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], testUser.address) as WETH;
   await weth.deposit({ value: to_d18(100) });
 
   await weth.approve(uniswapV2Router02.address, to_d18(wEthToSwap));
@@ -40,6 +41,77 @@ export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: 
       currentBlock.timestamp + 24*60*60*7);
 
   console.log("Swapped WETH for " + bdStableName);
+}
+
+export async function swapAsDeployer(
+     hre: HardhatRuntimeEnvironment, 
+     tokenInName: string,
+     tokenOutName: string, 
+     tokenInValue: number, 
+     tokenOutMinValue: number)
+  {
+  const deployer = await getDeployer(hre);
+
+  const tokenIn = await hre.ethers.getContract(tokenInName, deployer.address) as ERC20;
+  const tokenOut = await hre.ethers.getContract(tokenOutName, deployer.address) as ERC20;
+
+  await swapAsDeployerByContract(hre, tokenIn, tokenOut, tokenInValue, tokenOutMinValue);
+
+  console.log(`Swapped ${tokenInName} for ${tokenOutName}`);
+}
+
+export async function swapWethAsDeployer(
+  hre: HardhatRuntimeEnvironment, 
+  tokenOutName: string, 
+  wethInValue: number, 
+  tokenMinOutValue: number)
+{
+  const deployer = await getDeployer(hre);
+
+  const tokenIn = await getWeth(hre);
+  const tokenOut = await hre.ethers.getContract(tokenOutName, deployer.address) as ERC20;
+
+  await swapAsDeployerByContract(hre, tokenIn, tokenOut, wethInValue, tokenMinOutValue);
+
+  console.log(`Swapped WETH for ${tokenOutName}"`);
+}
+
+export async function swapForWethAsDeployer(
+  hre: HardhatRuntimeEnvironment, 
+  tokenInName: string, 
+  tokenInValue: number, 
+  wethMinOutValue: number)
+{
+  const deployer = await getDeployer(hre);
+
+  const tokenIn = await hre.ethers.getContract(tokenInName, deployer.address) as ERC20;
+  const tokenOut = await getWeth(hre);
+
+  await swapAsDeployerByContract(hre, tokenIn, tokenOut, tokenInValue, wethMinOutValue);
+
+  console.log(`Swapped ${tokenInName} for WETH`);
+}
+
+export async function swapAsDeployerByContract(
+  hre: HardhatRuntimeEnvironment, 
+  tokenIn: ERC20,
+  tokenOut: ERC20, 
+  tokenInValue: number, 
+  tokenOutMinValue: number)
+{
+const deployer = await getDeployer(hre);
+
+const uniswapV2Router02 = await getUniswapRouter(hre);
+
+const currentBlock = await hre.ethers.provider.getBlock("latest");
+
+await tokenIn.approve(uniswapV2Router02.address, to_d18(tokenInValue));
+await uniswapV2Router02.swapExactTokensForTokens(
+   to_d18(tokenInValue),
+   to_d18(tokenOutMinValue),
+   [tokenIn.address, tokenOut.address],
+   deployer.address,
+   currentBlock.timestamp + 24*60*60*7);
 }
 
 export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: string) {

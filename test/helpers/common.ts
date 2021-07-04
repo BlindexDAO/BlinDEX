@@ -17,44 +17,49 @@ export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   return deployer;
 }
 
+export async function getUser(hre: HardhatRuntimeEnvironment) {
+  const user = await hre.ethers.getNamedSigner('TEST2');
+  return user;
+}
+
 export async function getBdEur(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
+  return await hre.ethers.getContract('BDEUR', ownerUser) as BDStable;
 }
 
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('UniswapV2Router02', ownerUser) as unknown as UniswapV2Router02;
+  return await hre.ethers.getContract('UniswapV2Router02', ownerUser) as UniswapV2Router02;
 }
 
 export async function getUniswapFactory(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('UniswapV2Factory', ownerUser) as unknown as UniswapV2Factory;
+  return await hre.ethers.getContract('UniswapV2Factory', ownerUser) as UniswapV2Factory;
 }
 
 export async function getBdEurWethPool(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
+  return await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as BdStablePool;
 }
 
 export async function getBdEurWbtcPool(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEUR_WBTC_POOL', ownerUser) as unknown as BdStablePool;
+  return await hre.ethers.getContract('BDEUR_WBTC_POOL', ownerUser) as BdStablePool;
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
+  return await hre.ethers.getContract('BDXShares', ownerUser) as BDXShares;
 }
 
 export async function getWeth(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as ERC20;
+  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as ERC20;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], ownerUser) as unknown as ERC20;
+  return await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], ownerUser) as ERC20;
 }
 
 export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){

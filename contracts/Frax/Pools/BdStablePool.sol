@@ -218,8 +218,10 @@ contract BdStablePool {
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
 
-        require(
-            BDSTABLE.global_collateral_ratio() >= COLLATERAL_RATIO_MAX,
+        uint256 globalCR = BDSTABLE.global_collateral_ratio();
+
+        require(globalCR
+             >= COLLATERAL_RATIO_MAX,
             "Collateral ratio must be >= 1"
         );
         // require(
@@ -242,6 +244,7 @@ contract BdStablePool {
             address(this),
             collateral_amount
         );
+
         BDSTABLE.pool_mint(msg.sender, bd_amount_d18);
     }
 
@@ -475,21 +478,9 @@ contract BdStablePool {
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
 
-        console.log("-------------------1");
-        console.log(bdx_price);
-        console.log(bdx_paid_back);
-        console.log(missing_decimals);
-        console.log(collateral_amount);
-        console.log(collateral_units_precision);
-        console.log(collateral_units);
-        console.log(amount_to_recollat);
-
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
-        console.log("-------------------2");
         collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
-        console.log("-------------------3");
         BDX.pool_mint(msg.sender, bdx_paid_back);
-        console.log("-------------------4");
     }
 
     // todo ag

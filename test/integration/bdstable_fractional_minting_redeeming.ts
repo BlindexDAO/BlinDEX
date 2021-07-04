@@ -6,7 +6,7 @@ import { diffPct } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber, numberToBigNumberFixed, bigNumberToDecimal } from "../../utils/Helpers"
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
-import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
+import { updateBdxOracleRefreshRatiosBdEur, lockBdEurCrAt } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth, getBdEurWethPool } from "../helpers/common";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
@@ -40,29 +40,6 @@ describe("BDStable fractional", () => {
         await hre.deployments.fixture();
     });
 
-    async function mintInitalBdx_MoveCrTo0_7(user: SignerWithAddress) {
-        const bdx = await getBdx(hre);
-        const weth = await getWeth(hre);
-        const bdEur = await getBdEur(hre);
-
-        // set step to 1 to get CR = 0 after first refresh
-        await bdEur.setBdstable_step_d12(numberToBigNumberFixed(1, 12).mul(3).div(10));
-
-        await weth.connect(user).deposit({ value: to_d18(10000) });
-        await bdx.mint(user.address, to_d18(1000000));
-
-        const ethInBdxPrice = 100;
-
-        // liquidity provided by another user!
-        await provideLiquidity_BDEUR_WETH_userTest1(hre, 1000);
-        await provideLiquidity_BDX_WETH_userTest1(hre, ethInBdxPrice);
-
-        await updateBdxOracleRefreshRatiosBdEur(hre);
-        await updateBdxOracle(hre);
-        
-        await bdEur.setBdstable_step_d12(0); // lock CR at 0.7
-    }
-
     it("should mint bdeur when CR > 0 & CR < 1", async () => {
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
@@ -71,7 +48,7 @@ describe("BDStable fractional", () => {
         const bdEur = await getBdEur(hre);
         const bdEurPool = await getBdEurWethPool(hre);
 
-        await mintInitalBdx_MoveCrTo0_7(testUser);
+        await lockBdEurCrAt(hre, 0.7);
 
         const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
         const bdEurlBalanceBeforeMinting = await bdEur.balanceOf(testUser.address);
@@ -123,7 +100,7 @@ describe("BDStable fractional", () => {
         await weth.connect(testUser).approve(bdEurPool.address, to_d18(10));
         await bdEurPool.connect(testUser).mint1t1BD(to_d18(10), 1);
 
-        await mintInitalBdx_MoveCrTo0_7(testUser);
+        await lockBdEurCrAt(hre, 0.7);
 
         const bdEurBalanceBeforeRedeem = await bdEur.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem = await bdx.balanceOf(testUser.address);

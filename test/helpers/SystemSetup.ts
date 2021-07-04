@@ -58,17 +58,14 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment) {
     await updateOracle(hre, wbtc, bdx);
     await updateOracle(hre, bdx, bdEur);
 
-
     // recollateralize missing value for initial BdStable for the owner
     const collateralNeeded_d18 = constants.initalBdStableToOwner_d18[hre.network.name].div(initialWethBdEurPrice)
-    console.log("BD: " + constants.initalBdStableToOwner_d18[hre.network.name]);
-    console.log("initialWethBdEurPrice: " + initialWethBdEurPrice);
-    console.log("collateralNeeded: " + collateralNeeded_d18);
     
     const wethBal = await weth.balanceOf(deployer.address);
-    console.log("weth bal: " + wethBal);
     await weth.approve(bdEurWethPool.address, collateralNeeded_d18.mul(2));
     await bdEurWethPool.recollateralizeBdStable(collateralNeeded_d18, to_d18(1))
+
+    await bdEur.refreshCollateralRatio();
 }
 
 async function provideLiquidity(
