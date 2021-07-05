@@ -2,62 +2,47 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import {SignerWithAddress} from 'hardhat-deploy-ethers/dist/src/signer-with-address';
-import { WETH } from "../../typechain/WETH";
 import { BDStable } from "../../typechain/BDStable";
-import { BdStablePool } from "../../typechain/BdStablePool";
-import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { StakingRewards } from "../../typechain/StakingRewards";
-import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { getDeployer, getUniswapPair, getWeth } from "../helpers/common"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from "ethers";
-import * as constants from '../../utils/Constants';
-import { provideLiquidity_WETH_BDEUR } from "../helpers/swaps"
+import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
+import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-const bdxFirstYearSchedule = to_d18(21000000).mul(20).div(100);
-const bdxPerSecondFirstYear = bdxFirstYearSchedule.div(365*24*60*60);
-const totalRewardsSupply = to_d18(21e6/2);
+const bdxFirstYearSchedule_d18 = to_d18(21000000).mul(20).div(100);
+const bdxPerSecondFirstYear_d18 = bdxFirstYearSchedule_d18.div(365*24*60*60);
+const totalRewardsSupply_d18 = to_d18(21e6/2);
 
 let ownerUser: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 
-let weth: WETH;
-let bdStablePool: BdStablePool;
+let weth: ERC20;
 let bdEur: BDStable;
 let bdx: BDXShares;
-let uniswapV2Router02: UniswapV2Router02;
 let stakingRewards_BDEUR_WETH: StakingRewards;
-let uniswapFactory: UniswapV2Factory;  
 let stakingRewardsDistribution: StakingRewardsDistribution;  
 
-let swapPairAddress: string;
-let lpToken_BdEur_WETH: ERC20;
-
 async function initialize(){
-  ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+  ownerUser = await getDeployer(hre);
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
-  weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as unknown as WETH;
-  bdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as unknown as BdStablePool;
+  weth = await getWeth(hre);
   bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
   bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
-  uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', ownerUser) as unknown as UniswapV2Router02;
   stakingRewards_BDEUR_WETH = await hre.ethers.getContract('StakingRewards_BDEUR_WETH', ownerUser) as unknown as StakingRewards;
-  uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;
   stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", ownerUser) as unknown as StakingRewardsDistribution;
-
-  swapPairAddress = await uniswapFactory.getPair(bdEur.address, weth.address);
-  lpToken_BdEur_WETH = await hre.ethers.getContractAt("ERC20", swapPairAddress, ownerUser) as unknown as ERC20;
 }
 
 async function get_BDEUR_WETH_poolWeight(){
@@ -80,42 +65,55 @@ describe("StakingRewards", () => {
   describe("Normal staking", () => {
     before(async () => {
       await hre.deployments.fixture();
+      await setUpFunctionalSystem(hre);
     });
 
-    const depositedLPTokenUser1 = 2;
-    const depositedLPTokenUser2 = 6;
+    let depositedLPTokenUser1_d18_global: BigNumber;
+    let depositedLPTokenUser2_d18_global: BigNumber;
 
-    const totalDepositedLpTokens =
-      +depositedLPTokenUser1 
-      +depositedLPTokenUser2;
+    it("should get first reward", async () => {
+      // provide some initaila weth for the users
+      await weth.connect(testUser1).deposit({ value: to_d18(100) });
+      await weth.connect(testUser2).deposit({ value: to_d18(100) });
 
-    it("should get first reward", async () => {  
-      await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
-      await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
-  
-      await stakingRewards_BDEUR_WETH.connect(testUser1).stake(to_d18(depositedLPTokenUser1));
-      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(to_d18(depositedLPTokenUser2));
-  
+      // deployer gives some bdeur to users so they can stake
+      await bdEur.transfer(testUser1.address, to_d18(100));
+      await bdEur.transfer(testUser2.address, to_d18(100));
+      
+      await provideLiquidity(hre, testUser1, weth, bdEur, to_d18(1), to_d18(5));
+      await provideLiquidity(hre, testUser2, weth, bdEur, to_d18(4), to_d18(20));
+      
+      const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
+      depositedLPTokenUser1_d18_global = depositedLPTokenUser1_d18;
+      depositedLPTokenUser2_d18_global = depositedLPTokenUser2_d18;
+
+      const pair = await getUniswapPair(hre, bdEur, weth);
+      
+      await pair.connect(testUser1).approve(stakingRewards_BDEUR_WETH.address, depositedLPTokenUser1_d18);
+      await pair.connect(testUser2).approve(stakingRewards_BDEUR_WETH.address, depositedLPTokenUser2_d18);
+
+      await stakingRewards_BDEUR_WETH.connect(testUser1).stake(depositedLPTokenUser1_d18);
+      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(depositedLPTokenUser2_d18);
+
       const days = 360;
       await simulateTimeElapseInDays(days)
-  
-      // await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(to_d_18(depositedLPTokenUser1));
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
+
+      await stakingRewards_BDEUR_WETH.connect(testUser1).getReward();
   
       const secondsSinceLastReward = days*24*60*60;
       
-      const expectedReward = await adjustRewardsFor_BDEUR_WETH_pool(
-        bdxPerSecondFirstYear
-        .mul(secondsSinceLastReward)
-        .mul(depositedLPTokenUser1)
-        .div(totalDepositedLpTokens));
+      const expectedReward_d18 = await adjustRewardsFor_BDEUR_WETH_pool(
+        bdxPerSecondFirstYear_d18
+          .mul(secondsSinceLastReward)
+          .mul(depositedLPTokenUser1_d18)
+          .div(totalDepositedLpTokens_d18));
 
-      const bdxReward = await bdx.balanceOf(testUser1.address);
+      const bdxReward_d18 = await bdx.balanceOf(testUser1.address);
       
-      const diff = bdxReward.sub(expectedReward);
+      const diff = bdxReward_d18.sub(expectedReward_d18);
 
-      console.log("Expected: "+ expectedReward);
-      console.log("Actual:   "+ bdxReward);
+      console.log("Expected: "+ expectedReward_d18);
+      console.log("Actual:   "+ bdxReward_d18);
       console.log("Diff:     "+ d18_ToNumber(diff));
 
       expect(diff).to.gte(0);
@@ -136,7 +134,7 @@ describe("StakingRewards", () => {
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
-      const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply);
+      const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply_d18);
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
@@ -149,8 +147,12 @@ describe("StakingRewards", () => {
     });
 
     it("should be able to withdraw LP tokens", async () => {
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(to_d18(depositedLPTokenUser1))).wait();
-      await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(to_d18(depositedLPTokenUser2))).wait();
+      
+      expect(d18_ToNumber(depositedLPTokenUser1_d18_global)).to.be.gt(0);
+      expect(d18_ToNumber(depositedLPTokenUser2_d18_global)).to.be.gt(0);
+
+      await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(depositedLPTokenUser1_d18_global);
+      await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(depositedLPTokenUser2_d18_global);
     });
 
     it("should not be able to withdraw LP tokens when balance is empty", async () => {
@@ -167,20 +169,38 @@ describe("StakingRewards", () => {
   describe("Locked staking", () => {
     before(async () => {
       await hre.deployments.fixture();
+      await setUpFunctionalSystem(hre);
     });
     
-    const depositedLPTokenUser1 = 2;
-    const depositedLPTokenUser2 = 6;
+    let depositedLPTokenUser1_d18_global: BigNumber;
+    let depositedLPTokenUser2_d18_global: BigNumber;
 
     it("should get reward", async () => {
       const user1YearsLocked = 5;
       const user1LockBonusMultiplier = 10;
 
-      await provideLiquidity_WETH_BDEUR(hre, 1, 5, testUser1);
-      await provideLiquidity_WETH_BDEUR(hre, 4, 20, testUser2);
+      // provide some initaila weth for the users
+      await weth.connect(testUser1).deposit({ value: to_d18(100) });
+      await weth.connect(testUser2).deposit({ value: to_d18(100) });
 
-      await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(to_d18(depositedLPTokenUser1), user1YearsLocked);
-      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(to_d18(depositedLPTokenUser2));
+      // deployer gives some bdeur to users so they can stake
+      await bdEur.transfer(testUser1.address, to_d18(100));
+      await bdEur.transfer(testUser2.address, to_d18(100));
+
+      await provideLiquidity(hre, testUser1, weth, bdEur, to_d18(1), to_d18(5));
+      await provideLiquidity(hre, testUser2, weth, bdEur, to_d18(4), to_d18(20));
+
+      const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
+      depositedLPTokenUser1_d18_global = depositedLPTokenUser1_d18;
+      depositedLPTokenUser2_d18_global = depositedLPTokenUser2_d18;
+
+      const pair = await getUniswapPair(hre, bdEur, weth);
+
+      await pair.connect(testUser1).approve(stakingRewards_BDEUR_WETH.address, depositedLPTokenUser1_d18);
+      await pair.connect(testUser2).approve(stakingRewards_BDEUR_WETH.address, depositedLPTokenUser2_d18);
+
+      await stakingRewards_BDEUR_WETH.connect(testUser1).stakeLocked(depositedLPTokenUser1_d18, user1YearsLocked);
+      await stakingRewards_BDEUR_WETH.connect(testUser2).stake(depositedLPTokenUser2_d18);
 
       const days = 360;
       await simulateTimeElapseInDays(days)
@@ -190,10 +210,10 @@ describe("StakingRewards", () => {
       const secondsSinceLastReward = days*24*60*60;
       
       const expectedReward = await adjustRewardsFor_BDEUR_WETH_pool(
-        bdxPerSecondFirstYear
-        .mul(secondsSinceLastReward)
-        .mul(depositedLPTokenUser1*user1LockBonusMultiplier)
-        .div(depositedLPTokenUser1*user1LockBonusMultiplier + depositedLPTokenUser2));
+        bdxPerSecondFirstYear_d18
+          .mul(secondsSinceLastReward)
+          .mul(depositedLPTokenUser1_d18.mul(user1LockBonusMultiplier))
+          .div(depositedLPTokenUser1_d18.mul(user1LockBonusMultiplier).add(depositedLPTokenUser2_d18)));
       
       const bdxReward = await bdx.balanceOf(testUser1.address);
       
@@ -221,7 +241,7 @@ describe("StakingRewards", () => {
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
-      const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply);
+      const rewardsSupplyPerPool = await adjustRewardsFor_BDEUR_WETH_pool(totalRewardsSupply_d18);
       
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
@@ -261,3 +281,12 @@ describe("StakingRewards", () => {
     });
   });
 });
+
+async function getUsersCurrentLpBalance(){
+  const pair = await getUniswapPair(hre, bdEur, weth);
+  const depositedLPTokenUser1_d18 = await pair.balanceOf(testUser1.address);
+  const depositedLPTokenUser2_d18 = await pair.balanceOf(testUser2.address);
+  const totalDepositedLpTokens_d18 = depositedLPTokenUser1_d18.add(depositedLPTokenUser2_d18);
+
+  return { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 };
+}

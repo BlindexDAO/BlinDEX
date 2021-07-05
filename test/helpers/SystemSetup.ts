@@ -1,18 +1,12 @@
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d18, to_d8 } from "../../utils/Helpers";
-import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWethPool, getUniswapRouter, getUniswapFactory } from "./common";
+import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWethPool, getUniswapPair } from "./common";
 import * as constants from '../../utils/Constants';
-import { BDStable } from "../../typechain/BDStable";
-import { BdStablePool } from "../../typechain/BdStablePool";
-import { WETH } from "../../typechain/WETH";
-import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { ERC20 } from "../../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from '@ethersproject/bignumber';
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
-import { UniswapV2Pair } from "../../typechain/UniswapV2Pair";
+import { provideLiquidity } from "./swaps";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
@@ -68,42 +62,11 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment) {
     await bdEur.refreshCollateralRatio();
 }
 
-async function provideLiquidity(
-  hre: HardhatRuntimeEnvironment,
-  superuser: SignerWithAddress,
-  tokenA: ERC20,
-  tokenB: ERC20,
-  amountA: BigNumber,
-  amountB: BigNumber
-){
-  const router = await getUniswapRouter(hre);
-
-  // add liquidity to the uniswap pool (weth-bdeur)
-  // reveive LP tokens
-  await tokenA.connect(superuser).approve(router.address, amountA);
-  await tokenB.connect(superuser).approve(router.address, amountB);
-
-  const currentBlock = await hre.ethers.provider.getBlock("latest");
-
-  // router routes to the proper pair
-  await router.connect(superuser).addLiquidity(
-    tokenA.address, 
-    tokenB.address, 
-    amountA, 
-    amountB,
-    amountA, 
-    amountB, 
-    superuser.address, 
-    currentBlock.timestamp + 60);
-}
-
 async function updateOracle(
   hre: HardhatRuntimeEnvironment,
   tokenA: ERC20,
   tokenB: ERC20) 
 {
-  const factory = await getUniswapFactory(hre);
-  const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
-  const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
+  const pair = await getUniswapPair(hre, tokenA, tokenB);
   await pair.updateOracle();
 }

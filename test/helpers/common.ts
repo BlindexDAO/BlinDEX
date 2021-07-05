@@ -1,15 +1,12 @@
-import { BigNumber } from "ethers";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
 import { ChainlinkBasedCryptoFiatFeed } from "../../typechain/ChainlinkBasedCryptoFiatFeed";
 import { ERC20 } from "../../typechain/ERC20";
-import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
+import { UniswapV2Pair } from "../../typechain/UniswapV2Pair";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
-import { WETH } from "../../typechain/WETH";
 import * as constants from '../../utils/Constants'
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
@@ -75,11 +72,9 @@ export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
   return {ethInEurPrice_1e12, ethInEurPrice};
 }
 
-export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: SignerWithAddress, amountETH: BigNumber){
-  // swaps ETH for WETH internally
-  
-  const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, account)
-  await uniRouter.connect(account).swapExactETHForTokens(0, [constants.wETH_address[hre.network.name], constants.wBTC_address[hre.network.name]], account.address,  Date.now() + 3600, {
-    value: amountETH
-  })
+export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: ERC20, tokenB: ERC20) {
+  const factory = await getUniswapFactory(hre);
+  const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
+  const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
+  return pair;
 }

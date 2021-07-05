@@ -7,11 +7,11 @@ import { to_d18 as to_d18, d18_ToNumber, numberToBigNumberFixed, bigNumberToDeci
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { updateBdxOracleRefreshRatiosBdEur, updateBdxOracle } from "../helpers/bdStable";
-import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, swapEthForWbtc } from "../helpers/common";
+import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { provideLiquidity_BDX_WETH_userTest1, provideLiquidity_WETH_BDEUR, provideLiquidity_WBTC_BDEUR, provideLiquidity_BDEUR_WETH_userTest1 } from "../helpers/swaps";
 import { getOnChainEthEurPrice } from "../helpers/common";
-import { updateWethPair } from "../helpers/swaps";
+import { updateWethPair, swapEthForWbtc } from "../helpers/swaps";
 import { BigNumber } from "ethers";
 import { BDXShares } from "../../typechain/BDXShares";
 import { BDStable } from "../../typechain/BdStable";

@@ -13,6 +13,8 @@ import { ERC20 } from "../../typechain/ERC20";
 import { bigNumberToDecimal } from "../../utils/Helpers";
 import { getWethPair } from "../../utils/Swaps";
 import { getDeployer, getUniswapRouter, getWeth } from "./common";
+import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
+import { BigNumber } from "ethers";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
   var pair = await getWethPair(hre, tokenName);
@@ -99,19 +101,19 @@ export async function swapAsDeployerByContract(
   tokenInValue: number, 
   tokenOutMinValue: number)
 {
-const deployer = await getDeployer(hre);
+  const deployer = await getDeployer(hre);
 
-const uniswapV2Router02 = await getUniswapRouter(hre);
+  const uniswapV2Router02 = await getUniswapRouter(hre);
 
-const currentBlock = await hre.ethers.provider.getBlock("latest");
+  const currentBlock = await hre.ethers.provider.getBlock("latest");
 
-await tokenIn.approve(uniswapV2Router02.address, to_d18(tokenInValue));
-await uniswapV2Router02.swapExactTokensForTokens(
-   to_d18(tokenInValue),
-   to_d18(tokenOutMinValue),
-   [tokenIn.address, tokenOut.address],
-   deployer.address,
-   currentBlock.timestamp + 24*60*60*7);
+  await tokenIn.approve(uniswapV2Router02.address, to_d18(tokenInValue));
+  await uniswapV2Router02.swapExactTokensForTokens(
+    to_d18(tokenInValue),
+    to_d18(tokenOutMinValue),
+    [tokenIn.address, tokenOut.address],
+    deployer.address,
+    currentBlock.timestamp + 24*60*60*7);
 }
 
 export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: string) {
@@ -131,6 +133,35 @@ export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: str
   console.log(`${bdStableName} in WETH price: ` + bdStableInWethPriceDecimal);
 
   return [wethInBdStablePriceDecimal, bdStableInWethPriceDecimal];
+}
+
+export async function provideLiquidity(
+  hre: HardhatRuntimeEnvironment,
+  user: SignerWithAddress,
+  tokenA: ERC20,
+  tokenB: ERC20,
+  amountA: BigNumber,
+  amountB: BigNumber
+){
+  const router = await getUniswapRouter(hre);
+
+  // add liquidity to the uniswap pool (weth-bdeur)
+  // reveive LP tokens
+  await tokenA.connect(user).approve(router.address, amountA);
+  await tokenB.connect(user).approve(router.address, amountB);
+
+  const currentBlock = await hre.ethers.provider.getBlock("latest");
+
+  // router routes to the proper pair
+  await router.connect(user).addLiquidity(
+    tokenA.address, 
+    tokenB.address, 
+    amountA, 
+    amountB,
+    1, 
+    1, 
+    user.address, 
+    currentBlock.timestamp + 60);
 }
 
 export async function provideLiquidity_WETH_BDEUR(
@@ -282,4 +313,13 @@ export async function provideLiquidity_WBTC_BDEUR(
 
   // approve LP tokens transfer to the liquidity rewards manager
   await lpToken_BdEur_WBTC.connect(user).approve(stakingRewards_BDEUR_WBTC.address, to_d18(100));
+}
+
+export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: SignerWithAddress, amountETH: BigNumber){
+  // swaps ETH for WETH internally
+  
+  const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, account)
+  await uniRouter.connect(account).swapExactETHForTokens(0, [constants.wETH_address[hre.network.name], constants.wBTC_address[hre.network.name]], account.address,  Date.now() + 3600, {
+    value: amountETH
+  })
 }
