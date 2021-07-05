@@ -2,11 +2,9 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { BDStable } from "../../typechain/BDStable";
 import * as constants from '../../utils/Constants'
 import { 
-    provideLiquidity_WETH_BDEUR,
-    provideLiquidity_WETH_BDX,
+    provideLiquidity,
     updateWethPair,
     swapWethFor,
     getPrices
@@ -14,6 +12,7 @@ import {
 import { getWethPair } from "../../utils/Swaps"
 import { to_d18 } from "../../utils/Helpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
+import { getBdEur, getUser, getWeth, getBdx } from "../helpers/common";
 
 chai.use(cap);
 
@@ -24,47 +23,21 @@ describe("Uniswap Oracles", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
+        // do NOT set up the system before these tests.
+        // this test tests oracles in isolation
     });
 
     const oneHour = 60*60;
 
-    it("should add bdeur oracle", async () => {
-        const bdeur = await hre.ethers.getContract("BDEUR") as unknown as BDStable;
-
-        const testUser1 = await hre.ethers.getNamedSigner('TEST1');
-        
-        await provideLiquidity_WETH_BDEUR(hre, 20, 80, testUser1);
-        await simulateTimeElapseInSeconds(oneHour);
-
-        const bdeurWethOracle = await getWethPair(hre, "BDEUR");
-        
-        bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address[hre.network.name]);
-
-        await swapWethFor(hre, "BDEUR", 5);
-        await updateWethPair(hre, "BDEUR");
-        const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEUR");
-    });
-
-    it("should add bdx oracle", async () => {
-        const bdeur = await hre.ethers.getContract("BDEUR") as unknown as BDStable;
-
-        const testUser1 = await hre.ethers.getNamedSigner('TEST1');
-        
-        await provideLiquidity_WETH_BDX(hre, 20, 80, testUser1);
-
-        const bdxWethOracle = await getWethPair(hre, "BDXShares");
-        
-        bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[hre.network.name]);
-
-        await swapWethFor(hre, "BDXShares", 5);
-        await updateWethPair(hre, "BDXShares");
-        const [wethInBdxPriceDecimal1, bdxInWethPriceDecimal1] = await getPrices(hre, "BDXShares");
-    })
-
     it("should update price after swap", async () => {
-        const testUserLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
+        const bdeur = await getBdEur(hre);
+        const weth = await getWeth(hre);
 
-        await provideLiquidity_WETH_BDEUR(hre, 20, 80, testUserLiquidityProvider);
+        const user = await getUser(hre);
+        
+        await weth.connect(user).deposit({ value: to_d18(20) });
+        await bdeur.transfer(user.address, to_d18(80)); // deployer gives user some bdeur so user can provide liquidity
+        await provideLiquidity(hre, user, weth, bdeur, to_d18(20), to_d18(80));
         
         await simulateTimeElapseInSeconds(oneHour);
 
@@ -85,9 +58,15 @@ describe("Uniswap Oracles", () => {
     });
 
     it("should not update price before one hour elapses", async () => {
-        const testUserLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
+        const bdeur = await getBdEur(hre);
+        const weth = await getWeth(hre);
 
-        await provideLiquidity_WETH_BDEUR(hre, 20, 80, testUserLiquidityProvider);
+        const user = await getUser(hre);
+        
+        await weth.connect(user).deposit({ value: to_d18(20) });
+        await bdeur.transfer(user.address, to_d18(80)); // deployer gives user some bdeur so user can provide liquidity
+        await provideLiquidity(hre, user, weth, bdeur, to_d18(20), to_d18(80));
+        
         await simulateTimeElapseInSeconds(oneHour);
 
         await swapWethFor(hre, "BDEUR", 5);

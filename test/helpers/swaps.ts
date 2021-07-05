@@ -163,7 +163,7 @@ export async function provideLiquidity(
     user.address, 
     currentBlock.timestamp + 60);
 }
-
+//out
 export async function provideLiquidity_WETH_BDEUR(
   hre: HardhatRuntimeEnvironment,
   amountWeth: number, 
@@ -209,6 +209,7 @@ export async function provideLiquidity_WETH_BDEUR(
   await lpToken_BdEur_WETH.connect(user).approve(stakingRewards_BDEUR_WETH.address, to_d18(100));
 }
 
+//out
 export async function provideLiquidity_BDEUR_WETH_userTest1(hre: HardhatRuntimeEnvironment, eurToEth: number){
   const userLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
 
@@ -216,6 +217,7 @@ export async function provideLiquidity_BDEUR_WETH_userTest1(hre: HardhatRuntimeE
   await provideLiquidity_WETH_BDEUR(hre, amountWeth, amountWeth*eurToEth, userLiquidityProvider);
 }
 
+//out
 export async function provideLiquidity_BDX_WETH_userTest1(hre: HardhatRuntimeEnvironment, bdxToEth: number){
   const userLiquidityProvider = await hre.ethers.getNamedSigner('TEST1');
 
@@ -224,7 +226,7 @@ export async function provideLiquidity_BDX_WETH_userTest1(hre: HardhatRuntimeEnv
 
   await provideLiquidity_WETH_BDX(hre, ethAmount, bdxAmount, userLiquidityProvider);
 }
-
+//out
 export async function provideLiquidity_WETH_BDX(
   hre: HardhatRuntimeEnvironment,
   amountWeth: number, 
@@ -270,7 +272,7 @@ export async function provideLiquidity_WETH_BDX(
   // approve LP tokens transfer to the liquidity rewards manager
   await lpToken_Bdx_WETH.connect(user).approve(stakingRewards_BDX_WETH.address, to_d18(100));
 }
-
+//out
 export async function provideLiquidity_WBTC_BDEUR(
   hre: HardhatRuntimeEnvironment,
   amountWbtc: number, 
