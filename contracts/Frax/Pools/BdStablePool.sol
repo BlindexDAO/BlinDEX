@@ -2,26 +2,6 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-// ====================================================================
-// |     ______                   _______                             |
-// |    / _____________ __  __   / ____(_____  ____ _____  ________   |
-// |   / /_  / ___/ __ `| |/_/  / /_  / / __ \/ __ `/ __ \/ ___/ _ \  |
-// |  / __/ / /  / /_/ _>  <   / __/ / / / / / /_/ / / / / /__/  __/  |
-// | /_/   /_/   \__,_/_/|_|  /_/   /_/_/ /_/\__,_/_/ /_/\___/\___/   |
-// |                                                                  |
-// ====================================================================
-// ============================= FraxPool =============================
-// ====================================================================
-// Frax Finance: https://github.com/FraxFinance
-
-// Primary Author(s)
-// Travis Moore: https://github.com/FortisFortuna
-// Jason Huan: https://github.com/jasonhuan
-// Sam Kazemian: https://github.com/samkazemian
-
-// Reviewer(s) / Contributor(s)
-// Sam Sun: https://github.com/samczsun
-
 import "../../Math/SafeMath.sol";
 import "../../FXS/BDXShares.sol";
 import "../../Frax/BDStable.sol";
@@ -82,7 +62,7 @@ contract BdStablePool {
     // Stores price of the collateral, if price is paused
     uint256 public pausedPrice = 0;
 
-    // Bonus rate on BDX minted during recollateralizeFRAX(); 12 decimals of precision, set to 0.75% on genesis
+    // Bonus rate on BDX minted during recollateralizeBdStable(); 12 decimals of precision, set to 0.75% on genesis
     uint256 public bonus_rate = 7500000000; // d12
 
     // Number of blocks to wait before being able to collectRedemption()
@@ -181,7 +161,7 @@ contract BdStablePool {
         }
     }
 
-    // Returns fiat value of collateral held in this Frax pool
+    // Returns fiat value of collateral held in this BdStable pool
     function collatFiatBalance() public view returns (uint256) {
         //Expressed in collateral token decimals
         // if(collateralPricePaused == true){
@@ -376,7 +356,7 @@ contract BdStablePool {
     }
 
     // Will fail if fully collateralized or algorithmic
-    // Redeem BDSTABLE for collateral and FXS. > 0% and < 100% collateral-backed
+    // Redeem BDSTABLE for collateral and BDX. > 0% and < 100% collateral-backed
     function redeemFractionalBdStable(uint256 BdStable_amount, uint256 BDX_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
         updateOraclesIfNeeded();
 
@@ -398,7 +378,7 @@ contract BdStablePool {
 
         require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
         require(COLLATERAL_out_min <= collateral_amount, "Slippage limit reached [collateral]");
-        require(BDX_out_min <= bdx_amount, "Slippage limit reached [FXS]");
+        require(BDX_out_min <= bdx_amount, "Slippage limit reached [BDX]");
 
         redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_amount);
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_amount);
@@ -453,10 +433,10 @@ contract BdStablePool {
         }
     }
 
-    // When the protocol is recollateralizing, we need to give a discount of FXS to hit the new CR target
-    // Thus, if the target collateral ratio is higher than the actual value of collateral, minters get FXS for adding collateral
-    // This function simply rewards anyone that sends collateral to a pool with the same amount of FXS + the bonus rate
-    // Anyone can call this function to recollateralize the protocol and take the extra FXS value from the bonus rate as an arb opportunity
+    // When the protocol is recollateralizing, we need to give a discount of BDX to hit the new CR target
+    // Thus, if the target collateral ratio is higher than the actual value of collateral, minters get BDX for adding collateral
+    // This function simply rewards anyone that sends collateral to a pool with the same amount of BDX + the bonus rate
+    // Anyone can call this function to recollateralize the protocol and take the extra BDX value from the bonus rate as an arb opportunity
     function recollateralizeBdStable(uint256 collateral_amount, uint256 BDX_out_min) external {
         updateOraclesIfNeeded();
 
@@ -484,28 +464,27 @@ contract BdStablePool {
         BDX.pool_mint(msg.sender, bdx_paid_back);
     }
 
-    // todo ag
-    // Function can be called by an FXS holder to have the protocol buy back FXS with excess collateral value from a desired collateral pool
+    // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
     // This can also happen if the collateral ratio > 1
-    // function buyBackFXS(uint256 FXS_amount, uint256 COLLATERAL_out_min) external {
-    //     require(buyBackPaused == false, "Buyback is paused");
-    //     uint256 fxs_price = FRAX.fxs_price();
+    function buyBackBDX(uint256 BDX_amount, uint256 COLLATERAL_out_min) external {
+        require(buyBackPaused == false, "Buyback is paused");
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
     
-    //     FraxPoolLibrary.BuybackFXS_Params memory input_params = FraxPoolLibrary.BuybackFXS_Params(
-    //         availableExcessCollatDV(),
-    //         fxs_price,
-    //         getCollateralPrice(),
-    //         FXS_amount
-    //     );
+        BdPoolLibrary.BuybackBDX_Params memory input_params = BdPoolLibrary.BuybackBDX_Params(
+            availableExcessCollatDV(),
+            bdx_price,
+            getCollateralPrice(),
+            BDX_amount
+        );
 
-    //     (uint256 collateral_equivalent_d18) = (FraxPoolLibrary.calcBuyBackFXS(input_params)).mul(uint(1e6).sub(buyback_fee)).div(1e6);
-    //     uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
+        (uint256 collateral_equivalent_d18) = (BdPoolLibrary.calcBuyBackBDX(input_params)).mul(uint(1e12).sub(buyback_fee)).div(1e12);
+        uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
 
-    //     require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
-    //     // Give the sender their desired collateral and burn the FXS
-    //     FXS.pool_burn_from(msg.sender, FXS_amount);
-    //     collateral_token.transfer(msg.sender, collateral_precision);
-    // }
+        require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
+        // Give the sender their desired collateral and burn the BDX
+        BDX.pool_burn_from(msg.sender, BDX_amount);
+        collateral_token.transfer(msg.sender, collateral_precision);
+    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 

@@ -12,13 +12,19 @@ library BdPoolLibrary {
     // Constants for various precisions
     uint256 private constant PRICE_PRECISION = 1e12;
 
-
     struct MintFBD_Params {
-        uint256 fxs_price_usd; 
-        uint256 col_price_usd;
-        uint256 fxs_amount;
+        uint256 bdx_price_fiat; 
+        uint256 col_price_fiat;
+        uint256 bdx_amount;
         uint256 collateral_amount;
         uint256 col_ratio;
+    }
+
+    struct BuybackBDX_Params {
+        uint256 excess_collateral_fiat_value_d18;
+        uint256 bdx_price_fiat;
+        uint256 col_price_fiat;
+        uint256 BDX_amount;
     }
 
     // ================ Functions ================
@@ -27,7 +33,6 @@ library BdPoolLibrary {
         return (collateral_amount_d18.mul(col_price)).div(1e12);
     }
 
-    // todo ag fix naming (fxs)
     // Must be internal because of the struct
     function calcMintFractionalBD(MintFBD_Params memory params) internal pure returns (uint256, uint256) {
         // Since solidity truncates division, every division operation must be the last operation in the equation to ensure minimum error
@@ -38,15 +43,15 @@ library BdPoolLibrary {
         // Scoping for stack concerns
         {    
             // fiat amounts of the collateral and the BDX
-            bdx_fiat_value_d18 = params.fxs_amount.mul(params.fxs_price_usd).div(1e12);
-            c_fiat_value_d18 = params.collateral_amount.mul(params.col_price_usd).div(1e12);
-
+            bdx_fiat_value_d18 = params.bdx_amount.mul(params.bdx_price_fiat).div(1e12);
+            c_fiat_value_d18 = params.collateral_amount.mul(params.col_price_fiat).div(1e12);
         }
+
         uint calculated_bdx_fiat_value_d18 = 
                     (c_fiat_value_d18.mul(1e12).div(params.col_ratio))
                     .sub(c_fiat_value_d18);
 
-        uint calculated_bdx_needed = calculated_bdx_fiat_value_d18.mul(1e12).div(params.fxs_price_usd);
+        uint calculated_bdx_needed = calculated_bdx_fiat_value_d18.mul(1e12).div(params.bdx_price_fiat);
 
         return (
             c_fiat_value_d18.add(calculated_bdx_fiat_value_d18),
@@ -83,24 +88,22 @@ library BdPoolLibrary {
         return (amount_to_recollat.mul(1e12).div(col_price), amount_to_recollat);
     }
 
-    // // Must be internal because of the struct
-    // function calcBuyBackFXS(BuybackFXS_Params memory params) internal pure returns (uint256) {
-    //     // If the total collateral value is higher than the amount required at the current collateral ratio then buy back up to the possible FXS with the desired collateral
-    //     require(params.excess_collateral_dollar_value_d18 > 0, "No excess collateral to buy back!");
+    // Must be internal because of the struct
+    function calcBuyBackBDX(BuybackBDX_Params memory params) internal pure returns (uint256) {
+        // If the total collateral value is higher than the amount required at the current collateral ratio then buy back up to the possible BDX with the desired collateral
+        require(params.excess_collateral_fiat_value_d18 > 0, "No excess collateral to buy back!");
 
-    //     // Make sure not to take more than is available
-    //     uint256 fxs_dollar_value_d18 = params.FXS_amount.mul(params.fxs_price_usd).div(1e12);
-    //     require(fxs_dollar_value_d18 <= params.excess_collateral_dollar_value_d18, "You are trying to buy back more than the excess!");
+        // Make sure not to take more than is available
+        uint256 bdx_fiat_value_d18 = params.BDX_amount.mul(params.bdx_price_fiat).div(1e12);
+        require(bdx_fiat_value_d18 <= params.excess_collateral_fiat_value_d18, "You are trying to buy back more than the excess!");
 
-    //     // Get the equivalent amount of collateral based on the market value of FXS provided 
-    //     uint256 collateral_equivalent_d18 = fxs_dollar_value_d18.mul(1e12).div(params.col_price_usd);
-    //     //collateral_equivalent_d18 = collateral_equivalent_d18.sub((collateral_equivalent_d18.mul(params.buyback_fee)).div(1e12));
+        // Get the equivalent amount of collateral based on the market value of BDX provided 
+        uint256 collateral_equivalent_d18 = bdx_fiat_value_d18.mul(1e12).div(params.col_price_fiat);
 
-    //     return (
-    //         collateral_equivalent_d18
-    //     );
-
-    // }
+        return (
+            collateral_equivalent_d18
+        );
+    }
 
 
 }
