@@ -125,11 +125,11 @@ describe("StakingRewards", () => {
       // we need to recalculate rewards every now and than
       for(let i = 1; i <= 5; i++){
         await simulateTimeElapseInDays(365);
-        await (await stakingRewards_BDEUR_WETH.connect(ownerUser).renewIfApplicable()).wait();
+        await stakingRewards_BDEUR_WETH.connect(ownerUser).renewIfApplicable();
       }
 
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
-      await (await stakingRewards_BDEUR_WETH.connect(testUser2).getReward()).wait();
+      await stakingRewards_BDEUR_WETH.connect(testUser1).getReward();
+      await stakingRewards_BDEUR_WETH.connect(testUser2).getReward();
 
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
@@ -157,11 +157,11 @@ describe("StakingRewards", () => {
 
     it("should not be able to withdraw LP tokens when balance is empty", async () => {
       await expect((async () => {
-        await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
+        await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)
       })()).to.be.rejectedWith("subtraction overflow");
 
       await expect((async () => {
-        await (await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(1)).wait()
+        await stakingRewards_BDEUR_WETH.connect(testUser2).withdraw(1)
       })()).to.be.rejectedWith("subtraction overflow");
     });
   })
@@ -172,9 +172,6 @@ describe("StakingRewards", () => {
       await setUpFunctionalSystem(hre);
     });
     
-    let depositedLPTokenUser1_d18_global: BigNumber;
-    let depositedLPTokenUser2_d18_global: BigNumber;
-
     it("should get reward", async () => {
       const user1YearsLocked = 5;
       const user1LockBonusMultiplier = 10;
@@ -191,8 +188,6 @@ describe("StakingRewards", () => {
       await provideLiquidity(hre, testUser2, weth, bdEur, to_d18(4), to_d18(20));
 
       const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
-      depositedLPTokenUser1_d18_global = depositedLPTokenUser1_d18;
-      depositedLPTokenUser2_d18_global = depositedLPTokenUser2_d18;
 
       const pair = await getUniswapPair(hre, bdEur, weth);
 
@@ -205,7 +200,7 @@ describe("StakingRewards", () => {
       const days = 360;
       await simulateTimeElapseInDays(days)
 
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
+      await stakingRewards_BDEUR_WETH.connect(testUser1).getReward();
 
       const secondsSinceLastReward = days*24*60*60;
       
@@ -232,11 +227,11 @@ describe("StakingRewards", () => {
       // we need to recalculate rewards every now and than
       for(let i = 1; i <= 5; i++){
         await simulateTimeElapseInDays(365);
-        await (await stakingRewards_BDEUR_WETH.connect(ownerUser).renewIfApplicable()).wait();
+        await stakingRewards_BDEUR_WETH.connect(ownerUser).renewIfApplicable();
       }
 
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).getReward()).wait();
-      await (await stakingRewards_BDEUR_WETH.connect(testUser2).getReward()).wait();
+      await stakingRewards_BDEUR_WETH.connect(testUser1).getReward();
+      await stakingRewards_BDEUR_WETH.connect(testUser2).getReward();
 
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
@@ -257,7 +252,7 @@ describe("StakingRewards", () => {
 
     it("should not be able to withdraw (normal withdraw) locked LP tokens", async () => {
       await expect((async () => {
-        await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
+        await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1);
       })()).to.be.rejectedWith("subtraction overflow");
     });
 
@@ -267,7 +262,7 @@ describe("StakingRewards", () => {
 
       const kekId = onlyStake.kek_id;
 
-      await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdrawLocked(kekId)).wait();
+      await stakingRewards_BDEUR_WETH.connect(testUser1).withdrawLocked(kekId);
     });
 
     it("should not be able to withdraw LP tokens after all locked stakes have been withdrawn", async () => {
@@ -276,7 +271,7 @@ describe("StakingRewards", () => {
       expect(lockedStakes[0].kek_id).to.eq(BigNumber.from(0)); // deletion only fills whole object with 0s
 
       await expect((async () => {
-        await (await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1)).wait()
+        await stakingRewards_BDEUR_WETH.connect(testUser1).withdraw(1);
       })()).to.be.rejectedWith("subtraction overflow");
     });
   });

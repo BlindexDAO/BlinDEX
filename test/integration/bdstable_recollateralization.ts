@@ -85,7 +85,7 @@ describe("Recollateralization", () => {
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid diffPctWethBalance");
     });
 
-    it.only("recollateralize should NOT fail when efCR < CR", async () => {        
+    it("recollateralize should NOT fail when efCR < CR", async () => {        
         await setUpFunctionalSystem(hre, 0.3); // ~efCR
 
         await lockBdEurCrAt(hre, 0.9); // CR
@@ -99,7 +99,7 @@ describe("Recollateralization", () => {
         await bdEurWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
     })
 
-    it.only("recollateralize should fail when efCR > CR", async () => {        
+    it("recollateralize should fail when efCR > CR", async () => {        
         await setUpFunctionalSystem(hre, 0.9); // ~efCR
 
         await lockBdEurCrAt(hre, 0.3); // CR
