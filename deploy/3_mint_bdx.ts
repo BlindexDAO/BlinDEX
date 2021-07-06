@@ -8,6 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const bdxInstance = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
 
+    // todo ag why?!?!? we mint new BDX in multiple places!
     // mint all BDX up front
     await (await bdxInstance.connect(deployer).mint(
         (await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER")).address,

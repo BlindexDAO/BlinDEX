@@ -194,7 +194,7 @@ contract BdStablePool {
                 PRICE_PRECISION // * (10**missing_decimals)) todo ag
             );
 
-        uint256 collat_usd_price =
+        uint256 collat_fiat_price =
             eth_fiat_price.mul(PRICE_PRECISION).div(eth_collat_price);
         return
             (
@@ -203,7 +203,7 @@ contract BdStablePool {
                 )
             )
                 .mul(10**missing_decimals)
-                .mul(collat_usd_price)
+                .mul(collat_fiat_price)
                 .div(PRICE_PRECISION); //.mul(getCollateralPrice()).div(1e12);//todo lw
         //}
     }
@@ -320,11 +320,11 @@ contract BdStablePool {
         uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
 
         require(global_collateral_ratio == 0, "Collateral ratio must be 0"); 
-        uint256 bdx_dollar_value_d18 = bdStable_amount;
+        uint256 bdx_fiat_value_d18 = bdStable_amount;
 
-        bdx_dollar_value_d18 = (bdx_dollar_value_d18.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION); //apply fees
+        bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION); //apply fees
 
-        uint256 bdx_amount = bdx_dollar_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
         
         redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
         unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
@@ -474,6 +474,7 @@ contract BdStablePool {
             bdStable_total_supply,
             global_collateral_ratio
         ); 
+
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
