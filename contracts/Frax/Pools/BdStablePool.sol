@@ -106,8 +106,8 @@ contract BdStablePool {
     /* ========== VIEWS ========== */
 
     //todo ag
-    // Returns dollar value of collateral held in this Frax pool
-    // function collatDollarBalance() public view returns (uint256) {
+    // Returns fiat value of collateral held in this Frax pool
+    // function collatFiatBalance() public view returns (uint256) {
     //     if(collateralPricePaused == true){
     //         return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(pausedPrice).div(PRICE_PRECISION);
     //     } else {
@@ -127,12 +127,14 @@ contract BdStablePool {
 
         if (global_collateral_ratio > COLLATERAL_RATIO_PRECISION)
             global_collateral_ratio = COLLATERAL_RATIO_PRECISION; // Handles an overcollateralized contract with CR > 1
-        uint256 required_collat_dollar_value_d18 =
-            (total_supply.mul(global_collateral_ratio)).div(
-                COLLATERAL_RATIO_PRECISION
-            ); // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
-        if (global_collat_value > required_collat_dollar_value_d18)
-            return global_collat_value.sub(required_collat_dollar_value_d18);
+        
+        // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
+        uint256 required_collat_fiat_value_d18 = total_supply
+            .mul(global_collateral_ratio)
+            .div(COLLATERAL_RATIO_PRECISION); 
+
+        if (global_collat_value > required_collat_fiat_value_d18)
+            return global_collat_value.sub(required_collat_fiat_value_d18);
         else return 0;
     }
 
@@ -477,7 +479,8 @@ contract BdStablePool {
             BDX_amount
         );
 
-        (uint256 collateral_equivalent_d18) = (BdPoolLibrary.calcBuyBackBDX(input_params)).mul(uint(1e12).sub(buyback_fee)).div(1e12);
+        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(input_params).mul(uint(1e12).sub(buyback_fee)).div(1e12);
+
         uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
