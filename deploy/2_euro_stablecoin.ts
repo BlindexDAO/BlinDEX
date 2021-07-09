@@ -50,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (await bdeur.addPool(bdeur_weth_BdStablePoolDeployment.address)).wait()
   await (await bdeur.addPool(bdeur_wbtc_BdStablePoolDeployment.address)).wait()
 
-  await (await bdx.setBdStableAddress(bdeurDeployment.address)).wait()
+  await (await bdx.addBdStableAddress(bdeurDeployment.address)).wait()
 
 	// One time migration
 	return true;

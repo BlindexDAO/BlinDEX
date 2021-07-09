@@ -183,7 +183,7 @@ contract LiquidityRewardsManager is Ownable {
         //todo ag mint bonus for FRAX developers?
         //todo ag limit by total bdx supply
         //   - limit is set by allocPoints 
-        bdx.mint(address(this), bdxReward);
+        bdx.mint(address(0), address(this), bdxReward);
         pool.accBdxPerShare_BDX_REWARD_PRCISION = pool.accBdxPerShare_BDX_REWARD_PRCISION.add(
             bdxReward.mul(BDX_REWARD_PRCISION).div(lpSupply) // div by lpSupply, because it's "per share" (per LP token)
         );

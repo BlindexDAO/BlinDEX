@@ -29,11 +29,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Added WETH EUR oracle to BDEUR`)
 
   const bdxWethOracle = await getWethPair(hre,"BDXShares");
-  bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName]);
+  await (await bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDX WETH Uniswap oracle`);
 
   const bdeurWethOracle = await getWethPair(hre,"BDEUR");
-  bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address[networkName]);
+  await (await bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDEUR WETH Uniswap oracle`);
 
   const uniswapFactoryContract = await hre.ethers.getContractAt("UniswapV2Factory", constants.uniswapFactoryAddress) as unknown as UniswapV2Factory;

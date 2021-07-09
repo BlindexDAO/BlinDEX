@@ -3,25 +3,9 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import { StakingRewards } from '../typechain/StakingRewards';
-import { BigNumber } from 'ethers';
 import * as constants from '../utils/Constants'
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
-import { Timelock } from '../typechain/TimeLock';
-
-async function feedStakeRewards(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string) {
-  const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
-
-  const contractName = `StakingRewards_${nameA}_${nameB}`;
-
-  const stakingRewards_BDEUR_WETH_Proxy = await hre.ethers.getContract(
-    contractName) as unknown as StakingRewards;
-
-  await (await bdx.connect((await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER"))).transfer(
-    stakingRewards_BDEUR_WETH_Proxy.address,
-    BigNumber.from(21).mul(BigNumber.from(10).pow(6 + 18)).div(2).div(constants.numberOfLPs))).wait();
-
-  console.log("Fed Staking Rewards: " + contractName);
-}
+import { Timelock } from '../typechain/Timelock';
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -53,13 +37,13 @@ async function setupStakingContract(
 
   const timelock = await hre.ethers.getContract("Timelock") as unknown as Timelock;
 
-  await stakingRewards_Proxy.initialize(
+  await (await stakingRewards_Proxy.initialize(
     pairAddress,
     timelock.address,
     stakingRewardsDistribution.address,
-    isTrueBdPool);
+    isTrueBdPool)).wait();
 
-  stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6]);
+  await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6])).wait();
 
   console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
   console.log(`${stakingRewardsContractName} deployed to impl: `, stakingRewards_ProxyDeployment.implementation);

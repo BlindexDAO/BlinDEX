@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { to_d18 } from '../utils/Helpers'
-import { Timelock } from '../typechain/TimeLock';
+import { Timelock } from '../typechain/Timelock';
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;

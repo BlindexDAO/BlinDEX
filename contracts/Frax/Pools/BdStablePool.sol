@@ -196,7 +196,6 @@ contract BdStablePool {
         notMintPaused
     {
         updateOraclesIfNeeded();
-
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
 
@@ -226,7 +225,6 @@ contract BdStablePool {
             address(this),
             collateral_amount
         );
-
         BDSTABLE.pool_mint(msg.sender, bd_amount_d18);
     }
 
@@ -290,7 +288,7 @@ contract BdStablePool {
         bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION);
         require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
 
-        BDX.pool_burn_from(msg.sender, bdx_amount_d18);
+        BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_amount_d18);
         BDSTABLE.pool_mint(msg.sender, bdStable_amount_d18);
     }
 
@@ -316,7 +314,7 @@ contract BdStablePool {
         require(bdx_out_min <= bdx_amount, "Slippage limit reached");
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
-        BDX.pool_mint(address(this), bdx_amount);
+        BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
     }
 
     // Will fail if fully collateralized or fully algorithmic
@@ -352,7 +350,7 @@ contract BdStablePool {
 
         require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
 
-        BDX.pool_burn_from(msg.sender, bdx_needed);
+        BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_needed);
         collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
         BDSTABLE.pool_mint(msg.sender, mint_amount);
     }
@@ -392,7 +390,7 @@ contract BdStablePool {
         
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
-        BDX.pool_mint(address(this), bdx_amount);
+        BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
     }
 
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
@@ -463,7 +461,7 @@ contract BdStablePool {
 
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
         collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
-        BDX.pool_mint(msg.sender, bdx_paid_back);
+        BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
     }
 
     // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
@@ -485,7 +483,7 @@ contract BdStablePool {
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
         // Give the sender their desired collateral and burn the BDX
-        BDX.pool_burn_from(msg.sender, BDX_amount);
+        BDX.pool_burn_from(address(BDSTABLE), msg.sender, BDX_amount);
         collateral_token.transfer(msg.sender, collateral_precision);
     }
 
