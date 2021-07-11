@@ -39,13 +39,14 @@ contract BDXShares is ERC20Custom {
     address public FRAXStablecoinAdd;
     
     address public owner_address;
-    BDStable private BDSTABLE;
+
+    mapping(address => bool) bdstables;
 
 
     /* ========== MODIFIERS ========== */
 
-    modifier onlyPools() {
-       require(BDSTABLE.bdstable_pools(msg.sender) == true, "Only bd pools can redeem new BD stable");
+    modifier onlyPools(address bd_stable) {
+       require(bdstables[bd_stable] && BDStable(bd_stable).bdstable_pools(msg.sender) == true, "Only bd pools can redeem new BD stable");
         _;
     }
     
@@ -54,8 +55,8 @@ contract BDXShares is ERC20Custom {
         _;
     }
 
-    modifier onlyPoolsOrOwner() {
-       require(BDSTABLE.bdstable_pools(msg.sender) == true || msg.sender == owner_address,
+    modifier onlyPoolsOrOwner(address bd_stable) {
+       require(bdstables[bd_stable] && BDStable(bd_stable).bdstable_pools(msg.sender) == true || msg.sender == owner_address,
          "Only bd pools or owner can redeem new BD stable");
         _;
     }
@@ -74,8 +75,8 @@ contract BDXShares is ERC20Custom {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setBdStableAddress(address frax_contract_address) external onlyByOwner {
-        BDSTABLE = BDStable(frax_contract_address);
+    function addBdStableAddress(address bdstable_contract_address) external onlyByOwner {
+        bdstables[bdstable_contract_address] = true;
     }
 
     
@@ -83,38 +84,24 @@ contract BDXShares is ERC20Custom {
         owner_address = _owner_address;
     }
 
-    function mint(address to, uint256 amount) public onlyPoolsOrOwner {
+    function mint(address bd_stable, address to, uint256 amount) public onlyPoolsOrOwner(bd_stable) {
         _mint(to, amount);
     }
 
     // This function is what other frax pools will call to mint new FXS (similar to the FRAX mint) 
-    function pool_mint(address m_address, uint256 m_amount) external onlyPools {        
-        // if(trackingVotes){
-        //     uint32 srcRepNum = numCheckpoints[address(this)];
-        //     uint96 srcRepOld = srcRepNum > 0 ? checkpoints[address(this)][srcRepNum - 1].votes : 0;
-        //     uint96 srcRepNew = add96(srcRepOld, uint96(m_amount), "pool_mint new votes overflows");
-        //     _writeCheckpoint(address(this), srcRepNum, srcRepOld, srcRepNew); // mint new votes
-        //     trackVotes(address(this), m_address, uint96(m_amount));
-        // } //todo ag
+    function pool_mint(address bd_stable, address m_address, uint256 m_amount) external onlyPools(bd_stable) {        
 
         super._mint(m_address, m_amount);
         // emit FXSMinted(address(this), m_address, m_amount); //todo ag
     }
 
     // This function is what other frax pools will call to burn FXS 
-    function burn_from(address b_address, uint256 b_amount) external onlyPools {
+    function burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
         super._burnFrom(b_address, b_amount);
     }
 
     // This function is what other frax pools will call to burn FXS 
-    function pool_burn_from(address b_address, uint256 b_amount) external onlyPools {
-        // if(trackingVotes){
-        //     trackVotes(b_address, address(this), uint96(b_amount));
-        //     uint32 srcRepNum = numCheckpoints[address(this)];
-        //     uint96 srcRepOld = srcRepNum > 0 ? checkpoints[address(this)][srcRepNum - 1].votes : 0;
-        //     uint96 srcRepNew = sub96(srcRepOld, uint96(b_amount), "pool_burn_from new votes underflows");
-        //     _writeCheckpoint(address(this), srcRepNum, srcRepOld, srcRepNew); // burn votes
-        // }//todo ag
+    function pool_burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
 
         super._burnFrom(b_address, b_amount);
         // emit FXSBurned(b_address, address(this), b_amount); //todo ag
@@ -125,7 +112,7 @@ contract BDXShares is ERC20Custom {
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
 
         _transfer(sender, recipient, amount);
-        // Lukasz: Do we need lowering approvals?
+        // Lukasz: Do we need lowering approvals? - 
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
 
         return true;

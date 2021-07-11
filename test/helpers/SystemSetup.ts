@@ -20,7 +20,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     const bdEurWbtcPool = await getBdEurWbtcPool(hre);
 
     // mint initial BDX
-    await bdx.mint(deployer.address, to_d18(1e5));
+    await bdx.mint('0x0000000000000000000000000000000000000000', deployer.address, to_d18(1e5));
 
     // mint initial WETH
     await weth.deposit({ value: to_d18(100) });
@@ -45,7 +45,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     await provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).div(initialWbtcBdxPrice), to_d18(1000));
     await provideLiquidity(hre, deployer, bdx, bdEur, to_d8(1000).div(initialBdxBdEurPrice), to_d18(1000));
 
-    await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracla update period
+    await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
     
     await updateOracle(hre, weth, bdEur);
     await updateOracle(hre, wbtc, bdEur);

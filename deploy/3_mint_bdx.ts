@@ -11,6 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // todo ag why?!?!? we mint new BDX in multiple places!
     // mint all BDX up front
     await (await bdxInstance.connect(deployer).mint(
+        '0x0000000000000000000000000000000000000000',
         (await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER")).address,
         BigNumber.from(21).mul(BigNumber.from(10).pow(6 + 18)))).wait();
 
