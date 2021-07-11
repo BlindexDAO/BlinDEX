@@ -75,7 +75,7 @@ export async function swapWethAsDeployer(
 
   await swapAsDeployerByContract(hre, tokenIn, tokenOut, wethInValue, tokenMinOutValue);
 
-  console.log(`Swapped WETH for ${tokenOutName}"`);
+  console.log(`Swapped WETH for ${tokenOutName}`);
 }
 
 export async function swapForWethAsDeployer(

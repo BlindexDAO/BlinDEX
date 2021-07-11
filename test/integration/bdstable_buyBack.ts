@@ -69,7 +69,7 @@ describe("BuyBack", () => {
         expect(poolWethDiff).to.be.closeTo(expectedPoolWethDiff, 0.01, "invalid pool weth diff");
     });
 
-    it.only("should buy back max possible value", async () => {        
+    it("should buy back max possible value", async () => {        
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
@@ -79,20 +79,9 @@ describe("BuyBack", () => {
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);
-        const bdEur = await getBdEur(hre);
         const bdEurWethPool = await getBdEurWethPool(hre);
 
-        const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-
-        const maxBdxToBuyBack_d18 = (await bdEur.globalCollateralValue())
-            .mul(to_d12(1-cr))
-            .div(1e12)
-            .mul(1e12)
-            .div(bdxInEurPrice_d12);
-
-        console.log("maxBdxToBuyBack_d18: " + maxBdxToBuyBack_d18);
-        console.log("bdxInEurPrice_d12: " + bdxInEurPrice_d12);
-        console.log("colat: " + await bdEur.globalCollateralValue());
+        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
         bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
         
@@ -100,15 +89,39 @@ describe("BuyBack", () => {
         await bdEurWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1);
     });
 
+    it("should throw if trying to buy back more than excess", async () => {        
+        const collateralizedFraction = 0.9;
+        const cr = 0.3;
+
+        await setUpFunctionalSystem(hre, collateralizedFraction);
+
+        await lockBdEurCrAt(hre, cr); // CR
+
+        const testUser = await getUser(hre);
+        const bdx = await getBdx(hre);
+        const bdEurWethPool = await getBdEurWethPool(hre);
+
+        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
+
+        const moreThanMaxBdxToBuyBack_d18 = maxBdxToBuyBack_d18.add(1);
+
+        bdx.transfer(testUser.address, moreThanMaxBdxToBuyBack_d18);
+        
+        await bdx.connect(testUser).approve(bdEurWethPool.address, moreThanMaxBdxToBuyBack_d18); 
+
+        await expect((async () => {
+            await bdEurWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1);
+        })()).to.be.rejectedWith("You are trying to buy back more than the excess!");
+    });
+
     it("should throw if no excess collateral", async () => {        
         await setUpFunctionalSystem(hre, 0.3);
 
         const testUser = await getUser(hre);
-        const weth = await getWeth(hre);
         const bdx = await getBdx(hre);
         const bdEurWethPool = await getBdEurWethPool(hre);
 
-        const bdxAmount_d18 = to_d18(100);
+        const bdxAmount_d18 = to_d18(10);
 
         bdx.transfer(testUser.address, bdxAmount_d18.mul(3));
         
@@ -119,3 +132,23 @@ describe("BuyBack", () => {
         })()).to.be.rejectedWith("No excess collateral to buy back!");
     });
 })
+
+async function calculateMaxBdxToBuyBack_d18(cr: number){
+    const bdEur = await getBdEur(hre);
+
+    const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
+
+    const bdEurCollateralValue = await bdEur.globalCollateralValue();
+
+    const bdEurTotalSupply = await bdEur.totalSupply();
+    const currentRequiredCollateralValue = bdEurTotalSupply.mul(to_d12(cr)).div(1e12);
+
+    const maxBdxToBuyBack_d18 = bdEurCollateralValue.sub(currentRequiredCollateralValue)
+        .mul(1e12).div(bdxInEurPrice_d12);
+
+    console.log("maxBdxToBuyBack_d18: " + maxBdxToBuyBack_d18);
+    console.log("bdxInEurPrice_d12: " + bdxInEurPrice_d12);
+    console.log("colat: " + await bdEur.globalCollateralValue());
+
+    return maxBdxToBuyBack_d18;
+}
