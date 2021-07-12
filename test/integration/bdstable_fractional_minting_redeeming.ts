@@ -51,7 +51,7 @@ describe("BDStable fractional", () => {
         const bdxlBalanceBeforeMinting_d18 = await bdx.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice();
+        const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice_d12();
         const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInEurPrice_d12).div(bdxInEurPrice_d12);
 
         // calculate how much is needed to mint
@@ -102,7 +102,7 @@ describe("BDStable fractional", () => {
         const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice();
+        const wethInEurPrice_d12 = await bdEurPool.getCollateralPrice_d12();
 
         const bdEurToRedeem_d18 = to_d18(100);
 

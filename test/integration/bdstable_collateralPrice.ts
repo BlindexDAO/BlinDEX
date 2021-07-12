@@ -16,7 +16,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Collateral price", () => {
+describe("Collateral price", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();

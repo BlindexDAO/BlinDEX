@@ -32,7 +32,7 @@ export async function lockBdEurCrAt(hre: HardhatRuntimeEnvironment, targetCR: nu
 
   const bdEur = await getBdEur(hre);
 
-  const currentCR_d12 = await bdEur.global_collateral_ratio();
+  const currentCR_d12 = await bdEur.global_collateral_ratio_d12();
   const currentCR = bigNumberToDecimal(currentCR_d12, 12);
 
   let step = Math.abs(targetCR - currentCR); // step is always positive

@@ -39,7 +39,7 @@ describe("Recollateralization", () => {
         const wethUserBalanceBeforeRecolat_d18 = await weth.balanceOf(testUser.address);
         
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice();
+        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice_d12();
 
         const bdEurCollatrValue_d18 = await bdEur.globalCollateralValue();
         const maxPossibleRecollateralInEur_d18 = (constants.initalBdStableToOwner_d18[hre.network.name].sub(bdEurCollatrValue_d18))

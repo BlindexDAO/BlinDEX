@@ -22,6 +22,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("ChainlinkBasedCryptoFiatFeed_WETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
+  const wbtc_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_WBTC_EUR', {
+    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    contract: "ChainlinkBasedCryptoFiatFeed",
+    args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.WBTC_USD_CHAINLINK_FEED[networkName]]
+  });
+
+  const chainlinkBasedCryptoFiatFeed_BTC_EUR = await hre.ethers.getContract("ChainlinkBasedCryptoFiatFeed_WBTC_EUR") as unknown as ChainlinkBasedCryptoFiatFeed;
+
+  console.log("ChainlinkBasedCryptoFiatFeed_WETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
+
   const bdeur = await hre.ethers.getContract("BDEUR") as unknown as BDStable;
   const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
 

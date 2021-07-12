@@ -263,9 +263,7 @@ contract BdStablePool {
         redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender]
             .add(collateral_needed);
 
-        unclaimedPoolCollateral = unclaimedPoolCollateral.add(
-            collateral_needed
-        );
+        unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
         lastRedeemed[msg.sender] = block.number;
 
         // Move all external functions to the end

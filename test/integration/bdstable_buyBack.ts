@@ -38,7 +38,7 @@ describe("BuyBack", () => {
         bdx.transfer(testUser.address, bdxAmount_d18.mul(3));
         
         const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice();
+        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice_d12();
 
         const expectedUserBdxDiff = -d18_ToNumber(bdxAmount_d18);
         const expectedUserWethDiff = d18_ToNumber(bdxAmount_d18.mul(bdxInEurPrice_d12).div(wethInEurPrice_d12));

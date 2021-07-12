@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d12, to_d18, to_d8 } from "../../utils/Helpers";
-import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWethPool, getBdEurWbtcPool, getUniswapPair } from "./common";
+import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWethPool, getBdEurWbtcPool, getUniswapPair, mintWbtc } from "./common";
 import * as constants from '../../utils/Constants';
 import { ERC20 } from "../../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
@@ -26,11 +26,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     await weth.deposit({ value: to_d18(100) });
 
     // mint inital WBTC
-    const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, deployer)
-    const networkName = hre.network.name;
-    await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], deployer.address,  Date.now() + 3600, {
-      value: BigNumber.from(10).pow(20)
-    })
+    await mintWbtc(hre, deployer, to_d18(1000));
 
     // todo all should be adjusted by the amonut of initial BdStables minted for the owner and current collateral prices
     const initialWethBdEurPrice = 1600;
