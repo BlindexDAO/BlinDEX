@@ -105,20 +105,6 @@ contract BdStablePool {
 
     /* ========== VIEWS ========== */
 
-    //todo ag
-    // Returns fiat value of collateral held in this Frax pool
-    // function collatFiatBalance() public view returns (uint256) {
-    //     if(collateralPricePaused == true){
-    //         return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(pausedPrice).div(PRICE_PRECISION);
-    //     } else {
-    //         uint256 eth_usd_price = FRAX.eth_usd_price();
-    //         uint256 eth_collat_price = collatEthOracle.consult(weth_address, (PRICE_PRECISION * (10 ** missing_decimals)));
-
-    //         uint256 collat_usd_price = eth_usd_price.mul(PRICE_PRECISION).div(eth_collat_price);
-    //         return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(collat_usd_price).div(PRICE_PRECISION); //.mul(getCollateralPrice()).div(1e6);    
-    //     }
-    // }
-
     // Returns the value of excess collateral held in this BdStable pool, compared to what is needed to maintain the global collateral ratio
     function availableExcessCollatDV() public view returns (uint256) {
         uint256 total_supply = BDSTABLE.totalSupply();
@@ -166,24 +152,28 @@ contract BdStablePool {
     // Returns fiat value of collateral held in this BdStable pool
     function collatFiatBalance() public view returns (uint256) {
         //Expressed in collateral token decimals
-        // if(collateralPricePaused == true){
-        //     return (collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral)).mul(10 ** missing_decimals).mul(pausedPrice).div(PRICE_PRECISION);
-        // } else { //todo lw
-        uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
-        uint256 eth_collat_price =
-            collatWEthOracle.consult(
-                weth_address,
-                PRICE_PRECISION
-            );
+        if(collateralPricePaused == true){
+            return collateral_token.balanceOf(address(this))
+                .sub(unclaimedPoolCollateral)
+                .mul(10 ** missing_decimals)
+                .mul(pausedPrice)
+                .div(PRICE_PRECISION);
+        } else {
+            uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
+            uint256 eth_collat_price =
+                collatWEthOracle.consult(
+                    weth_address,
+                    PRICE_PRECISION
+                );
 
-        uint256 collat_fiat_price =
-            eth_fiat_price.mul(PRICE_PRECISION).div(eth_collat_price);
-        return collateral_token.balanceOf(address(this))
-            .sub(unclaimedPoolCollateral)
-            .mul(10**missing_decimals)
-            .mul(collat_fiat_price)
-            .div(PRICE_PRECISION);
-        //}
+            uint256 collat_fiat_price = eth_fiat_price.mul(PRICE_PRECISION).div(eth_collat_price);
+
+            return collateral_token.balanceOf(address(this))
+                .sub(unclaimedPoolCollateral)
+                .mul(10 ** missing_decimals)
+                .mul(collat_fiat_price)
+                .div(PRICE_PRECISION);
+        }
     }
 
     // We separate out the 1t1, fractional and algorithmic minting functions for gas efficiency
@@ -197,15 +187,17 @@ contract BdStablePool {
 
         uint256 globalCR = BDSTABLE.global_collateral_ratio_d12();
 
-        require(globalCR
-             >= COLLATERAL_RATIO_MAX,
+        require(
+            globalCR >= COLLATERAL_RATIO_MAX,
             "Collateral ratio must be >= 1"
         );
-        // require(
-        //     (collateral_token.balanceOf(address(this)))
-        //         .sub(unclaimedPoolCollateral)
-        //         .add(collateral_amount) <= pool_ceiling,
-        //  "[Pool's Closed]: Ceiling reached"); //todo lw
+        
+        require(
+            collateral_token.balanceOf(address(this))
+                .sub(unclaimedPoolCollateral)
+                .add(collateral_amount) <= pool_ceiling,
+            "[Pool's Closed]: Ceiling reached"
+        );
 
         uint256 bd_amount_d18 =
             BdPoolLibrary.calcMint1t1BD(
@@ -321,11 +313,13 @@ contract BdStablePool {
 
         require(global_collateral_ratio_d12 < COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0, 
             "Collateral ratio needs to be between .000001 and .999999");
-        require(collateral_token
-            .balanceOf(address(this))
-            .sub(unclaimedPoolCollateral)
-            .add(collateral_amount) <= pool_ceiling,
-            "Pool ceiling reached, no more BdStable can be minted with this collateral");
+        
+        require(
+            collateral_token.balanceOf(address(this))
+                .sub(unclaimedPoolCollateral)
+                .add(collateral_amount) <= pool_ceiling,
+            "Pool ceiling reached, no more BdStable can be minted with this collateral"
+        );
 
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
