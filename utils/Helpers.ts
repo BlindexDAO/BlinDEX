@@ -22,6 +22,10 @@ export function d18_ToNumber(n: BigNumber): number {
     return bigNumberToDecimal(n, 18)
 }
 
+export function d12_ToNumber(n: BigNumber): number {
+    return bigNumberToDecimal(n, 12)
+}
+
 export function bigNumberToDecimal(n: BigNumber, decimals: number){
     return Number(n.toString()) / 10**decimals;
 }

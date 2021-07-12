@@ -122,15 +122,15 @@ contract BdStablePool {
     // Returns the value of excess collateral held in this BdStable pool, compared to what is needed to maintain the global collateral ratio
     function availableExcessCollatDV() public view returns (uint256) {
         uint256 total_supply = BDSTABLE.totalSupply();
-        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
         uint256 global_collat_value = BDSTABLE.globalCollateralValue();
 
-        if (global_collateral_ratio > COLLATERAL_RATIO_PRECISION)
-            global_collateral_ratio = COLLATERAL_RATIO_PRECISION; // Handles an overcollateralized contract with CR > 1
+        if (global_collateral_ratio_d12 > COLLATERAL_RATIO_PRECISION)
+            global_collateral_ratio_d12 = COLLATERAL_RATIO_PRECISION; // Handles an overcollateralized contract with CR > 1
         
         // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
         uint256 required_collat_fiat_value_d18 = total_supply
-            .mul(global_collateral_ratio)
+            .mul(global_collateral_ratio_d12)
             .div(COLLATERAL_RATIO_PRECISION); 
 
         if (global_collat_value > required_collat_fiat_value_d18)
@@ -148,18 +148,18 @@ contract BdStablePool {
     }
 
     // Returns the price of the pool collateral in fiat
-    function getCollateralPrice() public view returns (uint256) {
+    function getCollateralPrice_d12() public view returns (uint256) {
         if(collateralPricePaused == true){
             return pausedPrice;
         } else {
-            uint256 eth_fiat_price = BDSTABLE.weth_fiat_price(); //d12
+            uint256 eth_fiat_price_d12 = BDSTABLE.weth_fiat_price();
             uint256 collat_eth_price =
                 collatWEthOracle.consult(
                     weth_address,
-                    PRICE_PRECISION //* (10**missing_decimals) todo ag?
+                    PRICE_PRECISION
                 );
 
-            return eth_fiat_price.mul(PRICE_PRECISION).div(collat_eth_price);
+            return eth_fiat_price_d12.mul(PRICE_PRECISION).div(collat_eth_price);
         }
     }
 
@@ -173,20 +173,16 @@ contract BdStablePool {
         uint256 eth_collat_price =
             collatWEthOracle.consult(
                 weth_address,
-                PRICE_PRECISION // * (10**missing_decimals)) todo ag
+                PRICE_PRECISION
             );
 
         uint256 collat_fiat_price =
             eth_fiat_price.mul(PRICE_PRECISION).div(eth_collat_price);
-        return
-            (
-                collateral_token.balanceOf(address(this)).sub(
-                    unclaimedPoolCollateral
-                )
-            )
-                .mul(10**missing_decimals)
-                .mul(collat_fiat_price)
-                .div(PRICE_PRECISION); //.mul(getCollateralPrice()).div(1e12);//todo lw
+        return collateral_token.balanceOf(address(this))
+            .sub(unclaimedPoolCollateral)
+            .mul(10**missing_decimals)
+            .mul(collat_fiat_price)
+            .div(PRICE_PRECISION);
         //}
     }
 
@@ -199,7 +195,7 @@ contract BdStablePool {
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
 
-        uint256 globalCR = BDSTABLE.global_collateral_ratio();
+        uint256 globalCR = BDSTABLE.global_collateral_ratio_d12();
 
         require(globalCR
              >= COLLATERAL_RATIO_MAX,
@@ -213,7 +209,7 @@ contract BdStablePool {
 
         uint256 bd_amount_d18 =
             BdPoolLibrary.calcMint1t1BD(
-                getCollateralPrice(),
+                getCollateralPrice_d12(),
                 collateral_amount_d18
             ); //1 BD for each $1/€1/etc worth of collateral
 
@@ -236,7 +232,7 @@ contract BdStablePool {
         updateOraclesIfNeeded();
 
         require(
-            BDSTABLE.global_collateral_ratio() == COLLATERAL_RATIO_MAX,
+            BDSTABLE.global_collateral_ratio_d12() == COLLATERAL_RATIO_MAX,
             "Collateral ratio must be == 1"
         );
 
@@ -244,7 +240,7 @@ contract BdStablePool {
         uint256 BD_amount_precision = BD_amount.div(10**missing_decimals);
         uint256 collateral_needed =
             BdPoolLibrary.calcRedeem1t1BD(
-                getCollateralPrice(),
+                getCollateralPrice_d12(),
                 BD_amount_precision
             );
 
@@ -281,7 +277,7 @@ contract BdStablePool {
         updateOraclesIfNeeded();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
-        require(BDSTABLE.global_collateral_ratio() == 0, "Collateral ratio must be 0");
+        require(BDSTABLE.global_collateral_ratio_d12() == 0, "Collateral ratio must be 0");
 
         (uint256 bdStable_amount_d18) = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_amount_d18);
 
@@ -297,9 +293,9 @@ contract BdStablePool {
         updateOraclesIfNeeded();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
-        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
 
-        require(global_collateral_ratio == 0, "Collateral ratio must be 0"); 
+        require(global_collateral_ratio_d12 == 0, "Collateral ratio must be 0"); 
         uint256 bdx_fiat_value_d18 = bdStable_amount;
 
         bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION); //apply fees
@@ -323,9 +319,9 @@ contract BdStablePool {
         updateOraclesIfNeeded();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
-        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
 
-        require(global_collateral_ratio < COLLATERAL_RATIO_MAX && global_collateral_ratio > 0, 
+        require(global_collateral_ratio_d12 < COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0, 
             "Collateral ratio needs to be between .000001 and .999999");
         require(collateral_token
             .balanceOf(address(this))
@@ -336,10 +332,10 @@ contract BdStablePool {
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
             bdx_price,
-            getCollateralPrice(),
+            getCollateralPrice_d12(),
             bdx_amount,
             collateral_amount_d18,
-            global_collateral_ratio
+            global_collateral_ratio_d12
         );
 
         (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(input_params);
@@ -361,19 +357,19 @@ contract BdStablePool {
         updateOraclesIfNeeded();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
-        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
 
-        require(global_collateral_ratio < COLLATERAL_RATIO_MAX && global_collateral_ratio > 0, "Collateral ratio needs to be between .000001 and .999999");
-        uint256 col_price_fiat = getCollateralPrice();
+        require(global_collateral_ratio_d12 < COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0, "Collateral ratio needs to be between .000001 and .999999");
+        uint256 col_price_fiat = getCollateralPrice_d12();
 
         uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION);
 
-        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(global_collateral_ratio).div(PRICE_PRECISION));
+        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(global_collateral_ratio_d12).div(PRICE_PRECISION));
         uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
-        uint256 collateral_fiat_value = BdStable_amount_precision.mul(global_collateral_ratio).div(PRICE_PRECISION);
+        uint256 collateral_fiat_value = BdStable_amount_precision.mul(global_collateral_ratio_d12).div(PRICE_PRECISION);
         uint256 collateral_amount = collateral_fiat_value.mul(PRICE_PRECISION).div(col_price_fiat);
 
         require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
@@ -444,15 +440,15 @@ contract BdStablePool {
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 bdStable_total_supply = BDSTABLE.totalSupply();
-        uint256 global_collateral_ratio = BDSTABLE.global_collateral_ratio();
+        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
         uint256 global_collat_value = BDSTABLE.globalCollateralValue();
 
         (uint256 collateral_units, uint256 amount_to_recollat) = BdPoolLibrary.calcRecollateralizeBdStableInner(
             collateral_amount_d18,
-            getCollateralPrice(),
+            getCollateralPrice_d12(),
             global_collat_value,
             bdStable_total_supply,
-            global_collateral_ratio
+            global_collateral_ratio_d12
         ); 
 
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
@@ -467,13 +463,15 @@ contract BdStablePool {
     // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
     // This can also happen if the collateral ratio > 1
     function buyBackBDX(uint256 BDX_amount, uint256 COLLATERAL_out_min) external {
+        updateOraclesIfNeeded();
+        
         require(buyBackPaused == false, "Buyback is paused");
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
     
         BdPoolLibrary.BuybackBDX_Params memory input_params = BdPoolLibrary.BuybackBDX_Params(
             availableExcessCollatDV(),
             bdx_price,
-            getCollateralPrice(),
+            getCollateralPrice_d12(),
             BDX_amount
         );
 

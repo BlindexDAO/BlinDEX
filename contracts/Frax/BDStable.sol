@@ -55,7 +55,7 @@ contract BDStable is ERC20Custom {
     ChainlinkBasedCryptoFiatFeed private weth_fiat_pricer;
     uint8 private weth_fiat_pricer_decimals;
 
-    uint256 public global_collateral_ratio; // 12 decimals of precision
+    uint256 public global_collateral_ratio_d12; // 12 decimals of precision
     
     address public weth_address;
 
@@ -110,7 +110,7 @@ contract BDStable is ERC20Custom {
         bdx_address = _bdx_address;
 
         bdstable_step = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
-        global_collateral_ratio = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
+        global_collateral_ratio_d12 = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
         price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
         price_band = uint256(1e12).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
@@ -197,16 +197,16 @@ contract BDStable is ERC20Custom {
         // Step increments are 0.25% (upon genesis, changable by setFraxStep()) 
 
         if (bdstable_price_cur > price_target.add(price_band)) { //decrease collateral ratio
-            if(global_collateral_ratio <= bdstable_step){ //if within a step of 0, go to 0
-                global_collateral_ratio = 0;
+            if(global_collateral_ratio_d12 <= bdstable_step){ //if within a step of 0, go to 0
+                global_collateral_ratio_d12 = 0;
             } else {
-                global_collateral_ratio = global_collateral_ratio.sub(bdstable_step);
+                global_collateral_ratio_d12 = global_collateral_ratio_d12.sub(bdstable_step);
             }
         } else if (bdstable_price_cur < price_target.sub(price_band)) { //increase collateral ratio
-            if(global_collateral_ratio.add(bdstable_step) >= 1e12){
-                global_collateral_ratio = 1e12; // cap collateral ratio at 1.000000
+            if(global_collateral_ratio_d12.add(bdstable_step) >= 1e12){
+                global_collateral_ratio_d12 = 1e12; // cap collateral ratio at 1.000000
             } else {
-                global_collateral_ratio = global_collateral_ratio.add(bdstable_step);
+                global_collateral_ratio_d12 = global_collateral_ratio_d12.add(bdstable_step);
             }
         }
 
