@@ -73,6 +73,8 @@ contract BDStable is ERC20Custom {
     uint256 public price_target; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
     uint256 public price_band; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
 
+    bool public collateral_ratio_paused = false;
+
     /* ========== MODIFIERS ========== */
 
     modifier onlyPools() {
@@ -188,7 +190,7 @@ contract BDStable is ERC20Custom {
     // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
     uint256 public last_call_time; // Last time the refreshCollateralRatio function was called
     function refreshCollateralRatio() public {
-        //require(collateral_ratio_paused == false, "Collateral Ratio has been paused");//todo lw
+        require(collateral_ratio_paused == false, "Collateral Ratio has been paused");
 
         uint256 bdstable_price_cur = bdstable_price_d12();
 
@@ -269,6 +271,10 @@ contract BDStable is ERC20Custom {
 
     function setBdstable_step_d12(uint256 _bdstable_step) external onlyByOwner {
         bdstable_step = _bdstable_step;
+    }
+
+    function toggleCollateralRatio() public onlyByOwner {
+        collateral_ratio_paused = !collateral_ratio_paused;
     }
 
     /* ========== EVENTS ========== */
