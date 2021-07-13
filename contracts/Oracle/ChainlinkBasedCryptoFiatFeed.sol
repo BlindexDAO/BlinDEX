@@ -16,7 +16,7 @@ contract ChainlinkBasedCryptoFiatFeed {
         cryptoToUsdFeed = AggregatorV3Interface(_cryptUsdFeedAddress);
     }
 
-    function getPrice_1e12() public view returns (uint256) {       
+    function getPrice_1e12() public view returns (uint256) {
         uint256 fiatUsdPrice = getLatestPrice(fiatToUsdFeed);
         uint256 cryptoUsdPrice = getLatestPrice(cryptoToUsdFeed);
 
@@ -27,8 +27,8 @@ contract ChainlinkBasedCryptoFiatFeed {
             .div(uint256(10)**cryptoToUsdFeed.decimals());
     }
 
-    function consult(address token, uint amountIn) external view returns (uint256) {     
-        //require(token == WETH); // todo lw
+    function consult(address tokenIn, uint amountIn) external view returns (uint256) {     
+        require(tokenIn == address(cryptoToUsdFeed), "This oracle only accepts consulting crypto input");
 
         return getPrice_1e12().mul(amountIn).div(1e12);
     }

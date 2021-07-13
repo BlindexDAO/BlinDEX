@@ -15,9 +15,15 @@ import "hardhat/console.sol";
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract WethToWethOracle is ICryptoPairOracle {
     
-    // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint256 amountIn) override view external returns (uint amountOut) {
-        //require(token == WETH) todo ag
+    address internal wethAddress;
+
+    constructor(address _wethAddress) public {
+        wethAddress = _wethAddress;
+    }
+
+    function consult(address tokenIn, uint256 amountIn) override view external returns (uint amountOut) {
+        require(tokenIn == wethAddress, "This oracle only accepts consulting WETH input");
+
         return amountIn;
     }
 

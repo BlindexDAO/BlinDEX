@@ -51,13 +51,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //todo ag replace with a better implementaion (price from uniswap3?)
   const btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
-    args: [constants.BTC_ETH_CHAINLINK_FEED[networkName]]
+    args: [constants.BTC_ETH_CHAINLINK_FEED[networkName], constants.wETH_address[networkName]]
   });
 
   const bdeurWethPool = await hre.ethers.getContract('BDEUR_WETH_POOL') as BdStablePool;
   const bdeurWbtcPool = await hre.ethers.getContract('BDEUR_WBTC_POOL') as BdStablePool;
   const weth_to_weth_oracle = await hre.deployments.deploy('WethToWethOracle', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    args: [constants.wETH_address[networkName]]
   });
   await (await bdeurWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait(); //replace with sth?
   await bdeurWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, constants.wETH_address[networkName]);
