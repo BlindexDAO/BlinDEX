@@ -50,6 +50,8 @@ contract BdStablePool {
     bool public recollateralizePaused = false;
     bool public buyBackPaused = false;
     bool public collateralPricePaused = false;
+    bool public recollateralizeOnlyForOwner = false;
+    bool public buybackOnlyForOwner = false;
 
     uint256 public minting_fee; //d12
     uint256 public redemption_fee; //d12
@@ -426,9 +428,14 @@ contract BdStablePool {
     // This function simply rewards anyone that sends collateral to a pool with the same amount of BDX + the bonus rate
     // Anyone can call this function to recollateralize the protocol and take the extra BDX value from the bonus rate as an arb opportunity
     function recollateralizeBdStable(uint256 collateral_amount, uint256 BDX_out_min) external {
+        require(recollateralizePaused == false, "Recollateralize is paused");
+
+        if(recollateralizeOnlyForOwner){
+            require(msg.sender == owner_address, "Currently only owner can rellateralize");
+        }
+
         updateOraclesIfNeeded();
 
-        require(recollateralizePaused == false, "Recollateralize is paused");
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 bdStable_total_supply = BDSTABLE.totalSupply();
@@ -455,9 +462,14 @@ contract BdStablePool {
     // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
     // This can also happen if the collateral ratio > 1
     function buyBackBDX(uint256 BDX_amount, uint256 COLLATERAL_out_min) external {
+        require(buyBackPaused == false, "Buyback is paused");
+
+        if(buybackOnlyForOwner){
+            require(msg.sender == owner_address, "Currently only owner can buyback");
+        }
+
         updateOraclesIfNeeded();
         
-        require(buyBackPaused == false, "Buyback is paused");
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
     
         BdPoolLibrary.BuybackBDX_Params memory input_params = BdPoolLibrary.BuybackBDX_Params(
@@ -505,6 +517,14 @@ contract BdStablePool {
     
     function toggleBuyBack() external onlyByOwner {
         buyBackPaused = !buyBackPaused;
+    }
+
+    function toggleBuybackOnlyForOwner() external onlyByOwner {
+        buybackOnlyForOwner = !buybackOnlyForOwner;
+    }
+
+    function toggleRecollateralizeOnlyForOwner() external onlyByOwner {
+        recollateralizeOnlyForOwner = !recollateralizeOnlyForOwner;
     }
 
     function toggleCollateralPrice(uint256 _new_price) external onlyByOwner {
