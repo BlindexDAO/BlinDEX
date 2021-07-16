@@ -62,8 +62,6 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
 
       await wbtc.approve(bdEurWbtcPool.address, collateralWbtc_d8);
       await bdEurWbtcPool.recollateralizeBdStable(collateralWbtc_d8, to_d18(1));
-      
-      await bdEur.refreshCollateralRatio(); //todo ag redundant?
     }
 }
 

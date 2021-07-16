@@ -4,10 +4,8 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
-import { updateBdEurOracle } from "../helpers/bdStable";
 import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
-import { updateWethPair, swapEthForWbtc } from "../helpers/swaps";
 import { lockBdEurCrAt } from "../helpers/bdStable";
 import * as constants from '../../utils/Constants';
 
@@ -49,10 +47,7 @@ describe("Recollateralization", () => {
         const toRecollatInEur_d18 = maxPossibleRecollateralInEur_d18.div(2);
         const toRecollatInEth_d18 = toRecollatInEur_d18.mul(1e12).div(wethInEurPrice_d12);
         const toRecollatInEth = d18_ToNumber(toRecollatInEth_d18);
-
-        await updateBdEurOracle(hre);
-        await updateWethPair(hre, "BDXShares");
-
+        
         const bdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(testUser.address);
 
         await weth.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 

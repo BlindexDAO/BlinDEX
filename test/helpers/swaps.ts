@@ -12,7 +12,7 @@ import { getDeployer, getUniswapRouter, getWeth } from "./common";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from "ethers";
 
-export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){ //todo ag needed?
+export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
   var pair = await getWethPair(hre, tokenName);
 
   await pair.updateOracle();
