@@ -1,14 +1,10 @@
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
-import { BdStablePool } from "../../typechain/BdStablePool";
-import { BDXShares } from "../../typechain/BDXShares";
 import { d18_ToNumber, to_d18, to_d8 } from "../../utils/Helpers";
 import * as constants from '../../utils/Constants';
 import { WETH } from "../../typechain/WETH";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
-import { StakingRewards } from "../../typechain/StakingRewards";
-import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
 import { ERC20 } from "../../typechain/ERC20";
 import { bigNumberToDecimal } from "../../utils/Helpers";
 import { getWethPair } from "../../utils/Swaps";
@@ -16,7 +12,7 @@ import { getDeployer, getUniswapRouter, getWeth } from "./common";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from "ethers";
 
-export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
+export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){ //todo ag needed?
   var pair = await getWethPair(hre, tokenName);
 
   await pair.updateOracle();

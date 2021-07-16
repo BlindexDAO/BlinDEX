@@ -68,7 +68,7 @@ contract BDStable is ERC20Custom {
     // Constants for various precisions
     uint256 private constant PRICE_PRECISION = 1e12; //increase because we are no longer base on stablecoins
 
-    uint256 public bdstable_step; // Amount to change the collateralization ratio by upon refreshCollateralRatio()
+    uint256 public bdStable_step_d12; // Amount to change the collateralization ratio by upon refreshCollateralRatio()
     uint256 public refresh_cooldown; // Seconds to wait before being able to run refreshCollateralRatio() again
     uint256 public price_target; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
     uint256 public price_band; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
@@ -111,7 +111,7 @@ contract BDStable is ERC20Custom {
         owner_address = _owner_address;
         bdx_address = _bdx_address;
 
-        bdstable_step = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
+        bdStable_step_d12 = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
         global_collateral_ratio_d12 = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
         price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
         price_band = uint256(1e12).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
@@ -181,38 +181,45 @@ contract BDStable is ERC20Custom {
     }
 
     // Returns BDX / <fiat>
-    function BDX_price_d12()  public view returns (uint256) {
+    function BDX_price_d12() public view returns (uint256) {
         return oracle_price(PriceChoice.BDX);
     }
     /* ========== PUBLIC FUNCTIONS ========== */
 
-    
     // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
-    uint256 public last_call_time; // Last time the refreshCollateralRatio function was called
+    uint256 public refreshCollateralRatio_last_call_time; // Last time the collateral ration was refreshed function was executed
     function refreshCollateralRatio() public {
-        require(collateral_ratio_paused == false, "Collateral Ratio has been paused");
+        if(collateral_ratio_paused == true){
+            return;
+        }
+
+        if(block.timestamp - refreshCollateralRatio_last_call_time < refresh_cooldown){
+            return;
+        }
+
+        if(bdstableWethOracle.shouldUpdateOracle()){
+            bdstableWethOracle.updateOracle();
+        }
 
         uint256 bdstable_price_cur = bdstable_price_d12();
-
-        require(block.timestamp - last_call_time >= refresh_cooldown, "Must wait for the refresh cooldown since last refresh");
 
         // Step increments are 0.25% (upon genesis, changable by setFraxStep()) 
 
         if (bdstable_price_cur > price_target.add(price_band)) { //decrease collateral ratio
-            if(global_collateral_ratio_d12 <= bdstable_step){ //if within a step of 0, go to 0
+            if(global_collateral_ratio_d12 <= bdStable_step_d12){ //if within a step of 0, go to 0
                 global_collateral_ratio_d12 = 0;
             } else {
-                global_collateral_ratio_d12 = global_collateral_ratio_d12.sub(bdstable_step);
+                global_collateral_ratio_d12 = global_collateral_ratio_d12.sub(bdStable_step_d12);
             }
         } else if (bdstable_price_cur < price_target.sub(price_band)) { //increase collateral ratio
-            if(global_collateral_ratio_d12.add(bdstable_step) >= 1e12){
+            if(global_collateral_ratio_d12.add(bdStable_step_d12) >= 1e12){
                 global_collateral_ratio_d12 = 1e12; // cap collateral ratio at 1.000000
             } else {
-                global_collateral_ratio_d12 = global_collateral_ratio_d12.add(bdstable_step);
+                global_collateral_ratio_d12 = global_collateral_ratio_d12.add(bdStable_step_d12);
             }
         }
 
-        last_call_time = block.timestamp; // Set the time of the last expansion
+        refreshCollateralRatio_last_call_time = block.timestamp; // Set the time of the last expansion
     }
     
     function weth_fiat_price() public view returns (uint256) {
@@ -269,12 +276,17 @@ contract BDStable is ERC20Custom {
         weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals(); // IS that true? weth_usd_pricer.getDecimals();
     }
 
-    function setBdstable_step_d12(uint256 _bdstable_step) external onlyByOwner {
-        bdstable_step = _bdstable_step;
+    function setBdStable_step_d12(uint256 _bdStable_step_d12) external onlyByOwner {
+        bdStable_step_d12 = _bdStable_step_d12;
     }
 
-    function toggleCollateralRatio() public onlyByOwner {
+    function toggleCollateralRatioPaused() external onlyByOwner {
         collateral_ratio_paused = !collateral_ratio_paused;
+    }
+
+    function lockCollateralRationAt(uint256 wantedCR_d12) external onlyByOwner {
+        global_collateral_ratio_d12 = wantedCR_d12;
+        collateral_ratio_paused = true;
     }
 
     /* ========== EVENTS ========== */

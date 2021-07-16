@@ -3,8 +3,6 @@ import { to_d12, to_d18, to_d8 } from "../../utils/Helpers";
 import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWethPool, getBdEurWbtcPool, getUniswapPair, mintWbtc } from "./common";
 import * as constants from '../../utils/Constants';
 import { ERC20 } from "../../typechain/ERC20";
-import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
-import { BigNumber } from '@ethersproject/bignumber';
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { provideLiquidity } from "./swaps";
 
@@ -64,9 +62,9 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
 
       await wbtc.approve(bdEurWbtcPool.address, collateralWbtc_d8);
       await bdEurWbtcPool.recollateralizeBdStable(collateralWbtc_d8, to_d18(1));
+      
+      await bdEur.refreshCollateralRatio(); //todo ag redundant?
     }
-
-    await bdEur.refreshCollateralRatio();
 }
 
 async function updateOracle(

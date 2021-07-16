@@ -187,6 +187,7 @@ contract BdStablePool {
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
 
+        BDSTABLE.refreshCollateralRatio();
         uint256 globalCR = BDSTABLE.global_collateral_ratio_d12();
 
         require(
@@ -224,6 +225,7 @@ contract BdStablePool {
         notRedeemPaused
     {
         updateOraclesIfNeeded();
+        BDSTABLE.refreshCollateralRatio();
 
         require(
             BDSTABLE.global_collateral_ratio_d12() == COLLATERAL_RATIO_MAX,
@@ -267,6 +269,7 @@ contract BdStablePool {
     // 0% collateral-backed
     function mintAlgorithmicBdStable(uint256 bdx_amount_d18, uint256 bdStable_out_min) external notMintPaused {
         updateOraclesIfNeeded();
+        BDSTABLE.refreshCollateralRatio();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         require(BDSTABLE.global_collateral_ratio_d12() == 0, "Collateral ratio must be 0");
@@ -283,6 +286,7 @@ contract BdStablePool {
     // Redeem BDSTABLE for BDX. 0% collateral-backed
     function redeemAlgorithmicBdStable(uint256 bdStable_amount, uint256 bdx_out_min) external notRedeemPaused {
         updateOraclesIfNeeded();
+        BDSTABLE.refreshCollateralRatio();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
@@ -309,6 +313,7 @@ contract BdStablePool {
     // > 0% and < 100% collateral-backed
     function mintFractionalBdStable(uint256 collateral_amount, uint256 bdx_amount, uint256 bdStable_out_min) external notMintPaused {
         updateOraclesIfNeeded();
+        BDSTABLE.refreshCollateralRatio();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
@@ -349,6 +354,7 @@ contract BdStablePool {
     // Redeem BDSTABLE for collateral and BDX. > 0% and < 100% collateral-backed
     function redeemFractionalBdStable(uint256 BdStable_amount, uint256 BDX_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
         updateOraclesIfNeeded();
+        BDSTABLE.refreshCollateralRatio();
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
@@ -435,6 +441,7 @@ contract BdStablePool {
         }
 
         updateOraclesIfNeeded();
+        BDSTABLE.refreshCollateralRatio();
 
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
