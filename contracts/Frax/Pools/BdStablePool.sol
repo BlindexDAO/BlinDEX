@@ -297,16 +297,22 @@ contract BdStablePool {
         bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION); //apply fees
 
         uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
         
-        redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
-        unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+        if(bdx_amount > 0){
+            redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+            unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+        }
         
         lastRedeemed[msg.sender] = block.number;
         
-        require(bdx_out_min <= bdx_amount, "Slippage limit reached");
+        require(bdx_out_min < bdx_amount, "Slippage limit reached");
+
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
-        BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
+        if(bdx_amount > 0){
+            BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
+        }
     }
 
     // Will fail if fully collateralized or fully algorithmic
@@ -366,6 +372,7 @@ contract BdStablePool {
 
         uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(global_collateral_ratio_d12).div(PRICE_PRECISION));
         uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
@@ -379,14 +386,18 @@ contract BdStablePool {
         redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_amount);
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_amount);
 
-        redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
-        unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+        if(bdx_amount > 0){
+            redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+            unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+        }
 
         lastRedeemed[msg.sender] = block.number;
         
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
-        BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
+        if(bdx_amount > 0){
+            BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
+        }
     }
 
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
@@ -460,10 +471,14 @@ contract BdStablePool {
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
+        bdx_paid_back = howMuchBdxCanBeMinted(bdx_paid_back);
 
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
-        collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
-        BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
+
+        if(bdx_paid_back > 0){
+            collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
+            BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
+        }
     }
 
     // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
@@ -494,6 +509,16 @@ contract BdStablePool {
         // Give the sender their desired collateral and burn the BDX
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, BDX_amount);
         collateral_token.transfer(msg.sender, collateral_precision);
+    }
+
+    function howMuchBdxCanBeMinted(uint256 _watned_amount_d18) public view returns (uint256) {
+        uint256 maxToBeMinted_d18 = BDX.howMuchCanBeMinted();
+
+        if(maxToBeMinted_d18 > _watned_amount_d18){
+            return _watned_amount_d18;
+        } else {
+            return maxToBeMinted_d18;
+        }
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */

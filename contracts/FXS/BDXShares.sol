@@ -2,26 +2,6 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-// ====================================================================
-// |     ______                   _______                             |
-// |    / _____________ __  __   / ____(_____  ____ _____  ________   |
-// |   / /_  / ___/ __ `| |/_/  / /_  / / __ \/ __ `/ __ \/ ___/ _ \  |
-// |  / __/ / /  / /_/ _>  <   / __/ / / / / / /_/ / / / / /__/  __/  |
-// | /_/   /_/   \__,_/_/|_|  /_/   /_/_/ /_/\__,_/_/ /_/\___/\___/   |
-// |                                                                  |
-// ====================================================================
-// ========================= FRAXShares (FXS) =========================
-// ====================================================================
-// Frax Finance: https://github.com/FraxFinance
-
-// Primary Author(s)
-// Travis Moore: https://github.com/FortisFortuna
-// Jason Huan: https://github.com/jasonhuan
-// Sam Kazemian: https://github.com/samkazemian
-
-// Reviewer(s) / Contributor(s)
-// Sam Sun: https://github.com/samczsun
-
 import "../Common/Context.sol";
 import "../ERC20/ERC20Custom.sol";
 import "../ERC20/IERC20.sol";
@@ -39,6 +19,8 @@ contract BDXShares is ERC20Custom {
     address public FRAXStablecoinAdd;
     
     address public owner_address;
+
+    uint256 public MAX_TOTAL_SUPPLY = 21*1e6*1e18;
 
     mapping(address => bool) bdstables;
 
@@ -84,23 +66,30 @@ contract BDXShares is ERC20Custom {
         owner_address = _owner_address;
     }
 
-    function mint(address bd_stable, address to, uint256 amount) public onlyPoolsOrOwner(bd_stable) {
-        _mint(to, amount);
+    function howMuchCanBeMinted() external view returns(uint256) {
+        return MAX_TOTAL_SUPPLY.sub(totalSupply());
     }
 
-    // This function is what other frax pools will call to mint new FXS (similar to the FRAX mint) 
-    function pool_mint(address bd_stable, address m_address, uint256 m_amount) external onlyPools(bd_stable) {        
+    function mint(address bd_stable, address to, uint256 amount_d18) public onlyPoolsOrOwner(bd_stable) {
+        require(totalSupply().add(amount_d18) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
-        super._mint(m_address, m_amount);
-        // emit FXSMinted(address(this), m_address, m_amount); //todo ag
+        _mint(to, amount_d18);
     }
 
-    // This function is what other frax pools will call to burn FXS 
+    // This function is what other frax pools will call to mint new BDX (similar to the BdStable mint) 
+    function pool_mint(address bd_stable, address to, uint256 amount_d18) external onlyPools(bd_stable) {
+        require(totalSupply().add(amount_d18) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
+
+        super._mint(to, amount_d18);
+        // emit FXSMinted(address(this), to, amount_d18); //todo ag
+    }
+
+    // This function is what other frax pools will call to burn BDX 
     function burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
         super._burnFrom(b_address, b_amount);
     }
 
-    // This function is what other frax pools will call to burn FXS 
+    // This function is what other frax pools will call to burn BDX 
     function pool_burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
 
         super._burnFrom(b_address, b_amount);

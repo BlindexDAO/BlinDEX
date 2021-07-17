@@ -5,6 +5,7 @@ import * as constants from '../../utils/Constants';
 import { ERC20 } from "../../typechain/ERC20";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { provideLiquidity } from "./swaps";
+import { ethers } from "ethers";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEurColltFraction: number = 1) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
@@ -18,7 +19,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     const bdEurWbtcPool = await getBdEurWbtcPool(hre);
 
     // mint initial BDX
-    await bdx.mint('0x0000000000000000000000000000000000000000', deployer.address, to_d18(1e5));
+    await bdx.mint(ethers.constants.AddressZero, deployer.address, to_d18(1e5));
 
     // mint initial WETH
     await weth.deposit({ value: to_d18(100) });

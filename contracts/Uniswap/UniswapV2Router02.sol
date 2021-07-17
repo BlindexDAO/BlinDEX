@@ -478,4 +478,9 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         IUniswapV2PairOracle pair = IUniswapV2PairOracle(IUniswapV2Factory(factory).getPair(tokenIn, tokenOut));
         amountOut = pair.consult(tokenIn, amountIn);
     }
+
+    function getReserves(address _tokenA, address _tokenB) external view returns(uint256, uint256) {
+        (uint256 reserveA_d18, uint256 reserveB_d18) = UniswapV2Library.getReserves(factory, _tokenA, _tokenB);
+        return (reserveA_d18, reserveB_d18);
+    }
 }
