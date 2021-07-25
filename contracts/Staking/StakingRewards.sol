@@ -11,7 +11,6 @@ import "../ERC20/ERC20.sol";
 import '../Uniswap/TransferHelper.sol';
 import "../ERC20/SafeERC20.sol";
 import "../Utils/ReentrancyGuard.sol";
-import "../Utils/StringHelpers.sol";
 import "./StakingRewardsDistribution.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -29,7 +28,6 @@ contract StakingRewards is
     PausableUpgradeable,
     OwnableUpgradeable
 {
-    // using SafeMath for uint256;
     using SafeERC20 for ERC20;
     using SafeMath for uint256;
 

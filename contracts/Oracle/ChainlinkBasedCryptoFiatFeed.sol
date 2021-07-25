@@ -2,7 +2,6 @@ pragma solidity 0.6.11;
 
 import "./AggregatorV3Interface.sol";
 import "../Math/SafeMath.sol";
-import "../Math/MagnitudesAndPowers.sol";
 import "hardhat/console.sol";
 
 contract ChainlinkBasedCryptoFiatFeed {

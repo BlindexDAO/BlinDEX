@@ -28,10 +28,7 @@ import "../ERC20/ERC20Custom.sol";
 import "../ERC20/ERC20.sol";
 import "../Math/SafeMath.sol";
 import "../FXS/BDXShares.sol";
-import "./Pools/FraxPool.sol";
-import "../Oracle/ChainlinkETHFIATPriceConsumer.sol";
 import "../Oracle/ChainlinkBasedCryptoFiatFeed.sol";
-import "../Governance/AccessControl.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
 
@@ -59,7 +56,7 @@ contract BDStable is ERC20Custom {
     
     address public weth_address;
 
-    // The addresses in this array are added by the oracle and these contracts are able to mint frax
+    // The addresses in this array are added by the oracle and these contracts are able to mint bdStable
     address[] public bdstable_pools_array;
 
     // Mapping is also used for faster verification
@@ -78,7 +75,7 @@ contract BDStable is ERC20Custom {
     /* ========== MODIFIERS ========== */
 
     modifier onlyPools() {
-       require(bdstable_pools[msg.sender] == true, "Only frax pools can call this function");
+       require(bdstable_pools[msg.sender] == true, "Only bd pools can call this function");
         _;
     } 
     
@@ -203,7 +200,7 @@ contract BDStable is ERC20Custom {
 
         uint256 bdstable_price_cur = bdstable_price_d12();
 
-        // Step increments are 0.25% (upon genesis, changable by setFraxStep()) 
+        // Step increments are 0.25% (upon genesis, changable) 
 
         if (bdstable_price_cur > price_target.add(price_band)) { //decrease collateral ratio
             if(global_collateral_ratio_d12 <= bdStable_step_d12){ //if within a step of 0, go to 0
@@ -233,7 +230,7 @@ contract BDStable is ERC20Custom {
         super._burnFrom(b_address, b_amount);
     }
 
-    // This function is what other frax pools will call to mint new FRAX 
+    // This function is what other bd pools will call to mint new bd stable 
     function pool_mint(address m_address, uint256 m_amount) public onlyPools {
         super._mint(m_address, m_amount);
     }
