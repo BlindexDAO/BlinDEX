@@ -238,8 +238,8 @@ contract BdStablePool {
         uint256 BD_amount_precision = BD_amount.div(10**missing_decimals);
         uint256 col_price_d12 = getCollateralPrice_d12();
         uint256 effective_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
-        uint256 cr = effective_collateral_ratio_d12 > 1e12 ? 1e12 : effective_collateral_ratio_d12;
-        uint256 collateral_needed = BD_amount.mul(1e12).mul(cr).div(1e12).div(col_price_d12);
+        uint256 cr_d12 = effective_collateral_ratio_d12 > 1e12 ? 1e12 : effective_collateral_ratio_d12;
+        uint256 collateral_needed = BD_amount.mul(1e12).mul(cr_d12).div(1e12).div(col_price_d12);
 
         collateral_needed = (
             collateral_needed.mul(uint256(PRICE_PRECISION).sub(redemption_fee))
@@ -363,30 +363,30 @@ contract BdStablePool {
         updateOraclesIfNeeded();
         BDSTABLE.refreshCollateralRatio();
 
-        uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
-        uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
 
-        uint256 cr = effective_global_collateral_ratio_d12 < global_collateral_ratio_d12
-            ? effective_global_collateral_ratio_d12
-            : global_collateral_ratio_d12;
-
-        require(
+        require(    
             global_collateral_ratio_d12 < COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0,
             "Collateral ratio needs to be between .000001 and .999999");
+
+        uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
+
+        uint256 cr_d12 = effective_global_collateral_ratio_d12 < global_collateral_ratio_d12
+            ? effective_global_collateral_ratio_d12
+            : global_collateral_ratio_d12;
 
         uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION);
 
         uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(
-                BdStable_amount_post_fee.mul(cr).div(PRICE_PRECISION)
+                BdStable_amount_post_fee.mul(cr_d12).div(PRICE_PRECISION)
             );
 
-        uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
         bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
-        uint256 collateral_fiat_value = BdStable_amount_precision.mul(cr).div(PRICE_PRECISION);
+        uint256 collateral_fiat_value = BdStable_amount_precision.mul(cr_d12).div(PRICE_PRECISION);
         uint256 collateral_amount = collateral_fiat_value.mul(PRICE_PRECISION).div(getCollateralPrice_d12());
 
         require(collateral_amount <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");

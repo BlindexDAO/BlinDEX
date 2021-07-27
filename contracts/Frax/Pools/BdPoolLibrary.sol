@@ -62,7 +62,7 @@ library BdPoolLibrary {
     }
 
     function calcRecollateralizeBdStableInner(
-        uint256 collateral_amount_d18, 
+        uint256 collateral_amount_d18,
         uint256 col_price,
         uint256 global_collat_value,
         uint256 bdStable_total_supply,
