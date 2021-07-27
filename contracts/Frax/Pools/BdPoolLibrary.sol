@@ -4,8 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import "../../Math/SafeMath.sol";
 
-
-
 library BdPoolLibrary {
     using SafeMath for uint256;
 
@@ -57,10 +55,6 @@ library BdPoolLibrary {
             c_fiat_value_d18.add(calculated_bdx_fiat_value_d18),
             calculated_bdx_needed
         );
-    }
-
-    function calcRedeem1t1BD(uint256 col_price, uint256 BD_amount) public pure returns (uint256) {
-        return BD_amount.mul(1e12).div(col_price);
     }
 
     function calcMintAlgorithmicBD(uint256 bdx_price_fiat_d12, uint256 bdx_amount_d18_d18) public pure returns (uint256) {

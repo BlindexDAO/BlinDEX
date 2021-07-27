@@ -125,7 +125,7 @@ contract BDStable is ERC20Custom {
         return bdstable_pools_array;
     }
 
-
+    // collateral value in fiat corresponding to the stable
     // Iterate through all bd pools and calculate all value of collateral in all pools globally 
     function globalCollateralValue() public view returns (uint256) {
         uint256 total_collateral_value_d18 = 0; 
@@ -219,6 +219,13 @@ contract BDStable is ERC20Custom {
         refreshCollateralRatio_last_call_time = block.timestamp; // Set the time of the last expansion
     }
     
+    function effective_global_collateral_ratio_d12() public view returns (uint256) {
+        uint256 bdStable_total_supply = totalSupply();
+        uint256 global_collat_value = globalCollateralValue();
+        uint256 efCR = global_collat_value.mul(1e12).div(bdStable_total_supply);
+        return efCR;
+    }
+
     function weth_fiat_price() public view returns (uint256) {
         return uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
     }
