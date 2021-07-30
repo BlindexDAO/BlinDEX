@@ -117,7 +117,11 @@ describe("BDStable 1to1", () => {
 
         const bdEurToRedeem =  to_d18(100);
 
-        const expectedWethForRedeem = bdEurToRedeem.mul(1e12).div(ethInEurPrice_1e12);
+        const efCr_d12 = await bdEur.effective_global_collateral_ratio_d12();
+
+        expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
+
+        const expectedWethForRedeem = bdEurToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12);
 
         await bdEurPool.connect(testUser).redeem1t1BD(bdEurToRedeem, 1);
         await bdEurPool.connect(testUser).collectRedemption();

@@ -458,7 +458,7 @@ contract BdStablePool {
         require(recollateralizePaused == false, "Recollateralize is paused");
 
         if(recollateralizeOnlyForOwner){
-            require(msg.sender == owner_address, "Currently only owner can rellateralize");
+            require(msg.sender == owner_address, "Currently only owner can recollateralize");
         }
 
         updateOraclesIfNeeded();
