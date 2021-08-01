@@ -7,14 +7,14 @@ import "../ERC20/ERC20Custom.sol";
 import "../ERC20/IERC20.sol";
 import "../Math/SafeMath.sol";
 import "../Frax/BDStable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract BDXShares is ERC20Custom, Initializable {
     using SafeMath for uint256;
 
     /* ========== STATE VARIABLES ========== */
-    uint8 public decimals;
-    uint256 public MAX_TOTAL_SUPPLY;
+    uint8 public constant decimals = 18;
+    uint256 public constant MAX_TOTAL_SUPPLY = 21*1e6*1e18;
 
     string public symbol;
     string public name;
@@ -56,8 +56,6 @@ contract BDXShares is ERC20Custom, Initializable {
         name = _name;
         symbol = _symbol;
         owner_address = _owner_address;
-        decimals = 18;
-        MAX_TOTAL_SUPPLY = 21*1e6*1e18;
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
