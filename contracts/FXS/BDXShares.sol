@@ -7,23 +7,23 @@ import "../ERC20/ERC20Custom.sol";
 import "../ERC20/IERC20.sol";
 import "../Math/SafeMath.sol";
 import "../Frax/BDStable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract BDXShares is ERC20Custom {
+contract BDXShares is ERC20Custom, Initializable {
     using SafeMath for uint256;
 
     /* ========== STATE VARIABLES ========== */
+    uint8 public decimals;
+    uint256 public MAX_TOTAL_SUPPLY;
 
     string public symbol;
     string public name;
-    uint8 public constant decimals = 18;
+    
     address public FRAXStablecoinAdd;
     
     address public owner_address;
 
-    uint256 public MAX_TOTAL_SUPPLY = 21*1e6*1e18;
-
     mapping(address => bool) bdstables;
-
 
     /* ========== MODIFIERS ========== */
 
@@ -45,14 +45,19 @@ contract BDXShares is ERC20Custom {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
+    function initialize(
         string memory _name,
-        string memory _symbol, 
+        string memory _symbol,
         address _owner_address
-    ) public {
+    )
+        external
+        initializer
+    {
         name = _name;
         symbol = _symbol;
         owner_address = _owner_address;
+        decimals = 18;
+        MAX_TOTAL_SUPPLY = 21*1e6*1e18;
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -61,7 +66,6 @@ contract BDXShares is ERC20Custom {
         bdstables[bdstable_contract_address] = true;
     }
 
-    
     function setOwner(address _owner_address) external onlyByOwner {
         owner_address = _owner_address;
     }
@@ -106,12 +110,6 @@ contract BDXShares is ERC20Custom {
 
         return true;
     }
-
-    /* ========== PUBLIC FUNCTIONS ========== */
-
-
-    /* ========== INTERNAL FUNCTIONS ========== */
-
 
     /* ========== EVENTS ========== */
     

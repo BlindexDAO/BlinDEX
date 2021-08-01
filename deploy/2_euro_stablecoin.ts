@@ -33,7 +33,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   
   console.log("BDEUR WETH Pool deployed to:", bdeur_weth_BdStablePoolDeployment.address);
-
   
   const bdeur_wbtc_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WBTC_POOL', {
     from: deployer,
