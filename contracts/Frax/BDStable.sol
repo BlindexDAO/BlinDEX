@@ -31,18 +31,22 @@ import "../FXS/BDXShares.sol";
 import "../Oracle/ChainlinkBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 import "hardhat/console.sol";
 
-contract BDStable is ERC20Custom {
+contract BDStable is ERC20Custom, Initializable {
     using SafeMath for uint256;
 
     /* ========== STATE VARIABLES ========== */
     enum PriceChoice { BDSTABLE, BDX }
+
+    uint8 public constant decimals = 18;
+    uint256 private constant PRICE_PRECISION = 1e12; //increase because we are no longer base on stablecoins
+
     string public symbol;
     string public name;
     string public fiat;
-    uint8 public constant decimals = 18;
     address public owner_address;
     address public bdx_address;
 
@@ -62,15 +66,12 @@ contract BDStable is ERC20Custom {
     // Mapping is also used for faster verification
     mapping(address => bool) public bdstable_pools; 
 
-    // Constants for various precisions
-    uint256 private constant PRICE_PRECISION = 1e12; //increase because we are no longer base on stablecoins
-
     uint256 public bdStable_step_d12; // Amount to change the collateralization ratio by upon refreshCollateralRatio()
     uint256 public refresh_cooldown; // Seconds to wait before being able to run refreshCollateralRatio() again
     uint256 public price_target; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
     uint256 public price_band; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
 
-    bool public collateral_ratio_paused = false;
+    bool public collateral_ratio_paused;
 
     /* ========== MODIFIERS ========== */
 
@@ -94,14 +95,17 @@ contract BDStable is ERC20Custom {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
+    function initialize (
         string memory _name,
         string memory _symbol,
         string memory _fiat,
         address _owner_address,
         address _bdx_address,
         uint256 _initalBdStableToOwner_d18
-    ) public {
+    ) 
+        public 
+        initializer
+    {
         name = _name;
         symbol = _symbol;
         fiat = _fiat;
@@ -113,6 +117,8 @@ contract BDStable is ERC20Custom {
         price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
         price_band = uint256(1e12).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
+
+        collateral_ratio_paused = false;
 
         if(_initalBdStableToOwner_d18 > 0) {
             _mint(_owner_address, _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps

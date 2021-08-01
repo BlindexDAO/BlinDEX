@@ -15,18 +15,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
 
-  const bdeurDeployment = await hre.deployments.deploy('BDEUR', {
+  const bdeur_proxy = await hre.deployments.deploy('BDEUR', {
     from: deployer,
+    proxy: {
+      proxyContract: 'OptimizedTransparentProxy',
+    },
     contract: 'BDStable',
-    args: ['BlindexEuro', 'BDEUR', 'EURO', deployer, bdx.address, constants.initalBdStableToOwner_d18[hre.network.name]]
+    args: []
   });
 
-  console.log("BDEUR deployed to:", bdeurDeployment.address);
+  const bdEur = await hre.ethers.getContract('BDEUR') as BDStable;
+  await bdEur.initialize(
+    'BlindexEuro',
+    'BDEUR',
+    'EURO',
+    deployer,
+    bdx.address,
+    constants.initalBdStableToOwner_d18[hre.network.name]
+  );
+
+  console.log("BDEUR deployed to:", bdEur.address);
   
   const bdeur_weth_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WETH_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, constants.wETH_address[hre.network.name], deployer],
+    args: [bdEur.address, bdx.address, constants.wETH_address[hre.network.name], deployer],
     libraries: {
       BdPoolLibrary: bdPoolLibraryDeployment.address
     }
@@ -37,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur_wbtc_BdStablePoolDeployment = await hre.deployments.deploy('BDEUR_WBTC_POOL', {
     from: deployer,
     contract: 'BdStablePool',
-    args: [bdeurDeployment.address, bdx.address, constants.wBTC_address[hre.network.name], deployer],
+    args: [bdEur.address, bdx.address, constants.wBTC_address[hre.network.name], deployer],
     libraries: {
       BdPoolLibrary: bdPoolLibraryDeployment.address
     }
@@ -45,11 +58,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   console.log("BDEUR WBTC Pool deployed to:", bdeur_wbtc_BdStablePoolDeployment.address);
 
-  const bdeur = await hre.ethers.getContract('BDEUR') as BDStable;
-  await (await bdeur.addPool(bdeur_weth_BdStablePoolDeployment.address)).wait()
-  await (await bdeur.addPool(bdeur_wbtc_BdStablePoolDeployment.address)).wait()
+  await (await bdEur.addPool(bdeur_weth_BdStablePoolDeployment.address)).wait()
+  await (await bdEur.addPool(bdeur_wbtc_BdStablePoolDeployment.address)).wait()
 
-  await (await bdx.addBdStableAddress(bdeurDeployment.address)).wait()
+  await (await bdx.addBdStableAddress(bdEur.address)).wait()
 
 	// One time migration
 	return true;
