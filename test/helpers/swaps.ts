@@ -113,11 +113,11 @@ export async function swapAsDeployerByContract(
 }
 
 export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: string) {
-  const bdStable = await hre.ethers.getContract(bdStableName) as unknown as BDStable;
+  const bdStable = await hre.ethers.getContract(bdStableName) as BDStable;
 
   const testUser = await hre.ethers.getNamedSigner('TEST2');
 
-  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as unknown as UniswapV2Router02;
+  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as UniswapV2Router02;
 
   const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], to_d18(1), bdStable.address);
   const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, to_d18(1), constants.wETH_address[hre.network.name]);

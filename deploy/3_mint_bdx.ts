@@ -7,7 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const [ deployer ] = await hre.ethers.getSigners();
     const treasury = await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER");
 
-    const bdxInstance = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
+    const bdxInstance = await hre.ethers.getContract("BDXShares") as BDXShares;
 
     // mint half of the BDX up front, to reseve for staking rewards
     await bdxInstance.connect(deployer).mint(

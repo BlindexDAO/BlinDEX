@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer
   });
 
-  const bdx = await hre.ethers.getContract('BDXShares', deployer) as unknown as BDXShares;
+  const bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
 
   const bdeurDeployment = await hre.deployments.deploy('BDEUR', {
     from: deployer,
@@ -45,7 +45,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   console.log("BDEUR WBTC Pool deployed to:", bdeur_wbtc_BdStablePoolDeployment.address);
 
-  const bdeur = await hre.ethers.getContract('BDEUR') as unknown as BDStable;
+  const bdeur = await hre.ethers.getContract('BDEUR') as BDStable;
   await (await bdeur.addPool(bdeur_weth_BdStablePoolDeployment.address)).wait()
   await (await bdeur.addPool(bdeur_wbtc_BdStablePoolDeployment.address)).wait()
 

@@ -15,7 +15,7 @@ async function setupStakingContract(
   nameB: string,
   isTrueBdPool: boolean)
 {
-  const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as unknown as UniswapV2Factory;
+  const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB); 
 
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
@@ -30,12 +30,12 @@ async function setupStakingContract(
     args: []
   });
 
-  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as unknown as StakingRewardsDistribution;
-  const stakingRewards_Proxy = await hre.ethers.getContract(stakingRewardsContractName) as unknown as StakingRewards;
+  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
+  const stakingRewards_Proxy = await hre.ethers.getContract(stakingRewardsContractName) as StakingRewards;
 
   const [ deployer ] = await hre.ethers.getSigners();
 
-  const timelock = await hre.ethers.getContract("Timelock") as unknown as Timelock;
+  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
 
   await (await stakingRewards_Proxy.initialize(
     pairAddress,
@@ -54,7 +54,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [ deployer ] = await hre.ethers.getSigners();
   
   const bdeur = await hre.deployments.get('BDEUR');
-  const bdx = await hre.ethers.getContract("BDXShares") as unknown as BDXShares;
+  const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
   //todo ag set true pools rewards proportions
 

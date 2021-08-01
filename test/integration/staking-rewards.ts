@@ -39,10 +39,10 @@ async function initialize(){
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
   weth = await getWeth(hre);
-  bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as unknown as BDStable;
-  bdx = await hre.ethers.getContract('BDXShares', ownerUser) as unknown as BDXShares;
-  stakingRewards_BDEUR_WETH = await hre.ethers.getContract('StakingRewards_BDEUR_WETH', ownerUser) as unknown as StakingRewards;
-  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", ownerUser) as unknown as StakingRewardsDistribution;
+  bdEur = await hre.ethers.getContract('BDEUR', ownerUser) as BDStable;
+  bdx = await hre.ethers.getContract('BDXShares', ownerUser) as BDXShares;
+  stakingRewards_BDEUR_WETH = await hre.ethers.getContract('StakingRewards_BDEUR_WETH', ownerUser) as StakingRewards;
+  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", ownerUser) as StakingRewardsDistribution;
 }
 
 async function get_BDEUR_WETH_poolWeight(){

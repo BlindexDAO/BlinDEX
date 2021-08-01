@@ -6,13 +6,13 @@ import * as constants from "./Constants";
 
 export async function getWethPair(hre: HardhatRuntimeEnvironment, tokenName: string): Promise<UniswapV2Pair> {
     const ownerUser = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS
-    const uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as unknown as UniswapV2Factory;
+    const uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", ownerUser) as UniswapV2Factory;
   
-    const token = await hre.ethers.getContract(tokenName) as unknown as BDStable;
+    const token = await hre.ethers.getContract(tokenName) as BDStable;
   
     const pairAddress = await uniswapFactory.getPair(token.address, constants.wETH_address[hre.network.name]);
   
-    const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as unknown as UniswapV2Pair;
+    const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
   
     return pair;
 }

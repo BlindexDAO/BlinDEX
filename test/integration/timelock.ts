@@ -20,13 +20,13 @@ const day = 60*60*24;
 
 async function GetSRD() : Promise<StakingRewardsDistribution> {
     const [ deployer ] = await hre.ethers.getSigners();
-    const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer.address) as unknown as StakingRewardsDistribution;
+    const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer.address) as StakingRewardsDistribution;
     return stakingRewardsDistribution;
 }
 
 async function GetTimelock() : Promise<Timelock> {
     const [ deployer ] = await hre.ethers.getSigners();
-    const timelock = await hre.ethers.getContract("Timelock", deployer.address) as unknown as Timelock;
+    const timelock = await hre.ethers.getContract("Timelock", deployer.address) as Timelock;
     return timelock;
 }
 
