@@ -59,8 +59,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur = await hre.deployments.get('BDEUR');
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
-  //todo ag set true pools rewards proportions
-
   console.log("Setting up staking contracts");
 
   await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
