@@ -95,7 +95,6 @@ contract StakingRewards is
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
-        lastUpdateTime = block.timestamp;
         DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 

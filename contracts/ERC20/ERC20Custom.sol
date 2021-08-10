@@ -282,4 +282,6 @@ contract ERC20Custom is Context, IERC20 {
      * To learn more about hooks, head to xref:ROOT:using-hooks.adoc[Using Hooks].
      */
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+
+    uint256[45] private __gap;
 }

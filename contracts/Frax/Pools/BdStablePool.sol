@@ -8,11 +8,17 @@ import "../../Frax/BDStable.sol";
 import "../../ERC20/ERC20.sol";
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 import "hardhat/console.sol";
 
-contract BdStablePool {
+contract BdStablePool is Initializable {
     using SafeMath for uint256;
+
+    // Constants for various precisions
+    uint256 private constant PRICE_PRECISION = 1e12;
+    uint256 private constant COLLATERAL_RATIO_PRECISION = 1e12;
+    uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
 
     /* ========== STATE VARIABLES ========== */
 
@@ -28,8 +34,8 @@ contract BdStablePool {
 
     ICryptoPairOracle private collatWEthOracle;
     address public collat_weth_oracle_address;
-    // Number of decimals needed to get to 18
-    uint256 private immutable missing_decimals;
+    
+    uint256 private missing_decimals; // Number of decimals needed to get to 18
     address private weth_address;
 
     mapping(address => uint256) public redeemBDXBalances;
@@ -38,19 +44,14 @@ contract BdStablePool {
     uint256 public unclaimedPoolBDX;
     mapping(address => uint256) public lastRedeemed;
 
-    // Constants for various precisions
-    uint256 private constant PRICE_PRECISION = 1e12;
-    uint256 private constant COLLATERAL_RATIO_PRECISION = 1e12;
-    uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
-
     // AccessControl state variables
-    bool public mintPaused = false;
-    bool public redeemPaused = false;
-    bool public recollateralizePaused = false;
-    bool public buyBackPaused = false;
-    bool public collateralPricePaused = false;
-    bool public recollateralizeOnlyForOwner = false;
-    bool public buybackOnlyForOwner = false;
+    bool public mintPaused;
+    bool public redeemPaused;
+    bool public recollateralizePaused;
+    bool public buyBackPaused;
+    bool public collateralPricePaused;
+    bool public recollateralizeOnlyForOwner;
+    bool public buybackOnlyForOwner;
 
     uint256 public minting_fee; //d12
     uint256 public redemption_fee; //d12
@@ -58,16 +59,16 @@ contract BdStablePool {
     uint256 public recollat_fee; //d12
 
     // Pool_ceiling is the total units of collateral that a pool contract can hold
-    uint256 public pool_ceiling = 1e36; // d18
+    uint256 public pool_ceiling; // d18
 
     // Stores price of the collateral, if price is paused
-    uint256 public pausedPrice = 0;
+    uint256 public pausedPrice;
 
     // Bonus rate on BDX minted during recollateralizeBdStable(); 12 decimals of precision, set to 0.75% on genesis
-    uint256 public bonus_rate = 7500000000; // d12
+    uint256 public bonus_rate; // d12
 
     // Number of blocks to wait before being able to collectRedemption()
-    uint256 public redemption_delay = 1;
+    uint256 public redemption_delay;
 
     /* ========== MODIFIERS ========== */
 
@@ -88,12 +89,15 @@ contract BdStablePool {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
+    function initialize(
         address _bdstable_contract_address,
         address _bdx_contract_address,
         address _collateral_address,
         address _creator_address
-    ) public {
+    ) 
+        public
+        initializer
+    {
         BDSTABLE = BDStable(_bdstable_contract_address);
         BDX = BDXShares(_bdx_contract_address);
         bdstable_contract_address = _bdstable_contract_address;
@@ -102,6 +106,11 @@ contract BdStablePool {
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
         missing_decimals = uint256(18).sub(collateral_token.decimals());
+
+        pool_ceiling = 1e36; // d18
+        pausedPrice = 0;
+        bonus_rate = 7500000000; // d12
+        redemption_delay = 1;
     }
 
     /* ========== VIEWS ========== */

@@ -22,7 +22,7 @@ describe("Chainlink besed Oracles", () => {
         
         const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
             'ChainlinkBasedCryptoFiatFeed_WETH_EUR', 
-            ownerUser) as unknown as ChainlinkBasedCryptoFiatFeed;
+            ownerUser) as ChainlinkBasedCryptoFiatFeed;
 
         const price = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
         
@@ -38,7 +38,7 @@ describe("Chainlink besed Oracles", () => {
         const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
         const btcToEthOracle = await hre.ethers.getContract(
             'BtcToEthOracle', 
-            ownerUser) as unknown as BtcToEthOracle;
+            ownerUser) as BtcToEthOracle;
 
         const price = await btcToEthOracle.getPrice_1e12();
 

@@ -59,10 +59,10 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
         .mul(2).mul(initialBdEurColltFraction_d12).div(10).div(initialWbtcBdEurPrice).div(1e10).div(1e12); // 30% in wbtc
       
       await weth.approve(bdEurWethPool.address, collateralWeth_d18);
-      await bdEurWethPool.recollateralizeBdStable(collateralWeth_d18, to_d18(1))
+      await bdEurWethPool.recollateralizeBdStable(collateralWeth_d18, 1)
 
       await wbtc.approve(bdEurWbtcPool.address, collateralWbtc_d8);
-      await bdEurWbtcPool.recollateralizeBdStable(collateralWbtc_d8, to_d18(1));
+      await bdEurWbtcPool.recollateralizeBdStable(collateralWbtc_d8, 1);
     }
 }
 
