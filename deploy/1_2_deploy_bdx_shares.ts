@@ -4,24 +4,27 @@ import { BDXShares } from '../typechain/BDXShares';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+
   const bdx_proxy = await hre.deployments.deploy(
     'BDXShares', 
     {
       from: deployer,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
+        execute: {
+          init: {
+            methodName: "initialize",
+            args: [
+              'BDXShares',
+              'BDX',
+              deployer
+            ]
+          }
+        }
       },
       contract: 'BDXShares',
       args: []
     }
-  );
-
-  const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
-
-  await bdx.initialize(
-    'BDXShares',
-    'BDX',
-    deployer
   );
 
   console.log("BDXShares deployed to:", bdx_proxy.address);

@@ -23,7 +23,7 @@ describe("Collateral price", () => {
 
         const wethPool = await getBdEurWethPool(hre);
 
-        const expectedWethPrice = 2000;
+        const expectedWethPrice = 2300;
         const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
 
         console.log("wethInEurPrice: " + wethInEurPrice);

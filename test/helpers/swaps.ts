@@ -1,4 +1,4 @@
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
+import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { d18_ToNumber, to_d18, to_d8 } from "../../utils/Helpers";

@@ -1,4 +1,3 @@
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
@@ -11,13 +10,14 @@ import { UniswapV2Pair } from "../../typechain/UniswapV2Pair";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { BigNumber } from '@ethersproject/bignumber';
 import * as constants from '../../utils/Constants'
+import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
   return deployer;
 }
 
-export async function getUser(hre: HardhatRuntimeEnvironment) {
+export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   const user = await hre.ethers.getNamedSigner('TEST2');
   return user;
 }

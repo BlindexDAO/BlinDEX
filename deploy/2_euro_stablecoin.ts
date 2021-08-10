@@ -20,20 +20,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [
+            'BlindexEuro',
+            'BDEUR',
+            'EURO',
+            deployer,
+            bdx.address,
+            constants.initalBdStableToOwner_d18[hre.network.name]
+          ]
+        }
+      }
     },
     contract: 'BDStable',
     args: []
   });
 
   const bdEur = await hre.ethers.getContract('BDEUR') as BDStable;
-  await bdEur.initialize(
-    'BlindexEuro',
-    'BDEUR',
-    'EURO',
-    deployer,
-    bdx.address,
-    constants.initalBdStableToOwner_d18[hre.network.name]
-  );
 
   console.log("BDEUR deployed to:", bdEur.address);
   
@@ -43,6 +48,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
+        execute: {
+          init: {
+            methodName: "initialize",
+            args: [
+              bdEur.address,
+              bdx.address,
+              constants.wETH_address[hre.network.name],
+              deployer
+            ]
+          }
+        }
       },
       contract: 'BdStablePool',
       args: [],
@@ -53,8 +69,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
   
   const bdeur_weth_BdStablePool = await hre.ethers.getContract('BDEUR_WETH_POOL') as BdStablePool;
-  
-  await bdeur_weth_BdStablePool.initialize(bdEur.address, bdx.address, constants.wETH_address[hre.network.name], deployer);
 
   console.log("BDEUR WETH Pool deployed to:", bdeur_weth_BdStablePool.address);
   
@@ -64,6 +78,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
+        execute: {
+          init: {
+            methodName: "initialize",
+            args: [
+              bdEur.address,
+              bdx.address,
+              constants.wBTC_address[hre.network.name],
+              deployer
+            ]
+          }
+        }
       },
       contract: 'BdStablePool',
       args: [],
@@ -74,8 +99,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   );
 
   const bdeur_wbtc_BdStablePool = await hre.ethers.getContract('BDEUR_WBTC_POOL') as BdStablePool;
-  
-  await bdeur_wbtc_BdStablePool.initialize(bdEur.address, bdx.address, constants.wBTC_address[hre.network.name], deployer);
   
   console.log("BDEUR WBTC Pool deployed to:", bdeur_wbtc_BdStablePool.address);
 

@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import {SignerWithAddress} from 'hardhat-deploy-ethers/dist/src/signer-with-address';
+import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { BDStable } from "../../typechain/BDStable";
 import { StakingRewards } from "../../typechain/StakingRewards";
 import { ERC20 } from "../../typechain/ERC20";

@@ -20,28 +20,31 @@ async function setupStakingContract(
 
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
 
+  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
+  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
+
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
     stakingRewardsContractName, {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [
+            pairAddress,
+            timelock.address,
+            stakingRewardsDistribution.address,
+            isTrueBdPool
+          ]
+        }
+      }
     },
     contract: "StakingRewards",
     args: []
   });
 
-  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
-  const stakingRewards_Proxy = await hre.ethers.getContract(stakingRewardsContractName) as StakingRewards;
-
   const [ deployer ] = await hre.ethers.getSigners();
-
-  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
-
-  await (await stakingRewards_Proxy.initialize(
-    pairAddress,
-    timelock.address,
-    stakingRewardsDistribution.address,
-    isTrueBdPool)).wait();
 
   await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6])).wait();
 

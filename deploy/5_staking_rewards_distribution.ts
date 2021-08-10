@@ -24,22 +24,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
+  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
+
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
     "StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [
+            timelock.address,
+            bdx.address
+          ]
+        }
+      }
     },
     contract: "StakingRewardsDistribution",
     args: []
   });
-
-  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
-
-  const stakingRewardsDistribution_Proxy = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
-  await stakingRewardsDistribution_Proxy.initialize(
-    timelock.address,
-    bdx.address);
 
   console.log("Deployed StakingRewardsDistribution");
 

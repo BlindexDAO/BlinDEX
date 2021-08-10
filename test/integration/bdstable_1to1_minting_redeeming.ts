@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signer-with-address";
+import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEurCrAt } from "../helpers/bdStable";
 import { getBdEur, getBdEurWbtcPool, getBdEurWethPool, getDeployer, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
@@ -60,7 +60,7 @@ describe("BDStable 1to1", () => {
 
         const testUser = await getUser(hre);
         const collateralAmount = 10;
-        
+
         await lockBdEurCrAt(hre, 1);
         
         const bdEurBefore_d18 = await bdEur.balanceOf(testUser.address);
@@ -92,7 +92,7 @@ describe("BDStable 1to1", () => {
 
         await expect((async () => {
             await (await perform1To1MintingForWeth(hre, testUser, collateralAmount))
-        })()).to.be.rejectedWith("revert Collateral ratio must be >= 1");
+        })()).to.be.rejectedWith("Collateral ratio must be >= 1");
     });
 
     it("should redeem bdeur when CR = 1", async () => {
