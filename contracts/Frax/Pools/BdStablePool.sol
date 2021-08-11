@@ -494,12 +494,13 @@ contract BdStablePool is Initializable {
 
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
-        if(bdx_paid_back > 0){ // todo ag isn't this if too wide?
-            collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
-            BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
+        collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
 
-            emit Recollateralized(collateral_units_precision, bdx_paid_back);
+        if(bdx_paid_back > 0){
+            BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
         }
+
+        emit Recollateralized(collateral_units_precision, bdx_paid_back);
     }
 
     // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
