@@ -558,31 +558,31 @@ contract BdStablePool is Initializable {
         collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
 
-        emit CollatWETHOracleSet(_collateral_weth_oracle_address, _weth_address);
+        emit CollateralWethOracleSet(_collateral_weth_oracle_address, _weth_address);
     }
 
-    function toggleMinting() external onlyByOwner {
+    function toggleMintingPaused() external onlyByOwner {
         mintPaused = !mintPaused;
 
-        emit MintingToggled(mintPaused);
+        emit MintingPausedToggled(mintPaused);
     }
 
-    function toggleRedeeming() external onlyByOwner {
+    function toggleRedeemingPaused() external onlyByOwner {
         redeemPaused = !redeemPaused;
 
-        emit RedeemingToggled(redeemPaused);
+        emit RedeemingPausedToggled(redeemPaused);
     }
 
-    function toggleRecollateralize() external onlyByOwner {
+    function toggleRecollateralizePaused() external onlyByOwner {
         recollateralizePaused = !recollateralizePaused;
 
-        emit RecollateralizeToggled(recollateralizePaused);
+        emit RecollateralizePausedToggled(recollateralizePaused);
     }
     
-    function toggleBuyBack() external onlyByOwner {
+    function toggleBuybackPaused() external onlyByOwner {
         buyBackPaused = !buyBackPaused;
 
-        emit BuybackToggled(buyBackPaused);
+        emit BuybackPausedToggled(buyBackPaused);
     }
 
     function toggleBuybackOnlyForOwner() external onlyByOwner {
@@ -640,12 +640,12 @@ contract BdStablePool is Initializable {
     /* ========== EVENTS ========== */
 
     event PoolParametersSet(uint256 new_ceiling, uint256 new_bonus_rate, uint256 new_redemption_delay, uint256 new_mint_fee, uint256 new_redeem_fee, uint256 new_buyback_fee, uint256 new_recollat_fee);
-    event MintingToggled(bool toggled);
-    event RedeemingToggled(bool toggled);
-    event RecollateralizeToggled(bool toggled);
-    event BuybackToggled(bool toggled);
+    event MintingPausedToggled(bool toggled);
+    event RedeemingPausedToggled(bool toggled);
+    event RecollateralizePausedToggled(bool toggled);
+    event BuybackPausedToggled(bool toggled);
     event CollateralPriceToggled(bool toggled);
-    event CollatWETHOracleSet(address indexed collateral_weth_oracle_address, address indexed weth_address);
+    event CollateralWethOracleSet(address indexed collateral_weth_oracle_address, address indexed weth_address);
     event RecollateralizeOnlyForOwnerToggled(bool recollateralizeOnlyForOwner);
     event BuybackOnlyForOwnerToggled(bool buybackOnlyForOwner);
     event Recollateralized(uint256 indexed collateral_amount_paid, uint256 indexed bdx_paid_back);

@@ -299,7 +299,7 @@ contract BDStable is ERC20Custom, Initializable {
         weth_fiat_pricer = ChainlinkBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals();
         
-        emit EthFeatOracleSet(_eth_fiat_consumer_address);
+        emit EthFiatOracleSet(_eth_fiat_consumer_address);
     }
 
     function setBdStable_step_d12(uint256 _bdStable_step_d12) external onlyByOwner {
@@ -330,8 +330,8 @@ contract BDStable is ERC20Custom, Initializable {
     event PoolRemoved(address pool_address);
     event BDStable_WETH_OracleSet(address indexed bdstable_oracle_addr, address indexed weth_address);
     event BDX_WETH_OracleSet(address indexed bdx_oracle_address, address indexed weth_address);
-    event EthFeatOracleSet(address eth_fiat_consumer_address);
+    event EthFiatOracleSet(address eth_fiat_consumer_address);
     event BdStableStepSet(uint256 bdStable_step_d12);
     event CollateralRatioPausedToggled(bool collateral_ratio_paused);
-    event CollateralRatioLocked(uint256 wantedCR_d12);
+    event CollateralRatioLocked(uint256 lockedCR_d12);
 }
