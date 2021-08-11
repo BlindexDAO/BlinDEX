@@ -4,9 +4,9 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
-import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, getDeployer, getUser } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
-import { lockBdEurCrAt } from "../helpers/bdStable";
+import { lockBdEuCrAt } from "../helpers/bdStable";
 import * as constants from '../../utils/Constants';
 
 chai.use(cap);
@@ -28,19 +28,19 @@ describe("Recollateralization", () => {
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
-        const bdEur = await getBdEur(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
-        await lockBdEurCrAt(hre, 0.7);
+        await lockBdEuCrAt(hre, 0.7);
 
-        const wethPoolBalanceBeforeRecolat_d18 = await weth.balanceOf(bdEurWethPool.address);
+        const wethPoolBalanceBeforeRecolat_d18 = await weth.balanceOf(bdEuWethPool.address);
         const wethUserBalanceBeforeRecolat_d18 = await weth.balanceOf(testUser.address);
         
-        const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice_d12();
+        const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
+        const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
-        const bdEurCollatrValue_d18 = await bdEur.globalCollateralValue();
-        const maxPossibleRecollateralInEur_d18 = (constants.initalBdStableToOwner_d18[hre.network.name].sub(bdEurCollatrValue_d18))
+        const bdEuCollatrValue_d18 = await bdEu.globalCollateralValue();
+        const maxPossibleRecollateralInEur_d18 = (constants.initalBdStableToOwner_d18[hre.network.name].sub(bdEuCollatrValue_d18))
             .mul(1e12).div(wethInEurPrice_d12);
 
         // recollateralization
@@ -50,14 +50,14 @@ describe("Recollateralization", () => {
         
         const bdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(testUser.address);
 
-        await weth.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
-        await bdEurWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
+        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
 
         const bdxBalanceAfterRecolat_d18 = await bdx.balanceOf(testUser.address);
 
         // asserts
     
-        const wethPoolBalanceAfterRecolat_d18 = await weth.balanceOf(bdEurWethPool.address);
+        const wethPoolBalanceAfterRecolat_d18 = await weth.balanceOf(bdEuWethPool.address);
         console.log("wethPoolBalanceBeforeRecolat_d18: " + wethPoolBalanceBeforeRecolat_d18);
         console.log("wethPoolBalanceAfterRecolat_d18:  " + wethPoolBalanceAfterRecolat_d18);
         const wethPoolBalanceDelta_d18 = wethPoolBalanceAfterRecolat_d18.sub(wethPoolBalanceBeforeRecolat_d18);
@@ -83,31 +83,31 @@ describe("Recollateralization", () => {
     it("recollateralize should NOT fail when efCR < CR", async () => {        
         await setUpFunctionalSystem(hre, 0.3); // ~efCR
 
-        await lockBdEurCrAt(hre, 0.9); // CR
+        await lockBdEuCrAt(hre, 0.9); // CR
 
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const toRecollatInEth_d18 = to_d18(0.001);
-        await weth.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
-        await bdEurWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
+        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
     })
 
     it("recollateralize should fail when efCR > CR", async () => {        
         await setUpFunctionalSystem(hre, 0.9); // ~efCR
 
-        await lockBdEurCrAt(hre, 0.3); // CR
+        await lockBdEuCrAt(hre, 0.3); // CR
 
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const toRecollatInEth_d18 = to_d18(0.001);
-        await weth.connect(testUser).approve(bdEurWethPool.address, toRecollatInEth_d18); 
+        await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
 
         await expect((async () => {
-            await bdEurWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+            await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
         })()).to.be.rejectedWith("subtraction overflow");
     })
 })

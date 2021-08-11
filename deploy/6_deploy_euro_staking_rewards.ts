@@ -56,7 +56,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
   const [ deployer ] = await hre.ethers.getSigners();
   
-  const bdeur = await hre.deployments.get('BDEUR');
+  const bdeu = await hre.deployments.get('BDEU');
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
   console.log("Setting up staking contracts");
@@ -67,14 +67,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
   console.log("Set up statking: BDX/WBTC");
 
-  await setupStakingContract(hre, bdx.address, bdeur.address, "BDX", "BDEUR", true);
-  console.log("Set up statking: BDX/BDEUR");
+  await setupStakingContract(hre, bdx.address, bdeu.address, "BDX", "BDEU", true);
+  console.log("Set up statking: BDX/BDEU");
 
-  await setupStakingContract(hre, bdeur.address, constants.wETH_address[networkName], "BDEUR", "WETH", false);
-  console.log("Set up statking: BDEUR/WETH");
+  await setupStakingContract(hre, bdeu.address, constants.wETH_address[networkName], "BDEU", "WETH", false);
+  console.log("Set up statking: BDEU/WETH");
 
-  await setupStakingContract(hre, bdeur.address, constants.wBTC_address[networkName], "BDEUR", "WBTC", false);
-  console.log("Set up statking: BDEUR/WBTC");
+  await setupStakingContract(hre, bdeu.address, constants.wBTC_address[networkName], "BDEU", "WBTC", false);
+  console.log("Set up statking: BDEU/WBTC");
 
   console.log("Bdx shares connected with StakingRewards");
 

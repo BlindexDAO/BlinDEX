@@ -22,9 +22,9 @@ export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWit
   return user;
 }
 
-export async function getBdEur(hre: HardhatRuntimeEnvironment){
+export async function getBdEu(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEUR', ownerUser) as BDStable;
+  return await hre.ethers.getContract('BDEU', ownerUser) as BDStable;
 }
 
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment){
@@ -37,14 +37,14 @@ export async function getUniswapFactory(hre: HardhatRuntimeEnvironment){
   return await hre.ethers.getContract('UniswapV2Factory', ownerUser) as UniswapV2Factory;
 }
 
-export async function getBdEurWethPool(hre: HardhatRuntimeEnvironment){
+export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEUR_WETH_POOL', ownerUser) as BdStablePool;
+  return await hre.ethers.getContract('BDEU_WETH_POOL', ownerUser) as BdStablePool;
 }
 
-export async function getBdEurWbtcPool(hre: HardhatRuntimeEnvironment){
+export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEUR_WBTC_POOL', ownerUser) as BdStablePool;
+  return await hre.ethers.getContract('BDEU_WBTC_POOL', ownerUser) as BdStablePool;
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment){

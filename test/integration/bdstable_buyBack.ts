@@ -4,9 +4,9 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
-import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, getDeployer, getUser } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
-import { lockBdEurCrAt } from "../helpers/bdStable";
+import { lockBdEuCrAt } from "../helpers/bdStable";
 
 chai.use(cap);
 
@@ -22,20 +22,20 @@ describe("BuyBack", () => {
     it("should buy back", async () => {        
         await setUpFunctionalSystem(hre, 0.9);
 
-        await lockBdEurCrAt(hre, 0.3); // CR
+        await lockBdEuCrAt(hre, 0.3); // CR
 
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
         const bdx = await getBdx(hre);
-        const bdEur = await getBdEur(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const bdxAmount_d18 = to_d18(20);
 
         bdx.transfer(testUser.address, bdxAmount_d18.mul(3));
         
-        const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
-        const wethInEurPrice_d12 = await bdEurWethPool.getCollateralPrice_d12();
+        const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
+        const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
         const expectedUserBdxDiff = -d18_ToNumber(bdxAmount_d18);
         const expectedUserWethDiff = d18_ToNumber(bdxAmount_d18.mul(bdxInEurPrice_d12).div(wethInEurPrice_d12));
@@ -44,16 +44,16 @@ describe("BuyBack", () => {
 
         const userBdxBalanceBefore_d18 = await bdx.balanceOf(testUser.address);
         const userWethBalanceBefore_d18 = await weth.balanceOf(testUser.address);
-        const poolBdxBalanceBefore_d18 = await bdx.balanceOf(bdEurWethPool.address);
-        const poolWethBalanceBefore_d18 = await weth.balanceOf(bdEurWethPool.address);
+        const poolBdxBalanceBefore_d18 = await bdx.balanceOf(bdEuWethPool.address);
+        const poolWethBalanceBefore_d18 = await weth.balanceOf(bdEuWethPool.address);
 
-        await bdx.connect(testUser).approve(bdEurWethPool.address, bdxAmount_d18); 
-        await bdEurWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
+        await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
+        await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
 
         const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
         const userWethBalanceAfter_d18 = await weth.balanceOf(testUser.address);
-        const poolBdxBalanceAfter_d18 = await bdx.balanceOf(bdEurWethPool.address);
-        const poolWethBalanceAfter_d18 = await weth.balanceOf(bdEurWethPool.address);
+        const poolBdxBalanceAfter_d18 = await bdx.balanceOf(bdEuWethPool.address);
+        const poolWethBalanceAfter_d18 = await weth.balanceOf(bdEuWethPool.address);
 
         const userBdxDiff = d18_ToNumber(userBdxBalanceAfter_d18) - d18_ToNumber(userBdxBalanceBefore_d18);
         const userWethDiff = d18_ToNumber(userWethBalanceAfter_d18) - d18_ToNumber(userWethBalanceBefore_d18);
@@ -72,18 +72,18 @@ describe("BuyBack", () => {
 
         await setUpFunctionalSystem(hre, collateralizedFraction);
 
-        await lockBdEurCrAt(hre, cr); // CR
+        await lockBdEuCrAt(hre, cr); // CR
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
         bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
         
-        await bdx.connect(testUser).approve(bdEurWethPool.address, maxBdxToBuyBack_d18); 
-        await bdEurWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1);
+        await bdx.connect(testUser).approve(bdEuWethPool.address, maxBdxToBuyBack_d18); 
+        await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1);
     });
 
     it("should throw if trying to buy back more than excess", async () => {        
@@ -92,11 +92,11 @@ describe("BuyBack", () => {
 
         await setUpFunctionalSystem(hre, collateralizedFraction);
 
-        await lockBdEurCrAt(hre, cr); // CR
+        await lockBdEuCrAt(hre, cr); // CR
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
@@ -104,10 +104,10 @@ describe("BuyBack", () => {
 
         bdx.transfer(testUser.address, moreThanMaxBdxToBuyBack_d18);
         
-        await bdx.connect(testUser).approve(bdEurWethPool.address, moreThanMaxBdxToBuyBack_d18); 
+        await bdx.connect(testUser).approve(bdEuWethPool.address, moreThanMaxBdxToBuyBack_d18); 
 
         await expect((async () => {
-            await bdEurWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1);
+            await bdEuWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1);
         })()).to.be.rejectedWith("You are trying to buy back more than the excess!");
     });
 
@@ -116,36 +116,36 @@ describe("BuyBack", () => {
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const bdxAmount_d18 = to_d18(10);
 
         bdx.transfer(testUser.address, bdxAmount_d18.mul(3));
         
-        await bdx.connect(testUser).approve(bdEurWethPool.address, bdxAmount_d18); 
+        await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
 
         await expect((async () => {
-            await bdEurWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
+            await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
         })()).to.be.rejectedWith("No excess collateral to buy back!");
     });
 })
 
 async function calculateMaxBdxToBuyBack_d18(cr: number){
-    const bdEur = await getBdEur(hre);
+    const bdEu = await getBdEu(hre);
 
-    const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
+    const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
 
-    const bdEurCollateralValue = await bdEur.globalCollateralValue();
+    const bdEuCollateralValue = await bdEu.globalCollateralValue();
 
-    const bdEurTotalSupply = await bdEur.totalSupply();
-    const currentRequiredCollateralValue = bdEurTotalSupply.mul(to_d12(cr)).div(1e12);
+    const bdEuTotalSupply = await bdEu.totalSupply();
+    const currentRequiredCollateralValue = bdEuTotalSupply.mul(to_d12(cr)).div(1e12);
 
-    const maxBdxToBuyBack_d18 = bdEurCollateralValue.sub(currentRequiredCollateralValue)
+    const maxBdxToBuyBack_d18 = bdEuCollateralValue.sub(currentRequiredCollateralValue)
         .mul(1e12).div(bdxInEurPrice_d12);
 
     console.log("maxBdxToBuyBack_d18: " + maxBdxToBuyBack_d18);
     console.log("bdxInEurPrice_d12: " + bdxInEurPrice_d12);
-    console.log("colat: " + await bdEur.globalCollateralValue());
+    console.log("colat: " + await bdEu.globalCollateralValue());
 
     return maxBdxToBuyBack_d18;
 }

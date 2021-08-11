@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, diffPct, to_d12, to_d18, to_d8 } from "../../utils/Helpers";
-import { getBdEur, getBdEurWbtcPool, getBdEurWethPool, getBdx, getUniswapRouter, getDeployer, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../helpers/common";
+import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getUniswapRouter, getDeployer, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { swapForWethAsDeployer, swapAsDeployerByContract } from "../helpers/swaps";
@@ -22,28 +22,28 @@ describe("BDX limit", () => {
 
     it("should mint max total supply of BDX", async () => {
 
-        const bdEurAvailableToRedeem_d18 = await arrange();
+        const bdEuAvailableToRedeem_d18 = await arrange();
 
-        const bdEur = await getBdEur(hre);
+        const bdEu = await getBdEu(hre);
         const bdx = await getBdx(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const user = await getUser(hre);
 
         const bdxMaxTotalSupply_d18 = await bdx.MAX_TOTAL_SUPPLY();
 
-        await bdEur.transfer(user.address, bdEurAvailableToRedeem_d18);
-        const bdEurBalanceBeforeRedeem_d18 = await bdEur.balanceOf(user.address);
+        await bdEu.transfer(user.address, bdEuAvailableToRedeem_d18);
+        const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(user.address);
         const bdxTotalSupplyBeforeRedeem_d18 = await bdx.totalSupply();
 
-        await bdEur.connect(user).approve(bdEurWethPool.address, bdEurAvailableToRedeem_d18);
-        await bdEurWethPool.connect(user).redeemAlgorithmicBdStable(bdEurAvailableToRedeem_d18, 1);
+        await bdEu.connect(user).approve(bdEuWethPool.address, bdEuAvailableToRedeem_d18);
+        await bdEuWethPool.connect(user).redeemAlgorithmicBdStable(bdEuAvailableToRedeem_d18, 1);
 
-        const bdEurBalanceAfterRedeem_d18 = await bdEur.balanceOf(user.address);
+        const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(user.address);
 
-        const bdEurBalanceDiff_d18 = bdEurBalanceBeforeRedeem_d18.sub(bdEurBalanceAfterRedeem_d18);
+        const bdEuBalanceDiff_d18 = bdEuBalanceBeforeRedeem_d18.sub(bdEuBalanceAfterRedeem_d18);
 
-        const buredBdEurPctDiff = diffPct(bdEurAvailableToRedeem_d18, bdEurBalanceDiff_d18);
+        const buredBdEuPctDiff = diffPct(bdEuAvailableToRedeem_d18, bdEuBalanceDiff_d18);
 
         const bdxTotalSupplyAfterRedeem_d18 = await bdx.totalSupply();
 
@@ -53,43 +53,43 @@ describe("BDX limit", () => {
 
         const bdxTotalSupplyDiffPct = diffPct(bdxTotalSupplyAfterRedeem_d18, bdxMaxTotalSupply_d18);
 
-        console.log("bdEur blance diff: " + d18_ToNumber(bdEurBalanceDiff_d18));
+        console.log("bdEu blance diff: " + d18_ToNumber(bdEuBalanceDiff_d18));
         console.log("bdxTotalSupplyBefore: " + d18_ToNumber(bdxTotalSupplyBeforeRedeem_d18));
         console.log("bdxTotalSupplyAfter: " + d18_ToNumber(bdxTotalSupplyAfterRedeem_d18));
         console.log("bdx total supply, max supply diff %: " + bdxTotalSupplyDiffPct);
 
-        expect(buredBdEurPctDiff).to.be.closeTo(0, 0.01,
-            "unexpected bdEur amount burned");
+        expect(buredBdEuPctDiff).to.be.closeTo(0, 0.01,
+            "unexpected bdEu amount burned");
 
         expect(bdxTotalSupplyDiffPct).to.be.closeTo(0, 0.01,
             "unexpected amount of bdx minted");
     });
 
-    // redeeming x2 more bdEur, recieiving the same amount od bdx
+    // redeeming x2 more bdEu, recieiving the same amount od bdx
     it("should NOT exceed max total supply of BDX", async () => {
-        const bdEurAvailableToRedeem_d18 = await arrange();
-        const bdEurToRedeem_d18 = bdEurAvailableToRedeem_d18.mul(2); 
+        const bdEuAvailableToRedeem_d18 = await arrange();
+        const bdEuToRedeem_d18 = bdEuAvailableToRedeem_d18.mul(2); 
 
-        const bdEur = await getBdEur(hre);
+        const bdEu = await getBdEu(hre);
         const bdx = await getBdx(hre);
-        const bdEurWethPool = await getBdEurWethPool(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
 
         const user = await getUser(hre);
 
         const bdxMaxTotalSupply_d18 = await bdx.MAX_TOTAL_SUPPLY();
 
-        await bdEur.transfer(user.address, bdEurToRedeem_d18);
-        const bdEurBalanceBeforeRedeem_d18 = await bdEur.balanceOf(user.address);
+        await bdEu.transfer(user.address, bdEuToRedeem_d18);
+        const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(user.address);
         const bdxTotalSupplyBeforeRedeem_d18 = await bdx.totalSupply();
 
-        await bdEur.connect(user).approve(bdEurWethPool.address, bdEurToRedeem_d18);
-        await bdEurWethPool.connect(user).redeemAlgorithmicBdStable(bdEurToRedeem_d18, 1);
+        await bdEu.connect(user).approve(bdEuWethPool.address, bdEuToRedeem_d18);
+        await bdEuWethPool.connect(user).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
 
-        const bdEurBalanceAfterRedeem_d18 = await bdEur.balanceOf(user.address);
+        const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(user.address);
 
-        const bdEurBalanceDiff_d18 = bdEurBalanceBeforeRedeem_d18.sub(bdEurBalanceAfterRedeem_d18);
+        const bdEuBalanceDiff_d18 = bdEuBalanceBeforeRedeem_d18.sub(bdEuBalanceAfterRedeem_d18);
 
-        const buredBdEurPctDiff = diffPct(bdEurToRedeem_d18, bdEurBalanceDiff_d18);
+        const buredBdEuPctDiff = diffPct(bdEuToRedeem_d18, bdEuBalanceDiff_d18);
 
         const bdxTotalSupplyAfterRedeem_d18 = await bdx.totalSupply();
 
@@ -99,20 +99,20 @@ describe("BDX limit", () => {
 
         const bdxTotalSupplyDiffPct = diffPct(bdxTotalSupplyAfterRedeem_d18, bdxMaxTotalSupply_d18);
 
-        console.log("bdEur blance diff: " + d18_ToNumber(bdEurBalanceDiff_d18));
+        console.log("bdEu blance diff: " + d18_ToNumber(bdEuBalanceDiff_d18));
         console.log("bdxTotalSupplyBefore: " + d18_ToNumber(bdxTotalSupplyBeforeRedeem_d18));
         console.log("bdxTotalSupplyAfter: " + d18_ToNumber(bdxTotalSupplyAfterRedeem_d18));
         console.log("bdx total supply, max supply diff %: " + bdxTotalSupplyDiffPct);
 
-        expect(buredBdEurPctDiff).to.be.closeTo(0, 0.01,
-            "unexpected bdEur amount burned");
+        expect(buredBdEuPctDiff).to.be.closeTo(0, 0.01,
+            "unexpected bdEu amount burned");
 
         expect(bdxTotalSupplyDiffPct).to.be.closeTo(0, 0.01,
             "unexpected amount of bdx minted");
     });
 
     async function arrange(){
-        const bdEur = await getBdEur(hre);
+        const bdEu = await getBdEu(hre);
         const bdx = await getBdx(hre);
         const owner = await getDeployer(hre);
 
@@ -124,24 +124,24 @@ describe("BDX limit", () => {
 
         await bdx.mint(ethers.constants.AddressZero, owner.address, bdxToBeMintedByOwner);
 
-        // we lock CR at 0 to be able to redeem, bdEur for bdx only
-        await bdEur.lockCollateralRatioAt(0);
+        // we lock CR at 0 to be able to redeem, bdEu for bdx only
+        await bdEu.lockCollateralRatioAt(0);
 
         // we swap a big number of bdx for weth on low liquidity pool, to drive bdx price down
-        // we need cheap bdx to be able to mint all of BDX supply when redeeming our bdEur
+        // we need cheap bdx to be able to mint all of BDX supply when redeeming our bdEu
         const bdxIn = 1e6; // just a big number to bring bdx/weth price down in the oracle
         await swapForWethAsDeployer(hre, "BDXShares", bdxIn, 1e-18);
         await simulateTimeElapseInDays(1);
-        await bdEur.updateOraclesIfNeeded();
+        await bdEu.updateOraclesIfNeeded();
 
-        const bdxInEurPrice_d12 = await bdEur.BDX_price_d12();
+        const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
         const bdxTotalSupplyBeforeRedeem_d18 = await bdx.totalSupply();
         const bdxMaxTotalSupply_d18 = await bdx.MAX_TOTAL_SUPPLY();
 
         const bdxLeftToMint_d18 = bdxMaxTotalSupply_d18.sub(bdxTotalSupplyBeforeRedeem_d18);
         
-        const bdEurAvailableToRedeem_d18 = bdxLeftToMint_d18.mul(bdxInEurPrice_d12).div(1e12);
+        const bdEuAvailableToRedeem_d18 = bdxLeftToMint_d18.mul(bdxInEurPrice_d12).div(1e12);
 
-        return bdEurAvailableToRedeem_d18;
+        return bdEuAvailableToRedeem_d18;
     }
 });

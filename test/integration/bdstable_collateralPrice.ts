@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber, d12_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
-import { getBdEur, getBdx, getWeth, getWbtc, getBdEurWbtcPool, getBdEurWethPool, getDeployer, getUser } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 chai.use(cap);
 
@@ -21,7 +21,7 @@ describe("Collateral price", () => {
 
         await setUpFunctionalSystem(hre, 1);
 
-        const wethPool = await getBdEurWethPool(hre);
+        const wethPool = await getBdEuWethPool(hre);
 
         const expectedWethPrice = 2300;
         const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
@@ -34,7 +34,7 @@ describe("Collateral price", () => {
 
         await setUpFunctionalSystem(hre, 1);
 
-        const wbtcPool = await getBdEurWbtcPool(hre);
+        const wbtcPool = await getBdEuWbtcPool(hre);
 
         const expectedWbtcPrice = 30000;
         const wbtcInEurPrice = d12_ToNumber(await wbtcPool.getCollateralPrice_d12());

@@ -22,16 +22,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(await lens.BDX());
 
-  await (await lens.pushBdStable(await (await ethers.getContract('BDEUR')).address)).wait()
+  await (await lens.pushBdStable(await (await ethers.getContract('BDEU')).address)).wait()
 
   await (await lens.setSwapFactory(await (await ethers.getContract('UniswapV2Factory')).address)).wait()
   await (await lens.setSwapRouter(await (await ethers.getContract('UniswapV2Router02')).address)).wait()
 
   await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_WETH')).address)).wait()
-  await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_BDEUR')).address)).wait()
-  await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDEUR_WETH')).address)).wait()
+  await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_BDEU')).address)).wait()
+  await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDEU_WETH')).address)).wait()
   await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_WBTC')).address)).wait()
-  await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDEUR_WBTC')).address)).wait()
+  await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDEU_WBTC')).address)).wait()
 	// One time migration
 	return true;
 };

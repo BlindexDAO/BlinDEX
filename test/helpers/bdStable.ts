@@ -1,11 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d18, to_d12 } from "../../utils/Helpers"
-import { getBdEur, getBdEurWbtcPool, getBdx, getWeth } from "./common"
+import { getBdEu, getBdEuWbtcPool, getBdx, getWeth } from "./common"
 
 
 const oneHour = 60*60;
 
-export async function lockBdEurCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+export async function lockBdEuCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
   if(targetCR < 0){
     throw new Error("targetCR must >= 0");
   }
@@ -14,7 +14,7 @@ export async function lockBdEurCrAt(hre: HardhatRuntimeEnvironment, targetCR: nu
     throw new Error("targetCR must <= 1");
   }
 
-  const bdEur = await getBdEur(hre);
+  const bdEu = await getBdEu(hre);
   
-  await bdEur.lockCollateralRatioAt(to_d12(targetCR));
+  await bdEu.lockCollateralRatioAt(to_d12(targetCR));
 }

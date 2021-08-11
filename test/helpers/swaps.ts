@@ -141,7 +141,7 @@ export async function provideLiquidity(
 ){
   const router = await getUniswapRouter(hre);
 
-  // add liquidity to the uniswap pool (weth-bdeur)
+  // add liquidity to the uniswap pool (weth-bdeu)
   // reveive LP tokens
   await tokenA.connect(user).approve(router.address, amountA);
   await tokenB.connect(user).approve(router.address, amountB);

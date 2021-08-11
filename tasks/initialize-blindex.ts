@@ -24,30 +24,30 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
       value: BigNumber.from(10).pow(21)
     })
 
-    //Get some BDEUR
-    const bdeurWethPool = await hre.ethers.getContract('BDEUR_WETH_POOL') as BdStablePool
-    ;(await weth.approve(bdeurWethPool.address, BigNumber.from(10).pow(20))).wait()
-    await (await bdeurWethPool.mint1t1BD(BigNumber.from(10).pow(20), 0)).wait();
-    const bdeur = await hre.ethers.getContract('BDEUR') as BDStable
-    const bdeurBalance = await bdeur.balanceOf(account.address);
-    console.log(bdeurBalance.toString())
+    //Get some BDEU
+    const bdeuWethPool = await hre.ethers.getContract('BDEU_WETH_POOL') as BdStablePool
+    ;(await weth.approve(bdeuWethPool.address, BigNumber.from(10).pow(20))).wait()
+    await (await bdeuWethPool.mint1t1BD(BigNumber.from(10).pow(20), 0)).wait();
+    const bdeu = await hre.ethers.getContract('BDEU') as BDStable
+    const bdeuBalance = await bdeu.balanceOf(account.address);
+    console.log(bdeuBalance.toString())
 
     //Deposit into pair
     const router = await hre.ethers.getContract('UniswapV2Router02') as UniswapV2Router02
     ;(await weth.approve(router.address, BigNumber.from(10).pow(20))).wait()
-    await bdeur.approve(router.address, bdeurBalance);
-    await (await router.addLiquidity(constants.wETH_address[networkName], bdeur.address,
-      BigNumber.from(10).pow(20), bdeurBalance,
-      BigNumber.from(10).pow(20), bdeurBalance,
+    await bdeu.approve(router.address, bdeuBalance);
+    await (await router.addLiquidity(constants.wETH_address[networkName], bdeu.address,
+      BigNumber.from(10).pow(20), bdeuBalance,
+      BigNumber.from(10).pow(20), bdeuBalance,
       account.address, Date.now() + 3600
     )).wait()
     const factory = await hre.ethers.getContract('UniswapV2Factory') as UniswapV2Factory
-    const pairAddress = await factory.getPair(constants.wETH_address[networkName], bdeur.address)
+    const pairAddress = await factory.getPair(constants.wETH_address[networkName], bdeu.address)
     const pair = await UniswapV2Pair__factory.connect(pairAddress, account)
     const lpTokenBalance = await pair.balanceOf(account.address);
 
     //Stake tokens
-    const stakingReward = await hre.ethers.getContract('StakingRewards_BDEUR_WETH') as StakingRewards
+    const stakingReward = await hre.ethers.getContract('StakingRewards_BDEU_WETH') as StakingRewards
     await pair.approve(stakingReward.address, lpTokenBalance)
     await (await stakingReward.stake(lpTokenBalance)).wait();
     
@@ -90,8 +90,8 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
 
     //Update prices in oracle
     const bdx_eth_oracle_instance = await hre.ethers.getContract('UniswapPairOracle_BDX_WETH') as UniswapPairOracle
-    const bdeur_eth_oracle_instance = await hre.ethers.getContract('UniswapPairOracle_BDEUR_WETH') as UniswapPairOracle
+    const bdeu_eth_oracle_instance = await hre.ethers.getContract('UniswapPairOracle_BDEU_WETH') as UniswapPairOracle
     await (await bdx_eth_oracle_instance.update()).wait()
-    await (await bdeur_eth_oracle_instance.update()).wait()
+    await (await bdeu_eth_oracle_instance.update()).wait()
     
   });

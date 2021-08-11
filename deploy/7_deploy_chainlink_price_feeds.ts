@@ -32,19 +32,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("ChainlinkBasedCryptoFiatFeed_WETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
-  const bdeur = await hre.ethers.getContract("BDEUR") as BDStable;
+  const bdeu = await hre.ethers.getContract("BDEU") as BDStable;
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
-  await (await bdeur.setETH_fiat_Oracle(chainlinkBasedCryptoFiatFeed_ETH_EUR.address)).wait();
-  console.log(`Added WETH EUR oracle to BDEUR`)
+  await (await bdeu.setETH_fiat_Oracle(chainlinkBasedCryptoFiatFeed_ETH_EUR.address)).wait();
+  console.log(`Added WETH EUR oracle to BDEU`)
 
   const bdxWethOracle = await getWethPair(hre,"BDXShares");
-  await (await bdeur.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
+  await (await bdeu.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDX WETH Uniswap oracle`);
 
-  const bdeurWethOracle = await getWethPair(hre,"BDEUR");
-  await (await bdeur.setBDStable_WETH_Oracle(bdeurWethOracle.address, constants.wETH_address[networkName])).wait();
-  console.log(`Added BDEUR WETH Uniswap oracle`);
+  const bdeuWethOracle = await getWethPair(hre,"BDEU");
+  await (await bdeu.setBDStable_WETH_Oracle(bdeuWethOracle.address, constants.wETH_address[networkName])).wait();
+  console.log(`Added BDEU WETH Uniswap oracle`);
 
   const uniswapFactoryContract = await hre.ethers.getContractAt("UniswapV2Factory", constants.uniswapFactoryAddress) as UniswapV2Factory;
 
@@ -54,14 +54,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [constants.BTC_ETH_CHAINLINK_FEED[networkName], constants.wETH_address[networkName]]
   });
 
-  const bdeurWethPool = await hre.ethers.getContract('BDEUR_WETH_POOL') as BdStablePool;
-  const bdeurWbtcPool = await hre.ethers.getContract('BDEUR_WBTC_POOL') as BdStablePool;
+  const bdeuWethPool = await hre.ethers.getContract('BDEU_WETH_POOL') as BdStablePool;
+  const bdeuWbtcPool = await hre.ethers.getContract('BDEU_WBTC_POOL') as BdStablePool;
   const weth_to_weth_oracle = await hre.deployments.deploy('WethToWethOracle', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     args: [constants.wETH_address[networkName]]
   });
-  await (await bdeurWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait(); //replace with sth?
-  await bdeurWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, constants.wETH_address[networkName]);
+  await (await bdeuWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait(); //replace with sth?
+  await bdeuWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, constants.wETH_address[networkName]);
   // One time migration
   return true;
 };
