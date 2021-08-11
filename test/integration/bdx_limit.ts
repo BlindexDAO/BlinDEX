@@ -125,7 +125,7 @@ describe("BDX limit", () => {
         await bdx.mint(ethers.constants.AddressZero, owner.address, bdxToBeMintedByOwner);
 
         // we lock CR at 0 to be able to redeem, bdEur for bdx only
-        await bdEur.lockCollateralRationAt(0);
+        await bdEur.lockCollateralRatioAt(0);
 
         // we swap a big number of bdx for weth on low liquidity pool, to drive bdx price down
         // we need cheap bdx to be able to mint all of BDX supply when redeeming our bdEur

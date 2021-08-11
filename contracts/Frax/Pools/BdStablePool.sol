@@ -494,9 +494,11 @@ contract BdStablePool is Initializable {
 
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
-        if(bdx_paid_back > 0){
+        if(bdx_paid_back > 0){ // todo ag isn't this if too wide?
             collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
             BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
+
+            emit Recollateralized(collateral_units_precision, bdx_paid_back);
         }
     }
 
@@ -525,9 +527,12 @@ contract BdStablePool is Initializable {
         uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
+        
         // Give the sender their desired collateral and burn the BDX
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, BDX_amount);
         collateral_token.transfer(msg.sender, collateral_precision);
+
+        emit BoughtBack(BDX_amount, collateral_precision);
     }
 
     function howMuchBdxCanBeMinted(uint256 _watned_amount_d18) public view returns (uint256) {
@@ -552,30 +557,44 @@ contract BdStablePool is Initializable {
         collat_weth_oracle_address = _collateral_weth_oracle_address;
         collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
+
+        emit CollateralWethOracleSet(_collateral_weth_oracle_address, _weth_address);
     }
 
-    function toggleMinting() external onlyByOwner {
+    function toggleMintingPaused() external onlyByOwner {
         mintPaused = !mintPaused;
+
+        emit MintingPausedToggled(mintPaused);
     }
 
-    function toggleRedeeming() external onlyByOwner {
+    function toggleRedeemingPaused() external onlyByOwner {
         redeemPaused = !redeemPaused;
+
+        emit RedeemingPausedToggled(redeemPaused);
     }
 
-    function toggleRecollateralize() external onlyByOwner {
+    function toggleRecollateralizePaused() external onlyByOwner {
         recollateralizePaused = !recollateralizePaused;
+
+        emit RecollateralizePausedToggled(recollateralizePaused);
     }
     
-    function toggleBuyBack() external onlyByOwner {
+    function toggleBuybackPaused() external onlyByOwner {
         buyBackPaused = !buyBackPaused;
+
+        emit BuybackPausedToggled(buyBackPaused);
     }
 
     function toggleBuybackOnlyForOwner() external onlyByOwner {
         buybackOnlyForOwner = !buybackOnlyForOwner;
+
+        emit BuybackOnlyForOwnerToggled(buybackOnlyForOwner);
     }
 
     function toggleRecollateralizeOnlyForOwner() external onlyByOwner {
         recollateralizeOnlyForOwner = !recollateralizeOnlyForOwner;
+
+        emit RecollateralizeOnlyForOwnerToggled(recollateralizeOnlyForOwner);
     }
 
     function toggleCollateralPrice(uint256 _new_price) external onlyByOwner {
@@ -586,6 +605,8 @@ contract BdStablePool is Initializable {
             pausedPrice = 0;
         }
         collateralPricePaused = !collateralPricePaused;
+
+        emit CollateralPriceToggled(collateralPricePaused);
     }
 
     // Combined into one function due to 24KiB contract memory limit
@@ -608,6 +629,8 @@ contract BdStablePool is Initializable {
         redemption_fee = new_redeem_fee;
         buyback_fee = new_buyback_fee;
         recollat_fee = new_recollat_fee;
+
+        emit PoolParametersSet(new_ceiling, new_bonus_rate, new_redemption_delay, new_mint_fee, new_redeem_fee, new_buyback_fee, new_recollat_fee);
     }
 
     function setOwner(address _owner_address) external onlyByOwner {
@@ -615,4 +638,16 @@ contract BdStablePool is Initializable {
     }
 
     /* ========== EVENTS ========== */
+
+    event PoolParametersSet(uint256 new_ceiling, uint256 new_bonus_rate, uint256 new_redemption_delay, uint256 new_mint_fee, uint256 new_redeem_fee, uint256 new_buyback_fee, uint256 new_recollat_fee);
+    event MintingPausedToggled(bool toggled);
+    event RedeemingPausedToggled(bool toggled);
+    event RecollateralizePausedToggled(bool toggled);
+    event BuybackPausedToggled(bool toggled);
+    event CollateralPriceToggled(bool toggled);
+    event CollateralWethOracleSet(address indexed collateral_weth_oracle_address, address indexed weth_address);
+    event RecollateralizeOnlyForOwnerToggled(bool recollateralizeOnlyForOwner);
+    event BuybackOnlyForOwnerToggled(bool buybackOnlyForOwner);
+    event Recollateralized(uint256 indexed collateral_amount_paid, uint256 indexed bdx_paid_back);
+    event BoughtBack(uint256 indexed bdx_amount_paid, uint256 indexed collateral_paid_back);
 }

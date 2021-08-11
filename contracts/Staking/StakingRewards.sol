@@ -405,7 +405,6 @@ contract StakingRewards is
 
     /* ========== EVENTS ========== */
 
-    event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
     event StakeLocked(address indexed user, uint256 amount, uint256 secs);
     event Withdrawn(address indexed user, uint256 amount);
@@ -414,5 +413,4 @@ contract StakingRewards is
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event RewardsPeriodRenewed(address token);
-    event DefaultInitialization();
 }

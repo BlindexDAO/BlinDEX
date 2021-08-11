@@ -223,6 +223,8 @@ contract BDStable is ERC20Custom, Initializable {
         }
 
         refreshCollateralRatio_last_call_time = block.timestamp; // Set the time of the last expansion
+
+        emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
     
     function effective_global_collateral_ratio_d12() public view returns (uint256) {
@@ -241,11 +243,15 @@ contract BDStable is ERC20Custom, Initializable {
     // Used by pools when user redeems
     function pool_burn_from(address b_address, uint256 b_amount) public onlyPools {
         super._burnFrom(b_address, b_amount);
+
+        emit BdStableBurned(b_address, msg.sender, b_amount);
     }
 
     // This function is what other bd pools will call to mint new bd stable 
     function pool_mint(address m_address, uint256 m_amount) public onlyPools {
         super._mint(m_address, m_amount);
+        
+        emit BdStableMinted(msg.sender, m_address, m_amount);
     }
 
     // Adds collateral addresses supported, such as tether and busd, must be ERC20 
@@ -253,6 +259,8 @@ contract BDStable is ERC20Custom, Initializable {
         require(bdstable_pools[pool_address] == false, "address already exists");
         bdstable_pools[pool_address] = true; 
         bdstable_pools_array.push(pool_address);
+
+        emit PoolAdded(pool_address);
     }
 
     // Remove a pool 
@@ -269,35 +277,61 @@ contract BDStable is ERC20Custom, Initializable {
                 break;
             }
         }
+
+        emit PoolRemoved(pool_address);
     }
 
     function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) public onlyByOwner {
         bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
         weth_address = _weth_address;
+
+        emit BDStable_WETH_OracleSet(_bdstable_oracle_addr, _weth_address);
     }
 
     function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) public onlyByOwner {
         bdxWethOracle = ICryptoPairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
+
+        emit BDX_WETH_OracleSet(_bdx_oracle_addr, _weth_address);
     }
     
-    function setETHFIATOracle(address _eth_fiat_consumer_address) public onlyByOwner {
+    function setETH_fiat_Oracle(address _eth_fiat_consumer_address) public onlyByOwner {
         weth_fiat_pricer = ChainlinkBasedCryptoFiatFeed(_eth_fiat_consumer_address);
-        weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals(); // IS that true? weth_usd_pricer.getDecimals();
+        weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals();
+        
+        emit EthFiatOracleSet(_eth_fiat_consumer_address);
     }
 
     function setBdStable_step_d12(uint256 _bdStable_step_d12) external onlyByOwner {
         bdStable_step_d12 = _bdStable_step_d12;
+
+        emit BdStableStepSet(_bdStable_step_d12);
     }
 
     function toggleCollateralRatioPaused() external onlyByOwner {
         collateral_ratio_paused = !collateral_ratio_paused;
+
+        emit CollateralRatioPausedToggled(collateral_ratio_paused);
     }
 
-    function lockCollateralRationAt(uint256 wantedCR_d12) external onlyByOwner {
+    function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyByOwner {
         global_collateral_ratio_d12 = wantedCR_d12;
         collateral_ratio_paused = true;
+
+        emit CollateralRatioLocked(wantedCR_d12);
     }
 
     /* ========== EVENTS ========== */
+    
+    event CollateralRatioRefreshed(uint256 global_collateral_ratio);
+    event BdStableBurned(address indexed from, address indexed to, uint256 amount);
+    event BdStableMinted(address indexed from, address indexed to, uint256 amount);
+    event PoolAdded(address pool_address);
+    event PoolRemoved(address pool_address);
+    event BDStable_WETH_OracleSet(address indexed bdstable_oracle_addr, address indexed weth_address);
+    event BDX_WETH_OracleSet(address indexed bdx_oracle_address, address indexed weth_address);
+    event EthFiatOracleSet(address eth_fiat_consumer_address);
+    event BdStableStepSet(uint256 bdStable_step_d12);
+    event CollateralRatioPausedToggled(bool collateral_ratio_paused);
+    event CollateralRatioLocked(uint256 lockedCR_d12);
 }

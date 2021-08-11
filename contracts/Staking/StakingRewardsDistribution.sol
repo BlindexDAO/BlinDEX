@@ -94,6 +94,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             stakingRewardsWeights[_stakingRewardsAddresses[i]] = _stakingRewardsWeights[i];
             stakingRewardsWeightsTotal += _stakingRewardsWeights[i];
         }
+
+        emit PoolsRegistered(_stakingRewardsAddresses, _stakingRewardsWeights);
     }
 
     function resetRewardsWeights() external onlyByOwnerOrGovernance {
@@ -104,6 +106,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         stakingRewardsWeightsTotal = 0;
 
         delete stakingRewardsAddresses;
+
+        emit RewardsWeightsReset();
     }
 
     function transferRewards(address _recepient, uint256 amountErc20) external onlyStakingRewards {
@@ -119,4 +123,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         require(msg.sender == owner() || msg.sender == timelock_address, "You are not the owner or the governance timelock");
         _;
     }
+
+    // ---------- EVENTS ----------
+    event RewardsWeightsReset();
+    event PoolsRegistered(address[] indexed stakingRewardsAddresses, uint[] indexed stakingRewardsWeights);
 }

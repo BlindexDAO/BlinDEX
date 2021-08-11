@@ -16,5 +16,5 @@ export async function lockBdEurCrAt(hre: HardhatRuntimeEnvironment, targetCR: nu
 
   const bdEur = await getBdEur(hre);
   
-  await bdEur.lockCollateralRationAt(to_d12(targetCR));
+  await bdEur.lockCollateralRatioAt(to_d12(targetCR));
 }
