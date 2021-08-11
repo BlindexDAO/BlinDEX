@@ -62,10 +62,12 @@ contract BDXShares is ERC20Custom, Initializable {
 
     function addBdStableAddress(address bdstable_contract_address) external onlyByOwner {
         bdstables[bdstable_contract_address] = true;
+        emit BdStableAddressAdded(bdstable_contract_address);
     }
 
     function setOwner(address _owner_address) external onlyByOwner {
         owner_address = _owner_address;
+        emit OwnerSet(_owner_address);
     }
 
     function howMuchCanBeMinted() external view returns(uint256) {
@@ -76,6 +78,8 @@ contract BDXShares is ERC20Custom, Initializable {
         require(totalSupply().add(amount_d18) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
         _mint(to, amount_d18);
+
+        emit BdxMinted(address(this), to, amount_d18);
     }
 
     // This function is what other frax pools will call to mint new BDX (similar to the BdStable mint) 
@@ -83,19 +87,15 @@ contract BDXShares is ERC20Custom, Initializable {
         require(totalSupply().add(amount_d18) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
         super._mint(to, amount_d18);
-        // emit FXSMinted(address(this), to, amount_d18); //todo ag
-    }
 
-    // This function is what other frax pools will call to burn BDX 
-    function burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
-        super._burnFrom(b_address, b_amount);
+        emit BdxMinted(address(this), to, amount_d18);
     }
 
     // This function is what other frax pools will call to burn BDX 
     function pool_burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
 
         super._burnFrom(b_address, b_amount);
-        // emit FXSBurned(b_address, address(this), b_amount); //todo ag
+        emit BdxBurned(b_address, address(this), b_amount);
     }
 
     /* ========== OVERRIDDEN PUBLIC FUNCTIONS ========== */
@@ -103,7 +103,7 @@ contract BDXShares is ERC20Custom, Initializable {
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
 
         _transfer(sender, recipient, amount);
-        // Lukasz: Do we need lowering approvals? - 
+        // todo ag // todo lw // Lukasz: Do we need lowering approvals? - 
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
 
         return true;
@@ -111,4 +111,8 @@ contract BDXShares is ERC20Custom, Initializable {
 
     /* ========== EVENTS ========== */
     
+    event OwnerSet(address indexed newOwner);
+    event BdxBurned(address indexed from, address indexed to, uint256 amount);
+    event BdxMinted(address indexed from, address indexed to, uint256 amount);
+    event BdStableAddressAdded(address addr);
 }

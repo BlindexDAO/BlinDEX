@@ -35,7 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeur = await hre.ethers.getContract("BDEUR") as BDStable;
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
-  await (await bdeur.setETHFIATOracle(chainlinkBasedCryptoFiatFeed_ETH_EUR.address)).wait();
+  await (await bdeur.setETH_fiat_Oracle(chainlinkBasedCryptoFiatFeed_ETH_EUR.address)).wait();
   console.log(`Added WETH EUR oracle to BDEUR`)
 
   const bdxWethOracle = await getWethPair(hre,"BDXShares");

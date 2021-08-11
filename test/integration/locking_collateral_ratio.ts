@@ -43,7 +43,7 @@ describe("Locking collateral ratio", () => {
 
         expect(initialCR).to.be.lt(1); // test validation
 
-        await bdEur.lockCollateralRationAt(initialCR_d12);
+        await bdEur.lockCollateralRatioAt(initialCR_d12);
 
         await DecreaseCollateralizationAndWait();
 
