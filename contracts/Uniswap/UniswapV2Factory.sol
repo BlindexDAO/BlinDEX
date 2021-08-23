@@ -7,14 +7,16 @@ import './UniswapV2Pair.sol';
 contract UniswapV2Factory is IUniswapV2Factory {
     address public override feeTo;
     address public override feeToSetter;
+    address public override treasury;
 
     mapping(address => mapping(address => address)) public override getPair;
     address[] public override allPairs;
 
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
 
-    constructor(address _feeToSetter) public {
+    constructor(address _feeToSetter, address _treasury) public {
         feeToSetter = _feeToSetter;
+        treasury = _treasury;
     }
 
     function allPairsLength() external override view returns (uint) {
@@ -26,7 +28,11 @@ contract UniswapV2Factory is IUniswapV2Factory {
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), 'UniswapV2: ZERO_ADDRESS');
         require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS'); // single check is sufficient
-        bytes memory bytecode = abi.encodePacked(type(UniswapV2Pair).creationCode, abi.encode(feeToSetter));
+        bytes memory bytecode = abi.encodePacked(
+            type(UniswapV2Pair).creationCode,
+            abi.encode(feeToSetter),
+            abi.encode(treasury));
+
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
 
         // This creates a new contract
@@ -48,5 +54,10 @@ contract UniswapV2Factory is IUniswapV2Factory {
     function setFeeToSetter(address _feeToSetter) external override {
         require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
         feeToSetter = _feeToSetter;
+    }
+
+    function setTreasury(address _treasury) external override {
+        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        treasury = _treasury;
     }
 }
