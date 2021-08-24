@@ -57,7 +57,8 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     uint    public price1CumulativeLastOracle;
     uint32  public blockTimestampLastOracle;
 
-    mapping(address => uint256) public lastSwapByUser;
+    mapping(address => uint256) public lastSwapByUserOut0;
+    mapping(address => uint256) public lastSwapByUserOut1;
 
     uint256 minimumSwapsDelayInBlocks = 0;
 
@@ -211,27 +212,29 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         uint balance0;
         uint balance1;
 
-        console.log("------------------------------");
-        console.log(minimumSwapsDelayInBlocks);
-        console.log(block.number);
-        console.log(lastSwapByUser[to]);
-
         {
             require(to != token0 && to != token1, 'UniswapV2: INVALID_TO');
 
-            if(block.number.sub(lastSwapByUser[to]) < minimumSwapsDelayInBlocks){
-                // 90% tax for illegal swaps
-                if (amount0Out > 0) {
+            if (amount0Out > 0) {
+                if(block.number.sub(lastSwapByUserOut1[to]) < minimumSwapsDelayInBlocks) {
                     _safeTransfer(token0, to, amount0Out.div(10)); // optimistically transfer tokens
                     _safeTransfer(token0, treasury_address, amount0Out.mul(9).div(10)); // optimistically transfer tokens
+                } else {
+                    _safeTransfer(token0, to, amount0Out); // optimistically transfer tokens
                 }
-                if (amount1Out > 0) {
+
+                lastSwapByUserOut0[to] = block.number;
+            }
+
+            if (amount1Out > 0) {
+                if(block.number.sub(lastSwapByUserOut0[to]) < minimumSwapsDelayInBlocks){
                     _safeTransfer(token1, to, amount1Out.div(10)); // optimistically transfer tokens
                     _safeTransfer(token1, treasury_address, amount1Out.mul(9).div(10)); // optimistically transfer tokens
+                } else {
+                    _safeTransfer(token1, to, amount1Out); // optimistically transfer tokens
                 }
-            } else {
-                if (amount0Out > 0) _safeTransfer(token0, to, amount0Out); // optimistically transfer tokens
-                if (amount1Out > 0) _safeTransfer(token1, to, amount1Out); // optimistically transfer tokens
+
+                lastSwapByUserOut1[to] = block.number;
             }
 
             if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
@@ -248,8 +251,6 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
             uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
             require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
         }
-
-        lastSwapByUser[to] = block.number;
 
         _update(balance0, balance1, _reserve0, _reserve1);
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);

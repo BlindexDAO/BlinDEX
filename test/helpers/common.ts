@@ -22,6 +22,11 @@ export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWit
   return user;
 }
 
+export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  const user = await hre.ethers.getNamedSigner('TREASURY');
+  return user;
+}
+
 export async function getBdEu(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
   return await hre.ethers.getContract('BDEU', ownerUser) as BDStable;
