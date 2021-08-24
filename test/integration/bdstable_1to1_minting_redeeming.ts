@@ -81,7 +81,9 @@ describe("BDStable 1to1", () => {
         console.log("Actual   BeEur: " + d18_ToNumber(actualBdEuDiff_d18));
         console.log(`Diff BeEur: ${diff}%`);
 
-        expect(diff).to.be.closeTo(0, 1);
+        // we need a big tolerance due to price divergence in different sources 
+        // [eth-btc chainlink * eth-fiat chainlink (in contract)] vs [direct btc-fiat chinlink price (in test)]
+        expect(diff).to.be.closeTo(0, 2);
     });
 
     it("minting should throw when CR < 1", async () => {
