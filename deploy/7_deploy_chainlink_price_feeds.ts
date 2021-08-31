@@ -10,23 +10,24 @@ import { BdStablePool } from '../typechain/BdStablePool';
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
 
-  const weth_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_WETH_EUR', {
+  const weth_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_ETH_EUR', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     contract: "ChainlinkBasedCryptoFiatFeed",
-    args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.WETH_USD_CHAINLINK_FEED[networkName]]
+    args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.ETH_USD_CHAINLINK_FEED[networkName]]
   });
 
-  const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract("ChainlinkBasedCryptoFiatFeed_WETH_EUR") as ChainlinkBasedCryptoFiatFeed;
+  const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract("ChainlinkBasedCryptoFiatFeed_ETH_EUR") as ChainlinkBasedCryptoFiatFeed;
 
-  console.log("ChainlinkBasedCryptoFiatFeed_WETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
+  console.log("ChainlinkBasedCryptoFiatFeed_ETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
-  const wbtc_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_WBTC_EUR', {
+  //todo ag only used in tests, do we need it?
+  const btc_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_BTC_EUR', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     contract: "ChainlinkBasedCryptoFiatFeed",
-    args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.WBTC_USD_CHAINLINK_FEED[networkName]]
+    args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.BTC_USD_CHAINLINK_FEED[networkName]]
   });
 
-  console.log("ChainlinkBasedCryptoFiatFeed_WETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
+  console.log("ChainlinkBasedCryptoFiatFeed_ETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
   const bdeu = await hre.ethers.getContract("BDEU") as BDStable;
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
@@ -36,11 +37,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const bdxWethOracle = await getWethPair(hre,"BDXShares");
   await bdeu.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName]);
-  console.log(`Added BDX WETH Uniswap oracle`);
+  console.log(`Added BDX ETH Uniswap oracle`);
 
   const bdeuWethOracle = await getWethPair(hre,"BDEU");
   await bdeu.setBDStable_WETH_Oracle(bdeuWethOracle.address, constants.wETH_address[networkName]);
-  console.log(`Added BDEU WETH Uniswap oracle`);
+  console.log(`Added BDEU ETH Uniswap oracle`);
 
   //todo ag replace with a better implementaion (price from uniswap3?)
   const btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {

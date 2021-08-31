@@ -4,6 +4,7 @@ import "./AggregatorV3Interface.sol";
 import "../Math/SafeMath.sol";
 import "hardhat/console.sol";
 
+//todo ag extract interface, maybe ICryptoPairOracle
 contract ChainlinkBasedCryptoFiatFeed {
     using SafeMath for uint256;
 

@@ -49,6 +49,7 @@ contract BDStable is ERC20Custom, Initializable {
     string public fiat;
     address public owner_address;
     address public bdx_address;
+    address public treasury_address;
 
     ICryptoPairOracle bdstableWethOracle;
     ICryptoPairOracle bdxWethOracle;
@@ -72,6 +73,9 @@ contract BDStable is ERC20Custom, Initializable {
     uint256 public price_band; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
 
     bool public collateral_ratio_paused;
+
+    mapping(address => uint256) public lastMintByUserBlock;
+    uint256 minimumMintRedeemDelayInBlocks = 0;
 
     /* ========== MODIFIERS ========== */
 
@@ -100,6 +104,7 @@ contract BDStable is ERC20Custom, Initializable {
         string memory _symbol,
         string memory _fiat,
         address _owner_address,
+        address _treasury_address,
         address _bdx_address,
         uint256 _initalBdStableToOwner_d18
     ) 
@@ -110,6 +115,7 @@ contract BDStable is ERC20Custom, Initializable {
         symbol = _symbol;
         fiat = _fiat;
         owner_address = _owner_address;
+        treasury_address = _treasury_address;
         bdx_address = _bdx_address;
 
         bdStable_step_d12 = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
@@ -238,6 +244,10 @@ contract BDStable is ERC20Custom, Initializable {
         return uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
     }
     
+    function canLegallyRedeem(address who) external view returns (bool) {
+        return block.number.sub(lastMintByUserBlock[who]) < minimumMintRedeemDelayInBlocks;
+    }
+
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     // Used by pools when user redeems
@@ -251,6 +261,8 @@ contract BDStable is ERC20Custom, Initializable {
     function pool_mint(address m_address, uint256 m_amount) public onlyPools {
         super._mint(m_address, m_amount);
         
+        lastMintByUserBlock[m_address] = block.number;
+
         emit BdStableMinted(msg.sender, m_address, m_amount);
     }
 
@@ -319,6 +331,14 @@ contract BDStable is ERC20Custom, Initializable {
         collateral_ratio_paused = true;
 
         emit CollateralRatioLocked(wantedCR_d12);
+    }
+
+    function setTreasury_address(address _treasury_address) external onlyByOwner {
+        treasury_address = _treasury_address;
+    }
+
+    function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyByOwner{
+        minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
     }
 
     /* ========== EVENTS ========== */

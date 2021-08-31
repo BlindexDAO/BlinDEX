@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d12 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury } from "../helpers/common";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { initalBdStableToOwner_d18 } from "../../utils/Constants";
@@ -16,15 +16,15 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-async function performFractionalMinting(testUser: SignerWithAddress, collateralAmount_d18: BigNumber, bdxAmount_d18: BigNumber){
+async function performFractionalMinting(testUser: SignerWithAddress, wethAmount_d18: BigNumber, bdxAmount_d18: BigNumber){
     const bdx = await getBdx(hre);
     const bdEuPool = await getBdEuWethPool(hre);
     const weth = await getWeth(hre);
 
-    await weth.connect(testUser).approve(bdEuPool.address, collateralAmount_d18);
+    await weth.connect(testUser).approve(bdEuPool.address, wethAmount_d18);
     await bdx.connect(testUser).approve(bdEuPool.address, bdxAmount_d18); 
 
-    await bdEuPool.connect(testUser).mintFractionalBdStable(collateralAmount_d18, bdxAmount_d18, (to_d18(1)));
+    await bdEuPool.connect(testUser).mintFractionalBdStable(wethAmount_d18, bdxAmount_d18, to_d18(1));
 }
 
 describe("BDStable fractional", () => {
@@ -46,7 +46,7 @@ describe("BDStable fractional", () => {
         await lockBdEuCrAt(hre, 0.7);
 
         await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
-        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint // todo ag needed?
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
         const bdEulBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
@@ -118,7 +118,7 @@ describe("BDStable fractional", () => {
 
         // calculate how much is needed to mint
         const expectedWethRedeemingCost_d18 = bdEuToRedeem_d18
-            // .mul(to_d12(cr)).div(1e12)
+            // .mul(to_d12(cr)).div(1e12) //todo ag
             .mul(70).div(100)
             .mul(1e12).div(wethInEurPrice_d12);
 
@@ -217,5 +217,85 @@ describe("BDStable fractional", () => {
         console.log("bdx balance delta:          " + bdxDelta_d18);
         console.log("bdx diff pct:               " + bdxDiffPct);
         expect(bdxDiffPct).to.be.closeTo(0, 0.0001, "unexpected bdx balance");
+    });
+
+    it("should tax illegal fractional redemption", async () => {
+        await setUpFunctionalSystem(hre, 0.9); // low initial collateralization so efCR is low (for test purposes)
+
+        const testUser = await hre.ethers.getNamedSigner('TEST2');
+        const treasury = await getTreasury(hre);
+
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+
+        const cr = 0.2;
+
+        await lockBdEuCrAt(hre, cr);   
+
+        // setup bdEu so it's illegal to redeem for testUser
+
+        const wethInEurPrice_d12 = await bdEuPool.getCollateralPrice_d12();
+        const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
+
+        // calculate how much is needed to mint
+        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem // todo ag needed?
+
+        await performFractionalMinting(testUser, to_d18(0.1), to_d18(100));   
+
+        await bdEu.setMinimumSwapsDelayInBlocks(100);
+        // setup finished
+
+        const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
+        const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
+        const bdxBalanceBeforeRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
+        const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
+        const wethBalanceBeforeRedeemTreasury_d18 = await weth.balanceOf(treasury.address);
+
+        const bdEuToRedeem_d18 = to_d18(100);
+
+        // calculate how much is needed to mint
+        const expectedWethRedeemingCost_d18 = bdEuToRedeem_d18
+            .mul(to_d12(cr)).div(1e12)
+            .mul(1e12).div(wethInEurPrice_d12);
+
+        const expectedWethRedeemingCostUser_d18 = expectedWethRedeemingCost_d18.div(10);
+        const expectedWethRedeemingCostTreasury_d18 = expectedWethRedeemingCost_d18.mul(9).div(10);
+
+        const expectedBdxRedeemingCost_d18 = bdEuToRedeem_d18
+            .mul(to_d12(1-cr)).div(1e12)
+            .mul(1e12).div(bdxInEurPrice_d12);
+        
+        const expectedBdxRedeemingCostUser_d18 = expectedBdxRedeemingCost_d18.div(10);
+        const expectedBdxRedeemingCostTreasury_d18 = expectedBdxRedeemingCost_d18.mul(9).div(10);
+
+        await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
+        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
+        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(treasury).collectRedemption();
+        
+        // asserts
+
+        const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(testUser.address);
+        console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem_d18));
+        expect(bdEuBalanceAfterRedeem_d18).to.eq(bdEuBalanceBeforeRedeem_d18.sub(bdEuToRedeem_d18), "unexpected bdEu balance");
+
+        const wethBalanceAfterRedeem_d18 = await weth.balanceOf(testUser.address);
+        const wethBalanceAfterRedeemTreasury_d18 = await weth.balanceOf(treasury.address);
+        const wethDelta_d18 = wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18);
+        const wethDeltaTreasury_d18 = wethBalanceAfterRedeemTreasury_d18.sub(wethBalanceBeforeRedeemTreasury_d18);
+
+        expect(wethDelta_d18).to.be.eq(expectedWethRedeemingCostUser_d18, "invalid weth delta (user)");
+        expect(wethDeltaTreasury_d18).to.be.eq(expectedWethRedeemingCostTreasury_d18, "invalid weth delta (treasury)");
+        
+        const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
+        const bdxBalanceAfterRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
+        const bdxDelta_d18 = bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18);
+        const bdxDeltaTreasury_d18 = bdxBalanceAfterRedeemTreasury_d18.sub(bdxBalanceBeforeRedeemTreasury_d18);
+
+        expect(bdxDelta_d18).to.be.eq(expectedBdxRedeemingCostUser_d18, "invalid bdx delta (user)")
+        expect(bdxDeltaTreasury_d18).to.be.eq(expectedBdxRedeemingCostTreasury_d18, "invalid bdx delta (treasury)")
     });
 })
