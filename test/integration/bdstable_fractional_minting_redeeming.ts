@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber, diffPct, to_d12 } from "../../utils/Helpers";
+import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
@@ -43,10 +43,10 @@ describe("BDStable fractional", () => {
         const bdEu = await getBdEu(hre);
         const bdEuPool = await getBdEuWethPool(hre);
 
-        await lockBdEuCrAt(hre, 0.7);
+        const cr = 0.7;
+        await lockBdEuCrAt(hre, cr);
 
         await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
-        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint // todo ag needed?
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
         const bdEulBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
@@ -57,8 +57,8 @@ describe("BDStable fractional", () => {
         const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInEurPrice_d12).div(bdxInEurPrice_d12);
 
         // calculate how much is needed to mint
-        const wethAmountForMintigBdEu_d18 = to_d18(0.1); // 70% of total value
-        const bdxAmountForMintigBdEu_d18 = wethAmountForMintigBdEu_d18.mul(30).div(70).mul(bdxPriceInWeth_d12).div(1e12); // the remaining 30% of value
+        const wethAmountForMintigBdEu_d18 = to_d18(0.1); // CR% of total value
+        const bdxAmountForMintigBdEu_d18 = wethAmountForMintigBdEu_d18.mul(to_d8(1-cr)).div(to_d8(cr)).mul(bdxPriceInWeth_d12).div(1e12); // the remaining 30% of value
 
         const excessiveBdxAmountForMintigBdEu_d18 = bdxAmountForMintigBdEu_d18.mul(3); // the excess should be ignored
         await performFractionalMinting(testUser, wethAmountForMintigBdEu_d18, excessiveBdxAmountForMintigBdEu_d18);        
@@ -104,7 +104,6 @@ describe("BDStable fractional", () => {
         console.log("effectiveCR: " + d12_ToNumber(efCR_d12));
         expect(d12_ToNumber(efCR_d12)).to.be.gt(cr, "we want efCR > CR, for test purposes"); // test valitation
 
-        await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can redeem
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
@@ -118,8 +117,7 @@ describe("BDStable fractional", () => {
 
         // calculate how much is needed to mint
         const expectedWethRedeemingCost_d18 = bdEuToRedeem_d18
-            // .mul(to_d12(cr)).div(1e12) //todo ag
-            .mul(70).div(100)
+            .mul(to_d12(cr)).div(1e12)
             .mul(1e12).div(wethInEurPrice_d12);
 
         const expectedBdxRedeemingCost_d18 = bdEuToRedeem_d18
@@ -171,7 +169,6 @@ describe("BDStable fractional", () => {
         console.log("effectiveCR: " + d12_ToNumber(efCR_d12));
         expect(d12_ToNumber(efCR_d12)).to.be.lt(cr, "we want efCR < CR, for test purposes"); // test valitation
 
-        await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can redeem
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
@@ -240,13 +237,14 @@ describe("BDStable fractional", () => {
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
 
         // calculate how much is needed to mint
-        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
-        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem // todo ag needed?
+        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
 
         await performFractionalMinting(testUser, to_d18(0.1), to_d18(100));   
 
         await bdEu.setMinimumSwapsDelayInBlocks(100);
         // setup finished
+
+        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
