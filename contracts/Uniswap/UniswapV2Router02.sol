@@ -52,6 +52,7 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
         // create the pair if it doesn't exist yet
+        
         address pairAddress = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
         if (pairAddress == address(0)) {
             pairAddress = IUniswapV2Factory(factory).createPair(tokenA, tokenB);
@@ -67,10 +68,11 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
             if (amountBOptimal <= amountBDesired) {
                 require(amountBOptimal >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
 
-                uint256 amountBFromOracle = pair.consult(tokenA, amountIn);
+                uint256 amountBFromOracle = pair.consult(tokenA, amountADesired);
                 uint256 spotVsOraclePriceDivergence_d12 = relativeDiffFromLarger_d12(amountBOptimal, amountBFromOracle);
 
-                require(spotVsOraclePriceDivergence_d12 < factory.maxSpotVsOraclePriceDivergence_d12, "Spot vs Oracle Averaged price divergence exceedes limit");
+                // amountBFromOracle == 0, for the first liquidity
+                require(amountBFromOracle == 0 || spotVsOraclePriceDivergence_d12 < IUniswapV2Factory(factory).maxSpotVsOraclePriceDivergence_d12(), "Spot vs Oracle Averaged price divergence exceedes limit");
 
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
@@ -78,10 +80,11 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
                 assert(amountAOptimal <= amountADesired);
                 require(amountAOptimal >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
 
-                uint256 amountAFromOracle = pair.consult(tokenB, amountIn);
+                uint256 amountAFromOracle = pair.consult(tokenB, amountBDesired);
                 uint256 spotVsOraclePriceDivergence_d12 = relativeDiffFromLarger_d12(amountAOptimal, amountAFromOracle);
 
-                require(spotVsOraclePriceDivergence_d12 < factory.maxSpotVsOraclePriceDivergence_d12, "Spot vs Oracle Averaged price divergence exceedes limit");
+                // amountAFromOracle == 0, for the first liquidity
+                require(amountAFromOracle == 0 || spotVsOraclePriceDivergence_d12 < IUniswapV2Factory(factory).maxSpotVsOraclePriceDivergence_d12(), "Spot vs Oracle Averaged price divergence exceedes limit");
 
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }

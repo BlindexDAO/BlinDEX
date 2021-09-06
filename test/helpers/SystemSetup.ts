@@ -66,7 +66,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     }
 }
 
-async function updateOracle(
+export async function updateOracle(
   hre: HardhatRuntimeEnvironment,
   tokenA: ERC20,
   tokenB: ERC20) 

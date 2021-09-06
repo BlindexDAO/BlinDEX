@@ -18,5 +18,5 @@ interface IUniswapV2Factory {
     function setFeeTo(address) external;
     function setOwner(address) external;
     function setTreasury(address) external;
-    function setMaxSpotVsOraclePriceDivergence_d12(address) external;
+    function setMaxSpotVsOraclePriceDivergence_d12(uint256) external;
 }
