@@ -200,6 +200,9 @@ const config: HardhatUserConfig = {
     },
     TEST2: {
       default: 9
+    },
+    TREASURY: {
+      default: 10
     }
   }
 };

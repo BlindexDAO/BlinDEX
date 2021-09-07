@@ -29,6 +29,8 @@ describe("Uniswap Oracles", () => {
 
     const oneHour = 60*60;
 
+    // todo ag for some reason only first run of this test, after deployment works, should investigate
+    // looks like the swap contract stays alive and keeps state after test runs
     it("should update price after swap", async () => {
         const bdeu = await getBdEu(hre);
         const weth = await getWeth(hre);

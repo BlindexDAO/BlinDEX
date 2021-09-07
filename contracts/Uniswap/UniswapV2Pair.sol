@@ -57,9 +57,14 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     uint    public price1CumulativeLastOracle;
     uint32  public blockTimestampLastOracle;
 
+    mapping(address => uint256) public lastSwapByUserOut0;
+    mapping(address => uint256) public lastSwapByUserOut1;
+
+    uint256 minimumSwapsDelayInBlocks = 0;
+
     address owner_address;
     address timelock_address;
-
+    address treasury_address;
 
     uint private unlocked = 1;
     modifier lock() {
@@ -92,8 +97,11 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     );
     event Sync(uint112 reserve0, uint112 reserve1);
 
-    constructor() public {
+    constructor(address _owner_address, address _treasury_address) public {
         factory = msg.sender;
+
+        owner_address = _owner_address;
+        treasury_address = _treasury_address;
     }
 
     // called once by the factory at time of deployment
@@ -203,23 +211,45 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
         uint balance0;
         uint balance1;
-        { // scope for _token{0,1}, avoids stack too deep errors
-        address _token0 = token0;
-        address _token1 = token1;
-        require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');
-        if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
-        if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
-        if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
-        balance0 = IERC20(_token0).balanceOf(address(this));
-        balance1 = IERC20(_token1).balanceOf(address(this));
+
+        {
+            require(to != token0 && to != token1, 'UniswapV2: INVALID_TO');
+
+            if (amount0Out > 0) {
+                if(block.number.sub(lastSwapByUserOut1[to]) < minimumSwapsDelayInBlocks) {
+                    _safeTransfer(token0, to, amount0Out.div(10)); // optimistically transfer tokens
+                    _safeTransfer(token0, treasury_address, amount0Out.mul(9).div(10)); // optimistically transfer tokens
+                } else {
+                    _safeTransfer(token0, to, amount0Out); // optimistically transfer tokens
+                }
+
+                lastSwapByUserOut0[to] = block.number;
+            }
+
+            if (amount1Out > 0) {
+                if(block.number.sub(lastSwapByUserOut0[to]) < minimumSwapsDelayInBlocks){
+                    _safeTransfer(token1, to, amount1Out.div(10)); // optimistically transfer tokens
+                    _safeTransfer(token1, treasury_address, amount1Out.mul(9).div(10)); // optimistically transfer tokens
+                } else {
+                    _safeTransfer(token1, to, amount1Out); // optimistically transfer tokens
+                }
+
+                lastSwapByUserOut1[to] = block.number;
+            }
+
+            if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
+            balance0 = IERC20(token0).balanceOf(address(this));
+            balance1 = IERC20(token1).balanceOf(address(this));
         }
+        
         uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
+
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-        uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
-        uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
-        require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+            uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
+            uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
+            require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -299,8 +329,20 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         _approve(owner, spender, value);
     }
 
-    function setOwner_sddress(address _owner_address) external onlyByOwnerOrGovernance {
+    function setOwner_address(address _owner_address) external onlyByOwnerOrGovernance {
         owner_address = _owner_address;
+    }
+
+    function setTimelock_address(address _timelock_address) external onlyByOwnerOrGovernance {
+        timelock_address = _timelock_address;
+    }
+
+    function setTreasury_address(address _treasury_address) external onlyByOwnerOrGovernance {
+        treasury_address = _treasury_address;
+    }
+
+    function setMinimumSwapsDelayInBlocks(uint256 _minimumSwapsDelayInBlocks) external onlyByOwnerOrGovernance{
+        minimumSwapsDelayInBlocks = _minimumSwapsDelayInBlocks;
     }
 
     function setPeriod(uint _period) external onlyByOwnerOrGovernance {
