@@ -62,9 +62,9 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
     uint256 minimumSwapsDelayInBlocks = 0;
 
-    address owner_address;
-    address timelock_address;
-    address treasury_address;
+    address public owner_address;
+    address public timelock_address;
+    address public treasury_address;
 
     uint private unlocked = 1;
     modifier lock() {

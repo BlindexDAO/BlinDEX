@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../helpers/common";
+import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getTreasury, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
@@ -165,6 +165,75 @@ describe("BDStable 1to1", () => {
             await bdEuPool.connect(testUser).redeem1t1BD(to_d18(100), 1);
         })()).to.be.rejectedWith("Collateral ratio must be == 1");
     });
+
+    it("should tax illegal 1to1 redemption", async () => {
+        const ownerUser = await getDeployer(hre);
+        const testUser = await getUser(hre);
+        const treasury = await getTreasury(hre);
+
+        const weth = await getWeth(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+        const bdEu = await getBdEu(hre);
+
+        await lockBdEuCrAt(hre, 1);
+        
+        // setup bdEu so it's illegal to redeem for testUser
+        const collateralAmount = 0.1;
+        await perform1To1MintingForWeth(hre, testUser, collateralAmount);
+        await bdEu.setMinimumSwapsDelayInBlocks(100);
+
+        const { ethInEurPrice_1e12, ethInEurPrice } = await getOnChainEthEurPrice(hre);        
+
+        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user so user can redeem it
+
+        var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
+        var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
+        var wethBalanceBeforeRedeemTreasury = await weth.balanceOf(treasury.address);
+
+        await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem);
+
+        const bdEuToRedeem =  to_d18(100);
+
+        const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
+
+        expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
+
+        const expectedWethForRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12);
+        const expectedWethForRedeemUser = expectedWethForRedeem.div(10);
+        const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10);
+
+        await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
+        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(treasury).collectRedemption();
+
+        var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
+        var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
+        var wethBalanceAfterRedeemTreasury = await weth.balanceOf(treasury.address);
+
+        console.log("bdEu balance before redeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem));
+        console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem));
+        
+        console.log("weth balance before redeem:  " + d18_ToNumber(wethBalanceBeforeRedeem));
+        console.log("weth balance after redeem:   " + d18_ToNumber(wethBalanceAfterRedeem));
+
+        console.log("weth balance before redeem (tresury):  " + d18_ToNumber(wethBalanceBeforeRedeemTreasury));
+        console.log("weth balance after redeem (tresury) :   " + d18_ToNumber(wethBalanceAfterRedeemTreasury));
+
+        const wethDelta = d18_ToNumber(wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem));
+        console.log("weth balance delta: " + wethDelta);
+
+        const wethDeltaTreasury = d18_ToNumber(wethBalanceAfterRedeemTreasury.sub(wethBalanceBeforeRedeemTreasury));
+        console.log("weth balance delta: " + wethDeltaTreasury);
+
+        const bdEuDelta = d18_ToNumber(bdEuBalanceBeforeRedeem.sub(bdEuBalanceAfterRedeem));
+        console.log("bdEu balance delta: " + bdEuDelta);
+
+        expect(bdEuBalanceBeforeRedeem).to.be.gt(0);
+        expect(bdEuDelta).to.eq(d18_ToNumber(bdEuToRedeem), "unexpected bdeu delta");
+        expect(wethDelta).to.eq(d18_ToNumber(expectedWethForRedeemUser), "unexpected weth delta (user)");
+        expect(wethDeltaTreasury).to.eq(d18_ToNumber(expectedWethForRedeemTreasury), "unexpected weth delta (treasury)");
+    });
+
 })
 
 export async function perform1To1MintingForWeth(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, collateralAmount: number){

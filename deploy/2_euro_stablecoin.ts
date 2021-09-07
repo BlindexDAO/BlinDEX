@@ -7,7 +7,8 @@ import { to_d18 } from '../utils/Helpers';
 import { BdStablePool } from '../typechain/BdStablePool';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+const treasury = (await hre.getNamedAccounts()).TREASURY;
 
   //todo: extract into separate file
   const bdPoolLibraryDeployment = await hre.deployments.deploy('BdPoolLibrary', {
@@ -28,6 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             'BDEU',
             'EURO',
             deployer,
+            treasury,
             bdx.address,
             constants.initalBdStableToOwner_d18[hre.network.name]
           ]

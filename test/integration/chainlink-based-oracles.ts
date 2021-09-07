@@ -21,7 +21,7 @@ describe("Chainlink besed Oracles", () => {
         const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
         
         const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
-            'ChainlinkBasedCryptoFiatFeed_WETH_EUR', 
+            'ChainlinkBasedCryptoFiatFeed_ETH_EUR', 
             ownerUser) as ChainlinkBasedCryptoFiatFeed;
 
         const price = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();

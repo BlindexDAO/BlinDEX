@@ -80,7 +80,7 @@ export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
 
   const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
-      'ChainlinkBasedCryptoFiatFeed_WETH_EUR', 
+      'ChainlinkBasedCryptoFiatFeed_ETH_EUR', 
       ownerUser) as ChainlinkBasedCryptoFiatFeed;
   
   const ethInEurPrice_1e12 = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
@@ -93,7 +93,7 @@ export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
 
   const chainlinkBasedCryptoFiatFeed_BTC_EUR = await hre.ethers.getContract(
-      'ChainlinkBasedCryptoFiatFeed_WBTC_EUR', 
+      'ChainlinkBasedCryptoFiatFeed_BTC_EUR', 
       ownerUser) as ChainlinkBasedCryptoFiatFeed;
   
   const btcInEurPrice_1e12 = await chainlinkBasedCryptoFiatFeed_BTC_EUR.getPrice_1e12();
