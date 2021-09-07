@@ -267,6 +267,9 @@ contract BdStablePool is Initializable {
         );
 
         if(BDSTABLE.canLegallyRedeem(msg.sender)){
+            redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender]
+                .add(collateral_needed);
+        } else {
             uint256 collateral_needed_sender = collateral_needed.div(10);
             uint256 collateral_needed_treasury = collateral_needed.mul(9).div(10);
 
@@ -276,9 +279,6 @@ contract BdStablePool is Initializable {
             address treasury_address = BDSTABLE.treasury_address();
             redeemCollateralBalances[treasury_address] = redeemCollateralBalances[treasury_address]
                 .add(collateral_needed_treasury);
-        } else {
-            redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender]
-                .add(collateral_needed);
         }
 
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
@@ -323,15 +323,15 @@ contract BdStablePool is Initializable {
         
         if(bdx_amount > 0){
             if(BDSTABLE.canLegallyRedeem(msg.sender)){
-                uint256 bdx_amount_sender = bdx_amount.div(10);
-                uint256 bdx_amount_treasury = bdx_amount.mul(9).div(10);
-
-                redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount_sender);
-
-                address treasury_address = BDSTABLE.treasury_address();
-                redeemBDXBalances[treasury_address] = redeemBDXBalances[treasury_address].add(bdx_amount_treasury);
+               redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
             } else {
-                redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+               uint256 bdx_amount_sender = bdx_amount.div(10);
+               uint256 bdx_amount_treasury = bdx_amount.mul(9).div(10);
+
+               redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount_sender);
+
+               address treasury_address = BDSTABLE.treasury_address();
+               redeemBDXBalances[treasury_address] = redeemBDXBalances[treasury_address].add(bdx_amount_treasury);
             }
 
             unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
@@ -426,6 +426,8 @@ contract BdStablePool is Initializable {
         require(BDX_out_min <= bdx_amount, "Slippage limit reached [BDX]");
 
         if(BDSTABLE.canLegallyRedeem(msg.sender)){
+            redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);
+        } else {
             uint256 collateral_needed_sender = collateral_needed.div(10);
             uint256 collateral_needed_treasury = collateral_needed.mul(9).div(10);
 
@@ -435,14 +437,14 @@ contract BdStablePool is Initializable {
             address treasury_address = BDSTABLE.treasury_address();
             redeemCollateralBalances[treasury_address] = redeemCollateralBalances[treasury_address]
                 .add(collateral_needed_treasury);
-        } else {
-            redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);
         }
 
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
 
         if(bdx_amount > 0){
             if(BDSTABLE.canLegallyRedeem(msg.sender)){
+                redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+            } else {
                 uint256 bdx_amount_sender = bdx_amount.div(10);
                 uint256 bdx_amount_treasury = bdx_amount.mul(9).div(10);
 
@@ -450,8 +452,6 @@ contract BdStablePool is Initializable {
 
                 address treasury_address = BDSTABLE.treasury_address();
                 redeemBDXBalances[treasury_address] = redeemBDXBalances[treasury_address].add(bdx_amount_treasury);
-            } else {
-                redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
             }
 
             unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);

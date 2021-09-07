@@ -245,7 +245,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
     
     function canLegallyRedeem(address who) external view returns (bool) {
-        return block.number.sub(lastMintByUserBlock[who]) < minimumMintRedeemDelayInBlocks;
+        return block.number.sub(lastMintByUserBlock[who]) >= minimumMintRedeemDelayInBlocks;
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
