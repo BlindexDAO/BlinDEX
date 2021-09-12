@@ -103,7 +103,6 @@ contract BDXShares is ERC20Custom, Initializable {
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
 
         _transfer(sender, recipient, amount);
-        // todo ag // todo lw // Lukasz: Do we need lowering approvals? - 
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
 
         return true;

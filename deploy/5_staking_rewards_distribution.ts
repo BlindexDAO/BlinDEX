@@ -10,7 +10,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 
   const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
 
-  const treasury = await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER");
+  const treasury = await hre.ethers.getNamedSigner("TREASURY");
 
   await bdx.connect(treasury).transfer(
     stakingRewardsDistribution.address,
@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
     "StakingRewardsDistribution", {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    from: (await hre.getNamedAccounts()).DEPLOYER,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
       execute: {

@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
 
   const weth_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_ETH_EUR', {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    from: (await hre.getNamedAccounts()).DEPLOYER,
     contract: "ChainlinkBasedCryptoFiatFeed",
     args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.ETH_USD_CHAINLINK_FEED[networkName]]
   });
@@ -20,9 +20,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("ChainlinkBasedCryptoFiatFeed_ETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
-  //todo ag only used in tests, do we need it? dependent on dev
+  //todo ag only used in tests, do we need it? bezposrenio z chainlinka pobrać w helperze testowym
   const btc_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_BTC_EUR', {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    from: (await hre.getNamedAccounts()).DEPLOYER,
     contract: "ChainlinkBasedCryptoFiatFeed",
     args: [constants.EUR_USD_CHAINLINK_FEED[networkName], constants.BTC_USD_CHAINLINK_FEED[networkName]]
   });
@@ -45,14 +45,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   //todo ag replace with a better implementaion (price from uniswap3?)
   const btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    from: (await hre.getNamedAccounts()).DEPLOYER,
     args: [constants.BTC_ETH_CHAINLINK_FEED[networkName], constants.wETH_address[networkName]]
   });
 
   const bdeuWethPool = await hre.ethers.getContract('BDEU_WETH_POOL') as BdStablePool;
   const bdeuWbtcPool = await hre.ethers.getContract('BDEU_WBTC_POOL') as BdStablePool;
   const weth_to_weth_oracle = await hre.deployments.deploy('WethToWethOracle', {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    from: (await hre.getNamedAccounts()).DEPLOYER,
     args: [constants.wETH_address[networkName]]
   });
 

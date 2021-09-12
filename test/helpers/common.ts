@@ -13,7 +13,7 @@ import * as constants from '../../utils/Constants'
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
-  const deployer = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
+  const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
   return deployer;
 }
 

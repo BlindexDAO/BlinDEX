@@ -3,7 +3,7 @@ import {DeployFunction} from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+  const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 
   const bdx_proxy = await hre.deployments.deploy(
     'BDXShares', 

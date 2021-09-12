@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+    const deployer = (await hre.getNamedAccounts()).DEPLOYER;
     const treasury = (await hre.getNamedAccounts()).TREASURY;
 
     const uniswapV2Factory = await hre.deployments.deploy('UniswapV2Factory', {

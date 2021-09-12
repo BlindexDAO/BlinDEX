@@ -7,7 +7,7 @@ import { to_d18 } from '../utils/Helpers';
 import { BdStablePool } from '../typechain/BdStablePool';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-const deployer = (await hre.getNamedAccounts()).DEPLOYER_ADDRESS;
+const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 const treasury = (await hre.getNamedAccounts()).TREASURY;
 
   //todo: extract into separate file

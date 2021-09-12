@@ -8,7 +8,7 @@ import { provideLiquidity } from "./swaps";
 import { ethers } from "ethers";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1) {
-    const deployer = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
+    const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
 
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);

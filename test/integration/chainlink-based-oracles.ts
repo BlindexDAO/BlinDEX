@@ -18,7 +18,7 @@ describe("Chainlink besed Oracles", () => {
     });
 
     it("should get eth/eur price", async () => {
-        const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+        const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER');
         
         const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
             'ChainlinkBasedCryptoFiatFeed_ETH_EUR', 
@@ -35,7 +35,7 @@ describe("Chainlink besed Oracles", () => {
     })
 
     it("should get eth / btc price", async () => {
-        const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+        const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER');
         const btcToEthOracle = await hre.ethers.getContract(
             'BtcToEthOracle', 
             ownerUser) as BtcToEthOracle;

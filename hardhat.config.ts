@@ -171,39 +171,18 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
 
-    DEPLOYER_ADDRESS: {
+    DEPLOYER: {
       default: 0
     },
-    COLLATERAL_FRAX_AND_FXS_OWNER: {
+    TREASURY: {
       default: 1
     },
-    ORACLE_ADDRESS: {
+    TEST1: {
       default: 2
     },
-    POOL_CREATOR: {
+    TEST2: {
       default: 3
     },
-    TIMELOCK_ADMIN: {
-      default: 4
-    },
-    GOVERNOR_GUARDIAN_ADDRESS: {
-      default: 5
-    },
-    STAKING_OWNER: {
-      default: 6
-    },
-    STAKING_REWARDS_DISTRIBUTOR: {
-      default: 7
-    },
-    TEST1: {
-      default: 8
-    },
-    TEST2: {
-      default: 9
-    },
-    TREASURY: {
-      default: 10
-    }
   }
 };
 

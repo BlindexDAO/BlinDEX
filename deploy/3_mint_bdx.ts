@@ -5,7 +5,7 @@ import { to_d18 } from '../utils/Helpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const [ deployer ] = await hre.ethers.getSigners();
-    const treasury = await hre.ethers.getNamedSigner("COLLATERAL_FRAX_AND_FXS_OWNER");
+    const treasury = await hre.ethers.getNamedSigner("TREASURY");
 
     const bdxInstance = await hre.ethers.getContract("BDXShares") as BDXShares;
 
