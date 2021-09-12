@@ -3,19 +3,14 @@ import { BDXShares } from '../typechain/BDXShares';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
-import { to_d18 } from '../utils/Helpers';
 import { BdStablePool } from '../typechain/BdStablePool';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 const treasury = (await hre.getNamedAccounts()).TREASURY;
-
-  //todo: extract into separate file
-  const bdPoolLibraryDeployment = await hre.deployments.deploy('BdPoolLibrary', {
-    from: deployer
-  });
-
   const bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
+
+  const bdPoolLibraryDeployment = await hre.ethers.getContract('BdPoolLibrary');
 
   const bdeu_proxy = await hre.deployments.deploy('BDEU', {
     from: deployer,
@@ -114,5 +109,5 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
 };
 func.id = __filename
 func.tags = ['BDEU'];
-func.dependencies = ['BDX'];
+func.dependencies = ['BDX', 'BdPoolLibrary'];
 export default func;
