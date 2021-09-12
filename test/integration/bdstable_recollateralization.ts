@@ -33,6 +33,8 @@ describe("Recollateralization", () => {
 
         await lockBdEuCrAt(hre, 0.7);
 
+        await weth.connect(testUser).deposit({value: to_d18(100)  });
+
         const wethPoolBalanceBeforeRecolat_d18 = await weth.balanceOf(bdEuWethPool.address);
         const wethUserBalanceBeforeRecolat_d18 = await weth.balanceOf(testUser.address);
         
@@ -82,11 +84,13 @@ describe("Recollateralization", () => {
 
     it("recollateralize should NOT fail when efCR < CR", async () => {        
         await setUpFunctionalSystem(hre, 0.3); // ~efCR
+        const testUser = await getUser(hre);
+        const weth = await getWeth(hre);
 
         await lockBdEuCrAt(hre, 0.9); // CR
 
-        const testUser = await getUser(hre);
-        const weth = await getWeth(hre);
+        await weth.connect(testUser).deposit({value: to_d18(100)  });
+
         const bdEuWethPool = await getBdEuWethPool(hre);
 
         const toRecollatInEth_d18 = to_d18(0.001);

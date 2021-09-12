@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("ChainlinkBasedCryptoFiatFeed_ETH_EUR deployed to:", chainlinkBasedCryptoFiatFeed_ETH_EUR.address);
 
-  //todo ag only used in tests, do we need it?
+  //todo ag only used in tests, do we need it? dependent on dev
   const btc_eur_oracle = await hre.deployments.deploy('ChainlinkBasedCryptoFiatFeed_BTC_EUR', {
     from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
     contract: "ChainlinkBasedCryptoFiatFeed",

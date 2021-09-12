@@ -144,8 +144,8 @@ describe("BDStable 1to1", () => {
         console.log("bdEu balance delta: " + bdEuDelta);
 
         expect(bdEuBalanceBeforeRedeem).to.be.gt(0);
-        expect(bdEuDelta).to.eq(d18_ToNumber(bdEuToRedeem), "unexpected bdeu delta");
-        expect(wethDelta).to.eq(d18_ToNumber(expectedWethForRedeem), "unexpected weth delta");
+        expect(bdEuDelta).to.be.closeTo(d18_ToNumber(bdEuToRedeem), 1e-6, "unexpected bdeu delta");
+        expect(wethDelta).to.be.closeTo(d18_ToNumber(expectedWethForRedeem), 1e-6, "unexpected weth delta");
     });
 
     it("redeeming should throw when CR != 1", async () => {
