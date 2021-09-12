@@ -14,8 +14,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
     uint256 private constant ERC20_PRCISON = 1e18;
 
-    bool isInitialized;
-
     // BDX minting schedule
     // They sum up to 50% of TOTAL_BDX_SUPPLY
     //   as this much is reserved for liquidity mining rewards
@@ -40,7 +38,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public stakingRewardsWeightsTotal;
 
     function initialize(address _timelock_address, address _rewardsToken) external initializer {
-        require(!isInitialized, "contract can be initialized once only");
         __Ownable_init();
 
         timelock_address = _timelock_address;

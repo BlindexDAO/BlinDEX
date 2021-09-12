@@ -10,7 +10,6 @@ import "../Math/SafeMath.sol";
 import "../ERC20/ERC20.sol";
 import '../Uniswap/TransferHelper.sol';
 import "../ERC20/SafeERC20.sol";
-import "../Utils/ReentrancyGuard.sol";
 import "./StakingRewardsDistribution.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -20,11 +19,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 // Inheritance
 import "hardhat/console.sol";
 
-//todo ag remove all unupgradable dependencies
-//https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/master/contracts/access/OwnableUpgradeable.sol
-//https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/master/contracts/security/PausableUpgradeable.sol
 contract StakingRewards is 
-    ReentrancyGuard, 
     PausableUpgradeable,
     OwnableUpgradeable
 {
@@ -38,6 +33,12 @@ contract StakingRewards is
 
     uint256 private DeploymentTimestamp;
 
+    uint256 private constant _REENTRY_GUARD_NOT_ENTERED = 1;
+    uint256 private constant _REENTRY_GUARD_ENTERED = 2;
+
+    // uint256 is cheaper than bool
+    uint256 private _reentry_guard_status;
+
     /* ========== STATE VARIABLES ========== */
 
     ERC20 public stakingToken;
@@ -46,7 +47,6 @@ contract StakingRewards is
 
     uint256 public periodFinish;
     bool isTrueBdPool;
-    bool isInitialized;
 
     uint256 public rewardsDurationSeconds;
 
@@ -87,8 +87,6 @@ contract StakingRewards is
         external
         initializer
     {
-        require(!isInitialized, "contract can be initialized once only");
-
         __Ownable_init();
         __Pausable_init();
 
@@ -104,7 +102,7 @@ contract StakingRewards is
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
 
-        isInitialized = true;
+        _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
     }
 
     /* ========== VIEWS ========== */
@@ -401,6 +399,20 @@ contract StakingRewards is
     modifier onlyByOwnerOrGovernance() {
         require(msg.sender == owner() || msg.sender == timelock_address, "You are not the owner or the governance timelock");
         _;
+    }
+
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_reentry_guard_status != _REENTRY_GUARD_ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _reentry_guard_status = _REENTRY_GUARD_ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
     }
 
     /* ========== EVENTS ========== */
