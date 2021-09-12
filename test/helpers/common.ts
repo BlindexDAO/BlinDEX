@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
-import { ChainlinkBasedCryptoFiatFeed } from "../../typechain/ChainlinkBasedCryptoFiatFeed";
+import { IChainlinkBasedCryptoFiatFeed } from "../../typechain/IChainlinkBasedCryptoFiatFeed";
 import { ERC20 } from "../../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
@@ -81,7 +81,7 @@ export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
 
   const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
       'ChainlinkBasedCryptoFiatFeed_ETH_EUR', 
-      ownerUser) as ChainlinkBasedCryptoFiatFeed;
+      ownerUser) as IChainlinkBasedCryptoFiatFeed;
   
   const ethInEurPrice_1e12 = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
   const ethInEurPrice = ethInEurPrice_1e12.div(1e12).toNumber();
@@ -94,7 +94,7 @@ export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){
 
   const chainlinkBasedCryptoFiatFeed_BTC_EUR = await hre.ethers.getContract(
       'ChainlinkBasedCryptoFiatFeed_BTC_EUR', 
-      ownerUser) as ChainlinkBasedCryptoFiatFeed;
+      ownerUser) as IChainlinkBasedCryptoFiatFeed;
   
   const btcInEurPrice_1e12 = await chainlinkBasedCryptoFiatFeed_BTC_EUR.getPrice_1e12();
   const btcInEurPrice = btcInEurPrice_1e12.div(1e12).toNumber();

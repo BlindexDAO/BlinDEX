@@ -1,11 +1,11 @@
 pragma solidity 0.6.11;
 
 import "./AggregatorV3Interface.sol";
+import "./IChainlinkBasedCryptoFiatFeed.sol";
 import "../Math/SafeMath.sol";
 import "hardhat/console.sol";
 
-//todo ag extract interface, maybe ICryptoPairOracle
-contract ChainlinkBasedCryptoFiatFeed {
+contract ChainlinkBasedCryptoFiatFeed is IChainlinkBasedCryptoFiatFeed {
     using SafeMath for uint256;
 
     AggregatorV3Interface internal fiatToUsdFeed;
@@ -16,7 +16,7 @@ contract ChainlinkBasedCryptoFiatFeed {
         cryptoToUsdFeed = AggregatorV3Interface(_cryptUsdFeedAddress);
     }
 
-    function getPrice_1e12() public view returns (uint256) {
+    function getPrice_1e12() override public view returns (uint256) {
         uint256 fiatUsdPrice = getLatestPrice(fiatToUsdFeed);
         uint256 cryptoUsdPrice = getLatestPrice(cryptoToUsdFeed);
 
@@ -44,7 +44,7 @@ contract ChainlinkBasedCryptoFiatFeed {
         return uint256(price);
     }
     
-    function getDecimals()  public view returns (uint8) {
+    function getDecimals() override public view returns (uint8) {
         return 12 + fiatToUsdFeed.decimals() - cryptoToUsdFeed.decimals();
     }
 }
