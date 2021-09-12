@@ -3,6 +3,7 @@ import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
 import { IChainlinkBasedCryptoFiatFeed } from "../../typechain/IChainlinkBasedCryptoFiatFeed";
+import { AggregatorV3Interface } from "../../typechain/AggregatorV3Interface";
 import { ERC20 } from "../../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
@@ -11,6 +12,8 @@ import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { BigNumber } from '@ethersproject/bignumber';
 import * as constants from '../../utils/Constants'
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { bigNumberToDecimal, to_d12 } from "../../utils/Helpers";
+import { Address } from "node:cluster";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -90,16 +93,34 @@ export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
 }
 
 export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
+  const networkName = hre.network.name;
 
-  const chainlinkBasedCryptoFiatFeed_BTC_EUR = await hre.ethers.getContract(
-      'ChainlinkBasedCryptoFiatFeed_BTC_EUR', 
-      ownerUser) as IChainlinkBasedCryptoFiatFeed;
+  return getOnChainCryptoFiatPrice(
+    hre,
+    constants.EUR_USD_CHAINLINK_FEED[networkName],
+    constants.BTC_USD_CHAINLINK_FEED[networkName])
+}
+
+export async function getOnChainCryptoFiatPrice(
+  hre: HardhatRuntimeEnvironment,
+  fiat_usd_feed_addres: string,
+  crypto_usd_feed_address: string)
+{
+  const fiat_usd_feed = await hre.ethers.getContractAt('AggregatorV3Interface', fiat_usd_feed_addres) as AggregatorV3Interface;
+  const crypto_usd_feed = await hre.ethers.getContractAt('AggregatorV3Interface', crypto_usd_feed_address) as AggregatorV3Interface;
   
-  const btcInEurPrice_1e12 = await chainlinkBasedCryptoFiatFeed_BTC_EUR.getPrice_1e12();
-  const btcInEurPrice = btcInEurPrice_1e12.div(1e12).toNumber();
+  const fiat_usd_data = await fiat_usd_feed.latestRoundData();
+  const price_fiat_usd_decimlas = await fiat_usd_feed.decimals();
+  const price_fiat_usd = bigNumberToDecimal(fiat_usd_data.answer, price_fiat_usd_decimlas);
 
-  return {btcInEurPrice_1e12, btcInEurPrice};
+  const crypto_usd_data = await crypto_usd_feed.latestRoundData();
+  const price_crypto_usd_decimlas = await crypto_usd_feed.decimals();
+  const price_crypto_usd = bigNumberToDecimal(crypto_usd_data.answer, price_crypto_usd_decimlas);
+
+  const cryptoInFiatPrice = price_crypto_usd / price_fiat_usd;
+  const cryptoInFiatPrice_1e12 = to_d12(cryptoInFiatPrice);
+
+  return {price_1e12: cryptoInFiatPrice_1e12, price: cryptoInFiatPrice};
 }
 
 export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: ERC20, tokenB: ERC20) {

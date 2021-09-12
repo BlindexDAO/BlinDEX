@@ -56,7 +56,7 @@ describe("BDStable 1to1", () => {
     it("should mint bdeu when CR = 1 [for WBTC]", async () => {
         const bdEu = await getBdEu(hre);
 
-        const { btcInEurPrice_1e12, btcInEurPrice } = await getOnChainBtcEurPrice(hre);
+        const btcInEurPrice_1e12 = (await getOnChainBtcEurPrice(hre)).price_1e12;
 
         const testUser = await getUser(hre);
         const collateralAmount = 10;

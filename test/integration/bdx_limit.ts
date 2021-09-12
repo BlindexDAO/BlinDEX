@@ -2,11 +2,11 @@ import hre, { ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, diffPct, to_d12, to_d18, to_d8 } from "../../utils/Helpers";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getUniswapRouter, getDeployer, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../helpers/common";
+import { d18_ToNumber, diffPct, to_d18 } from "../../utils/Helpers";
+import { getBdEu, getBdEuWethPool, getBdx, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
-import { simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { swapForWethAsDeployer, swapAsDeployerByContract } from "../helpers/swaps";
+import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
+import { swapForWethAsDeployer } from "../helpers/swaps";
 
 chai.use(cap);
 
