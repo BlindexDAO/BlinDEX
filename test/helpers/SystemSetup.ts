@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d12, to_d18, to_d8 } from "../../utils/Helpers";
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc } from "./common";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice } from "./common";
 import * as constants from '../../utils/Constants';
 import { ERC20 } from "../../typechain/ERC20";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
@@ -27,18 +27,18 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     // mint inital WBTC
     await mintWbtc(hre, deployer, to_d18(1000));
 
-    // todo all should be adjusted by the amonut of initial BdStables minted for the owner and current collateral prices
-    const initialWethBdEuPrice = 1600;
-    const initialWbtcBdEuPrice = 25000;
-    const initialWethBdxPrice = 100;
-    const initialWbtcBdxPrice = 1000;
-    const initialBdxBdEuPrice = Math.round(initialWethBdEuPrice/initialWethBdxPrice);
+    // initial prices don't need to be very precise, in real world they will never be very precise
+    const initialWethBdEuPrice = (await getOnChainEthEurPrice(hre)).price;
+    const initialWbtcBdEuPrice = (await getOnChainBtcEurPrice(hre)).price;
+    const initialBdxBdEuPrice = 100;
+    const initialWethBdxPrice = initialWethBdEuPrice / initialBdxBdEuPrice;
+    const initialWbtcBdxPrice = initialWbtcBdEuPrice / initialBdxBdEuPrice;
 
-    await provideLiquidity(hre, deployer, weth, bdEu, to_d18(1000).div(initialWethBdEuPrice), to_d18(1000));
-    await provideLiquidity(hre, deployer, wbtc, bdEu, to_d8(1000).div(initialWbtcBdEuPrice), to_d18(1000));
-    await provideLiquidity(hre, deployer, weth, bdx, to_d18(1000).div(initialWethBdxPrice), to_d18(1000));
-    await provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).div(initialWbtcBdxPrice), to_d18(1000));
-    await provideLiquidity(hre, deployer, bdx, bdEu, to_d8(1000).div(initialBdxBdEuPrice), to_d18(1000));
+    await provideLiquidity(hre, deployer, weth, bdEu, to_d18(1000).mul(1e12).div(to_d12(initialWethBdEuPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, wbtc, bdEu, to_d8(1000).mul(1e12).div(to_d12(initialWbtcBdEuPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, weth, bdx, to_d18(1000).mul(1e12).div(to_d12(initialWethBdxPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).mul(1e12).div(to_d12(initialWbtcBdxPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, bdx, bdEu, to_d8(1000).mul(1e12).div(to_d12(initialBdxBdEuPrice)), to_d18(1000));
 
     await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
     
@@ -54,9 +54,9 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
       const initialBdEuColltFraction_d12 = to_d12(initialBdEuColltFraction);
 
       const collateralWeth_d18 = constants.initalBdStableToOwner_d18[hre.network.name]
-        .mul(7).mul(initialBdEuColltFraction_d12).div(10).div(initialWethBdEuPrice).div(1e12); // 70% in weth
+        .mul(7).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12); // 70% in weth
       const collateralWbtc_d8 = constants.initalBdStableToOwner_d18[hre.network.name]
-        .mul(2).mul(initialBdEuColltFraction_d12).div(10).div(initialWbtcBdEuPrice).div(1e10).div(1e12); // 30% in wbtc
+        .mul(3).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12); // 30% in wbtc
       
       await weth.approve(bdEuWethPool.address, collateralWeth_d18);
       await bdEuWethPool.recollateralizeBdStable(collateralWeth_d18, 1)

@@ -6,6 +6,7 @@ import { d12_ToNumber, to_d18 } from "../../utils/Helpers";
 import { getBdEu,  getBdEuWethPool, getBdx, getWeth } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
+import { swapWethAsDeployer, swapForWethAsDeployer } from "../helpers/swaps";
 
 chai.use(cap);
 
@@ -16,11 +17,18 @@ describe("Locking collateral ratio", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 0.8);
+
+        // decrease CR so fractional minting works
+        const bdEu = await getBdEu(hre);
+        await swapWethAsDeployer(hre, "BDEU", 1, 1e-12);
+        await simulateTimeElapseInSeconds(60*60*24);
+        await bdEu.refreshCollateralRatio();
     });
 
     it("collateral ratio should move when unlocked", async () => {
         const bdEu = await getBdEu(hre);
+
         const initialCR_d12 = await bdEu.global_collateral_ratio_d12();
         const initialCR = d12_ToNumber(initialCR_d12);
 

@@ -79,19 +79,6 @@ export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithA
   })
 }
 
-export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-
-  const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
-      'ChainlinkBasedCryptoFiatFeed_ETH_EUR', 
-      ownerUser) as IChainlinkBasedCryptoFiatFeed;
-  
-  const ethInEurPrice_1e12 = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
-  const ethInEurPrice = ethInEurPrice_1e12.div(1e12).toNumber();
-
-  return {ethInEurPrice_1e12, ethInEurPrice};
-}
-
 export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){
   const networkName = hre.network.name;
 
@@ -99,6 +86,15 @@ export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){
     hre,
     constants.EUR_USD_CHAINLINK_FEED[networkName],
     constants.BTC_USD_CHAINLINK_FEED[networkName])
+}
+
+export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
+  const networkName = hre.network.name;
+
+  return getOnChainCryptoFiatPrice(
+    hre,
+    constants.EUR_USD_CHAINLINK_FEED[networkName],
+    constants.ETH_USD_CHAINLINK_FEED[networkName])
 }
 
 export async function getOnChainCryptoFiatPrice(

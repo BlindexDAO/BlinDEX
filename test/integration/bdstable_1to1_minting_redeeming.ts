@@ -25,7 +25,7 @@ describe("BDStable 1to1", () => {
     it("should mint bdeu when CR = 1 [for WETH]", async () => {
         const bdEu = await getBdEu(hre);
 
-        const { ethInEurPrice_1e12, ethInEurPrice } = await getOnChainEthEurPrice(hre);
+        const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
         const testUser = await getUser(hre);
         const collateralAmount = 10;
@@ -47,7 +47,7 @@ describe("BDStable 1to1", () => {
         console.log("BeEur before: " + d18_ToNumber(bdEuBefore_d18));
         console.log("BeEur after : " + d18_ToNumber(bdEuAfter_d18));
         console.log("Expected BeEur: " + d18_ToNumber(expectedBdEuDiff_d18));
-        console.log("Actual   BeEur: " + d18_ToNumber(actualBdEuDiff_d18));
+        console.log("Actual BeEur  : " + d18_ToNumber(actualBdEuDiff_d18));
         console.log(`Diff BeEur: ${diff}%`);
 
         expect(diff).to.be.closeTo(0, 1);
@@ -106,7 +106,7 @@ describe("BDStable 1to1", () => {
 
         await lockBdEuCrAt(hre, 1);
 
-        const { ethInEurPrice_1e12, ethInEurPrice } = await getOnChainEthEurPrice(hre);        
+        const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
         
         const bdEu = await getBdEu(hre);
 
@@ -182,7 +182,7 @@ describe("BDStable 1to1", () => {
         await perform1To1MintingForWeth(hre, testUser, collateralAmount);
         await bdEu.setMinimumSwapsDelayInBlocks(100);
 
-        const { ethInEurPrice_1e12, ethInEurPrice } = await getOnChainEthEurPrice(hre);        
+        const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user so user can redeem it
 
