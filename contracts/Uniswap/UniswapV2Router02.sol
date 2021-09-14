@@ -34,6 +34,14 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
     }
 
+    function relativeDiffFromLarger_d12(uint a, uint b) internal pure returns(uint256){
+        if(a > b){
+            return (a-b).mul(1e12).div(a);
+        } else {
+            return (b-a).mul(1e12).div(b);
+        }
+    }
+
     // **** ADD LIQUIDITY ****
     function _addLiquidity(
         address tokenA,
@@ -44,9 +52,14 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
         uint amountBMin
     ) internal virtual returns (uint amountA, uint amountB) {
         // create the pair if it doesn't exist yet
-        if (IUniswapV2Factory(factory).getPair(tokenA, tokenB) == address(0)) {
-            IUniswapV2Factory(factory).createPair(tokenA, tokenB);
+        
+        address pairAddress = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+        if (pairAddress == address(0)) {
+            pairAddress = IUniswapV2Factory(factory).createPair(tokenA, tokenB);
         }
+
+        UniswapV2Pair pair = UniswapV2Pair(pairAddress);
+
         (uint reserveA, uint reserveB) = UniswapV2Library.getReserves(factory, tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
@@ -54,11 +67,25 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
             uint amountBOptimal = UniswapV2Library.quote(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
                 require(amountBOptimal >= amountBMin, 'UniswapV2Router: INSUFFICIENT_B_AMOUNT');
+
+                uint256 amountBFromOracle = pair.consult(tokenA, amountADesired);
+                uint256 spotVsOraclePriceDivergence_d12 = relativeDiffFromLarger_d12(amountBOptimal, amountBFromOracle);
+
+                // amountBFromOracle == 0, for the first liquidity
+                require(amountBFromOracle == 0 || spotVsOraclePriceDivergence_d12 < IUniswapV2Factory(factory).maxSpotVsOraclePriceDivergence_d12(), "Spot vs Oracle Averaged price divergence exceedes limit");
+
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint amountAOptimal = UniswapV2Library.quote(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
                 require(amountAOptimal >= amountAMin, 'UniswapV2Router: INSUFFICIENT_A_AMOUNT');
+
+                uint256 amountAFromOracle = pair.consult(tokenB, amountBDesired);
+                uint256 spotVsOraclePriceDivergence_d12 = relativeDiffFromLarger_d12(amountAOptimal, amountAFromOracle);
+
+                // amountAFromOracle == 0, for the first liquidity
+                require(amountAFromOracle == 0 || spotVsOraclePriceDivergence_d12 < IUniswapV2Factory(factory).maxSpotVsOraclePriceDivergence_d12(), "Spot vs Oracle Averaged price divergence exceedes limit");
+
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }

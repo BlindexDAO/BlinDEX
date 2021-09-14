@@ -6,17 +6,19 @@ import './UniswapV2Pair.sol';
 
 contract UniswapV2Factory is IUniswapV2Factory {
     address public override feeTo;
-    address public override feeToSetter;
+    address public override owner;
     address public override treasury;
+    uint256 public override maxSpotVsOraclePriceDivergence_d12;
 
     mapping(address => mapping(address => address)) public override getPair;
     address[] public override allPairs;
 
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
 
-    constructor(address _feeToSetter, address _treasury) public {
-        feeToSetter = _feeToSetter;
+    constructor(address _owner, address _treasury, uint256 _maxSpotVsOraclePriceDivergence_d12) public {
+        owner = _owner;
         treasury = _treasury;
+        maxSpotVsOraclePriceDivergence_d12 = _maxSpotVsOraclePriceDivergence_d12;
     }
 
     function allPairsLength() external override view returns (uint) {
@@ -30,7 +32,7 @@ contract UniswapV2Factory is IUniswapV2Factory {
         require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS'); // single check is sufficient
         bytes memory bytecode = abi.encodePacked(
             type(UniswapV2Pair).creationCode,
-            abi.encode(feeToSetter),
+            abi.encode(owner),
             abi.encode(treasury));
 
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
@@ -47,17 +49,22 @@ contract UniswapV2Factory is IUniswapV2Factory {
     }
 
     function setFeeTo(address _feeTo) external override {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        require(msg.sender == owner, 'UniswapV2: FORBIDDEN');
         feeTo = _feeTo;
     }
 
-    function setFeeToSetter(address _feeToSetter) external override {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
-        feeToSetter = _feeToSetter;
+    function setOwner(address _owner) external override {
+        require(msg.sender == owner, 'UniswapV2: FORBIDDEN');
+        owner = _owner;
     }
 
     function setTreasury(address _treasury) external override {
-        require(msg.sender == feeToSetter, 'UniswapV2: FORBIDDEN');
+        require(msg.sender == owner, 'UniswapV2: FORBIDDEN');
         treasury = _treasury;
+    }
+
+    function setMaxSpotVsOraclePriceDivergence_d12(uint256 _maxSpotVsOraclePriceDivergence_d12) external override {
+        require(msg.sender == owner, 'UniswapV2: FORBIDDEN');
+        maxSpotVsOraclePriceDivergence_d12 = _maxSpotVsOraclePriceDivergence_d12;
     }
 }

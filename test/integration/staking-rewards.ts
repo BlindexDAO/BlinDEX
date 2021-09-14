@@ -13,7 +13,7 @@ import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from "ethers";
 import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem, updateOracle } from "../helpers/SystemSetup";
 
 chai.use(cap);
 
