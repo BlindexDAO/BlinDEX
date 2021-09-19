@@ -41,7 +41,7 @@ task("test:dir")
   .setAction(
     async (
       { testDir, noCompile, deployFixture },
-      { run, network }
+      { run, network, ethers }
     ) => {
 
     const testFiles: string[] = []
@@ -53,6 +53,7 @@ task("test:dir")
         }
       });
     });
+
     await run("test", { testFiles, noCompile, deployFixture } );
   });
 
@@ -120,7 +121,7 @@ task("test:dir")
         [bigDaiHolder]
       )
     });
-  console.log(process.env.MAINNET_URL)
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -138,7 +139,14 @@ const config: HardhatUserConfig = {
       url: 'http://localhost:8545',
       timeout: 60000
     },
-
+    kovan: {
+      url: 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+      accounts: [
+        process.env.USER_DEPLOYER_PRIVATE_KEY!,
+        process.env.USER_TREASURY_PRIVATE_KEY!
+      ],
+      timeout: 240000
+    },
   },
   solidity: {
     compilers: [
