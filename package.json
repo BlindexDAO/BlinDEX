@@ -6,7 +6,8 @@
     "node": "hardhat node --no-deploy",
     "deploy:fork": "hardhat --network mainnetFork deploy",
     "deploy:rinkeby": "hardhat --network rinkeby deploy",
-    "deploy:kovan": "hardhat --network kovan deploy"
+    "deploy:kovan": "hardhat --network kovan deploy",
+    "initialize": "hardhat --network mainnetFork initialize"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

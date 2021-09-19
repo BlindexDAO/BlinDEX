@@ -13,6 +13,7 @@ import { BigNumber } from 'ethers';
 import { ethers } from "hardhat";
 
 import './tasks/initialize-blindex'
+import {setUpFunctionalSystem} from "./test/helpers/SystemSetup";
 
 const fs = require('fs');
 const path = require('path');
@@ -120,6 +121,12 @@ task("test:dir")
         [bigDaiHolder]
       )
     });
+
+    task("initialize")
+        .setAction(async (args, hre) => {
+            await setUpFunctionalSystem(hre);
+    })
+
   console.log(process.env.MAINNET_URL)
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",

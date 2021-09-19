@@ -32,3 +32,11 @@ Fully on-chain oracles – Frax v1 uses Uniswap (ETH, USDT, USDC time-weighted a
 ## Local Development
 
 We recommend using Truffle to set up a development environment and Ganache to run a chain.
+
+
+```bash
+npm run node
+# second window
+npm run deploy:fork -- --reset
+npm run initialize
+```
