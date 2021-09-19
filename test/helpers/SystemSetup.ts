@@ -7,7 +7,7 @@ import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { provideLiquidity } from "./swaps";
 import { ethers } from "ethers";
 
-export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1) {
+export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, simulateTimeElapse: boolean = true) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER_ADDRESS');
 
     const weth = await getWeth(hre);
@@ -40,8 +40,10 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     await provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).div(initialWbtcBdxPrice), to_d18(1000));
     await provideLiquidity(hre, deployer, bdx, bdEu, to_d8(1000).div(initialBdxBdEuPrice), to_d18(1000));
 
-    await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
-    
+    if (simulateTimeElapse) {
+        await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
+    }
+
     await updateOracle(hre, weth, bdEu);
     await updateOracle(hre, wbtc, bdEu);
     await updateOracle(hre, weth, bdx);

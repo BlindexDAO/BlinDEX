@@ -124,7 +124,7 @@ task("test:dir")
 
     task("initialize")
         .setAction(async (args, hre) => {
-            await setUpFunctionalSystem(hre);
+            await setUpFunctionalSystem(hre, 1, false);
     })
 
   console.log(process.env.MAINNET_URL)
