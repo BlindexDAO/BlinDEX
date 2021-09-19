@@ -385,6 +385,7 @@ contract BdStablePool is Initializable {
         require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
 
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_needed);
+
         collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
         BDSTABLE.pool_mint(msg.sender, mint_amount);
     }

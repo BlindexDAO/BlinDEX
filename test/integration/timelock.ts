@@ -7,7 +7,7 @@ import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
 import { Timelock } from "../../typechain/TimeLock";
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import TimeTraveler from "../../utils/TimeTraveler";
-import func from "../../deploy/2_euro_stablecoin";
+import func from "../../deploy/2_2_euro_stablecoin";
 
 chai.use(cap);
 

@@ -9,7 +9,6 @@ import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury } from "../helpers/common";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
-import { initalBdStableToOwner_d18 } from "../../utils/Constants";
 
 chai.use(cap);
 
@@ -47,6 +46,7 @@ describe("BDStable fractional", () => {
         await lockBdEuCrAt(hre, cr);
 
         await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
+        await weth.connect(testUser).deposit({ value: to_d18(100) });
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
         const bdEulBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
@@ -105,6 +105,7 @@ describe("BDStable fractional", () => {
         expect(d12_ToNumber(efCR_d12)).to.be.gt(cr, "we want efCR > CR, for test purposes"); // test valitation
 
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+        await weth.connect(testUser).deposit({ value: to_d18(100) });
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -170,6 +171,7 @@ describe("BDStable fractional", () => {
         expect(d12_ToNumber(efCR_d12)).to.be.lt(cr, "we want efCR < CR, for test purposes"); // test valitation
 
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+        await weth.connect(testUser).deposit({ value: to_d18(100) });
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -238,6 +240,7 @@ describe("BDStable fractional", () => {
 
         // calculate how much is needed to mint
         await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+        await weth.connect(testUser).deposit({ value: to_d18(100) });
 
         await performFractionalMinting(testUser, to_d18(0.1), to_d18(100));   
 

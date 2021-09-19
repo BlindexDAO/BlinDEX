@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { ChainlinkBasedCryptoFiatFeed } from '../../typechain/ChainlinkBasedCryptoFiatFeed';
+import { IChainlinkBasedCryptoFiatFeed } from '../../typechain/IChainlinkBasedCryptoFiatFeed';
 import { BtcToEthOracle } from '../../typechain/BtcToEthOracle';
 import cap from "chai-as-promised";
 
@@ -18,11 +18,11 @@ describe("Chainlink besed Oracles", () => {
     });
 
     it("should get eth/eur price", async () => {
-        const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+        const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER');
         
         const chainlinkBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(
             'ChainlinkBasedCryptoFiatFeed_ETH_EUR', 
-            ownerUser) as ChainlinkBasedCryptoFiatFeed;
+            ownerUser) as IChainlinkBasedCryptoFiatFeed;
 
         const price = await chainlinkBasedCryptoFiatFeed_ETH_EUR.getPrice_1e12();
         
@@ -35,7 +35,7 @@ describe("Chainlink besed Oracles", () => {
     })
 
     it("should get eth / btc price", async () => {
-        const ownerUser = await hre.ethers.getNamedSigner('POOL_CREATOR');
+        const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER');
         const btcToEthOracle = await hre.ethers.getContract(
             'BtcToEthOracle', 
             ownerUser) as BtcToEthOracle;

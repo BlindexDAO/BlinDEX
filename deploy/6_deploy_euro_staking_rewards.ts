@@ -25,7 +25,7 @@ async function setupStakingContract(
 
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
     stakingRewardsContractName, {
-    from: (await hre.getNamedAccounts()).DEPLOYER_ADDRESS,
+    from: (await hre.getNamedAccounts()).DEPLOYER,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
       execute: {
