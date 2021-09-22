@@ -18,17 +18,17 @@ contract Vesting is OwnableUpgradeable
     using SafeMath for uint256;
 
     struct VestingSchedule {
-        uint256 vestingStartedTimeStamp,
-        uint256 totalVestedAmount_d18,
-        uint256 releasedAmount_d18,
+        uint256 vestingStartedTimeStamp;
+        uint256 totalVestedAmount_d18;
+        uint256 releasedAmount_d18;
     }
 
-    public mapping(address => VestingSchedule[]) vestingSchedules;
+    mapping(address => VestingSchedule[]) vestingSchedules;
     
-    address vestingScheduler
+    address vestingScheduler;
     uint256 vestingTimeInSeconds;
 
-    private ERC20 vestedToken;
+    ERC20 private vestedToken;
 
     function initialize(
         address _vestedTokenAddress,
@@ -40,14 +40,14 @@ contract Vesting is OwnableUpgradeable
     {
         __Ownable_init();
 
-        vestedToken = ERC20(_vestedTokenAddress)
+        vestedToken = ERC20(_vestedTokenAddress);
         vestingScheduler = _vestingScheduler;
         vestingTimeInSeconds = _vestingTimeInSeconds;
     }
 
     function schedule(address _receiver, uint256 _amount_d18) external {
         // to prevent melicious users form cloging user's schedules
-        require(msg.sender == vestingScheduler
+        require(msg.sender == vestingScheduler,
             "Only vesting scheduler can create vesting schedules");
 
         vestingSchedules[_receiver].push(VestingSchedule(
@@ -56,11 +56,11 @@ contract Vesting is OwnableUpgradeable
             0
         ));
 
-        TransferHelper.safeTransferFrom(vestedToken.address, vestingScheduler, address(this), _amount_d18)
+        TransferHelper.safeTransferFrom(address(vestedToken), vestingScheduler, address(this), _amount_d18);
     }
 
     function claim() external {
-        vestingSchedules[_receiver]
+        // vestingSchedules[_receiver];
 
     }
 
@@ -79,7 +79,7 @@ contract Vesting is OwnableUpgradeable
     }
 
     modifier onlyByOwner() {
-        require(msg.sender == owner() ||  "You are not the owner");
+        require(msg.sender == owner(),  "You are not the owner");
         _;
     }
 }
