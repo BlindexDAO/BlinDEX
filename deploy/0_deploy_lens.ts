@@ -27,6 +27,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (await lens.setSwapFactory(await (await ethers.getContract('UniswapV2Factory')).address)).wait()
   await (await lens.setSwapRouter(await (await ethers.getContract('UniswapV2Router02')).address)).wait()
 
+  await (await lens.setStakingRewardsDistribution(await (await ethers.getContract('StakingRewardsDistribution')).address)).wait()
+
   await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_WETH')).address)).wait()
   await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_BDEU')).address)).wait()
   await (await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDEU_WETH')).address)).wait()

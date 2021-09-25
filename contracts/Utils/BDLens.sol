@@ -12,6 +12,7 @@ contract BDLens {
     address public BDX;
     address public SwapFactory;
     address public SwapRouter;
+    address public StakingRewardsDistribution;
     address[] public BdStables;
     address[] public Stakings;
 
@@ -30,6 +31,10 @@ contract BDLens {
         SwapRouter = _swapRouter;
     }
 
+    function setStakingRewardsDistribution(address _stakingRewardsDistribution) public {
+        StakingRewardsDistribution = _stakingRewardsDistribution;
+    }
+
     function pushBdStable(address _bdstable) public {
         BdStables.push(_bdstable);
     }
@@ -37,10 +42,12 @@ contract BDLens {
     function BdStablesLength() public view returns (uint256) {
         return BdStables.length;
     }
+
     struct BdStableInfo {
         string fiat;
         address token;
     }
+
     function AllBdStables() external view returns (BdStableInfo[] memory) {
         BdStableInfo[] memory infos = new BdStableInfo[](BdStables.length);
         for(uint i = 0; i < BdStables.length; i++) {

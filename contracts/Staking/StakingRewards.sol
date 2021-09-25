@@ -27,7 +27,7 @@ contract StakingRewards is
     using SafeMath for uint256;
 
     // Constant for various precisions
-    uint256 private constant LOCK_MULTIPLIER_PRECISION = 1e6;
+    uint256 public constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
     uint256 public constant REWARD_PRECISON = 1e18;
 
@@ -46,7 +46,7 @@ contract StakingRewards is
     StakingRewardsDistribution stakingRewardsDistribution;
 
     uint256 public periodFinish;
-    bool isTrueBdPool;
+    bool public isTrueBdPool;
 
     uint256 public rewardsDurationSeconds;
 
