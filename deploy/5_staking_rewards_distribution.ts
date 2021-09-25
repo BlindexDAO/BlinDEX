@@ -36,7 +36,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           methodName: "initialize",
           args: [
             timelock.address,
-            bdx.address
+            bdx.address,
+            10
           ]
         }
       }

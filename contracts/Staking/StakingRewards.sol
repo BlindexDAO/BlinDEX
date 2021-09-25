@@ -317,7 +317,9 @@ contract StakingRewards is
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            stakingRewardsDistribution.transferRewards(msg.sender, reward);
+            uint256 vestingRewardRatio = stakingRewardsDistribution.vestingRewardRatio_percent();
+            stakingRewardsDistribution.transferRewards(msg.sender, (100 - vestingRewardRatio) / 100 * reward);
+
             emit RewardPaid(msg.sender, reward);
         }
     }

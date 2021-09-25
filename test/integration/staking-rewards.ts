@@ -10,7 +10,7 @@ import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { getDeployer, getUniswapPair, getWeth } from "../helpers/common"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
-import { BigNumber } from "ethers";
+import { BigNumber, Contract } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import { setUpFunctionalSystem, updateOracle } from "../helpers/SystemSetup";
@@ -57,9 +57,19 @@ async function adjustRewardsFor_BDEU_WETH_pool(n: BigNumber){
   return n.mul(poolWeight).div(totalWeights);
 }
 
+async function setVestingRewardsRatio(contract: StakingRewardsDistribution, ratio: number) {
+  const deployer = await getDeployer(hre);
+  await contract.connect(deployer).setVestingRewardRatio(ratio);
+}
+
 describe("StakingRewards", () => {
   before(function() {
     return initialize();
+  })
+
+
+  beforeEach(async () => {
+    await setVestingRewardsRatio(stakingRewardsDistribution, 0);
   })
 
   describe("Normal staking", () => {
@@ -67,6 +77,7 @@ describe("StakingRewards", () => {
       await hre.deployments.fixture();
       await setUpFunctionalSystem(hre);
     });
+
 
     let depositedLPTokenUser1_d18_global: BigNumber;
     let depositedLPTokenUser2_d18_global: BigNumber;
