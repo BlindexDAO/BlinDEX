@@ -14,3 +14,9 @@ npm run node
 npm run deploy:fork -- --reset
 npm run test:integrations
 ```
+
+## Generate abis and typings
+
+```
+npm run npm-package
+```
