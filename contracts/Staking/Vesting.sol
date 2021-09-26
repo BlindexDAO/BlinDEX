@@ -63,12 +63,31 @@ contract Vesting is OwnableUpgradeable
     }
 
     function claim() external {
-        // VestingSchedule[] vestingSchedules = vestingSchedules[msg.sender];
-        // unit256 rewardsToClaim = 0;
-        // for (uint256 i = 0; i < vestingSchedules.length; i++) {
-        //     if (vesting)
-        // }
+        VestingSchedule[] memory vestingSchedules = vestingSchedules[msg.sender];
+        uint256 rewardsToClaim = 0;
+        for (uint256 i = 0; i < vestingSchedules.length; i++) {
+            VestingSchedule memory schedule = vestingSchedules[i];
+            if (isFullyVested(schedule)) {
+                rewardsToClaim += schedule.totalVestedAmount_d18 - schedule.releasedAmount_d18;
+            } else {
+                uint256 prooprtionalReward = getProportionalReward(schedule);
+                rewardsToClaim += prooprtionalReward;
+                schedule.releasedAmount_d18 += prooprtionalReward;
+            }
+        }
 
+        //delete used stakes
+
+        TransferHelper.safeTransfer(address(vestedToken), msg.sender, rewardsToClaim);
+    }
+
+    function isFullyVested(VestingSchedule memory schedule) returns(bool) {
+        return schedule.vestingStartedTimeStamp + vestingTimeInSeconds <= block.timestamp;
+    }
+
+    function getProportionalReward(VestingSchedule memory schedule) returns(uint256) {
+        uint256 remainingReward_d18 = schedule.totalVestedAmount_d18 - schedule.releasedAmount_d18;
+        return remainingReward_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds;
     }
 
     function setVestingScheduler(address _vestingScheduler)
