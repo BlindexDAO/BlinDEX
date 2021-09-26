@@ -11,6 +11,7 @@ import "../ERC20/ERC20.sol";
 import '../Uniswap/TransferHelper.sol';
 import "../ERC20/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
+import "./Vesting.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -44,6 +45,7 @@ contract StakingRewards is
     ERC20 public stakingToken;
     address public timelock_address; // Governance timelock address
     StakingRewardsDistribution stakingRewardsDistribution;
+    Vesting vesting;
 
     uint256 public periodFinish;
     bool isTrueBdPool;
@@ -82,6 +84,7 @@ contract StakingRewards is
         address _stakingToken,
         address _timelock_address,
         address _stakingRewardsDistribution,
+        address _vesting,
         bool _isTrueBdPool
     ) 
         external
@@ -93,6 +96,7 @@ contract StakingRewards is
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
+        vesting = Vesting(_vesting);
         DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
@@ -318,9 +322,15 @@ contract StakingRewards is
         if (reward > 0) {
             rewards[msg.sender] = 0;
             uint256 vestingRewardRatio = stakingRewardsDistribution.vestingRewardRatio_percent();
-            stakingRewardsDistribution.transferRewards(msg.sender, (100 - vestingRewardRatio) / 100 * reward);
+            uint256 rewardAvailable = reward * (100 - vestingRewardRatio) / 100;
 
-            emit RewardPaid(msg.sender, reward);
+            stakingRewardsDistribution.approveRewardTransferTo(address(vesting), reward - rewardAvailable);
+
+            vesting.schedule(msg.sender, reward - rewardAvailable);
+
+            stakingRewardsDistribution.transferRewards(msg.sender, rewardAvailable);
+
+            emit RewardPaid(msg.sender, rewardAvailable);
         }
     }
 

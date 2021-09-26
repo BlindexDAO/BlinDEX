@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import "../Math/Math.sol";
 import "../Math/SafeMath.sol";
+import '../Uniswap/TransferHelper.sol';
 import "../ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -112,12 +113,16 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function transferRewards(address _recepient, uint256 amountErc20) external onlyStakingRewards {
-        rewardsToken.transfer(_recepient, amountErc20);
+        TransferHelper.safeTransfer(address(rewardsToken), _recepient, amountErc20);
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwnerOrGovernance {
         require(0 <= _vestingRewardRatio && _vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
+    }
+
+    function approveRewardTransferTo(address spenderAddress, uint256 amountErc20) external onlyStakingRewards {
+        rewardsToken.approve(spenderAddress, amountErc20);
     }
 
     modifier onlyStakingRewards() {

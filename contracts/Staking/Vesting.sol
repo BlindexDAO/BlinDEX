@@ -23,9 +23,10 @@ contract Vesting is OwnableUpgradeable
         uint256 releasedAmount_d18;
     }
 
-    mapping(address => VestingSchedule[]) vestingSchedules;
+    mapping(address => VestingSchedule[]) public vestingSchedules;
     
     address vestingScheduler;
+    address stakingRewardsDistribution;
     uint256 vestingTimeInSeconds;
 
     ERC20 private vestedToken;
@@ -33,6 +34,7 @@ contract Vesting is OwnableUpgradeable
     function initialize(
         address _vestedTokenAddress,
         address _vestingScheduler,
+        address _stakingRewardsDistribution,
         uint256 _vestingTimeInSeconds
     ) 
         external
@@ -42,6 +44,7 @@ contract Vesting is OwnableUpgradeable
 
         vestedToken = ERC20(_vestedTokenAddress);
         vestingScheduler = _vestingScheduler;
+        stakingRewardsDistribution = _stakingRewardsDistribution;
         vestingTimeInSeconds = _vestingTimeInSeconds;
     }
 
@@ -56,11 +59,15 @@ contract Vesting is OwnableUpgradeable
             0
         ));
 
-        TransferHelper.safeTransferFrom(address(vestedToken), vestingScheduler, address(this), _amount_d18);
+        TransferHelper.safeTransferFrom(address(vestedToken), stakingRewardsDistribution, address(this), _amount_d18);
     }
 
     function claim() external {
-        // vestingSchedules[_receiver];
+        // VestingSchedule[] vestingSchedules = vestingSchedules[msg.sender];
+        // unit256 rewardsToClaim = 0;
+        // for (uint256 i = 0; i < vestingSchedules.length; i++) {
+        //     if (vesting)
+        // }
 
     }
 
