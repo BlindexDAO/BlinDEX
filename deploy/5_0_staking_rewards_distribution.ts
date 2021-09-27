@@ -21,7 +21,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [ deployer ] = await hre.ethers.getSigners();
-  
+
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
   const timelock = await hre.ethers.getContract("Timelock") as Timelock;
