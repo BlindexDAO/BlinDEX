@@ -1,4 +1,5 @@
 pragma solidity 0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "../Math/Math.sol";
 import "../Math/SafeMath.sol";
@@ -81,11 +82,11 @@ contract Vesting is OwnableUpgradeable
         TransferHelper.safeTransfer(address(vestedToken), msg.sender, rewardsToClaim);
     }
 
-    function isFullyVested(VestingSchedule memory schedule) returns(bool) {
+    function isFullyVested(VestingSchedule memory schedule) internal view returns(bool) {
         return schedule.vestingStartedTimeStamp + vestingTimeInSeconds <= block.timestamp;
     }
 
-    function getProportionalReward(VestingSchedule memory schedule) returns(uint256) {
+    function getProportionalReward(VestingSchedule memory schedule) internal view returns(uint256) {
         uint256 remainingReward_d18 = schedule.totalVestedAmount_d18 - schedule.releasedAmount_d18;
         return remainingReward_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds;
     }
