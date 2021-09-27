@@ -39,7 +39,7 @@ export async function moveTimeForwardBy(seconds: BigNumber) {
     await hre.network.provider.send("evm_increaseTime", [Number(seconds)])
 }
 
-describe.only('Vesting', () => {
+describe('Vesting', () => {
     before(async () => {
         await initialize();
     })
