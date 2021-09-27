@@ -291,7 +291,7 @@ describe("StakingRewards", () => {
   });
 });
 
-describe.only('getReward interaction with vesting contract', () => {
+describe('getReward interaction with vesting contract', () => {
 
   beforeEach(async () => {
     await initialize();

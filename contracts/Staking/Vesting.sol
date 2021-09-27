@@ -1,4 +1,5 @@
 pragma solidity 0.6.11;
+pragma experimental ABIEncoderV2;
 
 import "../Math/Math.sol";
 import "../Math/SafeMath.sol";
@@ -26,15 +27,15 @@ contract Vesting is OwnableUpgradeable
     mapping(address => VestingSchedule[]) public vestingSchedules;
     
     address vestingScheduler;
-    address stakingRewardsDistribution;
-    uint256 vestingTimeInSeconds;
+    address fundsProvider;
+    uint256 public vestingTimeInSeconds;
 
     ERC20 private vestedToken;
 
     function initialize(
         address _vestedTokenAddress,
         address _vestingScheduler,
-        address _stakingRewardsDistribution,
+        address _fundsProvider,
         uint256 _vestingTimeInSeconds
     ) 
         external
@@ -44,7 +45,7 @@ contract Vesting is OwnableUpgradeable
 
         vestedToken = ERC20(_vestedTokenAddress);
         vestingScheduler = _vestingScheduler;
-        stakingRewardsDistribution = _stakingRewardsDistribution;
+        fundsProvider = _fundsProvider;
         vestingTimeInSeconds = _vestingTimeInSeconds;
     }
 
@@ -59,33 +60,31 @@ contract Vesting is OwnableUpgradeable
             0
         ));
 
-        TransferHelper.safeTransferFrom(address(vestedToken), stakingRewardsDistribution, address(this), _amount_d18);
+        TransferHelper.safeTransferFrom(address(vestedToken), fundsProvider, address(this), _amount_d18);
     }
 
     function claim() external {
-        VestingSchedule[] memory vestingSchedules = vestingSchedules[msg.sender];
+        VestingSchedule[] storage vestingSchedules = vestingSchedules[msg.sender];
         uint256 rewardsToClaim = 0;
         for (uint256 i = 0; i < vestingSchedules.length; i++) {
-            VestingSchedule memory schedule = vestingSchedules[i];
-            if (isFullyVested(schedule)) {
-                rewardsToClaim += schedule.totalVestedAmount_d18 - schedule.releasedAmount_d18;
+            if (isFullyVested(vestingSchedules[i])) {
+                rewardsToClaim += vestingSchedules[i].totalVestedAmount_d18 - vestingSchedules[i].releasedAmount_d18;
+                delete vestingSchedules[i];
             } else {
-                uint256 prooprtionalReward = getProportionalReward(schedule);
+                uint256 prooprtionalReward = getProportionalReward(vestingSchedules[i]);
                 rewardsToClaim += prooprtionalReward;
-                schedule.releasedAmount_d18 += prooprtionalReward;
+                vestingSchedules[i].releasedAmount_d18 += prooprtionalReward;
             }
         }
-
-        //delete used stakes
 
         TransferHelper.safeTransfer(address(vestedToken), msg.sender, rewardsToClaim);
     }
 
-    function isFullyVested(VestingSchedule memory schedule) returns(bool) {
+    function isFullyVested(VestingSchedule memory schedule) internal returns(bool) {
         return schedule.vestingStartedTimeStamp + vestingTimeInSeconds <= block.timestamp;
     }
 
-    function getProportionalReward(VestingSchedule memory schedule) returns(uint256) {
+    function getProportionalReward(VestingSchedule memory schedule) internal returns(uint256) {
         uint256 remainingReward_d18 = schedule.totalVestedAmount_d18 - schedule.releasedAmount_d18;
         return remainingReward_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds;
     }
@@ -102,6 +101,10 @@ contract Vesting is OwnableUpgradeable
         onlyByOwner
     {
         vestingTimeInSeconds = _vestingTimeInSeconds;
+    }
+
+    function setFundsProvider(address _fundsProvider) external onlyByOwner {
+        fundsProvider = _fundsProvider;
     }
 
     modifier onlyByOwner() {
