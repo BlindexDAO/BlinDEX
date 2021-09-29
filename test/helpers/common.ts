@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { BDXShares } from "../../typechain/BDXShares";
-import { IChainlinkBasedCryptoFiatFeed } from "../../typechain/IChainlinkBasedCryptoFiatFeed";
 import { AggregatorV3Interface } from "../../typechain/AggregatorV3Interface";
 import { ERC20 } from "../../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
