@@ -14,7 +14,8 @@ async function setupStakingContract(
   addressB: string,
   nameA: string,
   nameB: string,
-  isTrueBdPool: boolean) {
+  isTrueBdPool: boolean)
+  {
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
 

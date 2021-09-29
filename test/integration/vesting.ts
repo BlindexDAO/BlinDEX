@@ -39,7 +39,7 @@ export async function moveTimeForwardBy(seconds: BigNumber) {
     await hre.network.provider.send("evm_increaseTime", [Number(seconds)])
 }
 
-describe('Vesting', () => {
+describe.only('Vesting', () => {
     before(async () => {
         await initialize();
     })
@@ -52,33 +52,36 @@ describe('Vesting', () => {
 
     it('should create schedule for owner', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
         const schedule = await vesting.vestingSchedules(ownerUser.address, 0);
 
-        expect(schedule.totalVestedAmount_d18, 'Vesting amount incorrect').to.be.eq(to_d18(amount));
+        expect(schedule.totalVestedAmount_d18, 'Vesting amount incorrect').to.be.eq(amount_d18);
         expect(schedule.releasedAmount_d18, 'Released amount not 0').to.be.eq(0);
 
     });
 
     it('should not allow other user to create schedule', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
 
-        await bdx.connect(testUser1).approve(vesting.address, to_d18(amount));
+        await bdx.connect(testUser1).approve(vesting.address, amount_d18);
 
         await expect(
-            vesting.connect(testUser1).schedule(ownerUser.address, to_d18(amount))
+            vesting.connect(testUser1).schedule(ownerUser.address, amount_d18)
         ).to.be.revertedWith('Only vesting scheduler can create vesting schedules');
     });
 
     it('claim should transfer full amount after vesting has ended', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
         const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
         await moveTimeForwardBy(vestingTimeSeconds)
 
@@ -86,15 +89,16 @@ describe('Vesting', () => {
         await vesting.connect(ownerUser).claim();
         const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
 
-        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(to_d18(amount));
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
     });
 
     it('claim should not transfer the same schedule twice', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
         const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
         const schedule = await vesting.vestingSchedules(ownerUser.address, 0);
 
@@ -105,18 +109,19 @@ describe('Vesting', () => {
         await vesting.connect(ownerUser).claim();
         const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
 
-        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(to_d18(0));
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(0);
     });
 
     it('claim should transfer multiple vested schedules at once', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
         const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
         await moveTimeForwardBy(vestingTimeSeconds)
 
@@ -124,24 +129,26 @@ describe('Vesting', () => {
         await vesting.connect(ownerUser).claim();
         const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
 
-        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(to_d18(amount * 2));
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(2));
     });
 
-    it('claim should transfer partial amount after vesting is halfway done', async () => {
+    it('claim should transfer partial amount after vesting is partly done', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
+        const timePartition = 7
         const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
-        await moveTimeForwardBy(vestingTimeSeconds.div(2))
+        await moveTimeForwardBy(vestingTimeSeconds.div(timePartition))
 
         const balanceBeforeClaim = await bdx.balanceOf(ownerUser.address);
         await vesting.connect(ownerUser).claim();
         const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
 
         const transferredAmount = balanceAfterClaim.sub(balanceBeforeClaim);
-        const expectedAmount = to_d18(amount / 2)
+        const expectedAmount = to_d18(amount / timePartition)
         const diff = transferredAmount.sub(expectedAmount);
 
         expect(diff, 'Diff negative').to.gte(0);
@@ -150,10 +157,11 @@ describe('Vesting', () => {
 
     it('claim should transfer full when claimed halfway through and after vesting ended', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
         const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
         const balanceBeforeClaim = await bdx.balanceOf(ownerUser.address);
         await moveTimeForwardBy(vestingTimeSeconds.div(2));
@@ -162,15 +170,36 @@ describe('Vesting', () => {
         await vesting.connect(ownerUser).claim();
         const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
 
-        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(to_d18(amount));
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
+    });
+
+    it('claim should transfer full when claimed twice during vesting and after vesting ended', async () => {
+        const amount = 1;
+        const amount_d18 = to_d18(amount);
+        const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
+
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
+
+        const balanceBeforeClaim = await bdx.balanceOf(ownerUser.address);
+        await moveTimeForwardBy(vestingTimeSeconds.div(5));
+        await vesting.connect(ownerUser).claim();
+        await moveTimeForwardBy(vestingTimeSeconds.div(5));
+        await vesting.connect(ownerUser).claim();
+        await moveTimeForwardBy(vestingTimeSeconds);
+        await vesting.connect(ownerUser).claim();
+        const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
+
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
     });
 
     it('claim should not transfer rewards to different user', async () => {
         const amount = 1;
+        const amount_d18 = to_d18(amount);
         const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
 
-        await bdx.connect(ownerUser).approve(vesting.address, to_d18(amount));
-        await vesting.connect(ownerUser).schedule(ownerUser.address, to_d18(amount));
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
 
         await moveTimeForwardBy(vestingTimeSeconds)
 
@@ -178,6 +207,24 @@ describe('Vesting', () => {
         await vesting.connect(testUser1).claim();
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
-        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(to_d18(0));
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(0);
     });
+
+    it('claim should not allow for transferring all funds during vesting', async () => {
+        const amount = 1;
+        const amount_d18 = to_d18(amount);
+        const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
+
+        await bdx.connect(ownerUser).approve(vesting.address, amount_d18);
+        await vesting.connect(ownerUser).schedule(ownerUser.address, amount_d18);
+
+        await moveTimeForwardBy(vestingTimeSeconds.div(2))
+
+        await vesting.connect(ownerUser).claim();
+        const balanceBeforeClaim = await bdx.balanceOf(ownerUser.address);
+        await vesting.connect(ownerUser).claim();
+        const balanceAfterClaim = await bdx.balanceOf(ownerUser.address);
+
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.lt(to_d18(amount / 100));
+    })
 });

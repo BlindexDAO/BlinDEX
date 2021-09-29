@@ -299,32 +299,23 @@ describe('getReward interaction with vesting contract', () => {
     await setUpFunctionalSystem(hre);
   })
 
-  let depositedLPTokenUser1_d18_global: BigNumber;
-  let depositedLPTokenUser2_d18_global: BigNumber;
 
   it('should transfer only fraction of total rewards', async () => {
     // provide some initaila weth for the users
     await weth.connect(testUser1).deposit({ value: to_d18(100) });
-    await weth.connect(testUser2).deposit({ value: to_d18(100) });
 
     // deployer gives some bdeu to users so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
-    await bdEu.transfer(testUser2.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
-    await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20));
 
-    const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
-    depositedLPTokenUser1_d18_global = depositedLPTokenUser1_d18;
-    depositedLPTokenUser2_d18_global = depositedLPTokenUser2_d18;
+    const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18 } = await getUsersCurrentLpBalance();
 
     const pair = await getUniswapPair(hre, bdEu, weth);
 
     await pair.connect(testUser1).approve(stakingRewards_BDEU_WETH.address, depositedLPTokenUser1_d18);
-    await pair.connect(testUser2).approve(stakingRewards_BDEU_WETH.address, depositedLPTokenUser2_d18);
 
     await stakingRewards_BDEU_WETH.connect(testUser1).stake(depositedLPTokenUser1_d18);
-    await stakingRewards_BDEU_WETH.connect(testUser2).stake(depositedLPTokenUser2_d18);
 
     const days = 360;
     await simulateTimeElapseInDays(days)

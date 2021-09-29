@@ -61,6 +61,8 @@ contract Vesting is OwnableUpgradeable
         ));
 
         TransferHelper.safeTransferFrom(address(vestedToken), fundsProvider, address(this), _amount_d18);
+
+        emit ScheduleCreated(_receiver, _amount_d18);
     }
 
     function claim() external {
@@ -71,13 +73,15 @@ contract Vesting is OwnableUpgradeable
                 rewardsToClaim += vestingSchedules[i].totalVestedAmount_d18 - vestingSchedules[i].releasedAmount_d18;
                 delete vestingSchedules[i];
             } else {
-                uint256 prooprtionalReward = getProportionalReward(vestingSchedules[i]);
-                rewardsToClaim += prooprtionalReward;
-                vestingSchedules[i].releasedAmount_d18 += prooprtionalReward;
+                uint256 proprtionalReward = getProportionalReward(vestingSchedules[i]);
+                rewardsToClaim += proprtionalReward;
+                vestingSchedules[i].releasedAmount_d18 += proprtionalReward;
             }
         }
 
         TransferHelper.safeTransfer(address(vestedToken), msg.sender, rewardsToClaim);
+
+        emit RewardClaimed(msg.sender, rewardsToClaim);
     }
 
     function isFullyVested(VestingSchedule memory schedule) internal returns(bool) {
@@ -85,8 +89,7 @@ contract Vesting is OwnableUpgradeable
     }
 
     function getProportionalReward(VestingSchedule memory schedule) internal returns(uint256) {
-        uint256 remainingReward_d18 = schedule.totalVestedAmount_d18 - schedule.releasedAmount_d18;
-        return remainingReward_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds;
+        return (schedule.totalVestedAmount_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds) - schedule.releasedAmount_d18;
     }
 
     function setVestingScheduler(address _vestingScheduler)
@@ -111,4 +114,7 @@ contract Vesting is OwnableUpgradeable
         require(msg.sender == owner(),  "You are not the owner");
         _;
     }
+
+    event ScheduleCreated(address user, uint256 amount);
+    event RewardClaimed(address user, uint256 amount);
 }

@@ -331,6 +331,7 @@ contract StakingRewards is
             stakingRewardsDistribution.transferRewards(msg.sender, rewardAvailable);
 
             emit RewardPaid(msg.sender, rewardAvailable);
+            emit RewardVested(msg.sender, reward - rewardAvailable);
         }
     }
 
@@ -437,4 +438,5 @@ contract StakingRewards is
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event RewardsPeriodRenewed(address token);
+    event RewardVested(address user, uint256 amount);
 }
