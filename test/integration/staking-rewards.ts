@@ -7,7 +7,7 @@ import { StakingRewards } from "../../typechain/StakingRewards";
 import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { to_d18, d18_ToNumber } from '../../utils/Helpers';
 import { getDeployer, getUniswapPair, getWeth } from "../helpers/common"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber, Contract } from 'ethers';
@@ -337,27 +337,13 @@ describe('getReward interaction with vesting contract', () => {
 
     const bdxReward_d18 = await bdx.balanceOf(testUser1.address);
 
-    const rewardDiff = bdxReward_d18.sub(rewardAvailable_d18);
-
-    console.log("Reward Available: " + rewardAvailable_d18);
-    console.log("Reward Actual:   " + bdxReward_d18);
-    console.log("Reward Diff:     " + d18_ToNumber(rewardDiff));
-
     const userVestingSchedules = await vesting.vestingSchedules(testUser1.address, 0);
 
     const vestedAmount = userVestingSchedules.totalVestedAmount_d18 as BigNumber;
 
-    const vestedDiff = vestedAmount.sub(rewardToBeScheduledForVesting_d18);
-
-    console.log("Vesting calculated: " + rewardToBeScheduledForVesting_d18);
-    console.log("Vesting Actual:   " + vestedAmount);
-    console.log("Vesting Diff:     " + d18_ToNumber(vestedDiff));
-
-    expect(rewardDiff, 'Reward diff negative').to.gte(0);
-    expect(rewardDiff, 'Reward diff too big').to.lt(to_d18(1));
-    expect(vestedDiff, 'Vested diff negative').to.gte(0);
-    expect(vestedDiff, 'Vested diff too big').to.lt(to_d18(1));
-
+    const precision = 0.01;
+    expect(d18_ToNumber(bdxReward_d18), 'Incorrect reward').to.be.closeTo(d18_ToNumber(rewardAvailable_d18), precision);
+    expect(d18_ToNumber(vestedAmount), 'Incorrect vested amount').to.be.closeTo(d18_ToNumber(rewardToBeScheduledForVesting_d18), precision);
   })
 });
 

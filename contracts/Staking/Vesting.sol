@@ -73,7 +73,7 @@ contract Vesting is OwnableUpgradeable
                 rewardsToClaim += vestingSchedules[i].totalVestedAmount_d18 - vestingSchedules[i].releasedAmount_d18;
                 delete vestingSchedules[i];
             } else {
-                uint256 proprtionalReward = getProportionalReward(vestingSchedules[i]);
+                uint256 proprtionalReward = getAvailableReward(vestingSchedules[i]);
                 rewardsToClaim += proprtionalReward;
                 vestingSchedules[i].releasedAmount_d18 += proprtionalReward;
             }
@@ -88,7 +88,7 @@ contract Vesting is OwnableUpgradeable
         return schedule.vestingStartedTimeStamp + vestingTimeInSeconds <= block.timestamp;
     }
 
-    function getProportionalReward(VestingSchedule memory schedule) internal returns(uint256) {
+    function getAvailableReward(VestingSchedule memory schedule) internal returns(uint256) {
         return (schedule.totalVestedAmount_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds) - schedule.releasedAmount_d18;
     }
 
