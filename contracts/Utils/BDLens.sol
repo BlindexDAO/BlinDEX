@@ -4,7 +4,7 @@ pragma solidity 0.6.11;
 // file: BDLens.sol
 
 import "hardhat/console.sol";
-import "../Frax/BDStable.sol";
+import "../BdStable/BDStable.sol";
 import "../Staking/StakingRewards.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";

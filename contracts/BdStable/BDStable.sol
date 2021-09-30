@@ -27,7 +27,7 @@ import "../ERC20/IERC20.sol";
 import "../ERC20/ERC20Custom.sol";
 import "../ERC20/ERC20.sol";
 import "../Math/SafeMath.sol";
-import "../FXS/BDXShares.sol";
+import "../Bdx/BDXShares.sol";
 import "../Oracle/IChainlinkBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";

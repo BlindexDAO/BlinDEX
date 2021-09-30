@@ -6,7 +6,7 @@ import "../Common/Context.sol";
 import "../ERC20/ERC20Custom.sol";
 import "../ERC20/IERC20.sol";
 import "../Math/SafeMath.sol";
-import "../Frax/BDStable.sol";
+import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract BDXShares is ERC20Custom, Initializable {
@@ -18,8 +18,6 @@ contract BDXShares is ERC20Custom, Initializable {
 
     string public symbol;
     string public name;
-    
-    address public FRAXStablecoinAdd;
     
     address public owner_address;
 
@@ -82,7 +80,7 @@ contract BDXShares is ERC20Custom, Initializable {
         emit BdxMinted(address(this), to, amount_d18);
     }
 
-    // This function is what other frax pools will call to mint new BDX (similar to the BdStable mint) 
+    // This function is what other bd pools will call to mint new BDX (similar to the BdStable mint) 
     function pool_mint(address bd_stable, address to, uint256 amount_d18) external onlyPools(bd_stable) {
         require(totalSupply().add(amount_d18) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
@@ -91,7 +89,7 @@ contract BDXShares is ERC20Custom, Initializable {
         emit BdxMinted(address(this), to, amount_d18);
     }
 
-    // This function is what other frax pools will call to burn BDX 
+    // This function is what other bd pools will call to burn BDX 
     function pool_burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
 
         super._burnFrom(b_address, b_amount);

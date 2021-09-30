@@ -3,8 +3,8 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "../../Math/SafeMath.sol";
-import "../../FXS/BDXShares.sol";
-import "../../Frax/BDStable.sol";
+import "../../Bdx/BDXShares.sol";
+import "../../BdStable/BDStable.sol";
 import "../../ERC20/ERC20.sol";
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
