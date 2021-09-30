@@ -6,6 +6,7 @@ import { StakingRewards } from '../typechain/StakingRewards';
 import * as constants from '../utils/Constants'
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { Timelock } from '../typechain/Timelock';
+import { Vesting } from '../typechain/Vesting';
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -14,14 +15,15 @@ async function setupStakingContract(
   nameA: string,
   nameB: string,
   isTrueBdPool: boolean)
-{
+  {
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
-  const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB); 
+  const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
 
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
 
   const timelock = await hre.ethers.getContract("Timelock") as Timelock;
   const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
+  const vesting = await hre.ethers.getContract('Vesting') as Vesting
 
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
     stakingRewardsContractName, {
@@ -35,6 +37,7 @@ async function setupStakingContract(
             pairAddress,
             timelock.address,
             stakingRewardsDistribution.address,
+            vesting.address,
             isTrueBdPool
           ]
         }
@@ -44,18 +47,23 @@ async function setupStakingContract(
     args: []
   });
 
-  const [ deployer ] = await hre.ethers.getSigners();
+  const [deployer] = await hre.ethers.getSigners();
 
   await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6])).wait();
 
   console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
   console.log(`${stakingRewardsContractName} deployed to impl: `, stakingRewards_ProxyDeployment.implementation);
+
+  if (nameB === 'WETH') {
+    console.log('Setting up StakingRewards_BDEU_WETH as vesting scheduler');
+    await vesting.connect(deployer).setVestingScheduler(stakingRewards_ProxyDeployment.address);
+  }
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
-  const [ deployer ] = await hre.ethers.getSigners();
-  
+  const [deployer] = await hre.ethers.getSigners();
+
   const bdeu = await hre.deployments.get('BDEU');
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
@@ -78,10 +86,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Bdx shares connected with StakingRewards");
 
-	// One time migration
-	return true;
+  // One time migration
+  return true;
 };
 func.id = __filename
 func.tags = ['StakingRewards'];
-func.dependencies = ['LiquidityPools', 'StakingRewardsDistribution'];
+func.dependencies = ['LiquidityPools', 'StakingRewardsDistribution', 'Vesting'];
 export default func;

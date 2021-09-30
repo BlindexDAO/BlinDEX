@@ -11,6 +11,7 @@ import "../ERC20/ERC20.sol";
 import '../Uniswap/TransferHelper.sol';
 import "../ERC20/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
+import "./Vesting.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -44,6 +45,7 @@ contract StakingRewards is
     ERC20 public stakingToken;
     address public timelock_address; // Governance timelock address
     StakingRewardsDistribution stakingRewardsDistribution;
+    Vesting vesting;
 
     uint256 public periodFinish;
     bool public isTrueBdPool;
@@ -82,6 +84,7 @@ contract StakingRewards is
         address _stakingToken,
         address _timelock_address,
         address _stakingRewardsDistribution,
+        address _vesting,
         bool _isTrueBdPool
     ) 
         external
@@ -93,6 +96,7 @@ contract StakingRewards is
         stakingToken = ERC20(_stakingToken);
         timelock_address = _timelock_address;
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
+        vesting = Vesting(_vesting);
         DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
@@ -317,8 +321,17 @@ contract StakingRewards is
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            stakingRewardsDistribution.transferRewards(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
+            uint256 vestingRewardRatio = stakingRewardsDistribution.vestingRewardRatio_percent();
+            uint256 rewardAvailable = reward * (100 - vestingRewardRatio) / 100;
+
+            stakingRewardsDistribution.approveRewardTransferTo(address(vesting), reward - rewardAvailable);
+
+            vesting.schedule(msg.sender, reward - rewardAvailable);
+
+            stakingRewardsDistribution.transferRewards(msg.sender, rewardAvailable);
+
+            emit RewardPaid(msg.sender, rewardAvailable);
+            emit RewardVested(msg.sender, reward - rewardAvailable);
         }
     }
 
@@ -425,4 +438,5 @@ contract StakingRewards is
     event RewardsDurationUpdated(uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event RewardsPeriodRenewed(address token);
+    event RewardVested(address user, uint256 amount);
 }

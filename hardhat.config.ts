@@ -197,6 +197,12 @@ const config: HardhatUserConfig = {
     TEST2: {
       default: 3
     },
+    TEST_VESTING_SCHEDULER: {
+      default: 4
+    },
+    TEST_VESTING_REWARDS_PROVIDER: {
+      default: 5
+    }
   }
 };
 

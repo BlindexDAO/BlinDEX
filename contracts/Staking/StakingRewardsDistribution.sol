@@ -3,6 +3,7 @@ pragma solidity 0.6.11;
 
 import "../Math/Math.sol";
 import "../Math/SafeMath.sol";
+import '../Uniswap/TransferHelper.sol';
 import "../ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -30,6 +31,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public EndOfYear_4;
     uint256 public EndOfYear_5;
 
+    uint256 public vestingRewardRatio_percent;
+
     address public timelock_address;
     ERC20 rewardsToken;
 
@@ -37,7 +40,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
-    function initialize(address _timelock_address, address _rewardsToken) external initializer {
+    function initialize(address _timelock_address, address _rewardsToken, uint256 _vestingRewardRatio_percent) external initializer {
         __Ownable_init();
 
         timelock_address = _timelock_address;
@@ -54,6 +57,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         EndOfYear_3 = block.timestamp + 3 * 365 days;
         EndOfYear_4 = block.timestamp + 4 * 365 days;
         EndOfYear_5 = block.timestamp + 5 * 365 days;
+
+        vestingRewardRatio_percent = _vestingRewardRatio_percent;
     }
 
     // Precision 1e18 for compatibility with ERC20 token
@@ -108,7 +113,16 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function transferRewards(address _recepient, uint256 amountErc20) external onlyStakingRewards {
-        rewardsToken.transfer(_recepient, amountErc20);
+        TransferHelper.safeTransfer(address(rewardsToken), _recepient, amountErc20);
+    }
+
+    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwnerOrGovernance {
+        require(0 <= _vestingRewardRatio && _vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
+        vestingRewardRatio_percent = _vestingRewardRatio;
+    }
+
+    function approveRewardTransferTo(address spenderAddress, uint256 amountErc20) external onlyStakingRewards {
+        rewardsToken.approve(spenderAddress, amountErc20);
     }
 
     modifier onlyStakingRewards() {

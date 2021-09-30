@@ -19,7 +19,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Uniswap Oracles - providing liquidity", () => {
+describe("Uniswap Oracles - providing liquidity", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
