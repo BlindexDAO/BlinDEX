@@ -7,8 +7,10 @@ import "hardhat/console.sol";
 import "../Frax/BDStable.sol";
 import "../Staking/StakingRewards.sol";
 
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 // used to "waste" blocks for truffle tests
-contract BDLens {
+contract BDLens is OwnableUpgradeable {
     address public BDX;
     address public SwapFactory;
     address public SwapRouter;
@@ -16,27 +18,53 @@ contract BDLens {
     address[] public BdStables;
     address[] public Stakings;
 
-    constructor() public {
+    function initialize() 
+        public
+        initializer
+    {
+        __Ownable_init();
     }
 
-    function setBDX(address _bdx) public {
+    function setBDX(address _bdx)
+        external
+        onlyByOwner
+    {
         BDX = _bdx;
     }
 
-    function setSwapFactory(address _swapFactory) public {
+    function setSwapFactory(address _swapFactory)
+        external
+        onlyByOwner
+    {
         SwapFactory = _swapFactory;
     }
 
-    function setSwapRouter(address _swapRouter) public {
+    function setSwapRouter(address _swapRouter)
+        external
+        onlyByOwner
+    {
         SwapRouter = _swapRouter;
     }
 
-    function setStakingRewardsDistribution(address _stakingRewardsDistribution) public {
+    function setStakingRewardsDistribution(address _stakingRewardsDistribution)
+        external
+        onlyByOwner
+    {
         StakingRewardsDistribution = _stakingRewardsDistribution;
     }
 
-    function pushBdStable(address _bdstable) public {
+    function pushBdStable(address _bdstable)
+        external
+        onlyByOwner
+    {
         BdStables.push(_bdstable);
+    }
+
+    function pushStaking(address _staking)
+        external
+        onlyByOwner
+    {
+        Stakings.push(_staking);
     }
 
     function BdStablesLength() public view returns (uint256) {
@@ -56,18 +84,16 @@ contract BDLens {
         }
         return infos;
     }
-    function pushStaking(address _staking) public {
-        console.log(_staking);
-        Stakings.push(_staking);
-    }
 
     function StakingsLength() public view returns (uint256) {
         return Stakings.length;
     }
+
     struct StakingInfo {
         address lp;
         address token;
     }
+
     function AllStakings() external view returns (StakingInfo[] memory) {
         StakingInfo[] memory infos = new StakingInfo[](Stakings.length);
         for(uint i = 0; i < Stakings.length; i++) {
@@ -76,5 +102,9 @@ contract BDLens {
         }
         return infos;
     }
-    
+
+    modifier onlyByOwner() {
+        require(msg.sender == owner(),  "You are not the owner");
+        _;
+    }   
 }
