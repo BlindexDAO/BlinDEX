@@ -24,11 +24,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public BDX_MINTING_SCHEDULE_YEAR_4;
     uint256 public BDX_MINTING_SCHEDULE_YEAR_5;
 
-    uint256 private EndOfYear_1;
-    uint256 private EndOfYear_2;
-    uint256 private EndOfYear_3;
-    uint256 private EndOfYear_4;
-    uint256 private EndOfYear_5;
+    uint256 public EndOfYear_1;
+    uint256 public EndOfYear_2;
+    uint256 public EndOfYear_3;
+    uint256 public EndOfYear_4;
+    uint256 public EndOfYear_5;
 
     address public timelock_address;
     ERC20 rewardsToken;
