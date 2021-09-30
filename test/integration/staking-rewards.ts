@@ -341,7 +341,7 @@ describe('getReward interaction with vesting contract', () => {
 
     const vestedAmount = userVestingSchedules.totalVestedAmount_d18 as BigNumber;
 
-    const precision = 0.01;
+    const precision = 0.1;
     expect(d18_ToNumber(bdxReward_d18), 'Incorrect reward').to.be.closeTo(d18_ToNumber(rewardAvailable_d18), precision);
     expect(d18_ToNumber(vestedAmount), 'Incorrect vested amount').to.be.closeTo(d18_ToNumber(rewardToBeScheduledForVesting_d18), precision);
   })

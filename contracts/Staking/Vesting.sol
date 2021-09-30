@@ -70,12 +70,12 @@ contract Vesting is OwnableUpgradeable
         uint256 rewardsToClaim = 0;
         for (uint256 i = 0; i < vestingSchedules.length; i++) {
             if (isFullyVested(vestingSchedules[i])) {
-                rewardsToClaim += vestingSchedules[i].totalVestedAmount_d18 - vestingSchedules[i].releasedAmount_d18;
+                rewardsToClaim = rewardsToClaim.add(vestingSchedules[i].totalVestedAmount_d18.sub(vestingSchedules[i].releasedAmount_d18));
                 delete vestingSchedules[i];
             } else {
                 uint256 proprtionalReward = getAvailableReward(vestingSchedules[i]);
-                rewardsToClaim += proprtionalReward;
-                vestingSchedules[i].releasedAmount_d18 += proprtionalReward;
+                rewardsToClaim = rewardsToClaim.add(proprtionalReward);
+                vestingSchedules[i].releasedAmount_d18 = vestingSchedules[i].releasedAmount_d18.add(proprtionalReward);
             }
         }
 
@@ -85,11 +85,15 @@ contract Vesting is OwnableUpgradeable
     }
 
     function isFullyVested(VestingSchedule memory schedule) internal returns(bool) {
-        return schedule.vestingStartedTimeStamp + vestingTimeInSeconds <= block.timestamp;
+        return schedule.vestingStartedTimeStamp.add(vestingTimeInSeconds) <= block.timestamp;
     }
 
     function getAvailableReward(VestingSchedule memory schedule) internal returns(uint256) {
-        return (schedule.totalVestedAmount_d18 * (block.timestamp - schedule.vestingStartedTimeStamp) / vestingTimeInSeconds) - schedule.releasedAmount_d18;
+        return (schedule.totalVestedAmount_d18
+            .mul(block.timestamp.sub(schedule.vestingStartedTimeStamp))
+            .div(vestingTimeInSeconds)
+        )
+        .sub(schedule.releasedAmount_d18);
     }
 
     function setVestingScheduler(address _vestingScheduler)
