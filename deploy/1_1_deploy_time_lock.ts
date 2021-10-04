@@ -2,11 +2,11 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const [ deployer ] = await hre.ethers.getSigners();
+  const deployer = (await hre.getNamedAccounts()).DEPLOYER;
   const timelock = await hre.deployments.deploy('Timelock', {
-    from: deployer.address,
+    from: deployer,
     args: [
-      deployer.address,
+      deployer,
       60*60*24*14 // 2 weeks delay
     ]
   });

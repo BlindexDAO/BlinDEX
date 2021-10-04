@@ -16,10 +16,10 @@ import { UniswapPairOracle } from '../typechain/UniswapPairOracle';
 
 task("initialize-blindex", "initialized blindex environment", async (args, hre) => {
     const networkName = hre.network.name;
-    const [account] = await hre.ethers.getSigners();
+    const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
   
     //Get some weth
-    const weth = WETH__factory.connect(constants.wETH_address[networkName], account)
+    const weth = WETH__factory.connect(constants.wETH_address[networkName], deployer)
     await weth.deposit({
       value: BigNumber.from(10).pow(21)
     })
@@ -29,7 +29,7 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
     ;(await weth.approve(bdeuWethPool.address, BigNumber.from(10).pow(20))).wait()
     await (await bdeuWethPool.mint1t1BD(BigNumber.from(10).pow(20), 0)).wait();
     const bdeu = await hre.ethers.getContract('BDEU') as BDStable
-    const bdeuBalance = await bdeu.balanceOf(account.address);
+    const bdeuBalance = await bdeu.balanceOf(deployer.address);
     console.log(bdeuBalance.toString())
 
     //Deposit into pair
@@ -39,12 +39,12 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
     await (await router.addLiquidity(constants.wETH_address[networkName], bdeu.address,
       BigNumber.from(10).pow(20), bdeuBalance,
       BigNumber.from(10).pow(20), bdeuBalance,
-      account.address, Date.now() + 3600
+      deployer.address, Date.now() + 3600
     )).wait()
     const factory = await hre.ethers.getContract('UniswapV2Factory') as UniswapV2Factory
     const pairAddress = await factory.getPair(constants.wETH_address[networkName], bdeu.address)
-    const pair = await UniswapV2Pair__factory.connect(pairAddress, account)
-    const lpTokenBalance = await pair.balanceOf(account.address);
+    const pair = await UniswapV2Pair__factory.connect(pairAddress, deployer)
+    const lpTokenBalance = await pair.balanceOf(deployer.address);
 
     //Stake tokens
     const stakingReward = await hre.ethers.getContract('StakingRewards_BDEU_WETH') as StakingRewards
@@ -58,10 +58,10 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
     }
 
     //Get BDX
-    console.log(await stakingReward.earned(account.address))
+    console.log(await stakingReward.earned(deployer.address))
     await (await stakingReward.getReward()).wait();
     const bdx = await hre.ethers.getContract('BDXShares') as BDXShares
-    const bdxBalance = await bdx.balanceOf(account.address);
+    const bdxBalance = await bdx.balanceOf(deployer.address);
 
     //Initialize BDX pair
     ;(await weth.approve(router.address, BigNumber.from(10).pow(20))).wait()
@@ -69,23 +69,23 @@ task("initialize-blindex", "initialized blindex environment", async (args, hre) 
     await (await router.addLiquidity(constants.wETH_address[networkName], bdx.address,
       BigNumber.from(10).pow(16), bdxBalance,
       BigNumber.from(10).pow(16), bdxBalance,
-      account.address, Date.now() + 3600
+      deployer.address, Date.now() + 3600
     )).wait()
     
     //Get some wBTC
-    const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, account)
-    await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], account.address,  Date.now() + 3600, {
+    const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, deployer)
+    await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], deployer.address,  Date.now() + 3600, {
       value: BigNumber.from(10).pow(20)
     })
-    const wbtc = ERC20__factory.connect(constants.wBTC_address[networkName], account)
-    const wbtcBalance = await wbtc.balanceOf(account.address)
+    const wbtc = ERC20__factory.connect(constants.wBTC_address[networkName], deployer)
+    const wbtcBalance = await wbtc.balanceOf(deployer.address)
     await wbtc.approve(router.address, wbtcBalance);
     await weth.approve(router.address, BigNumber.from(10).pow(20));
 
     await (await router.addLiquidity(constants.wETH_address[networkName], wbtc.address,
       BigNumber.from(10).pow(20), wbtcBalance,
       BigNumber.from(10).pow(20), wbtcBalance,
-      account.address, Date.now() + 3600
+      deployer.address, Date.now() + 3600
     )).wait()
 
     //Update prices in oracle

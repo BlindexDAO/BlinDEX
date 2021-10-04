@@ -6,11 +6,9 @@ import '@openzeppelin/hardhat-upgrades';
 import "hardhat-deploy-ethers";
 import 'hardhat-deploy';
 import "hardhat-typechain";
-//import "hardhat-ethernal";
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 import { BigNumber } from 'ethers';
-import { ethers } from "hardhat";
 
 import './tasks/initialize-blindex'
 import {setUpFunctionalSystem} from "./test/helpers/SystemSetup";
@@ -19,12 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
 dotenv.config({ path: envPath });
-// extendEnvironment((hre) => {
-//   hre.ethernalSync = true;
-//   hre.ethernalWorkspace = 'local';
-// });
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
+
 task("accounts", "Prints the list of accounts", async (args, hre) => {
   const accounts = await hre.ethers.getSigners();
 

@@ -19,14 +19,14 @@ const timeTraveler = new TimeTraveler(hre.network.provider);
 const day = 60*60*24;
 
 async function GetSRD() : Promise<StakingRewardsDistribution> {
-    const [ deployer ] = await hre.ethers.getSigners();
-    const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer.address) as StakingRewardsDistribution;
+    const deployer = (await hre.getNamedAccounts()).DEPLOYER;
+    const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer) as StakingRewardsDistribution;
     return stakingRewardsDistribution;
 }
 
 async function GetTimelock() : Promise<Timelock> {
-    const [ deployer ] = await hre.ethers.getSigners();
-    const timelock = await hre.ethers.getContract("Timelock", deployer.address) as Timelock;
+    const deployer = (await hre.getNamedAccounts()).DEPLOYER;
+    const timelock = await hre.ethers.getContract("Timelock", deployer) as Timelock;
     return timelock;
 }
 

@@ -4,7 +4,8 @@ import { BDXShares } from '../typechain/BDXShares';
 import { to_d18 } from '../utils/Helpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const [ deployer ] = await hre.ethers.getSigners();
+    const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
+    
     const treasury = await hre.ethers.getNamedSigner("TREASURY");
 
     const bdxInstance = await hre.ethers.getContract("BDXShares") as BDXShares;

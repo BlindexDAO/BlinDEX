@@ -47,7 +47,7 @@ async function setupStakingContract(
     args: []
   });
 
-  const [deployer] = await hre.ethers.getSigners();
+  const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
 
   await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6])).wait();
 
@@ -62,7 +62,6 @@ async function setupStakingContract(
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
-  const [deployer] = await hre.ethers.getSigners();
 
   const bdeu = await hre.deployments.get('BDEU');
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
