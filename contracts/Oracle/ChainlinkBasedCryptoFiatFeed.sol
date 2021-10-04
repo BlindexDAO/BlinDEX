@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
 import "./AggregatorV3Interface.sol";
@@ -33,14 +34,14 @@ contract ChainlinkBasedCryptoFiatFeed is IChainlinkBasedCryptoFiatFeed {
         return getPrice_1e12().mul(amountIn).div(1e12);
     }
 
-    function getLatestPrice(AggregatorV3Interface feed) internal view returns (uint256) {
+    function getLatestPrice(AggregatorV3Interface _feed) internal view returns (uint256) {
         (
             , 
             int256 price,
             ,
             ,
             
-        ) = feed.latestRoundData();
+        ) = _feed.latestRoundData();
         return uint256(price);
     }
     

@@ -47,9 +47,9 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     uint public override price1CumulativeLast;
     uint public override kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
-
     uint public PERIOD = 3600; // 1 hour TWAP (time-weighted average price)
     uint public CONSULT_LENIENCY = 120; // Used for being able to consult past the period end
+    uint public SHOULD_UPDATE_MARGIN = 60; // on minute
     bool public ALLOW_STALE_CONSULTS = false; // If false, consult() will fail if the TWAP is stale
     FixedPoint.uq112x112 public price0AverageOracle;
     FixedPoint.uq112x112 public price1AverageOracle;
@@ -353,6 +353,10 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         CONSULT_LENIENCY = _consult_leniency;
     }
 
+    function setOracleShuldUpdateMargin(uint _should_update_margin) external onlyByOwnerOrGovernance {
+        SHOULD_UPDATE_MARGIN = _should_update_margin;
+    }
+
     function setAllowStaleConsults(bool _allow_stale_consults) external onlyByOwnerOrGovernance {
         ALLOW_STALE_CONSULTS = _allow_stale_consults;
     }
@@ -375,12 +379,12 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
                 // update, so there is nothing to compensate for.
 
                 // subtraction overflow is desired
-                uint32 timeElapsed = blockTimestamp - blockTimestampLast;
+                uint32 timeElapsedInner = blockTimestamp - blockTimestampLast;
                 // addition overflow is desired
                 // counterfactual
-                price0Cumulative += uint(FixedPoint.fraction(reserve1, reserve0)._x) * timeElapsed;
+                price0Cumulative += uint(FixedPoint.fraction(reserve1, reserve0)._x) * timeElapsedInner;
                 // counterfactual
-                price1Cumulative += uint(FixedPoint.fraction(reserve0, reserve1)._x) * timeElapsed;
+                price1Cumulative += uint(FixedPoint.fraction(reserve0, reserve1)._x) * timeElapsedInner;
             }
 
             price0AverageOracle = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLastOracle) / timeElapsed));
@@ -393,11 +397,10 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     }
 
     function shouldUpdateOracle() public view override returns (bool){
-        uint256 margin = 60; // one minute
         uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
-        if((timeElapsed < (PERIOD + CONSULT_LENIENCY - margin)) || ALLOW_STALE_CONSULTS){
+        if((timeElapsed < (PERIOD + CONSULT_LENIENCY - SHOULD_UPDATE_MARGIN)) || ALLOW_STALE_CONSULTS){
             return false;
         } else {
             return true;
@@ -411,12 +414,12 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
         // Ensure that the price is not stale
         require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS,
-                'UniswapPairOracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
+                'UniswapV2Pair Oracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
 
         if (token == token0) {
             amountOut = price0AverageOracle.mul(amountIn).decode144();
         } else {
-            require(token == token1, 'UniswapPairOracle: INVALID_TOKEN');
+            require(token == token1, 'UniswapV2Pair Oracle: INVALID_TOKEN');
             amountOut = price1AverageOracle.mul(amountIn).decode144();
         }
     }

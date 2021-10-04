@@ -137,16 +137,7 @@ contract BdStablePool is Initializable {
         }
     }
 
-    /* ========== PUBLIC FUNCTIONS ========== */
-
-    function updateOraclesIfNeeded() public {
-        BDSTABLE.updateOraclesIfNeeded();
-        if(collatWEthOracle.shouldUpdateOracle()){
-            collatWEthOracle.updateOracle();
-        }
-    }
-
-    // Returns the price of the pool collateral in fiat
+     // Returns the price of the pool collateral in fiat
     function getCollateralPrice_d12() public view returns (uint256) {
         if(collateralPricePaused == true){
             return pausedPrice;
@@ -186,6 +177,25 @@ contract BdStablePool is Initializable {
                 .mul(10 ** missing_decimals)
                 .mul(collat_fiat_price)
                 .div(PRICE_PRECISION);
+        }
+    }
+
+    function howMuchBdxCanBeMinted(uint256 _watned_amount_d18) public view returns (uint256) {
+        uint256 maxToBeMinted_d18 = BDX.howMuchCanBeMinted();
+
+        if(maxToBeMinted_d18 > _watned_amount_d18){
+            return _watned_amount_d18;
+        } else {
+            return maxToBeMinted_d18;
+        }
+    }
+
+    /* ========== PUBLIC FUNCTIONS ========== */
+
+    function updateOraclesIfNeeded() public {
+        BDSTABLE.updateOraclesIfNeeded();
+        if(collatWEthOracle.shouldUpdateOracle()){
+            collatWEthOracle.updateOracle();
         }
     }
 
@@ -244,7 +254,6 @@ contract BdStablePool is Initializable {
         );
 
         // Need to adjust for decimals of collateral
-        uint256 BD_amount_precision = BD_amount.div(10**missing_decimals);
         uint256 col_price_d12 = getCollateralPrice_d12();
         uint256 effective_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
         uint256 cr_d12 = effective_collateral_ratio_d12 > 1e12 ? 1e12 : effective_collateral_ratio_d12;
@@ -584,16 +593,6 @@ contract BdStablePool is Initializable {
         emit BoughtBack(BDX_amount, collateral_precision);
     }
 
-    function howMuchBdxCanBeMinted(uint256 _watned_amount_d18) public view returns (uint256) {
-        uint256 maxToBeMinted_d18 = BDX.howMuchCanBeMinted();
-
-        if(maxToBeMinted_d18 > _watned_amount_d18){
-            return _watned_amount_d18;
-        } else {
-            return maxToBeMinted_d18;
-        }
-    }
-
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function setCollatWETHOracle(
@@ -646,7 +645,7 @@ contract BdStablePool is Initializable {
         emit RecollateralizeOnlyForOwnerToggled(recollateralizeOnlyForOwner);
     }
 
-    function toggleCollateralPrice(uint256 _new_price) external onlyByOwner {
+    function toggleCollateralPricePaused(uint256 _new_price) external onlyByOwner {
         // If pausing, set paused price; else if unpausing, clear pausedPrice
         if(collateralPricePaused == false){
             pausedPrice = _new_price;
@@ -683,11 +682,15 @@ contract BdStablePool is Initializable {
     }
 
     function setOwner(address _owner_address) external onlyByOwner {
+        require(_owner_address != address(0), "New owner can't be zero address");
+
         owner_address = _owner_address;
+        emit OwnerSet(_owner_address);
     }
 
     /* ========== EVENTS ========== */
 
+    event OwnerSet(address indexed newOwner);
     event PoolParametersSet(uint256 new_ceiling, uint256 new_bonus_rate, uint256 new_redemption_delay, uint256 new_mint_fee, uint256 new_redeem_fee, uint256 new_buyback_fee, uint256 new_recollat_fee);
     event MintingPausedToggled(bool toggled);
     event RedeemingPausedToggled(bool toggled);

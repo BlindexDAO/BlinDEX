@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
@@ -66,16 +67,16 @@ contract Vesting is OwnableUpgradeable
     }
 
     function claim() external {
-        VestingSchedule[] storage vestingSchedules = vestingSchedules[msg.sender];
+        VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
         uint256 rewardsToClaim = 0;
-        for (uint256 i = 0; i < vestingSchedules.length; i++) {
-            if (isFullyVested(vestingSchedules[i])) {
-                rewardsToClaim = rewardsToClaim.add(vestingSchedules[i].totalVestedAmount_d18.sub(vestingSchedules[i].releasedAmount_d18));
-                delete vestingSchedules[i];
+        for (uint256 i = 0; i < userVestingSchedules.length; i++) {
+            if (isFullyVested(userVestingSchedules[i])) {
+                rewardsToClaim = rewardsToClaim.add(userVestingSchedules[i].totalVestedAmount_d18.sub(userVestingSchedules[i].releasedAmount_d18));
+                delete userVestingSchedules[i];
             } else {
-                uint256 proprtionalReward = getAvailableReward(vestingSchedules[i]);
+                uint256 proprtionalReward = getAvailableReward(userVestingSchedules[i]);
                 rewardsToClaim = rewardsToClaim.add(proprtionalReward);
-                vestingSchedules[i].releasedAmount_d18 = vestingSchedules[i].releasedAmount_d18.add(proprtionalReward);
+                userVestingSchedules[i].releasedAmount_d18 = userVestingSchedules[i].releasedAmount_d18.add(proprtionalReward);
             }
         }
 
@@ -84,16 +85,16 @@ contract Vesting is OwnableUpgradeable
         emit RewardClaimed(msg.sender, rewardsToClaim);
     }
 
-    function isFullyVested(VestingSchedule memory schedule) internal returns(bool) {
-        return schedule.vestingStartedTimeStamp.add(vestingTimeInSeconds) <= block.timestamp;
+    function isFullyVested(VestingSchedule memory _schedule) internal view returns(bool) {
+        return _schedule.vestingStartedTimeStamp.add(vestingTimeInSeconds) <= block.timestamp;
     }
 
-    function getAvailableReward(VestingSchedule memory schedule) internal returns(uint256) {
-        return (schedule.totalVestedAmount_d18
-            .mul(block.timestamp.sub(schedule.vestingStartedTimeStamp))
+    function getAvailableReward(VestingSchedule memory _schedule) internal view returns(uint256) {
+        return (_schedule.totalVestedAmount_d18
+            .mul(block.timestamp.sub(_schedule.vestingStartedTimeStamp))
             .div(vestingTimeInSeconds)
         )
-        .sub(schedule.releasedAmount_d18);
+        .sub(_schedule.releasedAmount_d18);
     }
 
     function setVestingScheduler(address _vestingScheduler)

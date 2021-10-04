@@ -173,6 +173,22 @@ contract BDStable is ERC20Custom, Initializable {
     function BDX_price_d12() public view returns (uint256) {
         return oracle_price(PriceChoice.BDX);
     }
+
+    function effective_global_collateral_ratio_d12() public view returns (uint256) {
+        uint256 bdStable_total_supply = totalSupply();
+        uint256 global_collat_value = globalCollateralValue();
+        uint256 efCR = global_collat_value.mul(1e12).div(bdStable_total_supply);
+        return efCR;
+    }
+
+    function weth_fiat_price() public view returns (uint256) {
+        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
+    }
+    
+    function canLegallyRedeem(address who) external view returns (bool) {
+        return block.number.sub(lastMintByUserBlock[who]) >= minimumMintRedeemDelayInBlocks;
+    }
+
     /* ========== PUBLIC FUNCTIONS ========== */
 
     // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
@@ -212,21 +228,6 @@ contract BDStable is ERC20Custom, Initializable {
 
         emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
-    
-    function effective_global_collateral_ratio_d12() public view returns (uint256) {
-        uint256 bdStable_total_supply = totalSupply();
-        uint256 global_collat_value = globalCollateralValue();
-        uint256 efCR = global_collat_value.mul(1e12).div(bdStable_total_supply);
-        return efCR;
-    }
-
-    function weth_fiat_price() public view returns (uint256) {
-        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
-    }
-    
-    function canLegallyRedeem(address who) external view returns (bool) {
-        return block.number.sub(lastMintByUserBlock[who]) >= minimumMintRedeemDelayInBlocks;
-    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
@@ -247,7 +248,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     // Adds collateral addresses supported, such as tether and busd, must be ERC20 
-    function addPool(address pool_address) public onlyByOwner {
+    function addPool(address pool_address) external onlyByOwner {
         require(bdstable_pools[pool_address] == false, "address already exists");
         bdstable_pools[pool_address] = true; 
         bdstable_pools_array.push(pool_address);
@@ -256,7 +257,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     // Remove a pool 
-    function removePool(address pool_address) public onlyByOwner {
+    function removePool(address pool_address) external onlyByOwner {
         require(bdstable_pools[pool_address] == true, "address doesn't exist already");
         
         // Delete from the mapping
@@ -273,21 +274,21 @@ contract BDStable is ERC20Custom, Initializable {
         emit PoolRemoved(pool_address);
     }
 
-    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) public onlyByOwner {
+    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) external onlyByOwner {
         bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
         weth_address = _weth_address;
 
         emit BDStable_WETH_OracleSet(_bdstable_oracle_addr, _weth_address);
     }
 
-    function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) public onlyByOwner {
+    function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) external onlyByOwner {
         bdxWethOracle = ICryptoPairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
 
         emit BDX_WETH_OracleSet(_bdx_oracle_addr, _weth_address);
     }
     
-    function setETH_fiat_Oracle(address _eth_fiat_consumer_address) public onlyByOwner {
+    function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyByOwner {
         weth_fiat_pricer = IChainlinkBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals();
         
@@ -321,8 +322,16 @@ contract BDStable is ERC20Custom, Initializable {
         minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
     }
 
+    function setOwner(address _owner_address) external onlyByOwner {
+        require(_owner_address != address(0), "New owner can't be zero address");
+
+        owner_address = _owner_address;
+        emit OwnerSet(_owner_address);
+    }
+
     /* ========== EVENTS ========== */
     
+    event OwnerSet(address indexed newOwner);
     event CollateralRatioRefreshed(uint256 global_collateral_ratio);
     event BdStableBurned(address indexed from, address indexed to, uint256 amount);
     event BdStableMinted(address indexed from, address indexed to, uint256 amount);

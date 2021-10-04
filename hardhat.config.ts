@@ -9,8 +9,6 @@ import "hardhat-typechain";
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 import { BigNumber } from 'ethers';
-
-import './tasks/initialize-blindex'
 import {setUpFunctionalSystem} from "./test/helpers/SystemSetup";
 
 const fs = require('fs');

@@ -64,6 +64,8 @@ contract BDXShares is ERC20Custom, Initializable {
     }
 
     function setOwner(address _owner_address) external onlyByOwner {
+        require(_owner_address != address(0), "New owner can't be zero address");
+        
         owner_address = _owner_address;
         emit OwnerSet(_owner_address);
     }

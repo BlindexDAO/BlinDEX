@@ -34,14 +34,14 @@ contract BtcToEthOracle is ICryptoPairOracle {
         return amountIn.mul(1e12).div(getPrice_1e12());
     }
 
-    function getLatestPrice(AggregatorV3Interface feed) internal view returns (uint256) {
+    function getLatestPrice(AggregatorV3Interface _feed) internal view returns (uint256) {
         (
             , 
             int256 price,
             ,
             ,
             
-        ) = feed.latestRoundData();
+        ) = _feed.latestRoundData();
         return uint256(price);
     }
 
