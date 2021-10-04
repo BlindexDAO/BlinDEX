@@ -1,3 +1,8 @@
+## First compilation
+```
+npm run compile
+```
+
 ## Local Development
 
 ```bash
