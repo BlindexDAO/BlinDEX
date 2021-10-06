@@ -52,7 +52,7 @@ describe("BDStable algorythmic", () => {
 
         const expectedBdxCost = to_d18(bdxAmountForMintigBdEu);
         const expectedBdEuDiff = to_d18(bdxAmountForMintigBdEu).mul(bdxInEurPrice).div(1e12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by minting fee;
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by minting fee;
 
         const bdEuBalanceAfterMinting = await bdEu.balanceOf(testUser.address);
 

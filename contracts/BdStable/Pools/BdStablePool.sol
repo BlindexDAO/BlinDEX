@@ -111,8 +111,8 @@ contract BdStablePool is Initializable {
         pausedPrice = 0;
         bonus_rate = 7500000000; // d12 0.75%
         redemption_delay = 1;
-        minting_fee = 2500000000; // d12 0.25%
-        redemption_fee = 2500000000; // d12 0.25%
+        minting_fee = 3000000000; // d12 0.3%
+        redemption_fee = 3000000000; // d12 0.3%
     }
 
     /* ========== VIEWS ========== */

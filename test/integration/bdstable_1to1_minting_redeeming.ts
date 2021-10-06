@@ -71,19 +71,21 @@ describe("BDStable 1to1", () => {
 
         console.log("btcInEurPrice: " + d12_ToNumber(btcInEurPrice_1e12));
 
-        const expectedBdEuDiff_d18 = btcInEurPrice_1e12.mul(to_d18(collateralAmount)).div(1e12);
+        const expectedBdEuDiff_d18 = btcInEurPrice_1e12.mul(to_d18(collateralAmount)).div(1e12)
+            .mul(to_d12(1-0.003)).div(1e12); // decrease by minting fee
+
         const actualBdEuDiff_d18 = bdEuAfter_d18.sub(bdEuBefore_d18);
-        const diff = diffPct(actualBdEuDiff_d18, expectedBdEuDiff_d18);
+        const pctDiff = diffPct(actualBdEuDiff_d18, expectedBdEuDiff_d18);
 
         console.log("BeEur before: " + d18_ToNumber(bdEuBefore_d18));
         console.log("BeEur after : " + d18_ToNumber(bdEuAfter_d18));
         console.log("Expected BeEur: " + d18_ToNumber(expectedBdEuDiff_d18));
         console.log("Actual   BeEur: " + d18_ToNumber(actualBdEuDiff_d18));
-        console.log(`Diff BeEur: ${diff}%`);
+        console.log(`Diff BeEur: ${pctDiff}%`);
 
         // we need a big tolerance due to price divergence in different sources 
         // [eth-btc chainlink * eth-fiat chainlink (in contract)] vs [direct btc-fiat chinlink price (in test)]
-        expect(diff).to.be.closeTo(0, 2);
+        expect(pctDiff).to.be.closeTo(0, 2);
     });
 
     it("minting should throw when CR < 1", async () => {
@@ -124,7 +126,7 @@ describe("BDStable 1to1", () => {
         expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
 
         const expectedWethFromRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
         await bdEuPool.connect(testUser).collectRedemption();
@@ -204,10 +206,10 @@ describe("BDStable 1to1", () => {
         const expectedWethForRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12);
         
         const expectedWethForRedeemUser = expectedWethForRedeem.div(10)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee;
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
         const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee;
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
         await bdEuPool.connect(testUser).collectRedemption();

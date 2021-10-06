@@ -52,7 +52,7 @@ describe("BDX limit", () => {
             "some bdx must have been collected in redemption"); // test validation
 
         const bdxNotMintedYet = bdxMaxTotalSupply_d18.sub(bdxTotalSupplyBeforeRedeem_d18);
-        const bdxNotMintedYetMinusRedemptionFee = bdxNotMintedYet.mul(to_d12(1-0.0025)).div(1e12) // decrease (the part that hasn't been minted yet) by redemption fee
+        const bdxNotMintedYetMinusRedemptionFee = bdxNotMintedYet.mul(to_d12(1-0.003)).div(1e12) // decrease (the part that hasn't been minted yet) by redemption fee
         const expectedTotalMintedBdx = bdxTotalSupplyBeforeRedeem_d18.add(bdxNotMintedYetMinusRedemptionFee);
         const bdxTotalSupplyDiffPct = diffPct(bdxTotalSupplyAfterRedeem_d18, expectedTotalMintedBdx);
 

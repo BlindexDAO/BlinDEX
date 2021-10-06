@@ -80,7 +80,7 @@ describe("BDStable fractional", () => {
         const bdEuFromBdx_d18 = bdxAmountForMintigBdEu_d18.mul(bdxInEurPrice_d12).div(1e12);
         const bdEuFromWeth_d18 = wethAmountForMintigBdEu_d18.mul(wethInEurPrice_d12).div(1e12);
         const expectedBdEuDiff_d18 = bdEuFromBdx_d18.add(bdEuFromWeth_d18)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by minting fee;
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by minting fee;
             
         const bdEuBalanceAfterMinting_d18 = await bdEu.balanceOf(testUser.address);
         const diffPctBdEu = diffPct(bdEuBalanceAfterMinting_d18.sub(bdEulBalanceBeforeMinting_d18), expectedBdEuDiff_d18);
@@ -122,12 +122,12 @@ describe("BDStable fractional", () => {
         const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(cr)).div(1e12)
             .mul(1e12).div(wethInEurPrice_d12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
         const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(1-cr)).div(1e12)
             .mul(1e12).div(bdxInEurPrice_d12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee;
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
@@ -190,12 +190,12 @@ describe("BDStable fractional", () => {
         const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(efCR_d12).div(1e12)
             .mul(1e12).div(wethInEurPrice_d12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
         const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(1).sub(efCR_d12)).div(1e12)
             .mul(1e12).div(bdxInEurPrice_d12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
@@ -267,7 +267,7 @@ describe("BDStable fractional", () => {
         const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(cr)).div(1e12)
             .mul(1e12).div(wethInEurPrice_d12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
         const expectedWethRedemptionPaymentUser_d18 = expectedWethRedemptionPayment_d18.div(10)
         const expectedWethRedemptionPaymentTreasury_d18 = expectedWethRedemptionPayment_d18.mul(9).div(10)
@@ -275,7 +275,7 @@ describe("BDStable fractional", () => {
         const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(1-cr)).div(1e12)
             .mul(1e12).div(bdxInEurPrice_d12)
-            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
         
         const expectedBdxRedemptionPaymentUser_d18 = expectedBdxRedemptionPayment_d18.div(10);
         const expectedBdxRedemptionPaymentTreasury_d18 = expectedBdxRedemptionPayment_d18.mul(9).div(10);
