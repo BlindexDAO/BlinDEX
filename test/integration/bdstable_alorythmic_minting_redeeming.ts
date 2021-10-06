@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct } from "../../utils/Helpers";
+import { diffPct, to_d12 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury } from "../helpers/common";
@@ -51,7 +51,8 @@ describe("BDStable algorythmic", () => {
         await performAlgorithmicMinting(testUser, bdxAmountForMintigBdEu);
 
         const expectedBdxCost = to_d18(bdxAmountForMintigBdEu);
-        const expectedBdEuDiff = to_d18(bdxAmountForMintigBdEu).mul(bdxInEurPrice).div(1e12);
+        const expectedBdEuDiff = to_d18(bdxAmountForMintigBdEu).mul(bdxInEurPrice).div(1e12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by minting fee;
 
         const bdEuBalanceAfterMinting = await bdEu.balanceOf(testUser.address);
 
@@ -69,9 +70,9 @@ describe("BDStable algorythmic", () => {
         console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
 
-        expect(diffPctBdxCost).to.be.closeTo(0, 0.01);
-        expect(diffPctWethBalance).to.be.closeTo(0, 0.01);
-        expect(diffPctBdEu).to.be.closeTo(0, 0.01);
+        expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
+        expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");
+        expect(diffPctBdEu).to.be.closeTo(0, 0.001, "invalid bdEu diff");
     });
 
     it("should redeem bdeu when CR = 0", async () => {

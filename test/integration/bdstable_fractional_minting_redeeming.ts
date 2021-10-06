@@ -69,21 +69,23 @@ describe("BDStable fractional", () => {
         const actualBdxCost_d18 = bdxlBalanceBeforeMinting_d18.sub(bdxBalanceAfterMinting_d18);  
         const diffPctBdxCost = diffPct(actualBdxCost_d18, bdxAmountForMintigBdEu_d18);
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
-        expect(diffPctBdxCost).to.be.closeTo(0, 0.1);
+        expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
 
         const wethBalanceAfterMinging_d18 = await weth.balanceOf(testUser.address);
         const actualWethCost_d18 = wethBalanceBeforeMinting_d18.sub(wethBalanceAfterMinging_d18);
         const diffPctWethBalance = diffPct(actualWethCost_d18, wethAmountForMintigBdEu_d18);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
-        expect(diffPctWethBalance).to.be.closeTo(0, 0.1);
+        expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");
 
         const bdEuFromBdx_d18 = bdxAmountForMintigBdEu_d18.mul(bdxInEurPrice_d12).div(1e12);
         const bdEuFromWeth_d18 = wethAmountForMintigBdEu_d18.mul(wethInEurPrice_d12).div(1e12);
-        const expectedBdEuDiff_d18 = bdEuFromBdx_d18.add(bdEuFromWeth_d18);
+        const expectedBdEuDiff_d18 = bdEuFromBdx_d18.add(bdEuFromWeth_d18)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by minting fee;
+            
         const bdEuBalanceAfterMinting_d18 = await bdEu.balanceOf(testUser.address);
         const diffPctBdEu = diffPct(bdEuBalanceAfterMinting_d18.sub(bdEulBalanceBeforeMinting_d18), expectedBdEuDiff_d18);
         console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
-        expect(diffPctBdEu).to.be.closeTo(0, 0.1);
+        expect(diffPctBdEu).to.be.closeTo(0, 0.001, "invalid bdEu diff");
     });
 
     it("should redeem bdeu when CR > 0 & CR < 1 & efCR > CR", async () => {
@@ -117,13 +119,15 @@ describe("BDStable fractional", () => {
         const bdEuToRedeem_d18 = to_d18(100);
 
         // calculate how much is needed to mint
-        const expectedWethRedeemingCost_d18 = bdEuToRedeem_d18
+        const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(cr)).div(1e12)
-            .mul(1e12).div(wethInEurPrice_d12);
+            .mul(1e12).div(wethInEurPrice_d12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
 
-        const expectedBdxRedeemingCost_d18 = bdEuToRedeem_d18
+        const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(1-cr)).div(1e12)
-            .mul(1e12).div(bdxInEurPrice_d12);
+            .mul(1e12).div(bdxInEurPrice_d12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee;
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
@@ -137,18 +141,18 @@ describe("BDStable fractional", () => {
         
         const wethBalanceAfterRedeem_d18 = await weth.balanceOf(testUser.address);
         const wethDelta_d18 = wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18);
-        const wethDiffPct = diffPct(expectedWethRedeemingCost_d18, wethDelta_d18);
-        console.log("expected weth redeeming cost: " + expectedWethRedeemingCost_d18);
-        console.log("weth balance delta:           " + wethDelta_d18);
-        console.log("weth diff pct:                " + wethDiffPct);
+        const wethDiffPct = diffPct(expectedWethRedemptionPayment_d18, wethDelta_d18);
+        console.log("expected weth redemption payment: " + expectedWethRedemptionPayment_d18);
+        console.log("weth balance delta:               " + wethDelta_d18);
+        console.log("weth diff pct:                    " + wethDiffPct);
         expect(wethDiffPct).to.be.closeTo(0, 0.0001, "unexpected weth balance");
         
         const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
         const bdxDelta_d18 = bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18);
-        const bdxDiffPct = diffPct(expectedBdxRedeemingCost_d18, bdxDelta_d18);
-        console.log("expected bdx balance delta: " + expectedBdxRedeemingCost_d18);
-        console.log("bdx balance delta:          " + bdxDelta_d18);
-        console.log("bdx diff pct:               " + bdxDiffPct);
+        const bdxDiffPct = diffPct(expectedBdxRedemptionPayment_d18, bdxDelta_d18);
+        console.log("expected bdx redemption payment: " + expectedBdxRedemptionPayment_d18);
+        console.log("bdx balance delta:               " + bdxDelta_d18);
+        console.log("bdx diff pct:                    " + bdxDiffPct);
         expect(bdxDiffPct).to.be.closeTo(0, 0.0001, "unexpected bdx balance");
     });
 
@@ -183,13 +187,15 @@ describe("BDStable fractional", () => {
         const bdEuToRedeem_d18 = to_d18(100);
 
         // calculate how much is needed to mint
-        const expectedWethRedeemingCost_d18 = bdEuToRedeem_d18
+        const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(efCR_d12).div(1e12)
-            .mul(1e12).div(wethInEurPrice_d12);
+            .mul(1e12).div(wethInEurPrice_d12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
 
-        const expectedBdxRedeemingCost_d18 = bdEuToRedeem_d18
+        const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(1).sub(efCR_d12)).div(1e12)
-            .mul(1e12).div(bdxInEurPrice_d12);
+            .mul(1e12).div(bdxInEurPrice_d12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
@@ -203,18 +209,18 @@ describe("BDStable fractional", () => {
         
         const wethBalanceAfterRedeem_d18 = await weth.balanceOf(testUser.address);
         const wethDelta_d18 = wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18);
-        const wethDiffPct = diffPct(expectedWethRedeemingCost_d18, wethDelta_d18);
-        console.log("expected weth redeeming cost: " + expectedWethRedeemingCost_d18);
-        console.log("weth balance delta:           " + wethDelta_d18);
-        console.log("weth diff pct:                " + wethDiffPct);
+        const wethDiffPct = diffPct(expectedWethRedemptionPayment_d18, wethDelta_d18);
+        console.log("expected weth redemption payment: " + expectedWethRedemptionPayment_d18);
+        console.log("weth balance delta:               " + wethDelta_d18);
+        console.log("weth diff pct:                    " + wethDiffPct);
         expect(wethDiffPct).to.be.closeTo(0, 0.0001, "unexpected weth balance");
         
         const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
         const bdxDelta_d18 = bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18);
-        const bdxDiffPct = diffPct(expectedBdxRedeemingCost_d18, bdxDelta_d18);
-        console.log("expected bdx balance delta: " + expectedBdxRedeemingCost_d18);
-        console.log("bdx balance delta:          " + bdxDelta_d18);
-        console.log("bdx diff pct:               " + bdxDiffPct);
+        const bdxDiffPct = diffPct(expectedBdxRedemptionPayment_d18, bdxDelta_d18);
+        console.log("expected bdx redemption payment: " + expectedBdxRedemptionPayment_d18);
+        console.log("bdx balance delta:               " + bdxDelta_d18);
+        console.log("bdx diff pct:                    " + bdxDiffPct);
         expect(bdxDiffPct).to.be.closeTo(0, 0.0001, "unexpected bdx balance");
     });
 
@@ -258,19 +264,21 @@ describe("BDStable fractional", () => {
         const bdEuToRedeem_d18 = to_d18(100);
 
         // calculate how much is needed to mint
-        const expectedWethRedeemingCost_d18 = bdEuToRedeem_d18
+        const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(cr)).div(1e12)
-            .mul(1e12).div(wethInEurPrice_d12);
+            .mul(1e12).div(wethInEurPrice_d12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
 
-        const expectedWethRedeemingCostUser_d18 = expectedWethRedeemingCost_d18.div(10);
-        const expectedWethRedeemingCostTreasury_d18 = expectedWethRedeemingCost_d18.mul(9).div(10);
+        const expectedWethRedemptionPaymentUser_d18 = expectedWethRedemptionPayment_d18.div(10)
+        const expectedWethRedemptionPaymentTreasury_d18 = expectedWethRedemptionPayment_d18.mul(9).div(10)
 
-        const expectedBdxRedeemingCost_d18 = bdEuToRedeem_d18
+        const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
             .mul(to_d12(1-cr)).div(1e12)
-            .mul(1e12).div(bdxInEurPrice_d12);
+            .mul(1e12).div(bdxInEurPrice_d12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
         
-        const expectedBdxRedeemingCostUser_d18 = expectedBdxRedeemingCost_d18.div(10);
-        const expectedBdxRedeemingCostTreasury_d18 = expectedBdxRedeemingCost_d18.mul(9).div(10);
+        const expectedBdxRedemptionPaymentUser_d18 = expectedBdxRedemptionPayment_d18.div(10);
+        const expectedBdxRedemptionPaymentTreasury_d18 = expectedBdxRedemptionPayment_d18.mul(9).div(10);
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
@@ -288,15 +296,14 @@ describe("BDStable fractional", () => {
         const wethDelta_d18 = wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18);
         const wethDeltaTreasury_d18 = wethBalanceAfterRedeemTreasury_d18.sub(wethBalanceBeforeRedeemTreasury_d18);
 
-        expect(wethDelta_d18).to.be.eq(expectedWethRedeemingCostUser_d18, "invalid weth delta (user)");
-        expect(wethDeltaTreasury_d18).to.be.eq(expectedWethRedeemingCostTreasury_d18, "invalid weth delta (treasury)");
+        expect(d18_ToNumber(wethDelta_d18)).to.be.closeTo(d18_ToNumber(expectedWethRedemptionPaymentUser_d18), 1e-6, "invalid weth delta (user)");
+        expect(d18_ToNumber(wethDeltaTreasury_d18)).to.be.closeTo(d18_ToNumber(expectedWethRedemptionPaymentTreasury_d18), 1e-6, "invalid weth delta (treasury)");
         
         const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
         const bdxBalanceAfterRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
         const bdxDelta_d18 = bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18);
         const bdxDeltaTreasury_d18 = bdxBalanceAfterRedeemTreasury_d18.sub(bdxBalanceBeforeRedeemTreasury_d18);
-
-        expect(bdxDelta_d18).to.be.eq(expectedBdxRedeemingCostUser_d18, "invalid bdx delta (user)")
-        expect(bdxDeltaTreasury_d18).to.be.eq(expectedBdxRedeemingCostTreasury_d18, "invalid bdx delta (treasury)")
+        expect(d18_ToNumber(bdxDelta_d18)).to.be.closeTo(d18_ToNumber(expectedBdxRedemptionPaymentUser_d18), 1e-6, "invalid bdx delta (user)")
+        expect(d18_ToNumber(bdxDeltaTreasury_d18)).to.be.closeTo(d18_ToNumber(expectedBdxRedemptionPaymentTreasury_d18), 1e-6, "invalid bdx delta (treasury)")
     });
 })

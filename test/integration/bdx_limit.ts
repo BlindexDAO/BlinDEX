@@ -2,7 +2,7 @@ import hre, { ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d18_ToNumber, diffPct, to_d18 } from "../../utils/Helpers";
+import { d18_ToNumber, diffPct, to_d12, to_d18 } from "../../utils/Helpers";
 import { getBdEu, getBdEuWethPool, getBdx, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
@@ -51,17 +51,15 @@ describe("BDX limit", () => {
             bdxTotalSupplyBeforeRedeem_d18,
             "some bdx must have been collected in redemption"); // test validation
 
-        const bdxTotalSupplyDiffPct = diffPct(bdxTotalSupplyAfterRedeem_d18, bdxMaxTotalSupply_d18);
+        const bdxNotMintedYet = bdxMaxTotalSupply_d18.sub(bdxTotalSupplyBeforeRedeem_d18);
+        const bdxNotMintedYetMinusRedemptionFee = bdxNotMintedYet.mul(to_d12(1-0.0025)).div(1e12) // decrease (the part that hasn't been minted yet) by redemption fee
+        const expectedTotalMintedBdx = bdxTotalSupplyBeforeRedeem_d18.add(bdxNotMintedYetMinusRedemptionFee);
+        const bdxTotalSupplyDiffPct = diffPct(bdxTotalSupplyAfterRedeem_d18, expectedTotalMintedBdx);
 
-        console.log("bdEu blance diff: " + d18_ToNumber(bdEuBalanceDiff_d18));
-        console.log("bdxTotalSupplyBefore: " + d18_ToNumber(bdxTotalSupplyBeforeRedeem_d18));
-        console.log("bdxTotalSupplyAfter: " + d18_ToNumber(bdxTotalSupplyAfterRedeem_d18));
-        console.log("bdx total supply, max supply diff %: " + bdxTotalSupplyDiffPct);
-
-        expect(buredBdEuPctDiff).to.be.closeTo(0, 0.01,
+        expect(buredBdEuPctDiff).to.be.closeTo(0, 0.001,
             "unexpected bdEu amount burned");
 
-        expect(bdxTotalSupplyDiffPct).to.be.closeTo(0, 0.01,
+        expect(bdxTotalSupplyDiffPct).to.be.closeTo(0, 0.001,
             "unexpected amount of bdx minted");
     });
 

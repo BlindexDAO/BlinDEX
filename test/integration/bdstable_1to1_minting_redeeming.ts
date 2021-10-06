@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber, diffPct, to_d8 } from "../../utils/Helpers";
+import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
@@ -123,7 +123,8 @@ describe("BDStable 1to1", () => {
 
         expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
 
-        const expectedWethForRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12);
+        const expectedWethFromRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
         await bdEuPool.connect(testUser).collectRedemption();
@@ -138,14 +139,16 @@ describe("BDStable 1to1", () => {
         console.log("weth balance after redeem:   " + d18_ToNumber(wethBalanceAfterRedeem));
 
         const wethDelta = d18_ToNumber(wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem));
-        console.log("weth balance delta: " + wethDelta);
+        console.log("weth balance delta:        " + wethDelta);
+        console.log("expected weth from redeem: " + d18_ToNumber(expectedWethFromRedeem));
 
         const bdEuDelta = d18_ToNumber(bdEuBalanceBeforeRedeem.sub(bdEuBalanceAfterRedeem));
-        console.log("bdEu balance delta: " + bdEuDelta);
+        console.log("bdEu balance delta:    " + bdEuDelta);
+        console.log("bd eu to redeem:       " + d18_ToNumber(bdEuToRedeem));
 
         expect(bdEuBalanceBeforeRedeem).to.be.gt(0);
         expect(bdEuDelta).to.be.closeTo(d18_ToNumber(bdEuToRedeem), 1e-6, "unexpected bdeu delta");
-        expect(wethDelta).to.be.closeTo(d18_ToNumber(expectedWethForRedeem), 1e-6, "unexpected weth delta");
+        expect(wethDelta).to.be.closeTo(d18_ToNumber(expectedWethFromRedeem), 1e-6, "unexpected weth delta");
     });
 
     it("redeeming should throw when CR != 1", async () => {
@@ -199,8 +202,12 @@ describe("BDStable 1to1", () => {
         expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
 
         const expectedWethForRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12);
-        const expectedWethForRedeemUser = expectedWethForRedeem.div(10);
-        const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10);
+        
+        const expectedWethForRedeemUser = expectedWethForRedeem.div(10)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee;
+
+        const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10)
+            .mul(to_d12(1 - 0.0025)).div(1e12); // decrease by redemption fee;
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
         await bdEuPool.connect(testUser).collectRedemption();
@@ -220,10 +227,12 @@ describe("BDStable 1to1", () => {
         console.log("weth balance after redeem (tresury) :   " + d18_ToNumber(wethBalanceAfterRedeemTreasury));
 
         const wethDelta = d18_ToNumber(wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem));
-        console.log("weth balance delta: " + wethDelta);
+        console.log("weth balance delta:        " + wethDelta);
+        console.log("expectedWethForRedeemUser: " + d18_ToNumber(expectedWethForRedeemUser));
 
         const wethDeltaTreasury = d18_ToNumber(wethBalanceAfterRedeemTreasury.sub(wethBalanceBeforeRedeemTreasury));
-        console.log("weth balance delta: " + wethDeltaTreasury);
+        console.log("weth balance delta:            " + wethDeltaTreasury);
+        console.log("expectedWethForRedeemTreasury: " + d18_ToNumber(expectedWethForRedeemTreasury));
 
         const bdEuDelta = d18_ToNumber(bdEuBalanceBeforeRedeem.sub(bdEuBalanceAfterRedeem));
         console.log("bdEu balance delta: " + bdEuDelta);

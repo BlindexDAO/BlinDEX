@@ -55,7 +55,7 @@ contract BDStable is ERC20Custom, Initializable {
     bool public collateral_ratio_paused;
 
     mapping(address => uint256) public lastMintByUserBlock;
-    uint256 minimumMintRedeemDelayInBlocks = 0;
+    uint256 minimumMintRedeemDelayInBlocks = 2;
 
     /* ========== MODIFIERS ========== */
 
