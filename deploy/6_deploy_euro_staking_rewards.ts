@@ -2,10 +2,8 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
-import { StakingRewards } from '../typechain/StakingRewards';
 import * as constants from '../utils/Constants'
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
-import { Timelock } from '../typechain/Timelock';
 import { Vesting } from '../typechain/Vesting';
 
 async function setupStakingContract(
@@ -21,7 +19,6 @@ async function setupStakingContract(
 
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
 
-  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
   const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
   const vesting = await hre.ethers.getContract('Vesting') as Vesting
 
@@ -35,7 +32,6 @@ async function setupStakingContract(
           methodName: "initialize",
           args: [
             pairAddress,
-            timelock.address,
             stakingRewardsDistribution.address,
             vesting.address,
             isTrueBdPool

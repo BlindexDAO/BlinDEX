@@ -13,8 +13,6 @@ import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
-import "hardhat/console.sol";
-
 contract BDStable is ERC20Custom, Initializable {
     using SafeMath for uint256;
 
@@ -22,7 +20,9 @@ contract BDStable is ERC20Custom, Initializable {
     enum PriceChoice { BDSTABLE, BDX }
 
     uint8 public constant decimals = 18;
-    uint256 private constant PRICE_PRECISION = 1e12; //increase because we are no longer base on stablecoins
+    uint256 private constant PRICE_PRECISION = 1e12;
+    uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
+    uint8 private constant MAX_NUMBER_OF_POOLS = 32;
 
     string public symbol;
     string public name;
@@ -49,13 +49,17 @@ contract BDStable is ERC20Custom, Initializable {
 
     uint256 public bdStable_step_d12; // Amount to change the collateralization ratio by upon refreshCollateralRatio()
     uint256 public refresh_cooldown; // Seconds to wait before being able to run refreshCollateralRatio() again
-    uint256 public price_target; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
-    uint256 public price_band; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
+    uint256 public price_target_d12; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
+    uint256 public price_band_d12; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
+
+    uint256 minimumMintRedeemDelayInBlocks = 2;
 
     bool public collateral_ratio_paused;
 
     mapping(address => uint256) public lastMintByUserBlock;
-    uint256 minimumMintRedeemDelayInBlocks = 2;
+
+    // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
+    uint256 public refreshCollateralRatio_last_call_time; // Last time the collateral ration was refreshed function was executed
 
     /* ========== MODIFIERS ========== */
 
@@ -98,13 +102,11 @@ contract BDStable is ERC20Custom, Initializable {
         treasury_address = _treasury_address;
         bdx_address = _bdx_address;
 
-        bdStable_step_d12 = uint256(1e12).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
-        global_collateral_ratio_d12 = uint256(1e12); // Bdstable system starts off fully collateralized (12 decimals of precision)
-        price_target = uint256(1e12); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
-        price_band = uint256(1e12).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
+        bdStable_step_d12 = uint256(PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
+        global_collateral_ratio_d12 = uint256(COLLATERAL_RATIO_MAX); // Bdstable system starts off fully collateralized (12 decimals of precision)
+        price_target_d12 = uint256(PRICE_PRECISION); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
+        price_band_d12 = uint256(PRICE_PRECISION).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
-
-        collateral_ratio_paused = false;
 
         if(_initalBdStableToOwner_d18 > 0) {
             _mint(_owner_address, _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps
@@ -113,29 +115,21 @@ contract BDStable is ERC20Custom, Initializable {
 
     /* ========== VIEWS ========== */
 
-    function allPools() public view returns (address[] memory) {
-        return bdstable_pools_array;
-    }
-
     // collateral value in fiat corresponding to the stable
     // Iterate through all bd pools and calculate all value of collateral in all pools globally 
     function globalCollateralValue() public view returns (uint256) {
         uint256 total_collateral_value_d18 = 0; 
 
+        // bdstable_pools_array.length is limited by addPool function
         for (uint i = 0; i < bdstable_pools_array.length; i++){ 
-            // Exclude null addresses
-            if (bdstable_pools_array[i] != address(0)){
-                total_collateral_value_d18 = total_collateral_value_d18.add(BdStablePool(bdstable_pools_array[i]).collatFiatBalance());
-            }
-
+            total_collateral_value_d18 = total_collateral_value_d18.add(BdStablePool(bdstable_pools_array[i]).collatFiatBalance());
         }
         return total_collateral_value_d18;
     }
 
     // Choice = 'BDSTABLE' or 'BDX' for now
     function oracle_price(PriceChoice choice) internal view returns (uint256) {
-        // Get the ETH / USD price first, and cut it down to 1e12 precision
-        uint256 weth_fiat_price = uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
+        uint256 weth_fiat_price_d12 = uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
         uint256 price_vs_weth;
 
         if (choice == PriceChoice.BDSTABLE) {
@@ -146,8 +140,7 @@ contract BDStable is ERC20Custom, Initializable {
         }
         else revert("INVALID PRICE CHOICE. Needs to be either 0 (BDSTABLE) or 1 (BDX)");
 
-        // Will be in 1e12 format
-        return weth_fiat_price.mul(PRICE_PRECISION).div(price_vs_weth);
+        return weth_fiat_price_d12.mul(PRICE_PRECISION).div(price_vs_weth);
     }
     
     function updateOraclesIfNeeded() public {
@@ -177,7 +170,7 @@ contract BDStable is ERC20Custom, Initializable {
     function effective_global_collateral_ratio_d12() public view returns (uint256) {
         uint256 bdStable_total_supply = totalSupply();
         uint256 global_collat_value = globalCollateralValue();
-        uint256 efCR = global_collat_value.mul(1e12).div(bdStable_total_supply);
+        uint256 efCR = global_collat_value.mul(PRICE_PRECISION).div(bdStable_total_supply);
         return efCR;
     }
 
@@ -191,9 +184,7 @@ contract BDStable is ERC20Custom, Initializable {
 
     /* ========== PUBLIC FUNCTIONS ========== */
 
-    // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
-    uint256 public refreshCollateralRatio_last_call_time; // Last time the collateral ration was refreshed function was executed
-    function refreshCollateralRatio() public {
+    function refreshCollateralRatio() external {
         if(collateral_ratio_paused == true){
             return;
         }
@@ -210,15 +201,15 @@ contract BDStable is ERC20Custom, Initializable {
 
         // Step increments are 0.25% (upon genesis, changable) 
 
-        if (bdstable_price_cur > price_target.add(price_band)) { //decrease collateral ratio
+        if (bdstable_price_cur > price_target_d12.add(price_band_d12)) { //decrease collateral ratio
             if(global_collateral_ratio_d12 <= bdStable_step_d12){ //if within a step of 0, go to 0
                 global_collateral_ratio_d12 = 0;
             } else {
                 global_collateral_ratio_d12 = global_collateral_ratio_d12.sub(bdStable_step_d12);
             }
-        } else if (bdstable_price_cur < price_target.sub(price_band)) { //increase collateral ratio
-            if(global_collateral_ratio_d12.add(bdStable_step_d12) >= 1e12){
-                global_collateral_ratio_d12 = 1e12; // cap collateral ratio at 1.000000
+        } else if (bdstable_price_cur < price_target_d12.sub(price_band_d12)) { //increase collateral ratio
+            if(global_collateral_ratio_d12.add(bdStable_step_d12) >= COLLATERAL_RATIO_MAX){
+                global_collateral_ratio_d12 = COLLATERAL_RATIO_MAX; // cap collateral ratio at 1.000000
             } else {
                 global_collateral_ratio_d12 = global_collateral_ratio_d12.add(bdStable_step_d12);
             }
@@ -249,7 +240,9 @@ contract BDStable is ERC20Custom, Initializable {
 
     // Adds collateral addresses supported, such as tether and busd, must be ERC20 
     function addPool(address pool_address) external onlyByOwner {
-        require(bdstable_pools[pool_address] == false, "address already exists");
+        require(bdstable_pools[pool_address] == false, "pool already exists");
+        require(bdstable_pools_array.length < MAX_NUMBER_OF_POOLS, "pools limit reached");
+
         bdstable_pools[pool_address] = true; 
         bdstable_pools_array.push(pool_address);
 
@@ -260,13 +253,13 @@ contract BDStable is ERC20Custom, Initializable {
     function removePool(address pool_address) external onlyByOwner {
         require(bdstable_pools[pool_address] == true, "address doesn't exist already");
         
-        // Delete from the mapping
         delete bdstable_pools[pool_address];
 
-        // 'Delete' from the array by setting the address to 0x0
+        // bdstable_pools_array.length is limited by addPool function
         for (uint i = 0; i < bdstable_pools_array.length; i++){ 
             if (bdstable_pools_array[i] == pool_address) {
-                bdstable_pools_array[i] = address(0); // This will leave a null in the array and keep the indices the same
+                bdstable_pools_array[i] = bdstable_pools_array[bdstable_pools_array.length -1];
+                bdstable_pools_array.pop();
                 break;
             }
         }
@@ -299,6 +292,19 @@ contract BDStable is ERC20Custom, Initializable {
         bdStable_step_d12 = _bdStable_step_d12;
 
         emit BdStableStepSet(_bdStable_step_d12);
+    }
+
+    function set_price_target_d12(uint256 _price_target_d12) external onlyByOwner {
+        price_target_d12 = _price_target_d12;
+
+        emit PriceTargetSet(_price_target_d12);
+    }
+
+
+    function set_price_band_d12(uint256 _price_band_d12) external onlyByOwner {
+        price_band_d12 = _price_band_d12;
+
+        emit PriceBandSet(_price_band_d12);
     }
 
     function toggleCollateralRatioPaused() external onlyByOwner {
@@ -341,6 +347,8 @@ contract BDStable is ERC20Custom, Initializable {
     event BDX_WETH_OracleSet(address indexed bdx_oracle_address, address indexed weth_address);
     event EthFiatOracleSet(address eth_fiat_consumer_address);
     event BdStableStepSet(uint256 bdStable_step_d12);
+    event PriceBandSet(uint256 _price_band_d12);
+    event PriceTargetSet(uint256 _price_target_d12);
     event CollateralRatioPausedToggled(bool collateral_ratio_paused);
     event CollateralRatioLocked(uint256 lockedCR_d12);
 }
