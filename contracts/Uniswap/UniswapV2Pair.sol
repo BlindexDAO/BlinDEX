@@ -400,7 +400,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
-        if((timeElapsed < (PERIOD + CONSULT_LENIENCY - SHOULD_UPDATE_MARGIN)) || ALLOW_STALE_CONSULTS){
+        if((timeElapsed < (PERIOD + CONSULT_LENIENCY - SHOULD_UPDATE_MARGIN)) || ALLOW_STALE_CONSULTS || reserve0 == 0 || reserve1 == 0){
             return false;
         } else {
             return true;
