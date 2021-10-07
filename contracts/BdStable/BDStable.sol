@@ -11,6 +11,7 @@ import "../Bdx/BDXShares.sol";
 import "../Oracle/IChainlinkBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
+import "./Pools/BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract BDStable is ERC20Custom, Initializable {
@@ -20,8 +21,6 @@ contract BDStable is ERC20Custom, Initializable {
     enum PriceChoice { BDSTABLE, BDX }
 
     uint8 public constant decimals = 18;
-    uint256 private constant PRICE_PRECISION = 1e12;
-    uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
 
     string public symbol;
@@ -102,10 +101,10 @@ contract BDStable is ERC20Custom, Initializable {
         treasury_address = _treasury_address;
         bdx_address = _bdx_address;
 
-        bdStable_step_d12 = uint256(PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
-        global_collateral_ratio_d12 = uint256(COLLATERAL_RATIO_MAX); // Bdstable system starts off fully collateralized (12 decimals of precision)
-        price_target_d12 = uint256(PRICE_PRECISION); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
-        price_band_d12 = uint256(PRICE_PRECISION).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
+        bdStable_step_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
+        global_collateral_ratio_d12 = uint256(BdPoolLibrary.COLLATERAL_RATIO_MAX); // Bdstable system starts off fully collateralized (12 decimals of precision)
+        price_target_d12 = uint256(BdPoolLibrary.PRICE_PRECISION); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
+        price_band_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
 
         if(_initalBdStableToOwner_d18 > 0) {
@@ -129,18 +128,18 @@ contract BDStable is ERC20Custom, Initializable {
 
     // Choice = 'BDSTABLE' or 'BDX' for now
     function oracle_price(PriceChoice choice) internal view returns (uint256) {
-        uint256 weth_fiat_price_d12 = uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
+        uint256 weth_fiat_price_d12 = uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
         uint256 price_vs_weth;
 
         if (choice == PriceChoice.BDSTABLE) {
-            price_vs_weth = uint256(bdstableWethOracle.consult(weth_address, PRICE_PRECISION)); // How much BDSTABLE if you put in PRICE_PRECISION WETH
+            price_vs_weth = uint256(bdstableWethOracle.consult(weth_address, BdPoolLibrary.PRICE_PRECISION)); // How much BDSTABLE if you put in BdPoolLibrary.PRICE_PRECISION WETH
         }
         else if (choice == PriceChoice.BDX) {
-            price_vs_weth = uint256(bdxWethOracle.consult(weth_address, PRICE_PRECISION)); // How much BDX if you put in PRICE_PRECISION WETH
+            price_vs_weth = uint256(bdxWethOracle.consult(weth_address, BdPoolLibrary.PRICE_PRECISION)); // How much BDX if you put in BdPoolLibrary.PRICE_PRECISION WETH
         }
         else revert("INVALID PRICE CHOICE. Needs to be either 0 (BDSTABLE) or 1 (BDX)");
 
-        return weth_fiat_price_d12.mul(PRICE_PRECISION).div(price_vs_weth);
+        return weth_fiat_price_d12.mul(BdPoolLibrary.PRICE_PRECISION).div(price_vs_weth);
     }
     
     function updateOraclesIfNeeded() public {
@@ -170,12 +169,12 @@ contract BDStable is ERC20Custom, Initializable {
     function effective_global_collateral_ratio_d12() public view returns (uint256) {
         uint256 bdStable_total_supply = totalSupply();
         uint256 global_collat_value = globalCollateralValue();
-        uint256 efCR = global_collat_value.mul(PRICE_PRECISION).div(bdStable_total_supply);
+        uint256 efCR = global_collat_value.mul(BdPoolLibrary.PRICE_PRECISION).div(bdStable_total_supply);
         return efCR;
     }
 
     function weth_fiat_price() public view returns (uint256) {
-        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
+        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
     }
     
     function canLegallyRedeem(address who) external view returns (bool) {
@@ -208,8 +207,8 @@ contract BDStable is ERC20Custom, Initializable {
                 global_collateral_ratio_d12 = global_collateral_ratio_d12.sub(bdStable_step_d12);
             }
         } else if (bdstable_price_cur < price_target_d12.sub(price_band_d12)) { //increase collateral ratio
-            if(global_collateral_ratio_d12.add(bdStable_step_d12) >= COLLATERAL_RATIO_MAX){
-                global_collateral_ratio_d12 = COLLATERAL_RATIO_MAX; // cap collateral ratio at 1.000000
+            if(global_collateral_ratio_d12.add(bdStable_step_d12) >= BdPoolLibrary.COLLATERAL_RATIO_MAX){
+                global_collateral_ratio_d12 = BdPoolLibrary.COLLATERAL_RATIO_MAX; // cap collateral ratio at 1.000000
             } else {
                 global_collateral_ratio_d12 = global_collateral_ratio_d12.add(bdStable_step_d12);
             }
