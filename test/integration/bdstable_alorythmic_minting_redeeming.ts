@@ -142,11 +142,13 @@ describe("BDStable algorythmic", () => {
 
         await lockBdEuCrAt(hre, 0);
 
-        // setup bdEu so it's illegal to redeem for testUser
         const bdxAmount = 10;
         await bdx.transfer(testUser.address, to_d18(bdxAmount*100)); // deployer gives some bdx to user, so user can mint
+
+        // setup bdEu so it's illegal to redeem for testUser
         await performAlgorithmicMinting(testUser, bdxAmount);
         await bdEu.setMinimumSwapsDelayInBlocks(100);
+        // setup finished
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
