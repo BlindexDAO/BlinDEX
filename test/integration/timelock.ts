@@ -58,10 +58,13 @@ describe("Execute with timelock", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
+        
+        const timelock = await GetTimelock();
+        const stakingRewardsDistribution = await GetSRD();
+        stakingRewardsDistribution.transferOwnership(timelock.address)
     });
 
     it("transaction should be executed before eta, withing grace period", async () => {
-        const timelock = await GetTimelock();
         const stakingRewardsDistribution = await GetSRD();
 
         const totalBefore = await stakingRewardsDistribution.stakingRewardsWeightsTotal();

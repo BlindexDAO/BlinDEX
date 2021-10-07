@@ -17,9 +17,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-// Inheritance
-import "hardhat/console.sol";
-
 contract StakingRewards is 
     PausableUpgradeable,
     OwnableUpgradeable
@@ -43,7 +40,6 @@ contract StakingRewards is
     /* ========== STATE VARIABLES ========== */
 
     ERC20 public stakingToken;
-    address public timelock_address; // Governance timelock address
     StakingRewardsDistribution stakingRewardsDistribution;
     Vesting vesting;
 
@@ -82,7 +78,6 @@ contract StakingRewards is
 
     function initialize (
         address _stakingToken,
-        address _timelock_address,
         address _stakingRewardsDistribution,
         address _vesting,
         bool _isTrueBdPool
@@ -94,7 +89,6 @@ contract StakingRewards is
         __Pausable_init();
 
         stakingToken = ERC20(_stakingToken);
-        timelock_address = _timelock_address;
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
         vesting = Vesting(_vesting);
         DeploymentTimestamp = block.timestamp;
@@ -360,14 +354,14 @@ contract StakingRewards is
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     // Added to support recovering LP Rewards from other systems to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwnerOrGovernance {
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwner {
         // Admin cannot withdraw the staking token from the contract
         require(tokenAddress != address(stakingToken));
         ERC20(tokenAddress).transfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyByOwnerOrGovernance {
+    function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyByOwner {
         require(
             periodFinish == 0 || block.timestamp > periodFinish,
             "Previous rewards period must be complete before changing the duration for the new period"
@@ -376,17 +370,16 @@ contract StakingRewards is
         emit RewardsDurationUpdated(rewardsDurationSeconds);
     }
 
-    function greylistAddress(address _address) external onlyByOwnerOrGovernance {
+    function greylistAddress(address _address) external onlyByOwner {
         greylist[_address] = !(greylist[_address]);
     }
 
-    function unlockStakes() external onlyByOwnerOrGovernance {
+    function unlockStakes() external onlyByOwner {
         unlockedStakes = !unlockedStakes;
     }
 
-    function setOwnerAndTimelock(address _new_owner, address _new_timelock) external onlyByOwnerOrGovernance {
+    function setOwner(address _new_owner) external onlyByOwner {
         transferOwnership(_new_owner);
-        timelock_address = _new_timelock;
     }
 
     /* ========== MODIFIERS ========== */
@@ -409,8 +402,8 @@ contract StakingRewards is
         _;
     }
 
-    modifier onlyByOwnerOrGovernance() {
-        require(msg.sender == owner() || msg.sender == timelock_address, "You are not the owner or the governance timelock");
+    modifier onlyByOwner() {
+        require(msg.sender == owner(), "You are not the owner");
         _;
     }
 

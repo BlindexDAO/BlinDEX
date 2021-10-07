@@ -5,8 +5,6 @@ import "../Math/SafeMath.sol";
 import "./AggregatorV3Interface.sol";
 import "./ICryptoPairOracle.sol";
 
-import "hardhat/console.sol";
-
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract BtcToEthOracle is ICryptoPairOracle {

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GNU General Public License v3.0
 pragma solidity 0.6.11;
 
 
@@ -13,8 +13,6 @@ import './Interfaces/IUniswapV2Callee.sol';
 import './Interfaces/IUniswapV2Factory.sol';
 import '../Oracle/ICryptoPairOracle.sol';
 import './UniswapV2OracleLibrary.sol';
-
-import "hardhat/console.sol";
 
 contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     using FixedPoint for *;
@@ -63,7 +61,6 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     uint256 minimumSwapsDelayInBlocks = 0;
 
     address public owner_address;
-    address public timelock_address;
     address public treasury_address;
 
     uint private unlocked = 1;
@@ -329,35 +326,31 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         _approve(owner, spender, value);
     }
 
-    function setOwner_address(address _owner_address) external onlyByOwnerOrGovernance {
+    function setOwner_address(address _owner_address) external onlyByOwner {
         owner_address = _owner_address;
     }
 
-    function setTimelock_address(address _timelock_address) external onlyByOwnerOrGovernance {
-        timelock_address = _timelock_address;
-    }
-
-    function setTreasury_address(address _treasury_address) external onlyByOwnerOrGovernance {
+    function setTreasury_address(address _treasury_address) external onlyByOwner {
         treasury_address = _treasury_address;
     }
 
-    function setMinimumSwapsDelayInBlocks(uint256 _minimumSwapsDelayInBlocks) external onlyByOwnerOrGovernance{
+    function setMinimumSwapsDelayInBlocks(uint256 _minimumSwapsDelayInBlocks) external onlyByOwner{
         minimumSwapsDelayInBlocks = _minimumSwapsDelayInBlocks;
     }
 
-    function setPeriod(uint _period) external onlyByOwnerOrGovernance {
+    function setPeriod(uint _period) external onlyByOwner {
         PERIOD = _period;
     }
 
-    function setConsultLeniency(uint _consult_leniency) external onlyByOwnerOrGovernance {
+    function setConsultLeniency(uint _consult_leniency) external onlyByOwner {
         CONSULT_LENIENCY = _consult_leniency;
     }
 
-    function setOracleShuldUpdateMargin(uint _should_update_margin) external onlyByOwnerOrGovernance {
+    function setOracleShuldUpdateMargin(uint _should_update_margin) external onlyByOwner {
         SHOULD_UPDATE_MARGIN = _should_update_margin;
     }
 
-    function setAllowStaleConsults(bool _allow_stale_consults) external onlyByOwnerOrGovernance {
+    function setAllowStaleConsults(bool _allow_stale_consults) external onlyByOwner {
         ALLOW_STALE_CONSULTS = _allow_stale_consults;
     }
 
@@ -424,8 +417,8 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         }
     }
 
-    modifier onlyByOwnerOrGovernance() {
-        require(msg.sender == owner_address || msg.sender == timelock_address, "You are not an owner or the governance timelock");
+    modifier onlyByOwner() {
+        require(msg.sender == owner_address, "You are not an owner");
         _;
     }
 

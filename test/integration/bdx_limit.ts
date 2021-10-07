@@ -114,7 +114,7 @@ describe("BDX limit", () => {
         const bdx = await getBdx(hre);
         const owner = await getDeployer(hre);
 
-        const bdxAvailableToMint = await bdx.howMuchCanBeMinted();
+        const bdxAvailableToMint = (await bdx.MAX_TOTAL_SUPPLY()).sub(await bdx.totalSupply());
         const bdxLeftForUser = to_d18(9 * 1e6); // 9 mln available for the user to mint
         const bdxToBeMintedByOwner = bdxAvailableToMint.sub(bdxLeftForUser);
 

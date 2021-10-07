@@ -3,7 +3,6 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { to_d18 } from '../utils/Helpers'
-import { Timelock } from '../typechain/Timelock';
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
@@ -22,8 +21,6 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
 
-  const timelock = await hre.ethers.getContract("Timelock") as Timelock;
-
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
     "StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER,
@@ -33,7 +30,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         init: {
           methodName: "initialize",
           args: [
-            timelock.address,
             bdx.address,
             90
           ]
@@ -53,5 +49,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename
 func.tags = ['StakingRewardsDistribution'];
-func.dependencies = ['BDX', 'BdxMint', 'Timelock'];
+func.dependencies = ['BDX', 'BdxMint'];
 export default func;

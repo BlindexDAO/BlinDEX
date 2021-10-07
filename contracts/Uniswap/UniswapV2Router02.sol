@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GNU General Public License v3.0
 pragma solidity 0.6.11;
 
 import './Interfaces/IUniswapV2Factory.sol';
@@ -11,8 +11,6 @@ import './UniswapV2Pair.sol';
 import '../Math/SafeMath.sol';
 import '../ERC20/IERC20.sol';
 import '../ERC20/IWETH.sol';
-
-import "hardhat/console.sol";
 
 contract UniswapV2Router02 is IUniswapV2Router02 {
     using SafeMath for uint;

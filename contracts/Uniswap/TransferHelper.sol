@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GNU General Public License v3.0
 pragma solidity 0.6.11;
 
 // helper methods for interacting with ERC20 tokens and sending ETH that do not consistently return true/false

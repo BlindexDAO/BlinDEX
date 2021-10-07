@@ -11,9 +11,6 @@ import "./StakingRewardsDistribution.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-// Inheritance
-import "hardhat/console.sol";
-
 contract Vesting is OwnableUpgradeable
 {
     using SafeERC20 for ERC20;

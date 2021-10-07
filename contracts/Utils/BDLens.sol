@@ -3,7 +3,6 @@ pragma experimental ABIEncoderV2;
 pragma solidity 0.6.11;
 // file: BDLens.sol
 
-import "hardhat/console.sol";
 import "../BdStable/BDStable.sol";
 import "../Staking/StakingRewards.sol";
 
@@ -79,7 +78,6 @@ contract BDLens is OwnableUpgradeable {
     function AllBdStables() external view returns (BdStableInfo[] memory) {
         BdStableInfo[] memory infos = new BdStableInfo[](BdStables.length);
         for(uint i = 0; i < BdStables.length; i++) {
-            console.log(BdStables[i]);
             infos[i] = (BdStableInfo(BDStable(BdStables[i]).fiat(), BdStables[i]));
         }
         return infos;
@@ -97,7 +95,6 @@ contract BDLens is OwnableUpgradeable {
     function AllStakings() external view returns (StakingInfo[] memory) {
         StakingInfo[] memory infos = new StakingInfo[](Stakings.length);
         for(uint i = 0; i < Stakings.length; i++) {
-            console.log(Stakings[i]);
             infos[i] = (StakingInfo(address(StakingRewards(Stakings[i]).stakingToken()), Stakings[i]));
         }
         return infos;

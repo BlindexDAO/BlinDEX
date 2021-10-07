@@ -10,8 +10,6 @@ import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
-import "hardhat/console.sol";
-
 contract BdStablePool is Initializable {
     using SafeMath for uint256;
 
@@ -117,20 +115,16 @@ contract BdStablePool is Initializable {
 
     /* ========== VIEWS ========== */
 
-    // Returns the value of excess collateral held in this BdStable pool, compared to what is needed to maintain the global collateral ratio
+    // Returns the value of excess collateral held in all BdStablePool related to this BdStable, compared to what is needed to maintain the global collateral ratio
     function availableExcessCollatDV() public view returns (uint256) {
         uint256 total_supply = BDSTABLE.totalSupply();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
         uint256 global_collat_value = BDSTABLE.globalCollateralValue();
 
-        if (global_collateral_ratio_d12 > COLLATERAL_RATIO_PRECISION) {
-            global_collateral_ratio_d12 = COLLATERAL_RATIO_PRECISION; // Handles an overcollateralized contract with CR > 1
-        }
-        
         // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
         uint256 required_collat_fiat_value_d18 = total_supply
             .mul(global_collateral_ratio_d12)
-            .div(COLLATERAL_RATIO_PRECISION); 
+            .div(COLLATERAL_RATIO_MAX); 
 
         if (global_collat_value > required_collat_fiat_value_d18) {
             return global_collat_value.sub(required_collat_fiat_value_d18);
@@ -165,20 +159,20 @@ contract BdStablePool is Initializable {
                 .mul(pausedPrice)
                 .div(PRICE_PRECISION);
         } else {
-            uint256 eth_fiat_price = BDSTABLE.weth_fiat_price();
-            uint256 eth_collat_price =
-                collatWEthOracle.consult(
-                    weth_address,
-                    PRICE_PRECISION
-                );
-
-            uint256 collat_fiat_price = eth_fiat_price.mul(PRICE_PRECISION).div(eth_collat_price);
-
             return collateral_token.balanceOf(address(this))
                 .sub(unclaimedPoolCollateral)
                 .mul(10 ** missing_decimals)
-                .mul(collat_fiat_price)
+                .mul(getCollateralPrice_d12())
                 .div(PRICE_PRECISION);
+        }
+    }
+
+    /* ========== PUBLIC FUNCTIONS ========== */
+
+    function updateOraclesIfNeeded() public {
+        BDSTABLE.updateOraclesIfNeeded();
+        if(collatWEthOracle.shouldUpdateOracle()){
+            collatWEthOracle.updateOracle();
         }
     }
 
@@ -189,15 +183,6 @@ contract BdStablePool is Initializable {
             return _watned_amount_d18;
         } else {
             return maxToBeMinted_d18;
-        }
-    }
-
-    /* ========== PUBLIC FUNCTIONS ========== */
-
-    function updateOraclesIfNeeded() public {
-        BDSTABLE.updateOraclesIfNeeded();
-        if(collatWEthOracle.shouldUpdateOracle()){
-            collatWEthOracle.updateOracle();
         }
     }
 
@@ -258,8 +243,8 @@ contract BdStablePool is Initializable {
         // Need to adjust for decimals of collateral
         uint256 col_price_d12 = getCollateralPrice_d12();
         uint256 effective_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
-        uint256 cr_d12 = effective_collateral_ratio_d12 > 1e12 ? 1e12 : effective_collateral_ratio_d12;
-        uint256 collateral_needed = BD_amount.mul(1e12).mul(cr_d12).div(1e12).div(col_price_d12);
+        uint256 cr_d12 = effective_collateral_ratio_d12 > COLLATERAL_RATIO_MAX ? COLLATERAL_RATIO_MAX : effective_collateral_ratio_d12;
+        uint256 collateral_needed = BD_amount.mul(PRICE_PRECISION).mul(cr_d12).div(PRICE_PRECISION).div(col_price_d12);
 
         collateral_needed = (
             collateral_needed.mul(uint256(PRICE_PRECISION).sub(redemption_fee))
@@ -355,13 +340,13 @@ contract BdStablePool is Initializable {
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
         if(bdx_amount > 0){
-            BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
+            BDX.mint(address(BDSTABLE), address(this), bdx_amount);
         }
     }
 
     // Will fail if fully collateralized or fully algorithmic
     // > 0% and < 100% collateral-backed
-    function mintFractionalBdStable(uint256 collateral_amount, uint256 bdx_amount, uint256 bdStable_out_min) external notMintPaused {
+    function mintFractionalBdStable(uint256 collateral_amount, uint256 bdx_in_max, uint256 bdStable_out_min) external notMintPaused {
         updateOraclesIfNeeded();
         BDSTABLE.refreshCollateralRatio();
 
@@ -382,7 +367,7 @@ contract BdStablePool is Initializable {
         BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
             bdx_price,
             getCollateralPrice_d12(),
-            bdx_amount,
+            bdx_in_max,
             collateral_amount_d18,
             global_collateral_ratio_d12
         );
@@ -393,7 +378,7 @@ contract BdStablePool is Initializable {
 
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
 
-        require(bdx_needed <= bdx_amount, "Not enough BDX inputted");
+        require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_needed);
 
@@ -474,7 +459,7 @@ contract BdStablePool is Initializable {
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
         if(bdx_amount > 0){
-            BDX.pool_mint(address(BDSTABLE), address(this), bdx_amount);
+            BDX.mint(address(BDSTABLE), address(this), bdx_amount);
         }
     }
 
@@ -548,15 +533,15 @@ contract BdStablePool is Initializable {
 
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
-        uint256 bdx_paid_back = amount_to_recollat.mul(uint(1e12).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
+        uint256 bdx_paid_back = amount_to_recollat.mul(uint(PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
         bdx_paid_back = howMuchBdxCanBeMinted(bdx_paid_back);
-
+        
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
         collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
 
         if(bdx_paid_back > 0){
-            BDX.pool_mint(address(BDSTABLE), msg.sender, bdx_paid_back);
+            BDX.mint(address(BDSTABLE), msg.sender, bdx_paid_back);
         }
 
         emit Recollateralized(collateral_units_precision, bdx_paid_back);
@@ -582,7 +567,7 @@ contract BdStablePool is Initializable {
             BDX_amount
         );
 
-        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(input_params).mul(uint(1e12).sub(buyback_fee)).div(1e12);
+        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(input_params).mul(uint(PRICE_PRECISION).sub(buyback_fee)).div(PRICE_PRECISION);
 
         uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
 

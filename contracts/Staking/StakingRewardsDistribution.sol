@@ -7,8 +7,6 @@ import '../Uniswap/TransferHelper.sol';
 import "../ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
 
@@ -33,17 +31,15 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
     uint256 public vestingRewardRatio_percent;
 
-    address public timelock_address;
     ERC20 rewardsToken;
 
     mapping(address => uint256) public stakingRewardsWeights;
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
-    function initialize(address _timelock_address, address _rewardsToken, uint256 _vestingRewardRatio_percent) external initializer {
+    function initialize(address _rewardsToken, uint256 _vestingRewardRatio_percent) external initializer {
         __Ownable_init();
 
-        timelock_address = _timelock_address;
         rewardsToken = ERC20(_rewardsToken);
 
         BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
@@ -84,7 +80,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         return bdxPerSecond;
     }
 
-    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyByOwnerOrGovernance {
+    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyByOwner {
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
         for(uint i = 0; i < _stakingRewardsAddresses.length; i++){
@@ -100,7 +96,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit PoolsRegistered(_stakingRewardsAddresses, _stakingRewardsWeights);
     }
 
-    function resetRewardsWeights() external onlyByOwnerOrGovernance {
+    function resetRewardsWeights() external onlyByOwner {
         for(uint i = 0; i < stakingRewardsAddresses.length; i++){
             stakingRewardsWeights[stakingRewardsAddresses[i]] = 0;
         }
@@ -116,7 +112,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         TransferHelper.safeTransfer(address(rewardsToken), _recepient, amountErc20);
     }
 
-    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwnerOrGovernance {
+    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {
         require(0 <= _vestingRewardRatio && _vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
     }
@@ -130,8 +126,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         _;
     }
 
-    modifier onlyByOwnerOrGovernance() {
-        require(msg.sender == owner() || msg.sender == timelock_address, "You are not the owner or the governance timelock");
+    modifier onlyByOwner() {
+        require(msg.sender == owner(), "You are not the owner");
         _;
     }
 
