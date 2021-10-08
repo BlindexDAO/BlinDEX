@@ -13,25 +13,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 contract BdStablePool is Initializable {
     using SafeMath for uint256;
 
-    // Constants for various precisions
-    uint256 private constant PRICE_PRECISION = 1e12;
-    uint256 private constant COLLATERAL_RATIO_PRECISION = 1e12;
-    uint256 private constant COLLATERAL_RATIO_MAX = 1e12;
-
     /* ========== STATE VARIABLES ========== */
 
-    ERC20 public collateral_token;
-    address private collateral_address;
-    address private owner_address;
-
-    address private bdstable_contract_address;
-    address private bdx_contract_address;
-
+    ERC20 private collateral_token;
     BDXShares private BDX;
     BDStable private BDSTABLE;
-
     ICryptoPairOracle private collatWEthOracle;
-    address public collat_weth_oracle_address;
+
+    address public owner_address;
     
     uint256 private missing_decimals; // Number of decimals needed to get to 18
     address private weth_address;
@@ -98,15 +87,11 @@ contract BdStablePool is Initializable {
     {
         BDSTABLE = BDStable(_bdstable_contract_address);
         BDX = BDXShares(_bdx_contract_address);
-        bdstable_contract_address = _bdstable_contract_address;
-        bdx_contract_address = _bdx_contract_address;
-        collateral_address = _collateral_address;
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
         missing_decimals = uint256(18).sub(collateral_token.decimals());
 
         pool_ceiling = 1e36; // d18
-        pausedPrice = 0;
         bonus_rate = 7500000000; // d12 0.75%
         redemption_delay = 1;
         minting_fee = 3000000000; // d12 0.3%
@@ -124,7 +109,7 @@ contract BdStablePool is Initializable {
         // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
         uint256 required_collat_fiat_value_d18 = total_supply
             .mul(global_collateral_ratio_d12)
-            .div(COLLATERAL_RATIO_MAX); 
+            .div(BdPoolLibrary.COLLATERAL_RATIO_MAX); 
 
         if (global_collat_value > required_collat_fiat_value_d18) {
             return global_collat_value.sub(required_collat_fiat_value_d18);
@@ -142,10 +127,10 @@ contract BdStablePool is Initializable {
             uint256 collat_eth_price =
                 collatWEthOracle.consult(
                     weth_address,
-                    PRICE_PRECISION
+                    BdPoolLibrary.PRICE_PRECISION
                 );
 
-            return eth_fiat_price_d12.mul(PRICE_PRECISION).div(collat_eth_price);
+            return eth_fiat_price_d12.mul(BdPoolLibrary.PRICE_PRECISION).div(collat_eth_price);
         }
     }
 
@@ -157,13 +142,13 @@ contract BdStablePool is Initializable {
                 .sub(unclaimedPoolCollateral)
                 .mul(10 ** missing_decimals)
                 .mul(pausedPrice)
-                .div(PRICE_PRECISION);
+                .div(BdPoolLibrary.PRICE_PRECISION);
         } else {
             return collateral_token.balanceOf(address(this))
                 .sub(unclaimedPoolCollateral)
                 .mul(10 ** missing_decimals)
                 .mul(getCollateralPrice_d12())
-                .div(PRICE_PRECISION);
+                .div(BdPoolLibrary.PRICE_PRECISION);
         }
     }
 
@@ -199,7 +184,7 @@ contract BdStablePool is Initializable {
         uint256 globalCR = BDSTABLE.global_collateral_ratio_d12();
 
         require(
-            globalCR >= COLLATERAL_RATIO_MAX,
+            globalCR >= BdPoolLibrary.COLLATERAL_RATIO_MAX,
             "Collateral ratio must be >= 1"
         );
         
@@ -216,7 +201,7 @@ contract BdStablePool is Initializable {
                 collateral_amount_d18
             ); //1 BD for each $1/€1/etc worth of collateral
 
-        bd_amount_d18 = (bd_amount_d18.mul(uint256(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION); //remove precision at the end
+        bd_amount_d18 = (bd_amount_d18.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION); //remove precision at the end
         require(BD_out_min <= bd_amount_d18, "Slippage limit reached");
 
         collateral_token.transferFrom(
@@ -236,19 +221,19 @@ contract BdStablePool is Initializable {
         BDSTABLE.refreshCollateralRatio();
 
         require(
-            BDSTABLE.global_collateral_ratio_d12() == COLLATERAL_RATIO_MAX,
+            BDSTABLE.global_collateral_ratio_d12() == BdPoolLibrary.COLLATERAL_RATIO_MAX,
             "Collateral ratio must be == 1"
         );
 
         // Need to adjust for decimals of collateral
         uint256 col_price_d12 = getCollateralPrice_d12();
         uint256 effective_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
-        uint256 cr_d12 = effective_collateral_ratio_d12 > COLLATERAL_RATIO_MAX ? COLLATERAL_RATIO_MAX : effective_collateral_ratio_d12;
-        uint256 collateral_needed = BD_amount.mul(PRICE_PRECISION).mul(cr_d12).div(PRICE_PRECISION).div(col_price_d12);
+        uint256 cr_d12 = effective_collateral_ratio_d12 > BdPoolLibrary.COLLATERAL_RATIO_MAX ? BdPoolLibrary.COLLATERAL_RATIO_MAX : effective_collateral_ratio_d12;
+        uint256 collateral_needed = BD_amount.mul(BdPoolLibrary.PRICE_PRECISION).mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION).div(col_price_d12);
 
         collateral_needed = (
-            collateral_needed.mul(uint256(PRICE_PRECISION).sub(redemption_fee))
-        ).div(PRICE_PRECISION);
+            collateral_needed.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))
+        ).div(BdPoolLibrary.PRICE_PRECISION);
 
         require(
             collateral_needed <=
@@ -294,7 +279,7 @@ contract BdStablePool is Initializable {
 
         (uint256 bdStable_amount_d18) = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_amount_d18);
 
-        bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION);
+        bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
         require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
 
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_amount_d18);
@@ -312,9 +297,9 @@ contract BdStablePool is Initializable {
         require(global_collateral_ratio_d12 == 0, "Collateral ratio must be 0"); 
         uint256 bdx_fiat_value_d18 = bdStable_amount;
 
-        bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION); //apply fees
+        bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(BdPoolLibrary.PRICE_PRECISION); //apply fees
 
-        uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(bdx_price);
+        uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(bdx_price);
         bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
         
         if(bdx_amount > 0){
@@ -353,7 +338,7 @@ contract BdStablePool is Initializable {
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
 
-        require(global_collateral_ratio_d12 < COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0, 
+        require(global_collateral_ratio_d12 < BdPoolLibrary.COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0, 
             "Collateral ratio needs to be between .000001 and .999999");
         
         require(
@@ -364,17 +349,15 @@ contract BdStablePool is Initializable {
         );
 
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
-        BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
+
+        (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(
             bdx_price,
             getCollateralPrice_d12(),
-            bdx_in_max,
             collateral_amount_d18,
             global_collateral_ratio_d12
         );
 
-        (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(input_params);
-
-        mint_amount = (mint_amount.mul(uint(PRICE_PRECISION).sub(minting_fee))).div(PRICE_PRECISION);
+        mint_amount = (mint_amount.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
 
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
 
@@ -395,7 +378,7 @@ contract BdStablePool is Initializable {
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
 
         require(    
-            global_collateral_ratio_d12 < COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0,
+            global_collateral_ratio_d12 < BdPoolLibrary.COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0,
             "Collateral ratio needs to be between .000001 and .999999");
 
         uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
@@ -404,19 +387,19 @@ contract BdStablePool is Initializable {
             ? effective_global_collateral_ratio_d12
             : global_collateral_ratio_d12;
 
-        uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(PRICE_PRECISION).sub(redemption_fee))).div(PRICE_PRECISION);
+        uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(BdPoolLibrary.PRICE_PRECISION);
 
         uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(
-                BdStable_amount_post_fee.mul(cr_d12).div(PRICE_PRECISION)
+                BdStable_amount_post_fee.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION)
             );
 
-        uint256 bdx_amount = bdx_fiat_value_d18.mul(PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
+        uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
         bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
-        uint256 collateral_fiat_value = BdStable_amount_precision.mul(cr_d12).div(PRICE_PRECISION);
-        uint256 collateral_needed = collateral_fiat_value.mul(PRICE_PRECISION).div(getCollateralPrice_d12());
+        uint256 collateral_fiat_value = BdStable_amount_precision.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION);
+        uint256 collateral_needed = collateral_fiat_value.mul(BdPoolLibrary.PRICE_PRECISION).div(getCollateralPrice_d12());
 
         require(collateral_needed <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
         require(COLLATERAL_out_min <= collateral_needed, "Slippage limit reached [collateral]");
@@ -533,7 +516,7 @@ contract BdStablePool is Initializable {
 
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
-        uint256 bdx_paid_back = amount_to_recollat.mul(uint(PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
+        uint256 bdx_paid_back = amount_to_recollat.mul(uint(BdPoolLibrary.PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
         bdx_paid_back = howMuchBdxCanBeMinted(bdx_paid_back);
         
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
@@ -560,14 +543,12 @@ contract BdStablePool is Initializable {
         
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
     
-        BdPoolLibrary.BuybackBDX_Params memory input_params = BdPoolLibrary.BuybackBDX_Params(
+        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(
             availableExcessCollatDV(),
             bdx_price,
             getCollateralPrice_d12(),
             BDX_amount
-        );
-
-        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(input_params).mul(uint(PRICE_PRECISION).sub(buyback_fee)).div(PRICE_PRECISION);
+        ).mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(buyback_fee)).div(BdPoolLibrary.PRICE_PRECISION);
 
         uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
 
@@ -589,7 +570,6 @@ contract BdStablePool is Initializable {
         external
         onlyByOwner 
     {
-        collat_weth_oracle_address = _collateral_weth_oracle_address;
         collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
 

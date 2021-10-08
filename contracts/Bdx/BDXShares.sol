@@ -94,5 +94,5 @@ contract BDXShares is ERC20Custom, Initializable {
     event OwnerSet(address indexed newOwner);
     event BdxBurned(address indexed from, address indexed to, address bd_stable, uint256 indexed amount);
     event BdxMinted(address indexed from, address indexed to, address bd_stable, uint256 indexed amount);
-    event BdStableAddressAdded(address addr);
+    event BdStableAddressAdded(address indexed addr);
 }

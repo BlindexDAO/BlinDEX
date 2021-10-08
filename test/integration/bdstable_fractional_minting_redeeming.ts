@@ -239,8 +239,6 @@ describe("BDStable fractional", () => {
 
         await lockBdEuCrAt(hre, cr);   
 
-        // setup bdEu so it's illegal to redeem for testUser
-
         const wethInEurPrice_d12 = await bdEuPool.getCollateralPrice_d12();
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
 
@@ -248,8 +246,8 @@ describe("BDStable fractional", () => {
         await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
         await weth.connect(testUser).deposit({ value: to_d18(100) });
 
+        // setup bdEu so it's illegal to redeem for testUser
         await performFractionalMinting(testUser, to_d18(0.1), to_d18(100));   
-
         await bdEu.setMinimumSwapsDelayInBlocks(100);
         // setup finished
 

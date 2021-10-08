@@ -122,9 +122,7 @@ describe("BDStable 1to1", () => {
         const bdEuToRedeem =  to_d18(100);
 
         const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
-
         expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
-
         const expectedWethFromRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12)
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
@@ -182,10 +180,12 @@ describe("BDStable 1to1", () => {
 
         await lockBdEuCrAt(hre, 1);
         
-        // setup bdEu so it's illegal to redeem for testUser
         const collateralAmount = 0.1;
+        
+        // setup bdEu so it's illegal to redeem for testUser
         await perform1To1MintingForWeth(hre, testUser, collateralAmount);
-        await bdEu.setMinimumSwapsDelayInBlocks(100);
+        await bdEu.setMinimumSwapsDelayInBlocks(100); 
+        // setup finished
 
         const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
@@ -200,16 +200,12 @@ describe("BDStable 1to1", () => {
         const bdEuToRedeem =  to_d18(100);
 
         const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
+        const usedCr = efCr_d12 > to_d12(1) ? to_d12(1) : efCr_d12;
+        let expectedWethForRedeem = bdEuToRedeem.mul(usedCr).div(1e12).mul(1e12).div(ethInEurPrice_1e12);
+        expectedWethForRedeem = expectedWethForRedeem.mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
-        expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
-
-        const expectedWethForRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12);
-        
         const expectedWethForRedeemUser = expectedWethForRedeem.div(10)
-            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
-
         const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10)
-            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
         await bdEuPool.connect(testUser).collectRedemption();
@@ -241,8 +237,8 @@ describe("BDStable 1to1", () => {
 
         expect(bdEuBalanceBeforeRedeem).to.be.gt(0);
         expect(bdEuDelta).to.eq(d18_ToNumber(bdEuToRedeem), "unexpected bdeu delta");
-        expect(wethDelta).to.be.closeTo(d18_ToNumber(expectedWethForRedeemUser), 1e-6, "unexpected weth delta (user)");
-        expect(wethDeltaTreasury).to.be.closeTo(d18_ToNumber(expectedWethForRedeemTreasury), 1e-6, "unexpected weth delta (treasury)");
+        expect(wethDelta).to.be.closeTo(d18_ToNumber(expectedWethForRedeemUser), 1e-3, "unexpected weth delta (user)");
+        expect(wethDeltaTreasury).to.be.closeTo(d18_ToNumber(expectedWethForRedeemTreasury), 1e-3, "unexpected weth delta (treasury)");
     });
 
 })
