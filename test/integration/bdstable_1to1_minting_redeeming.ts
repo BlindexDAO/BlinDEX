@@ -202,11 +202,7 @@ describe("BDStable 1to1", () => {
         const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
         const usedCr = efCr_d12 > to_d12(1) ? to_d12(1) : efCr_d12;
         let expectedWethForRedeem = bdEuToRedeem.mul(usedCr).div(1e12).mul(1e12).div(ethInEurPrice_1e12);
-        
-        console.log("ethInEurPrice_1e12: " + ethInEurPrice_1e12);
-        console.log("expectedWethForRedeem1: " + expectedWethForRedeem);
         expectedWethForRedeem = expectedWethForRedeem.mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
-        console.log("expectedWethForRedeem2: " + expectedWethForRedeem);
 
         const expectedWethForRedeemUser = expectedWethForRedeem.div(10)
         const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10)
