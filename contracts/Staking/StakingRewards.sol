@@ -4,6 +4,8 @@ pragma experimental ABIEncoderV2;
 
 // Modified from Synthetixio
 // https://raw.githubusercontent.com/Synthetixio/synthetix/develop/contracts/StakingRewards.sol
+// Then modified from FRAX
+// https://github.com/blindexgit/BlinDEX/blob/551b521/contracts/Staking/StakingRewards.sol
 
 import "../Math/Math.sol";
 import "../Math/SafeMath.sol";
@@ -27,7 +29,7 @@ contract StakingRewards is
     // Constant for various precisions
     uint256 public constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
-    uint256 public constant REWARD_PRECISON = 1e18;
+    uint256 public constant REWARD_PRECISION = 1e18;
 
     uint256 private DeploymentTimestamp;
 
@@ -49,9 +51,9 @@ contract StakingRewards is
     uint256 public rewardsDurationSeconds;
 
     uint256 public lastUpdateTime; // time when recent reward per token has been calculated
-    uint256 public rewardPerTokenStored_REWARD_PRECISON;
+    uint256 public rewardPerTokenStored_REWARD_PRECISION;
 
-    mapping(address => uint256) public userRewardPerTokenPaid_REWARD_PRECISON;
+    mapping(address => uint256) public userRewardPerTokenPaid_REWARD_PRECISION;
     mapping(address => uint256) public rewards;
 
     uint256 private _staking_token_supply;
@@ -159,25 +161,20 @@ contract StakingRewards is
         return stakingToken.decimals();
     }
 
-    function rewardsFor(address account) external view returns (uint256) {
-        // You may have use earned() instead, because of the order in which the contract executes 
-        return rewards[account];
-    }
-
     function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
 
     function rewardPerToken() public view returns (uint256) {
         if (_staking_token_supply == 0) {
-            return rewardPerTokenStored_REWARD_PRECISON;
+            return rewardPerTokenStored_REWARD_PRECISION;
         }
         else {
-            return rewardPerTokenStored_REWARD_PRECISON
+            return rewardPerTokenStored_REWARD_PRECISION
                 .add(lastTimeRewardApplicable()
                     .sub(lastUpdateTime)
                     .mul(stakingRewardsDistribution.getRewardRatePerSecond(address(this)))
-                    .mul(REWARD_PRECISON)
+                    .mul(REWARD_PRECISION)
                     .div(_staking_token_boosted_supply));
         }
     }
@@ -186,8 +183,8 @@ contract StakingRewards is
         return _boosted_balances[account]
             .mul(
                 rewardPerToken()
-                .sub(userRewardPerTokenPaid_REWARD_PRECISON[account]))
-            .div(REWARD_PRECISON)
+                .sub(userRewardPerTokenPaid_REWARD_PRECISION[account]))
+            .div(REWARD_PRECISION)
             .add(rewards[account]);
     }
 
@@ -203,9 +200,6 @@ contract StakingRewards is
         require(amount > 0, "Cannot stake 0");
         require(greylist[msg.sender] == false, "address has been greylisted");
 
-        // Pull the tokens from the staker
-        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
-
         // Staking token supply and boosted supply
         _staking_token_supply = _staking_token_supply.add(amount);
         _staking_token_boosted_supply = _staking_token_boosted_supply.add(amount);
@@ -213,6 +207,9 @@ contract StakingRewards is
         // Staking token balance and boosted balance
         _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender].add(amount);
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(amount);
+
+        // Pull the tokens from the staker
+        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
 
         emit Staked(msg.sender, amount);
     }
@@ -245,9 +242,6 @@ contract StakingRewards is
             multiplier
         ));
 
-        // Pull the tokens from the staker
-        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
-
         // Staking token supply and boosted supply
         _staking_token_supply = _staking_token_supply.add(amount);
         _staking_token_boosted_supply = _staking_token_boosted_supply.add(boostedAmount);
@@ -255,6 +249,9 @@ contract StakingRewards is
         // Staking token balance and boosted balance
         _locked_balances[msg.sender] = _locked_balances[msg.sender].add(amount);
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
+
+        // Pull the tokens from the staker
+        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
 
         emit StakeLocked(msg.sender, amount, secs);
     }
@@ -344,7 +341,7 @@ contract StakingRewards is
 
         periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
 
-        rewardPerTokenStored_REWARD_PRECISON = rewardPerToken();
+        rewardPerTokenStored_REWARD_PRECISION = rewardPerToken();
 
         lastUpdateTime = lastTimeRewardApplicable();
 
@@ -370,11 +367,11 @@ contract StakingRewards is
         emit RewardsDurationUpdated(rewardsDurationSeconds);
     }
 
-    function greylistAddress(address _address) external onlyByOwner {
-        greylist[_address] = !(greylist[_address]);
+    function setIsAddressGraylisted(address _address, bool isGraylisted) external onlyByOwner {
+        greylist[_address] = isGraylisted;
     }
 
-    function unlockStakes() external onlyByOwner {
+    function toggleUnlockStakes() external onlyByOwner {
         unlockedStakes = !unlockedStakes;
     }
 
@@ -391,13 +388,13 @@ contract StakingRewards is
             retroCatchUp();
         }
         else {
-            rewardPerTokenStored_REWARD_PRECISON = rewardPerToken();
+            rewardPerTokenStored_REWARD_PRECISION = rewardPerToken();
             lastUpdateTime = lastTimeRewardApplicable();
         }
 
         if (account != address(0)) {
             rewards[account] = earned(account);
-            userRewardPerTokenPaid_REWARD_PRECISON[account] = rewardPerTokenStored_REWARD_PRECISON;
+            userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
         }
         _;
     }

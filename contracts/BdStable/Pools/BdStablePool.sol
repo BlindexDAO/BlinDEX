@@ -15,18 +15,12 @@ contract BdStablePool is Initializable {
 
     /* ========== STATE VARIABLES ========== */
 
-    ERC20 public collateral_token;
-    address private collateral_address;
-    address private owner_address;
-
-    address private bdstable_contract_address;
-    address private bdx_contract_address;
-
+    ERC20 private collateral_token;
     BDXShares private BDX;
     BDStable private BDSTABLE;
-
     ICryptoPairOracle private collatWEthOracle;
-    address public collat_weth_oracle_address;
+
+    address public owner_address;
     
     uint256 private missing_decimals; // Number of decimals needed to get to 18
     address private weth_address;
@@ -93,15 +87,11 @@ contract BdStablePool is Initializable {
     {
         BDSTABLE = BDStable(_bdstable_contract_address);
         BDX = BDXShares(_bdx_contract_address);
-        bdstable_contract_address = _bdstable_contract_address;
-        bdx_contract_address = _bdx_contract_address;
-        collateral_address = _collateral_address;
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
         missing_decimals = uint256(18).sub(collateral_token.decimals());
 
         pool_ceiling = 1e36; // d18
-        pausedPrice = 0;
         bonus_rate = 7500000000; // d12 0.75%
         redemption_delay = 1;
         minting_fee = 3000000000; // d12 0.3%
@@ -359,15 +349,13 @@ contract BdStablePool is Initializable {
         );
 
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
-        BdPoolLibrary.MintFBD_Params memory input_params = BdPoolLibrary.MintFBD_Params(
+
+        (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(
             bdx_price,
             getCollateralPrice_d12(),
-            bdx_in_max,
             collateral_amount_d18,
             global_collateral_ratio_d12
         );
-
-        (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(input_params);
 
         mint_amount = (mint_amount.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
 
@@ -555,14 +543,12 @@ contract BdStablePool is Initializable {
         
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
     
-        BdPoolLibrary.BuybackBDX_Params memory input_params = BdPoolLibrary.BuybackBDX_Params(
+        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(
             availableExcessCollatDV(),
             bdx_price,
             getCollateralPrice_d12(),
             BDX_amount
-        );
-
-        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(input_params).mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(buyback_fee)).div(BdPoolLibrary.PRICE_PRECISION);
+        ).mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(buyback_fee)).div(BdPoolLibrary.PRICE_PRECISION);
 
         uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
 
@@ -584,7 +570,6 @@ contract BdStablePool is Initializable {
         external
         onlyByOwner 
     {
-        collat_weth_oracle_address = _collateral_weth_oracle_address;
         collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
 
