@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "../../Math/SafeMath.sol";
 import "../../Bdx/BDXShares.sol";
 import "../../BdStable/BDStable.sol";
-import "../../ERC20/ERC20.sol";
+import '../../Uniswap/TransferHelper.sol';
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
@@ -204,7 +204,8 @@ contract BdStablePool is Initializable {
         bd_amount_d18 = (bd_amount_d18.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION); //remove precision at the end
         require(BD_out_min <= bd_amount_d18, "Slippage limit reached");
 
-        collateral_token.transferFrom(
+        TransferHelper.safeTransferFrom(
+            address(collateral_token),
             msg.sender,
             address(this),
             collateral_amount
@@ -365,7 +366,7 @@ contract BdStablePool is Initializable {
 
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_needed);
 
-        collateral_token.transferFrom(msg.sender, address(this), collateral_amount);
+        TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_amount);
         BDSTABLE.pool_mint(msg.sender, mint_amount);
     }
 
@@ -479,10 +480,10 @@ contract BdStablePool is Initializable {
         }
 
         if (sendBDX == true) {
-            BDX.transfer(msg.sender, BDXAmount);
+            TransferHelper.safeTransfer(address(BDX), msg.sender, BDXAmount);
         }
         if (sendCollateral == true) {
-            collateral_token.transfer(msg.sender, CollateralAmount);
+            TransferHelper.safeTransfer(address(collateral_token), msg.sender, CollateralAmount);
         }
     }
 
@@ -521,7 +522,7 @@ contract BdStablePool is Initializable {
         
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
-        collateral_token.transferFrom(msg.sender, address(this), collateral_units_precision);
+        TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);
 
         if(bdx_paid_back > 0){
             BDX.mint(address(BDSTABLE), msg.sender, bdx_paid_back);
@@ -556,7 +557,7 @@ contract BdStablePool is Initializable {
         
         // Give the sender their desired collateral and burn the BDX
         BDX.pool_burn_from(address(BDSTABLE), msg.sender, BDX_amount);
-        collateral_token.transfer(msg.sender, collateral_precision);
+        TransferHelper.safeTransfer(address(collateral_token), msg.sender, collateral_precision);
 
         emit BoughtBack(BDX_amount, collateral_precision);
     }
