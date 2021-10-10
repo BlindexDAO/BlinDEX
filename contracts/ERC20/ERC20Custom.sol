@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
-import "../Common/Context.sol";
-import "./IERC20.sol";
-import "../Math/SafeMath.sol";
-import "../Utils/Address.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 // Due to compiling issues, _name, _symbol, and _decimals were removed
 

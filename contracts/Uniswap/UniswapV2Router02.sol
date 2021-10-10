@@ -8,8 +8,8 @@ import './Interfaces/IUniswapV2Router02.sol';
 import './Interfaces/IUniswapV2PairOracle.sol';
 import './UniswapV2Library.sol';
 import './UniswapV2Pair.sol';
-import '../Math/SafeMath.sol';
-import '../ERC20/IERC20.sol';
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import '../ERC20/IWETH.sol';
 
 contract UniswapV2Router02 is IUniswapV2Router02 {
