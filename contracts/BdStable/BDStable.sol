@@ -114,6 +114,10 @@ contract BDStable is ERC20Custom, Initializable {
 
     /* ========== VIEWS ========== */
 
+    function getBdStablesPoolsLength() public view returns (uint256) {
+        return bdstable_pools_array.length;
+    }
+
     // collateral value in fiat corresponding to the stable
     // Iterate through all bd pools and calculate all value of collateral in all pools globally 
     function globalCollateralValue() public view returns (uint256) {

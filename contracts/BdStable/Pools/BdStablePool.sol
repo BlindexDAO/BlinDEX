@@ -19,6 +19,7 @@ contract BdStablePool is Initializable {
     BDXShares private BDX;
     BDStable private BDSTABLE;
     ICryptoPairOracle private collatWEthOracle;
+    address public collateral_address;
 
     address public owner_address;
     
@@ -87,6 +88,7 @@ contract BdStablePool is Initializable {
     {
         BDSTABLE = BDStable(_bdstable_contract_address);
         BDX = BDXShares(_bdx_contract_address);
+        collateral_address = _collateral_address;
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
         missing_decimals = uint256(18).sub(collateral_token.decimals());
