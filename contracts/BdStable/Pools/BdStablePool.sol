@@ -19,7 +19,7 @@ contract BdStablePool is Initializable {
     BDXShares private BDX;
     BDStable private BDSTABLE;
     ICryptoPairOracle private collatWEthOracle;
-    address public collateral_address;
+    address public collateral_address; // Required by frontend - frontend needs to know what collateral is used to mint
 
     address public owner_address;
     
