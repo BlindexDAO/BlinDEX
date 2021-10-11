@@ -1,0 +1,132 @@
+{
+  "address": "0x01491fDC66c83eb5fB1D554947B79FB55E9458f3",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_fiatToUsdFeedAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_cryptUsdFeedAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenIn",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        }
+      ],
+      "name": "consult",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getDecimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPrice_1e12",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xc0afed83a070b1c39823773758bc449d8e4d52180a62b9dda72843b153820c6a",
+  "receipt": {
+    "to": null,
+    "from": "0x774289Cb40c98B4f5b64a152BF7e5F94Fee38669",
+    "contractAddress": "0x01491fDC66c83eb5fB1D554947B79FB55E9458f3",
+    "transactionIndex": 3,
+    "gasUsed": "411928",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xd33a0464aee4bd6c8247f94c4b376360bfe2f0abed879b9d1496314faefbf078",
+    "transactionHash": "0xc0afed83a070b1c39823773758bc449d8e4d52180a62b9dda72843b153820c6a",
+    "logs": [],
+    "blockNumber": 27646132,
+    "cumulativeGasUsed": "594741",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x0c15Ab9A0DB086e062194c273CC79f41597Bbf13",
+    "0x9326BFA02ADD2366b30bacB125260Af641031331"
+  ],
+  "solcInputHash": "7fc5f7df362effb291697cb25232d91e",
+  "metadata": "{\"compiler\":{\"version\":\"0.6.11+commit.5ef660b1\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_fiatToUsdFeedAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_cryptUsdFeedAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"}],\"name\":\"consult\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getDecimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getPrice_1e12\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/Oracle/ChainlinkBasedCryptoFiatFeed.sol\":\"ChainlinkBasedCryptoFiatFeed\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/Math/SafeMath.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity 0.6.11;\\n\\n/**\\n * @dev Wrappers over Solidity's arithmetic operations with added overflow\\n * checks.\\n *\\n * Arithmetic operations in Solidity wrap on overflow. This can easily result\\n * in bugs, because programmers usually assume that an overflow raises an\\n * error, which is the standard behavior in high level programming languages.\\n * `SafeMath` restores this intuition by reverting the transaction when an\\n * operation overflows.\\n *\\n * Using this library instead of the unchecked operations eliminates an entire\\n * class of bugs, so it's recommended to use it always.\\n */\\nlibrary SafeMath {\\n    /**\\n     * @dev Returns the addition of two unsigned integers, reverting on\\n     * overflow.\\n     *\\n     * Counterpart to Solidity's `+` operator.\\n     *\\n     * Requirements:\\n     * - Addition cannot overflow.\\n     */\\n    function add(uint256 a, uint256 b) internal pure returns (uint256) {\\n        uint256 c = a + b;\\n        require(c >= a, \\\"SafeMath: addition overflow\\\");\\n\\n        return c;\\n    }\\n\\n    /**\\n     * @dev Returns the subtraction of two unsigned integers, reverting on\\n     * overflow (when the result is negative).\\n     *\\n     * Counterpart to Solidity's `-` operator.\\n     *\\n     * Requirements:\\n     * - Subtraction cannot overflow.\\n     */\\n    function sub(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return sub(a, b, \\\"SafeMath: subtraction overflow\\\");\\n    }\\n\\n    /**\\n     * @dev Returns the subtraction of two unsigned integers, reverting with custom message on\\n     * overflow (when the result is negative).\\n     *\\n     * Counterpart to Solidity's `-` operator.\\n     *\\n     * Requirements:\\n     * - Subtraction cannot overflow.\\n     *\\n     * _Available since v2.4.0._\\n     */\\n    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {\\n        require(b <= a, errorMessage);\\n        uint256 c = a - b;\\n\\n        return c;\\n    }\\n\\n    /**\\n     * @dev Returns the multiplication of two unsigned integers, reverting on\\n     * overflow.\\n     *\\n     * Counterpart to Solidity's `*` operator.\\n     *\\n     * Requirements:\\n     * - Multiplication cannot overflow.\\n     */\\n    function mul(uint256 a, uint256 b) internal pure returns (uint256) {\\n        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the\\n        // benefit is lost if 'b' is also tested.\\n        // See: https://github.com/OpenZeppelin/openzeppelin-contracts/pull/522\\n        if (a == 0) {\\n            return 0;\\n        }\\n\\n        uint256 c = a * b;\\n        require(c / a == b, \\\"SafeMath: multiplication overflow\\\");\\n\\n        return c;\\n    }\\n\\n    /**\\n     * @dev Returns the integer division of two unsigned integers. Reverts on\\n     * division by zero. The result is rounded towards zero.\\n     *\\n     * Counterpart to Solidity's `/` operator. Note: this function uses a\\n     * `revert` opcode (which leaves remaining gas untouched) while Solidity\\n     * uses an invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     * - The divisor cannot be zero.\\n     */\\n    function div(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return div(a, b, \\\"SafeMath: division by zero\\\");\\n    }\\n\\n    /**\\n     * @dev Returns the integer division of two unsigned integers. Reverts with custom message on\\n     * division by zero. The result is rounded towards zero.\\n     *\\n     * Counterpart to Solidity's `/` operator. Note: this function uses a\\n     * `revert` opcode (which leaves remaining gas untouched) while Solidity\\n     * uses an invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     * - The divisor cannot be zero.\\n     *\\n     * _Available since v2.4.0._\\n     */\\n    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {\\n        // Solidity only automatically asserts when dividing by 0\\n        require(b > 0, errorMessage);\\n        uint256 c = a / b;\\n        // assert(a == b * c + a % b); // There is no case in which this doesn't hold\\n\\n        return c;\\n    }\\n\\n    /**\\n     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),\\n     * Reverts when dividing by zero.\\n     *\\n     * Counterpart to Solidity's `%` operator. This function uses a `revert`\\n     * opcode (which leaves remaining gas untouched) while Solidity uses an\\n     * invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     * - The divisor cannot be zero.\\n     */\\n    function mod(uint256 a, uint256 b) internal pure returns (uint256) {\\n        return mod(a, b, \\\"SafeMath: modulo by zero\\\");\\n    }\\n\\n    /**\\n     * @dev Returns the remainder of dividing two unsigned integers. (unsigned integer modulo),\\n     * Reverts with custom message when dividing by zero.\\n     *\\n     * Counterpart to Solidity's `%` operator. This function uses a `revert`\\n     * opcode (which leaves remaining gas untouched) while Solidity uses an\\n     * invalid opcode to revert (consuming all remaining gas).\\n     *\\n     * Requirements:\\n     * - The divisor cannot be zero.\\n     *\\n     * _Available since v2.4.0._\\n     */\\n    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {\\n        require(b != 0, errorMessage);\\n        return a % b;\\n    }\\n}\",\"keccak256\":\"0xd59454f079791fa65de99df4f72d7efc0443657dacff0a1e41fcd0542bb5ee71\",\"license\":\"MIT\"},\"contracts/Oracle/AggregatorV3Interface.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity >=0.6.11;\\n\\ninterface AggregatorV3Interface {\\n\\n  function decimals() external view returns (uint8);\\n  function description() external view returns (string memory);\\n  function version() external view returns (uint256);\\n\\n  // getRoundData and latestRoundData should both raise \\\"No data present\\\"\\n  // if they do not have data to report, instead of returning unset values\\n  // which could be misinterpreted as actual reported values.\\n  function getRoundData(uint80 _roundId)\\n    external\\n    view\\n    returns (\\n      uint80 roundId,\\n      int256 answer,\\n      uint256 startedAt,\\n      uint256 updatedAt,\\n      uint80 answeredInRound\\n    );\\n  function latestRoundData()\\n    external\\n    view\\n    returns (\\n      uint80 roundId,\\n      int256 answer,\\n      uint256 startedAt,\\n      uint256 updatedAt,\\n      uint80 answeredInRound\\n    );\\n\\n}\",\"keccak256\":\"0xc6488af0275766b27cbbadec4770df11b2ff2c149bd3121ecf487f724d7a69cf\",\"license\":\"MIT\"},\"contracts/Oracle/ChainlinkBasedCryptoFiatFeed.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity 0.6.11;\\r\\n\\r\\nimport \\\"./AggregatorV3Interface.sol\\\";\\r\\nimport \\\"./IChainlinkBasedCryptoFiatFeed.sol\\\";\\r\\nimport \\\"../Math/SafeMath.sol\\\";\\r\\n\\r\\ncontract ChainlinkBasedCryptoFiatFeed is IChainlinkBasedCryptoFiatFeed {\\r\\n    using SafeMath for uint256;\\r\\n\\r\\n    AggregatorV3Interface internal fiatToUsdFeed;\\r\\n    AggregatorV3Interface internal cryptoToUsdFeed;\\r\\n    \\r\\n    constructor(address _fiatToUsdFeedAddress, address _cryptUsdFeedAddress) public {\\r\\n        fiatToUsdFeed = AggregatorV3Interface(_fiatToUsdFeedAddress);\\r\\n        cryptoToUsdFeed = AggregatorV3Interface(_cryptUsdFeedAddress);\\r\\n    }\\r\\n\\r\\n    function getPrice_1e12() override public view returns (uint256) {\\r\\n        uint256 fiatUsdPrice = getLatestPrice(fiatToUsdFeed);\\r\\n        uint256 cryptoUsdPrice = getLatestPrice(cryptoToUsdFeed);\\r\\n\\r\\n        return uint256(1e12)\\r\\n            .mul(cryptoUsdPrice)\\r\\n            .mul(uint256(10)**fiatToUsdFeed.decimals())\\r\\n            .div(fiatUsdPrice)\\r\\n            .div(uint256(10)**cryptoToUsdFeed.decimals());\\r\\n    }\\r\\n\\r\\n    function consult(address tokenIn, uint amountIn) external view returns (uint256) {     \\r\\n        require(tokenIn == address(cryptoToUsdFeed), \\\"This oracle only accepts consulting crypto input\\\");\\r\\n\\r\\n        return getPrice_1e12().mul(amountIn).div(1e12);\\r\\n    }\\r\\n\\r\\n    function getLatestPrice(AggregatorV3Interface _feed) internal view returns (uint256) {\\r\\n        (\\r\\n            , \\r\\n            int256 price,\\r\\n            ,\\r\\n            ,\\r\\n            \\r\\n        ) = _feed.latestRoundData();\\r\\n        return uint256(price);\\r\\n    }\\r\\n    \\r\\n    function getDecimals() override public view returns (uint8) {\\r\\n        return 12 + fiatToUsdFeed.decimals() - cryptoToUsdFeed.decimals();\\r\\n    }\\r\\n}\",\"keccak256\":\"0x0a37c188f86bcf86244cc3f4eb488b9d2076afa34c9de7a83137f91bfbe447a5\",\"license\":\"MIT\"},\"contracts/Oracle/IChainlinkBasedCryptoFiatFeed.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity 0.6.11;\\r\\n\\r\\nimport \\\"./AggregatorV3Interface.sol\\\";\\r\\nimport \\\"../Math/SafeMath.sol\\\";\\r\\n\\r\\ninterface IChainlinkBasedCryptoFiatFeed {\\r\\n    \\r\\n    function getPrice_1e12() external view returns (uint256);\\r\\n    function getDecimals() external view returns (uint8);\\r\\n}\",\"keccak256\":\"0xd46ea6431d5ff51898e16acc51cc728004901442699397dd3fa7458d979c85d3\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516106203803806106208339818101604052604081101561003357600080fd5b508051602090910151600080546001600160a01b039384166001600160a01b031991821617909155600180549390921692169190911790556105a68061007a6000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80633ddac95314610046578063f0141d8414610084578063f245a92f146100a2575b600080fd5b6100726004803603604081101561005c57600080fd5b506001600160a01b0381351690602001356100aa565b60408051918252519081900360200190f35b61008c61012f565b6040805160ff9092168252519081900360200190f35b61007261021a565b6001546000906001600160a01b038481169116146100f95760405162461bcd60e51b81526004018080602001828103825260308152602001806105206030913960400191505060405180910390fd5b61012664e8d4a5100061011a8461010e61021a565b9063ffffffff61037016565b9063ffffffff6103c916565b90505b92915050565b6001546040805163313ce56760e01b815290516000926001600160a01b03169163313ce567916004808301926020929190829003018186803b15801561017457600080fd5b505afa158015610188573d6000803e3d6000fd5b505050506040513d602081101561019e57600080fd5b50516000546040805163313ce56760e01b815290516001600160a01b039092169163313ce56791600480820192602092909190829003018186803b1580156101e557600080fd5b505afa1580156101f9573d6000803e3d6000fd5b505050506040513d602081101561020f57600080fd5b505103600c01905090565b600080548190610232906001600160a01b031661040b565b60015490915060009061024d906001600160a01b031661040b565b9050610369600160009054906101000a90046001600160a01b03166001600160a01b031663313ce5676040518163ffffffff1660e01b815260040160206040518083038186803b1580156102a057600080fd5b505afa1580156102b4573d6000803e3d6000fd5b505050506040513d60208110156102ca57600080fd5b50516000546040805163313ce56760e01b8152905160ff909316600a0a9261011a92879284926001600160a01b039092169163313ce56791600480820192602092909190829003018186803b15801561032257600080fd5b505afa158015610336573d6000803e3d6000fd5b505050506040513d602081101561034c57600080fd5b505160ff16600a0a61010e64e8d4a510008863ffffffff61037016565b9250505090565b60008261037f57506000610129565b8282028284828161038c57fe5b04146101265760405162461bcd60e51b81526004018080602001828103825260218152602001806105506021913960400191505060405180910390fd5b600061012683836040518060400160405280601a81526020017f536166654d6174683a206469766973696f6e206279207a65726f00000000000081525061047d565b600080826001600160a01b031663feaf968c6040518163ffffffff1660e01b815260040160a06040518083038186803b15801561044757600080fd5b505afa15801561045b573d6000803e3d6000fd5b505050506040513d60a081101561047157600080fd5b50602001519392505050565b600081836105095760405162461bcd60e51b81526004018080602001828103825283818151815260200191508051906020019080838360005b838110156104ce5781810151838201526020016104b6565b50505050905090810190601f1680156104fb5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b50600083858161051557fe5b049594505050505056fe54686973206f7261636c65206f6e6c79206163636570747320636f6e73756c74696e672063727970746f20696e707574536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a2646970667358221220ec40e23823d981460fa8809053fbfac7dff3fb808f3176195f6da97209b27e2264736f6c634300060b0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100415760003560e01c80633ddac95314610046578063f0141d8414610084578063f245a92f146100a2575b600080fd5b6100726004803603604081101561005c57600080fd5b506001600160a01b0381351690602001356100aa565b60408051918252519081900360200190f35b61008c61012f565b6040805160ff9092168252519081900360200190f35b61007261021a565b6001546000906001600160a01b038481169116146100f95760405162461bcd60e51b81526004018080602001828103825260308152602001806105206030913960400191505060405180910390fd5b61012664e8d4a5100061011a8461010e61021a565b9063ffffffff61037016565b9063ffffffff6103c916565b90505b92915050565b6001546040805163313ce56760e01b815290516000926001600160a01b03169163313ce567916004808301926020929190829003018186803b15801561017457600080fd5b505afa158015610188573d6000803e3d6000fd5b505050506040513d602081101561019e57600080fd5b50516000546040805163313ce56760e01b815290516001600160a01b039092169163313ce56791600480820192602092909190829003018186803b1580156101e557600080fd5b505afa1580156101f9573d6000803e3d6000fd5b505050506040513d602081101561020f57600080fd5b505103600c01905090565b600080548190610232906001600160a01b031661040b565b60015490915060009061024d906001600160a01b031661040b565b9050610369600160009054906101000a90046001600160a01b03166001600160a01b031663313ce5676040518163ffffffff1660e01b815260040160206040518083038186803b1580156102a057600080fd5b505afa1580156102b4573d6000803e3d6000fd5b505050506040513d60208110156102ca57600080fd5b50516000546040805163313ce56760e01b8152905160ff909316600a0a9261011a92879284926001600160a01b039092169163313ce56791600480820192602092909190829003018186803b15801561032257600080fd5b505afa158015610336573d6000803e3d6000fd5b505050506040513d602081101561034c57600080fd5b505160ff16600a0a61010e64e8d4a510008863ffffffff61037016565b9250505090565b60008261037f57506000610129565b8282028284828161038c57fe5b04146101265760405162461bcd60e51b81526004018080602001828103825260218152602001806105506021913960400191505060405180910390fd5b600061012683836040518060400160405280601a81526020017f536166654d6174683a206469766973696f6e206279207a65726f00000000000081525061047d565b600080826001600160a01b031663feaf968c6040518163ffffffff1660e01b815260040160a06040518083038186803b15801561044757600080fd5b505afa15801561045b573d6000803e3d6000fd5b505050506040513d60a081101561047157600080fd5b50602001519392505050565b600081836105095760405162461bcd60e51b81526004018080602001828103825283818151815260200191508051906020019080838360005b838110156104ce5781810151838201526020016104b6565b50505050905090810190601f1680156104fb5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b50600083858161051557fe5b049594505050505056fe54686973206f7261636c65206f6e6c79206163636570747320636f6e73756c74696e672063727970746f20696e707574536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a2646970667358221220ec40e23823d981460fa8809053fbfac7dff3fb808f3176195f6da97209b27e2264736f6c634300060b0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 8272,
+        "contract": "contracts/Oracle/ChainlinkBasedCryptoFiatFeed.sol:ChainlinkBasedCryptoFiatFeed",
+        "label": "fiatToUsdFeed",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_contract(AggregatorV3Interface)8137"
+      },
+      {
+        "astId": 8274,
+        "contract": "contracts/Oracle/ChainlinkBasedCryptoFiatFeed.sol:ChainlinkBasedCryptoFiatFeed",
+        "label": "cryptoToUsdFeed",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_contract(AggregatorV3Interface)8137"
+      }
+    ],
+    "types": {
+      "t_contract(AggregatorV3Interface)8137": {
+        "encoding": "inplace",
+        "label": "contract AggregatorV3Interface",
+        "numberOfBytes": "20"
+      }
+    }
+  }
+}
