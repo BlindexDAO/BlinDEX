@@ -4,9 +4,10 @@ pragma solidity 0.6.11;
 
 import './Interfaces/IUniswapV2Pair.sol';
 import './UniswapV2ERC20.sol';
-import '../Math/Math.sol';
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "../Math/Math.sol";
 import '../Math/UQ112x112.sol';
-import '../ERC20/IERC20.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import '../Math/FixedPoint.sol';
 import './Interfaces/IUniswapV2Factory.sol';
 import './Interfaces/IUniswapV2Callee.sol';

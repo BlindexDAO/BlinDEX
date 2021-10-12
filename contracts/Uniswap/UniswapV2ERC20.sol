@@ -2,7 +2,7 @@
 pragma solidity 0.6.11;
 
 import './Interfaces/IUniswapV2ERC20.sol';
-import '../Math/SafeMath.sol';
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract UniswapV2ERC20 is IUniswapV2ERC20 {
     using SafeMath for uint;
