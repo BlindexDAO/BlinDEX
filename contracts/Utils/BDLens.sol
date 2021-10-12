@@ -16,6 +16,7 @@ contract BDLens is OwnableUpgradeable {
     address public StakingRewardsDistribution;
     address[] public BdStables;
     address[] public Stakings;
+    address public PriceFeed_EUR_USD;
 
     function initialize() 
         public
@@ -64,6 +65,13 @@ contract BDLens is OwnableUpgradeable {
         onlyByOwner
     {
         Stakings.push(_staking);
+    }
+
+    function setPriceFeed_EUR_USD(address feed)
+        external
+        onlyByOwner
+    {
+        PriceFeed_EUR_USD = feed;
     }
 
     function BdStablesLength() public view returns (uint256) {

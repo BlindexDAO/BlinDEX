@@ -8,7 +8,7 @@ import "../ERC20/ERC20Custom.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Bdx/BDXShares.sol";
-import "../Oracle/IChainlinkBasedCryptoFiatFeed.sol";
+import "../Oracle/IOracleBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
 import "./Pools/BdPoolLibrary.sol";
@@ -33,7 +33,7 @@ contract BDStable is ERC20Custom, Initializable {
     ICryptoPairOracle bdstableWethOracle;
     ICryptoPairOracle bdxWethOracle;
 
-    IChainlinkBasedCryptoFiatFeed private weth_fiat_pricer;
+    IOracleBasedCryptoFiatFeed private weth_fiat_pricer;
     uint8 private weth_fiat_pricer_decimals;
 
     uint256 public global_collateral_ratio_d12; // 12 decimals of precision
@@ -285,7 +285,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
     
     function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyByOwner {
-        weth_fiat_pricer = IChainlinkBasedCryptoFiatFeed(_eth_fiat_consumer_address);
+        weth_fiat_pricer = IOracleBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals();
         
         emit EthFiatOracleSet(_eth_fiat_consumer_address);

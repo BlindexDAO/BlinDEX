@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
-import "./AggregatorV3Interface.sol";
-import "./IChainlinkBasedCryptoFiatFeed.sol";
+import "./IPriceFeed.sol";
+import "./IOracleBasedCryptoFiatFeed.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract ChainlinkBasedCryptoFiatFeed is IChainlinkBasedCryptoFiatFeed {
+contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
     using SafeMath for uint256;
 
-    AggregatorV3Interface internal fiatToUsdFeed;
-    AggregatorV3Interface internal cryptoToUsdFeed;
+    IPriceFeed internal fiatToUsdFeed;
+    IPriceFeed internal cryptoToUsdFeed;
     
     constructor(address _fiatToUsdFeedAddress, address _cryptUsdFeedAddress) public {
-        fiatToUsdFeed = AggregatorV3Interface(_fiatToUsdFeedAddress);
-        cryptoToUsdFeed = AggregatorV3Interface(_cryptUsdFeedAddress);
+        fiatToUsdFeed = IPriceFeed(_fiatToUsdFeedAddress);
+        cryptoToUsdFeed = IPriceFeed(_cryptUsdFeedAddress);
     }
 
     function getPrice_1e12() override public view returns (uint256) {
-        uint256 fiatUsdPrice = getLatestPrice(fiatToUsdFeed);
-        uint256 cryptoUsdPrice = getLatestPrice(cryptoToUsdFeed);
+        uint256 fiatUsdPrice = fiatToUsdFeed.price();
+        uint256 cryptoUsdPrice = cryptoToUsdFeed.price();
 
         return uint256(1e12)
             .mul(cryptoUsdPrice)
@@ -31,17 +31,6 @@ contract ChainlinkBasedCryptoFiatFeed is IChainlinkBasedCryptoFiatFeed {
         require(tokenIn == address(cryptoToUsdFeed), "This oracle only accepts consulting crypto input");
 
         return getPrice_1e12().mul(amountIn).div(1e12);
-    }
-
-    function getLatestPrice(AggregatorV3Interface _feed) internal view returns (uint256) {
-        (
-            , 
-            int256 price,
-            ,
-            ,
-            
-        ) = _feed.latestRoundData();
-        return uint256(price);
     }
     
     function getDecimals() override public view returns (uint8) {

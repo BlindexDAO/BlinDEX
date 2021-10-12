@@ -182,17 +182,20 @@ const config: HardhatUserConfig = {
     TREASURY: {
       default: 1
     },
-    TEST1: {
+    BOT: {
       default: 2
     },
-    TEST2: {
+    TEST1: {
       default: 3
     },
-    TEST_VESTING_SCHEDULER: {
+    TEST2: {
       default: 4
     },
-    TEST_VESTING_REWARDS_PROVIDER: {
+    TEST_VESTING_SCHEDULER: {
       default: 5
+    },
+    TEST_VESTING_REWARDS_PROVIDER: {
+      default: 6
     }
   }
 };
