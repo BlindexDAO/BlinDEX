@@ -10,6 +10,10 @@ import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 import { BigNumber } from 'ethers';
 import {setUpFunctionalSystem} from "./test/helpers/SystemSetup";
+import {MoneyOnChainPriceFeed__factory} from "./typechain/factories/MoneyOnChainPriceFeed__factory";
+import {MoneyOnChainPriceFeed} from "./typechain/MoneyOnChainPriceFeed";
+import { SSL_OP_ALL } from "constants";
+import { ADDRCONFIG } from "dns";
 
 const fs = require('fs');
 const path = require('path');
@@ -119,6 +123,27 @@ task("test:dir")
           await setUpFunctionalSystem(hre, 1, false);
     });
 
+  task("deploy:mocfeed")
+    .setAction(async (args, hre) => {
+        const [signer] = await hre.ethers.getSigners();
+
+        console.log("Signer: " + signer.address);
+
+        var mocFeed = await new MoneyOnChainPriceFeed__factory(signer).deploy('0x7B19bb8e6c5188eC483b784d6fB5d807a77b21bF');
+        console.log("MOCFeed: " + mocFeed.address);
+        var price = await mocFeed.price();
+        console.log("Price: " + price);
+    });
+
+  task("read:mocfeed")
+    .setAction(async (args, hre) => {
+      const address = "0xAA8aBD2EA15aE6cffD67C91c8e226274DFB0144b";
+      const [signer] = await hre.ethers.getSigners();
+      const mocFeed = MoneyOnChainPriceFeed__factory.connect(address, signer);
+      var price = await mocFeed.price();
+      console.log("Price: " + price);
+  });
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -134,7 +159,8 @@ const config: HardhatUserConfig = {
     },
     mainnetFork: {
       url: 'http://localhost:8545',
-      timeout: 60000
+      timeout: 60000,
+      gas: 10_000_000
     },
     kovan: {
       url: 'https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
@@ -143,6 +169,16 @@ const config: HardhatUserConfig = {
         process.env.USER_TREASURY_PRIVATE_KEY!
       ],
       timeout: 240000
+    },
+    rsk: {
+      url: 'https://public-node.rsk.co',
+      accounts: [
+        process.env.USER_DEPLOYER_PRIVATE_KEY!,
+        process.env.USER_TREASURY_PRIVATE_KEY!,
+        process.env.USER_BOT_PRIVATE_KEY!
+      ],
+      timeout: 6_000_000,
+      gasPrice: 65157483
     },
   },
   solidity: {

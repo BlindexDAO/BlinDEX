@@ -7,6 +7,7 @@
     "deploy:fork": "hardhat --network mainnetFork deploy",
     "deploy:rinkeby": "hardhat --network rinkeby deploy",
     "deploy:kovan": "hardhat --network kovan deploy",
+    "deploy:rsk": "hardhat --network rsk deploy",
     "initialize": "hardhat --network mainnetFork initialize",
     "npm-package": "hardhat --network mainnetFork npm-package",
     "compile": "hardhat compile --config hardhat.compile.config.ts"

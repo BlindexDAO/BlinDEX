@@ -12,7 +12,7 @@ export const wBTC_address = <any>{
     mainnetFork: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     rinkeby: '0xc778417e063141139fce010982780140aa0cd5ab',
     kovan: '0xCf516441828895f47aA02C335b6c0d37F9B7c3C2',
-    rsk: '0x1D931BF8656D795e50Ef6d639562C5bD8AC2b78F', // actually eths, reversed to reflect rbtc native coin
+    rsk: '0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f', // actually eths, reversed to reflect rbtc native coin
 };
 
 export const EUR_USD_FEED_ADDRESS = <any>{
@@ -55,5 +55,6 @@ export const initalBdStableToOwner_d18 = <any>{
     localhost: to_d18(10000),
     mainnetFork: to_d18(10000),
     rinkeby: to_d18(10000),
-    kovan: to_d18(10000)
+    kovan: to_d18(10000),
+    rsk: to_d18(10000),
 };
