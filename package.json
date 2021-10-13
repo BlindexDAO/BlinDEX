@@ -43,6 +43,7 @@
     "@nomiclabs/ethereumjs-vm": "4.2.2",
     "@openzeppelin/contracts": "3.4.0",
     "@openzeppelin/contracts-upgradeable": "3.4.0",
+    "@uniswap/lib": "^4.0.1-alpha",
     "bignumber.js": "^9.0.1",
     "chai-as-promised": "^7.1.1"
   }

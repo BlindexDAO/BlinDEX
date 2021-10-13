@@ -3,7 +3,7 @@ pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import '../Uniswap/TransferHelper.sol';
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
