@@ -2,11 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../Math/Math.sol";
-import "../Math/SafeMath.sol";
-import "../ERC20/ERC20.sol";
-import '../Uniswap/TransferHelper.sol';
-import "../ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";

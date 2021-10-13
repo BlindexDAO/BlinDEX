@@ -2,11 +2,11 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../Common/Context.sol";
-import "../ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../ERC20/ERC20Custom.sol";
-import "../ERC20/ERC20.sol";
-import "../Math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Bdx/BDXShares.sol";
 import "../Oracle/IChainlinkBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
