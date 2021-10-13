@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../../Bdx/BDXShares.sol";
 import "../../BdStable/BDStable.sol";
-import '../../Uniswap/TransferHelper.sol';
+import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
