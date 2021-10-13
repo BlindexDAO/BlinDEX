@@ -2,7 +2,7 @@
 pragma solidity ^0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../Math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 library BdPoolLibrary {
     using SafeMath for uint256;

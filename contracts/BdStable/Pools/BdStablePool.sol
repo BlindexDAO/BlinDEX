@@ -2,13 +2,14 @@
 pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
-import "../../Math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../../Bdx/BDXShares.sol";
 import "../../BdStable/BDStable.sol";
 import '../../Uniswap/TransferHelper.sol';
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract BdStablePool is Initializable {
     using SafeMath for uint256;

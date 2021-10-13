@@ -39,9 +39,10 @@
     "typescript": "^4.2.2"
   },
   "dependencies": {
-    "@openzeppelin/contracts-upgradeable": "3.4.0",
     "@ethersproject/providers": "5.1.1",
     "@nomiclabs/ethereumjs-vm": "4.2.2",
+    "@openzeppelin/contracts": "3.4.0",
+    "@openzeppelin/contracts-upgradeable": "3.4.0",
     "bignumber.js": "^9.0.1",
     "chai-as-promised": "^7.1.1"
   }
