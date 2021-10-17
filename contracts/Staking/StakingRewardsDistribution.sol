@@ -91,9 +91,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             stakingRewardsWeightsTotal -= stakingRewardsWeights[_stakingRewardsAddresses[i]]; // to support override
             stakingRewardsWeights[_stakingRewardsAddresses[i]] = _stakingRewardsWeights[i];
             stakingRewardsWeightsTotal += _stakingRewardsWeights[i];
+            emit PoolRegistered(_stakingRewardsAddresses[i], _stakingRewardsWeights[i]);
         }
-
-        emit PoolsRegistered(_stakingRewardsAddresses, _stakingRewardsWeights);
     }
 
     function resetRewardsWeights() external onlyByOwner {
@@ -133,5 +132,5 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
     // ---------- EVENTS ----------
     event RewardsWeightsReset();
-    event PoolsRegistered(address[] indexed stakingRewardsAddresses, uint[] indexed stakingRewardsWeights);
+    event PoolRegistered(address stakingRewardsAddress, uint stakingRewardsWeight);
 }
