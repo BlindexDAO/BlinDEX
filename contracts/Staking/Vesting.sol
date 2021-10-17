@@ -18,7 +18,7 @@ contract Vesting is OwnableUpgradeable
 
     struct VestingSchedule {
         uint256 vestingStartedTimeStamp;
-        uint256 vestingEndedTimeStamp;
+        uint256 vestingEndTimeStamp;
         uint256 totalVestedAmount_d18;
         uint256 releasedAmount_d18;
     }
@@ -87,7 +87,7 @@ contract Vesting is OwnableUpgradeable
     }
 
     function isFullyVested(VestingSchedule memory _schedule) internal view returns(bool) {
-        return _schedule.vestingEndedTimeStamp <= block.timestamp;
+        return _schedule.vestingEndTimeStamp <= block.timestamp;
     }
 
     function getAvailableReward(VestingSchedule memory _schedule) internal view returns(uint256) {
