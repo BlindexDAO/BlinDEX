@@ -40,6 +40,8 @@ contract Vesting is OwnableUpgradeable
         external
         initializer
     {
+        require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
+
         __Ownable_init();
 
         vestedToken = ERC20(_vestedTokenAddress);
