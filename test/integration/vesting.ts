@@ -230,7 +230,7 @@ describe('Vesting', () => {
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.lt(to_d18(amount / 100));
     })
 
-    it('should not create more schedules for user than the limit, max amount od schedules is possible to claim', async () => {
+    it('should not create more schedules for user than the limit, max amount of schedules is possible to claim', async () => {
         const amount = 0.001;
         const amount_d18 = to_d18(amount);
         const schedulesLimit = Number(await vesting.MAX_VESTING_SCHEDULES_PER_USER());
