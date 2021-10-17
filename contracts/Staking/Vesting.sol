@@ -91,6 +91,9 @@ contract Vesting is OwnableUpgradeable
     }
 
     function getAvailableReward(VestingSchedule memory _schedule) internal view returns(uint256) {
+        if (isFullyVested(_schedule)) {
+            return _schedule.totalVestedAmount_d18.sub(_schedule.releasedAmount_d18);
+        }
         return (_schedule.totalVestedAmount_d18
             .mul(block.timestamp.sub(_schedule.vestingStartedTimeStamp))
             .div(vestingTimeInSeconds)
