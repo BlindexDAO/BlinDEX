@@ -229,4 +229,31 @@ describe('Vesting', () => {
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.lt(to_d18(amount / 100));
     })
+
+    it('should not create more schedules for user than the limit, max amount od schedules is possible to claim', async () => {
+        const amount = 0.001;
+        const amount_d18 = to_d18(amount);
+        const schedulesLimit = Number(await vesting.MAX_VESTING_SCHEDULES_PER_USER());
+        const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
+
+
+        for (var i = 0; i < schedulesLimit; i++) {
+            await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
+            await vesting.connect(testScheduler).schedule(testUser1.address, amount_d18);
+        }
+
+        await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
+
+        await expect(
+            vesting.connect(testScheduler).schedule(testUser1.address, amount_d18)
+        ).to.be.revertedWith('Limit for vesting schedules for user exceeded');
+
+        await moveTimeForwardBy(vestingTimeSeconds)
+
+        const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
+        await vesting.connect(testUser1).claim();
+        const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
+
+        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(schedulesLimit));
+    })
 });
