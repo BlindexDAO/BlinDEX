@@ -2,16 +2,15 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import '../Bdx/BDXShares.sol';
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
 
-    uint256 public constant TOTAL_BDX_SUPPLY = 21000000;
-    uint256 private constant ERC20_PRCISON = 1e18;
+    uint256 public TOTAL_BDX_SUPPLY;
 
     // BDX minting schedule
     // They sum up to 50% of TOTAL_BDX_SUPPLY
@@ -31,7 +30,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
     uint256 public vestingRewardRatio_percent;
 
-    ERC20 rewardsToken;
+    BDXShares rewardsToken;
 
     mapping(address => uint256) public stakingRewardsWeights;
     address[] public stakingRewardsAddresses;
@@ -40,13 +39,14 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     function initialize(address _rewardsToken, uint256 _vestingRewardRatio_percent) external initializer {
         __Ownable_init();
 
-        rewardsToken = ERC20(_rewardsToken);
+        rewardsToken = BDXShares(_rewardsToken);
+        TOTAL_BDX_SUPPLY = rewardsToken.MAX_TOTAL_SUPPLY();
 
-        BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_2 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(125).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_3 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(100).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_4 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(50).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_5 = TOTAL_BDX_SUPPLY.mul(ERC20_PRCISON).mul(25).div(BDX_MINTING_SCHEDULE_PRECISON);
+        BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
+        BDX_MINTING_SCHEDULE_YEAR_2 = TOTAL_BDX_SUPPLY.mul(125).div(BDX_MINTING_SCHEDULE_PRECISON);
+        BDX_MINTING_SCHEDULE_YEAR_3 = TOTAL_BDX_SUPPLY.mul(100).div(BDX_MINTING_SCHEDULE_PRECISON);
+        BDX_MINTING_SCHEDULE_YEAR_4 = TOTAL_BDX_SUPPLY.mul(50).div(BDX_MINTING_SCHEDULE_PRECISON);
+        BDX_MINTING_SCHEDULE_YEAR_5 = TOTAL_BDX_SUPPLY.mul(25).div(BDX_MINTING_SCHEDULE_PRECISON);
 
         EndOfYear_1 = block.timestamp + 365 days;
         EndOfYear_2 = block.timestamp + 2 * 365 days;
@@ -91,9 +91,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             stakingRewardsWeightsTotal -= stakingRewardsWeights[_stakingRewardsAddresses[i]]; // to support override
             stakingRewardsWeights[_stakingRewardsAddresses[i]] = _stakingRewardsWeights[i];
             stakingRewardsWeightsTotal += _stakingRewardsWeights[i];
+            emit PoolRegistered(_stakingRewardsAddresses[i], _stakingRewardsWeights[i]);
         }
-
-        emit PoolsRegistered(_stakingRewardsAddresses, _stakingRewardsWeights);
     }
 
     function resetRewardsWeights() external onlyByOwner {
@@ -133,5 +132,5 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
     // ---------- EVENTS ----------
     event RewardsWeightsReset();
-    event PoolsRegistered(address[] indexed stakingRewardsAddresses, uint[] indexed stakingRewardsWeights);
+    event PoolRegistered(address stakingRewardsAddress, uint stakingRewardsWeight);
 }

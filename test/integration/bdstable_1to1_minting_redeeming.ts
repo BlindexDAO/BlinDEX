@@ -24,6 +24,8 @@ describe("BDStable 1to1", () => {
 
     it("should mint bdeu when CR = 1 [for WETH]", async () => {
         const bdEu = await getBdEu(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+        const mintingFee_d12 = await bdEuPool.minting_fee();
 
         const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
@@ -40,7 +42,7 @@ describe("BDStable 1to1", () => {
 
         console.log("ethInEurPrice: " + d12_ToNumber(ethInEurPrice_1e12));
 
-        const expectedBdEuDiff_d18 = ethInEurPrice_1e12.mul(to_d18(collateralAmount)).div(1e12);
+        const expectedBdEuDiff_d18 = ethInEurPrice_1e12.mul(to_d18(collateralAmount)).div(1e12).mul(to_d12(1).sub(mintingFee_d12)).div(1e12);
         const actualBdEuDiff_d18 = bdEuAfter_d18.sub(bdEuBefore_d18);
         const diff = diffPct(actualBdEuDiff_d18, expectedBdEuDiff_d18);
 
@@ -50,7 +52,7 @@ describe("BDStable 1to1", () => {
         console.log("Actual BeEur  : " + d18_ToNumber(actualBdEuDiff_d18));
         console.log(`Diff BeEur: ${diff}%`);
 
-        expect(diff).to.be.closeTo(0, 1);
+        expect(diff).to.be.eq(0);
     });
 
     it("should mint bdeu when CR = 1 [for WBTC]", async () => {

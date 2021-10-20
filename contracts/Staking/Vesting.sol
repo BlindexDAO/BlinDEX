@@ -18,6 +18,7 @@ contract Vesting is OwnableUpgradeable
 
     struct VestingSchedule {
         uint256 vestingStartedTimeStamp;
+        uint256 vestingEndTimeStamp;
         uint256 totalVestedAmount_d18;
         uint256 releasedAmount_d18;
     }
@@ -27,6 +28,7 @@ contract Vesting is OwnableUpgradeable
     address vestingScheduler;
     address fundsProvider;
     uint256 public vestingTimeInSeconds;
+    uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 128;
 
     ERC20 private vestedToken;
 
@@ -39,6 +41,8 @@ contract Vesting is OwnableUpgradeable
         external
         initializer
     {
+        require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
+
         __Ownable_init();
 
         vestedToken = ERC20(_vestedTokenAddress);
@@ -51,9 +55,12 @@ contract Vesting is OwnableUpgradeable
         // to prevent melicious users form cloging user's schedules
         require(msg.sender == vestingScheduler,
             "Only vesting scheduler can create vesting schedules");
+        require(vestingSchedules[_receiver].length < MAX_VESTING_SCHEDULES_PER_USER,
+            "Limit for vesting schedules for user exceeded");
 
         vestingSchedules[_receiver].push(VestingSchedule(
             block.timestamp,
+            block.timestamp.add(vestingTimeInSeconds),
             _amount_d18,
             0
         ));
@@ -83,10 +90,13 @@ contract Vesting is OwnableUpgradeable
     }
 
     function isFullyVested(VestingSchedule memory _schedule) internal view returns(bool) {
-        return _schedule.vestingStartedTimeStamp.add(vestingTimeInSeconds) <= block.timestamp;
+        return _schedule.vestingEndTimeStamp <= block.timestamp;
     }
 
     function getAvailableReward(VestingSchedule memory _schedule) internal view returns(uint256) {
+        if (isFullyVested(_schedule)) {
+            return _schedule.totalVestedAmount_d18.sub(_schedule.releasedAmount_d18);
+        }
         return (_schedule.totalVestedAmount_d18
             .mul(block.timestamp.sub(_schedule.vestingStartedTimeStamp))
             .div(vestingTimeInSeconds)
@@ -105,6 +115,7 @@ contract Vesting is OwnableUpgradeable
         external
         onlyByOwner
     {
+        require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
         vestingTimeInSeconds = _vestingTimeInSeconds;
     }
 
