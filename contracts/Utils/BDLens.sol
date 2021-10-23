@@ -14,6 +14,7 @@ contract BDLens is OwnableUpgradeable {
     address public SwapFactory;
     address public SwapRouter;
     address public StakingRewardsDistribution;
+    address public Vesting;
     address[] public BdStables;
     address[] public Stakings;
 
@@ -50,6 +51,13 @@ contract BDLens is OwnableUpgradeable {
         onlyByOwner
     {
         StakingRewardsDistribution = _stakingRewardsDistribution;
+    }
+
+    function setVesting(address _vesting)
+    external
+    onlyByOwner
+    {
+        Vesting = _vesting;
     }
 
     function pushBdStable(address _bdstable)
