@@ -17,6 +17,9 @@ describe("BuyBack", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
+        
+        const bdEuWethPool = await getBdEuWethPool(hre);
+        await bdEuWethPool.toggleBuybackOnlyForOwner(); // now every user can buyback
     });
 
     it("should buy back", async () => {        

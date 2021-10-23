@@ -6,14 +6,14 @@ import * as constants from '../utils/Constants'
 import { BdStablePool } from '../typechain/BdStablePool';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-const deployer = (await hre.getNamedAccounts()).DEPLOYER;
-const treasury = (await hre.getNamedAccounts()).TREASURY;
-  const bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
+const deployerAddress = (await hre.getNamedAccounts()).DEPLOYER;
+const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
+  const bdx = await hre.ethers.getContract('BDXShares', deployerAddress) as BDXShares;
 
   const bdPoolLibraryDeployment = await hre.ethers.getContract('BdPoolLibrary');
 
   const bdeu_proxy = await hre.deployments.deploy('BDEU', {
-    from: deployer,
+    from: deployerAddress,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
       execute: {
@@ -23,8 +23,8 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
             'BlindexEuro',
             'BDEU',
             'EURO',
-            deployer,
-            treasury,
+            deployerAddress,
+            treasuryAddress,
             bdx.address,
             constants.initalBdStableToOwner_d18[hre.network.name]
           ]
@@ -42,7 +42,7 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
   const bdeu_weth_BdStablePoolDeployment = await hre.deployments.deploy(
     'BDEU_WETH_POOL', 
     {
-      from: deployer,
+      from: deployerAddress,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
         execute: {
@@ -52,7 +52,7 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
               bdEu.address,
               bdx.address,
               constants.wETH_address[hre.network.name],
-              deployer
+              deployerAddress
             ]
           }
         }
@@ -72,7 +72,7 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
   const bdeu_wbtc_BdStablePoolDeployment = await hre.deployments.deploy(
     'BDEU_WBTC_POOL', 
     {
-      from: deployer,
+      from: deployerAddress,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
         execute: {
@@ -82,7 +82,7 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
               bdEu.address,
               bdx.address,
               constants.wBTC_address[hre.network.name],
-              deployer
+              deployerAddress
             ]
           }
         }
@@ -98,6 +98,11 @@ const treasury = (await hre.getNamedAccounts()).TREASURY;
   const bdeu_wbtc_BdStablePool = await hre.ethers.getContract('BDEU_WBTC_POOL') as BdStablePool;
   
   console.log("BDEU WBTC Pool deployed to:", bdeu_wbtc_BdStablePool.address);
+
+  const treasury = await hre.ethers.getSigner(treasuryAddress);
+
+  await bdx.connect(treasury).transfer(bdEu.address, constants.initalBdStable_bdx_d18[hre.network.name]);
+  console.log("BDEU provided with BDX");
 
   await (await bdEu.addPool(bdeu_weth_BdStablePool.address)).wait()
   await (await bdEu.addPool(bdeu_wbtc_BdStablePool.address)).wait()

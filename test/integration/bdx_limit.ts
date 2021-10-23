@@ -112,7 +112,7 @@ describe("BDX limit", () => {
     async function arrange(){
         const bdEu = await getBdEu(hre);
         const bdx = await getBdx(hre);
-        const owner = await getDeployer(hre);
+        const deploeyer = await getDeployer(hre);
 
         const bdxAvailableToMint = (await bdx.MAX_TOTAL_SUPPLY()).sub(await bdx.totalSupply());
         const bdxLeftForUser = to_d18(9 * 1e6); // 9 mln available for the user to mint
@@ -120,7 +120,7 @@ describe("BDX limit", () => {
 
         expect(bdxToBeMintedByOwner).to.be.gt(1e6, "invalid bdxToBeMintedByOwner, must be at least 1e6 for a swap"); // test validation
 
-        await bdx.mint(ethers.constants.AddressZero, owner.address, bdxToBeMintedByOwner);
+        await bdx.mint(ethers.constants.AddressZero, deploeyer.address, bdxToBeMintedByOwner); // todo ag transfer form treasury?
 
         // we lock CR at 0 to be able to redeem, bdEu for bdx only
         await bdEu.lockCollateralRatioAt(0);

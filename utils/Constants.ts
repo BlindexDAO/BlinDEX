@@ -58,3 +58,12 @@ export const initalBdStableToOwner_d18 = <any>{
     kovan: to_d18(10000),
     rsk: to_d18(10000),
 };
+
+//todo ag how much bdx?
+export const initalBdStable_bdx_d18 = <any>{
+    localhost: to_d18(10000),
+    mainnetFork: to_d18(10000),
+    rinkeby: to_d18(10000),
+    kovan: to_d18(10000),
+    rsk: to_d18(10000),
+};

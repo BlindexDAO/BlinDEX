@@ -10,6 +10,7 @@ import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "hardhat/console.sol";
 
 contract BdStablePool is Initializable {
     using SafeMath for uint256;
@@ -99,6 +100,9 @@ contract BdStablePool is Initializable {
         redemption_delay = 1;
         minting_fee = 3000000000; // d12 0.3%
         redemption_fee = 3000000000; // d12 0.3%
+
+        recollateralizeOnlyForOwner = true;
+        buybackOnlyForOwner = true;
     }
 
     /* ========== VIEWS ========== */
@@ -161,16 +165,6 @@ contract BdStablePool is Initializable {
         BDSTABLE.updateOraclesIfNeeded();
         if(collatWEthOracle.shouldUpdateOracle()){
             collatWEthOracle.updateOracle();
-        }
-    }
-
-    function howMuchBdxCanBeMinted(uint256 _watned_amount_d18) public view returns (uint256) {
-        uint256 maxToBeMinted_d18 = BDX.howMuchCanBeMinted();
-
-        if(maxToBeMinted_d18 > _watned_amount_d18){
-            return _watned_amount_d18;
-        } else {
-            return maxToBeMinted_d18;
         }
     }
 
@@ -286,7 +280,7 @@ contract BdStablePool is Initializable {
         bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
         require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
 
-        BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_amount_d18);
+        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(this), bdx_amount_d18);
         BDSTABLE.pool_mint(msg.sender, bdStable_amount_d18);
     }
 
@@ -304,7 +298,8 @@ contract BdStablePool is Initializable {
         bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(BdPoolLibrary.PRICE_PRECISION); //apply fees
 
         uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(bdx_price);
-        bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
+        uint256 bdx_cov_ratio = BDSTABLE.getEffectiveBdxCoverageRatio();
+        bdx_amount = bdx_amount.mul(bdx_cov_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
         
         if(bdx_amount > 0){
             if(BDSTABLE.canLegallyRedeem(msg.sender)){
@@ -328,9 +323,6 @@ contract BdStablePool is Initializable {
 
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
-        if(bdx_amount > 0){
-            BDX.mint(address(BDSTABLE), address(this), bdx_amount);
-        }
     }
 
     // Will fail if fully collateralized or fully algorithmic
@@ -367,8 +359,7 @@ contract BdStablePool is Initializable {
 
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
-        BDX.pool_burn_from(address(BDSTABLE), msg.sender, bdx_needed);
-
+        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(this), bdx_needed);
         TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_amount);
         BDSTABLE.pool_mint(msg.sender, mint_amount);
     }
@@ -398,7 +389,8 @@ contract BdStablePool is Initializable {
             );
 
         uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
-        bdx_amount = howMuchBdxCanBeMinted(bdx_amount);
+        uint256 bdx_cov_ratio = BDSTABLE.getEffectiveBdxCoverageRatio();
+        bdx_amount = bdx_amount.mul(bdx_cov_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
@@ -445,9 +437,6 @@ contract BdStablePool is Initializable {
         
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
-        if(bdx_amount > 0){
-            BDX.mint(address(BDSTABLE), address(this), bdx_amount);
-        }
     }
 
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
@@ -483,7 +472,7 @@ contract BdStablePool is Initializable {
         }
 
         if (sendBDX == true) {
-            TransferHelper.safeTransfer(address(BDX), msg.sender, BDXAmount);
+            BDSTABLE.transferBdx(msg.sender, BDXAmount);
         }
         if (sendCollateral == true) {
             TransferHelper.safeTransfer(address(collateral_token), msg.sender, CollateralAmount);
@@ -521,14 +510,15 @@ contract BdStablePool is Initializable {
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(BdPoolLibrary.PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
-        bdx_paid_back = howMuchBdxCanBeMinted(bdx_paid_back);
+        uint256 bdx_cov_ratio = BDSTABLE.getEffectiveBdxCoverageRatio();
+        bdx_paid_back = bdx_paid_back.mul(bdx_cov_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
         
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
         TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);
 
         if(bdx_paid_back > 0){
-            BDX.mint(address(BDSTABLE), msg.sender, bdx_paid_back);
+            TransferHelper.safeTransfer(address(BDX), msg.sender, bdx_paid_back);
         }
 
         emit Recollateralized(collateral_units_precision, bdx_paid_back);
@@ -558,8 +548,9 @@ contract BdStablePool is Initializable {
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
         
-        // Give the sender their desired collateral and burn the BDX
-        BDX.pool_burn_from(address(BDSTABLE), msg.sender, BDX_amount);
+        // Take bdx form sender
+        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(this), BDX_amount);
+        // Give the sender their desired collateral
         TransferHelper.safeTransfer(address(collateral_token), msg.sender, collateral_precision);
 
         emit BoughtBack(BDX_amount, collateral_precision);

@@ -27,8 +27,9 @@ contract BDStable is ERC20Custom, Initializable {
     string public name;
     string public fiat;
     address public owner_address;
-    address public bdx_address;
-    address public treasury_address;
+    address public treasury_address; //todo ag remove?
+
+    IERC20 private BDX;
 
     ICryptoPairOracle bdstableWethOracle;
     ICryptoPairOracle bdxWethOracle;
@@ -99,7 +100,7 @@ contract BDStable is ERC20Custom, Initializable {
         fiat = _fiat;
         owner_address = _owner_address;
         treasury_address = _treasury_address;
-        bdx_address = _bdx_address;
+        BDX = IERC20(_bdx_address);
 
         bdStable_step_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
         global_collateral_ratio_d12 = uint256(BdPoolLibrary.COLLATERAL_RATIO_MAX); // Bdstable system starts off fully collateralized (12 decimals of precision)
@@ -222,6 +223,47 @@ contract BDStable is ERC20Custom, Initializable {
 
         emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
+    
+    function getEffectiveBdxCoverageRatio() public view returns (uint256) {
+        uint256 effective_collateral_ratio_d12 = effective_global_collateral_ratio_d12();
+
+        uint256 cr = global_collateral_ratio_d12 > effective_collateral_ratio_d12 
+            ? effective_collateral_ratio_d12 
+            : global_collateral_ratio_d12;
+
+        if(cr >= BdPoolLibrary.COLLATERAL_RATIO_MAX){
+            return 0; // to avoid useless computations
+        }
+
+        uint256 globalCollateralValue_d18 = globalCollateralValue();
+
+        uint256 expectedBdxValue_d18 = BdPoolLibrary
+            .COLLATERAL_RATIO_MAX.sub(cr)
+            .mul(globalCollateralValue_d18)
+            .div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+
+        uint256 bdxPrice_d12 = oracle_price(PriceChoice.BDX);
+
+        uint256 expectedBdx_d18 = expectedBdxValue_d18
+            .mul(BdPoolLibrary.PRICE_PRECISION)
+            .div(bdxPrice_d12);
+
+        uint256 bdxSupply_d18 = BDX.balanceOf(address(this));
+        uint256 effectiveBdxCR_d12 = BdPoolLibrary
+            .PRICE_PRECISION
+            .mul(bdxSupply_d18)
+            .div(expectedBdx_d18);
+
+        console.log("--------effective_collateral_ratio_d12 %s", effective_collateral_ratio_d12);
+        console.log("--------globalCollateralValue_d18 %s", globalCollateralValue_d18);
+        console.log("--------expectedBdxValue_d18 %s", expectedBdxValue_d18);
+        console.log("--------expectedBdx_d18 %s", expectedBdx_d18);
+        console.log("--------bdxSupply_d18 %s", bdxSupply_d18);
+        console.log("--------effectiveBdxCR_d12 %s", effectiveBdxCR_d12);
+        console.log("--------BdPoolLibrary.COLLATERAL_RATIO_MAX %s", BdPoolLibrary.COLLATERAL_RATIO_MAX);
+
+        return effectiveBdxCR_d12 > BdPoolLibrary.COLLATERAL_RATIO_MAX ? BdPoolLibrary.COLLATERAL_RATIO_MAX : effectiveBdxCR_d12;
+    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
@@ -336,6 +378,10 @@ contract BDStable is ERC20Custom, Initializable {
 
         owner_address = _owner_address;
         emit OwnerSet(_owner_address);
+    }
+
+    function transferBdx(address to, uint256 BDX_amount) external onlyByOwnerOrPool {
+        TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
     }
 
     /* ========== EVENTS ========== */

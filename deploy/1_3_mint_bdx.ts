@@ -10,11 +10,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const bdxInstance = await hre.ethers.getContract("BDXShares") as BDXShares;
 
-    // mint half of the BDX up front, to reseve for staking rewards
+    // mint all of the BDX up front to the treasury
     await bdxInstance.connect(deployer).mint(
         '0x0000000000000000000000000000000000000000',
         treasury.address,
-        to_d18(21).mul(1e6).div(2)
+        to_d18(21).mul(1e6)
     );
 
     // One time migration

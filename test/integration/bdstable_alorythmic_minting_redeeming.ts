@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, to_d12 } from "../../utils/Helpers";
+import { d12_ToNumber, diffPct, to_d12 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury } from "../helpers/common";
@@ -92,8 +92,8 @@ describe("BDStable algorythmic", () => {
         const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
-        console.log("bdxInEurPrice           : " + bdxInEurPrice_d12);
-        console.log("bdEuBalanceBeforeRedeem: " + bdEuBalanceBeforeRedeem_d18);
+        console.log("bdxInEurPrice           : " + d12_ToNumber(bdxInEurPrice_d12));
+        console.log("bdEuBalanceBeforeRedeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem_d18));
 
         const bdEuToRedeem_d18 = to_d18(100);
 
@@ -127,8 +127,8 @@ describe("BDStable algorythmic", () => {
         console.log("expected bdEu balance delta: " + expectedBdEuDelta);
 
         expect(wethDelta).to.eq(0);
-        expect(bdxDelta).to.be.closeTo(expectedBdxDelta, 0.1);
-        expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1);
+        expect(bdxDelta).to.be.closeTo(expectedBdxDelta, 0.1, "Invalid BDX delta");
+        expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1, "Invalid BdEu delta");
     });
 
     it("should tax illegal algorithmic redemption", async () => {
