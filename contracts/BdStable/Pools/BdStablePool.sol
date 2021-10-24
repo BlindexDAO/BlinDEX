@@ -10,7 +10,6 @@ import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "hardhat/console.sol";
 
 contract BdStablePool is Initializable {
     using SafeMath for uint256;
@@ -280,7 +279,7 @@ contract BdStablePool is Initializable {
         bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
         require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
 
-        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(this), bdx_amount_d18);
+        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(BDSTABLE), bdx_amount_d18);
         BDSTABLE.pool_mint(msg.sender, bdStable_amount_d18);
     }
 
@@ -359,7 +358,7 @@ contract BdStablePool is Initializable {
 
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
-        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(this), bdx_needed);
+        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(BDSTABLE), bdx_needed);
         TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_amount);
         BDSTABLE.pool_mint(msg.sender, mint_amount);
     }
@@ -518,7 +517,7 @@ contract BdStablePool is Initializable {
         TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);
 
         if(bdx_paid_back > 0){
-            TransferHelper.safeTransfer(address(BDX), msg.sender, bdx_paid_back);
+            BDSTABLE.transferBdx(msg.sender, bdx_paid_back);
         }
 
         emit Recollateralized(collateral_units_precision, bdx_paid_back);
@@ -549,7 +548,7 @@ contract BdStablePool is Initializable {
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
         
         // Take bdx form sender
-        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(this), BDX_amount);
+        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(BDSTABLE), BDX_amount);
         // Give the sender their desired collateral
         TransferHelper.safeTransfer(address(collateral_token), msg.sender, collateral_precision);
 

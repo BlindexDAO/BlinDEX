@@ -49,8 +49,9 @@ describe("BDStable fractional", () => {
         await weth.connect(testUser).deposit({ value: to_d18(100) });
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
-        const bdEulBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
-        const bdxlBalanceBeforeMinting_d18 = await bdx.balanceOf(testUser.address);
+        const bdEuBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
+        const bdxBalanceBeforeMinting_d18 = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceBeforeMinting_d18 = await bdx.balanceOf(bdEu.address);
 
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
         const wethInEurPrice_d12 = await bdEuPool.getCollateralPrice_d12();
@@ -66,10 +67,16 @@ describe("BDStable fractional", () => {
         // asserts
     
         const bdxBalanceAfterMinting_d18 = await bdx.balanceOf(testUser.address);
-        const actualBdxCost_d18 = bdxlBalanceBeforeMinting_d18.sub(bdxBalanceAfterMinting_d18);  
+        const actualBdxCost_d18 = bdxBalanceBeforeMinting_d18.sub(bdxBalanceAfterMinting_d18);  
         const diffPctBdxCost = diffPct(actualBdxCost_d18, bdxAmountForMintigBdEu_d18);
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
         expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
+
+        const bdEuBdxBalanceAfterMinting_d18 = await bdx.balanceOf(bdEu.address);
+        const actualBdxIntoBdEu_d18 = bdEuBdxBalanceAfterMinting_d18.sub(bdEuBdxBalanceBeforeMinting_d18);  
+        const diffPctBdxIntoBdEu = diffPct(actualBdxIntoBdEu_d18, bdxAmountForMintigBdEu_d18);
+        console.log(`Diff BDX into BdEu: ${diffPctBdxIntoBdEu}%`);
+        expect(diffPctBdxIntoBdEu).to.be.closeTo(0, 0.001, "invalid bdx into bdeu diff");
 
         const wethBalanceAfterMinging_d18 = await weth.balanceOf(testUser.address);
         const actualWethCost_d18 = wethBalanceBeforeMinting_d18.sub(wethBalanceAfterMinging_d18);
@@ -83,7 +90,7 @@ describe("BDStable fractional", () => {
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by minting fee;
             
         const bdEuBalanceAfterMinting_d18 = await bdEu.balanceOf(testUser.address);
-        const diffPctBdEu = diffPct(bdEuBalanceAfterMinting_d18.sub(bdEulBalanceBeforeMinting_d18), expectedBdEuDiff_d18);
+        const diffPctBdEu = diffPct(bdEuBalanceAfterMinting_d18.sub(bdEuBalanceBeforeMinting_d18), expectedBdEuDiff_d18);
         console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
         expect(diffPctBdEu).to.be.closeTo(0, 0.001, "invalid bdEu diff");
     });

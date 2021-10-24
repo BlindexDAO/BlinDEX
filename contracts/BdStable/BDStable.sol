@@ -254,14 +254,6 @@ contract BDStable is ERC20Custom, Initializable {
             .mul(bdxSupply_d18)
             .div(expectedBdx_d18);
 
-        console.log("--------effective_collateral_ratio_d12 %s", effective_collateral_ratio_d12);
-        console.log("--------globalCollateralValue_d18 %s", globalCollateralValue_d18);
-        console.log("--------expectedBdxValue_d18 %s", expectedBdxValue_d18);
-        console.log("--------expectedBdx_d18 %s", expectedBdx_d18);
-        console.log("--------bdxSupply_d18 %s", bdxSupply_d18);
-        console.log("--------effectiveBdxCR_d12 %s", effectiveBdxCR_d12);
-        console.log("--------BdPoolLibrary.COLLATERAL_RATIO_MAX %s", BdPoolLibrary.COLLATERAL_RATIO_MAX);
-
         return effectiveBdxCR_d12 > BdPoolLibrary.COLLATERAL_RATIO_MAX ? BdPoolLibrary.COLLATERAL_RATIO_MAX : effectiveBdxCR_d12;
     }
 

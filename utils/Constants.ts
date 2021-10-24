@@ -65,5 +65,5 @@ export const initalBdStable_bdx_d18 = <any>{
     mainnetFork: to_d18(10000),
     rinkeby: to_d18(10000),
     kovan: to_d18(10000),
-    rsk: to_d18(10000),
+    rsk: to_d18(100000),
 };

@@ -43,6 +43,7 @@ describe("BDStable algorythmic", () => {
 
         const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
         const bdEulBalanceBeforeMinting = await bdEu.balanceOf(testUser.address);
+        const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
 
         const bdxInEurPrice = await bdEu.BDX_price_d12();
 
@@ -55,24 +56,29 @@ describe("BDStable algorythmic", () => {
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by minting fee;
 
         const bdEuBalanceAfterMinting = await bdEu.balanceOf(testUser.address);
+        const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
 
         const diffPctBdEu = diffPct(bdEuBalanceAfterMinting.sub(bdEulBalanceBeforeMinting), expectedBdEuDiff);
 
         const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
-        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
+        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);
+        const actualBdxIntoBdEu  = bdEuBdxBalanceAfter_d18.sub(bdEuBdxBalanceBefore_d18);
         
         const diffPctBdxCost = diffPct(actualBdxCost, expectedBdxCost);
-        const actualWeth = await weth.balanceOf(testUser.address);
+        const diffPctBdEuBdxBalance = diffPct(actualBdxIntoBdEu, expectedBdxCost);
 
+        const actualWeth = await weth.balanceOf(testUser.address);
         const diffPctWethBalance = diffPct(wethBalanceBeforeMinting, actualWeth);
 
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
         console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
+        console.log(`Diff BdEu DBX balance: ${diffPctWethBalance}%`);
 
         expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");
         expect(diffPctBdEu).to.be.closeTo(0, 0.001, "invalid bdEu diff");
+        expect(diffPctBdEuBdxBalance).to.be.closeTo(0, 0.001, "invalid bdEu bdx diff");
     });
 
     it("should redeem bdeu when CR = 0", async () => {

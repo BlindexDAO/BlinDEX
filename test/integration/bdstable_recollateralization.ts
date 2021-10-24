@@ -53,6 +53,7 @@ describe("Recollateralization", () => {
         const toRecollatInEth = d18_ToNumber(toRecollatInEth_d18);
         
         const bdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(bdEu.address);
 
         await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
         await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
@@ -82,6 +83,11 @@ describe("Recollateralization", () => {
         const diffPctWethBalance = diffPct(actualWethCost_d18, toRecollatInEth_d18);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid diffPctWethBalance");
+
+        const expecedBdEuBdx = d18_ToNumber(bdEuBdxBalanceBeforeRecolat_d18.sub(expectedBdxBack_d18));
+        const bdEuBdxBalanceAfterRecolat = d18_ToNumber(await bdx.balanceOf(bdEu.address));
+
+        expect(bdEuBdxBalanceAfterRecolat).to.be.closeTo(expecedBdEuBdx, 0.001, "invalid bdEu bdx balance");
     });
 
     it("recollateralize should NOT fail when efCR < CR", async () => {        
