@@ -224,7 +224,7 @@ describe("BDStable algorythmic", () => {
 
         const bdxLeftInBdEu_d18 = to_d18(6);
         const bdxToRemoveFromBdEu_d18 = (await bdx.balanceOf(bdEu.address)).sub(bdxLeftInBdEu_d18);
-        await bdEu.transferBdx(deployer.address, bdxToRemoveFromBdEu_d18); // deployer takes bdx form bdEu to decrease effective BDX CR
+        await bdEu.transfer_bdx(deployer.address, bdxToRemoveFromBdEu_d18); // deployer takes bdx form bdEu to decrease effective BDX CR
 
         // enable alogirthimc redeem
         const cr = 0;

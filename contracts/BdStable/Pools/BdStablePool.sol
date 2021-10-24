@@ -30,7 +30,6 @@ contract BdStablePool is Initializable {
     mapping(address => uint256) public redeemBDXBalances;
     mapping(address => uint256) public redeemCollateralBalances;
     uint256 public unclaimedPoolCollateral;
-    uint256 public unclaimedPoolBDX;
     mapping(address => uint256) public lastRedeemed;
 
     // AccessControl state variables
@@ -313,7 +312,7 @@ contract BdStablePool is Initializable {
                redeemBDXBalances[treasury_address] = redeemBDXBalances[treasury_address].add(bdx_amount_treasury);
             }
 
-            unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+            BDSTABLE.pool_claim_bdx(bdx_amount);
         }
         
         lastRedeemed[msg.sender] = block.number;
@@ -429,7 +428,7 @@ contract BdStablePool is Initializable {
                 redeemBDXBalances[treasury_address] = redeemBDXBalances[treasury_address].add(bdx_amount_treasury);
             }
 
-            unclaimedPoolBDX = unclaimedPoolBDX.add(bdx_amount);
+            BDSTABLE.pool_claim_bdx(bdx_amount);
         }
 
         lastRedeemed[msg.sender] = block.number;
@@ -455,7 +454,6 @@ contract BdStablePool is Initializable {
         if (redeemBDXBalances[msg.sender] > 0) {
             BDXAmount = redeemBDXBalances[msg.sender];
             redeemBDXBalances[msg.sender] = 0;
-            unclaimedPoolBDX = unclaimedPoolBDX.sub(BDXAmount);
 
             sendBDX = true;
         }
@@ -471,7 +469,7 @@ contract BdStablePool is Initializable {
         }
 
         if (sendBDX == true) {
-            BDSTABLE.transferBdx(msg.sender, BDXAmount);
+            BDSTABLE.pool_transfer_claimed_bdx(msg.sender, BDXAmount);
         }
         if (sendCollateral == true) {
             TransferHelper.safeTransfer(address(collateral_token), msg.sender, CollateralAmount);
@@ -517,7 +515,7 @@ contract BdStablePool is Initializable {
         TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);
 
         if(bdx_paid_back > 0){
-            BDSTABLE.transferBdx(msg.sender, bdx_paid_back);
+            BDSTABLE.transfer_bdx(msg.sender, bdx_paid_back);
         }
 
         emit Recollateralized(collateral_units_precision, bdx_paid_back);

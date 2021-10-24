@@ -22,6 +22,7 @@ contract BDStable is ERC20Custom, Initializable {
 
     uint8 public constant decimals = 18;
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
+    uint256 public unclaimedPoolsBDX;
 
     string public symbol;
     string public name;
@@ -250,7 +251,7 @@ contract BDStable is ERC20Custom, Initializable {
             .mul(BdPoolLibrary.PRICE_PRECISION)
             .div(bdxPrice_d12);
 
-        uint256 bdxSupply_d18 = BDX.balanceOf(address(this));
+        uint256 bdxSupply_d18 = BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX);
         uint256 effectiveBdxCR_d12 = BdPoolLibrary
             .PRICE_PRECISION
             .mul(bdxSupply_d18)
@@ -339,7 +340,6 @@ contract BDStable is ERC20Custom, Initializable {
         emit PriceTargetSet(_price_target_d12);
     }
 
-
     function set_price_band_d12(uint256 _price_band_d12) external onlyByOwner {
         price_band_d12 = _price_band_d12;
 
@@ -374,7 +374,25 @@ contract BDStable is ERC20Custom, Initializable {
         emit OwnerSet(_owner_address);
     }
 
-    function transferBdx(address to, uint256 BDX_amount) external onlyByOwnerOrPool {
+    function pool_claim_bdx(uint256 amount) public onlyPools {
+        unclaimedPoolsBDX = unclaimedPoolsBDX.add(amount);
+    }
+
+    function pool_transfer_claimed_bdx(address to, uint256 amount) public onlyPools {
+        unclaimedPoolsBDX = unclaimedPoolsBDX.sub(amount);
+        TransferHelper.safeTransfer(address(BDX), to, amount);
+    }
+
+    function transfer_bdx(address to, uint256 BDX_amount) external onlyByOwnerOrPool {
+        require(
+            BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX) >= BDX_amount,
+            "Not enough BDX"
+        );
+
+        TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
+    }
+
+    function transfer_bdx_force(address to, uint256 BDX_amount) external onlyByOwner {
         TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
     }
 
