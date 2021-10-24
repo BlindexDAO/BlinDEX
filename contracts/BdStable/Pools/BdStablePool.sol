@@ -297,8 +297,8 @@ contract BdStablePool is Initializable {
         bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(BdPoolLibrary.PRICE_PRECISION); //apply fees
 
         uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(bdx_price);
-        uint256 bdx_cov_ratio = BDSTABLE.getEffectiveBdxCoverageRatio();
-        bdx_amount = bdx_amount.mul(bdx_cov_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+        uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
+        bdx_amount = bdx_amount.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
         
         if(bdx_amount > 0){
             if(BDSTABLE.canLegallyRedeem(msg.sender)){
@@ -388,8 +388,8 @@ contract BdStablePool is Initializable {
             );
 
         uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
-        uint256 bdx_cov_ratio = BDSTABLE.getEffectiveBdxCoverageRatio();
-        bdx_amount = bdx_amount.mul(bdx_cov_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+        uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
+        bdx_amount = bdx_amount.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
         // Need to adjust for decimals of collateral
         uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
@@ -509,9 +509,9 @@ contract BdStablePool is Initializable {
         uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
 
         uint256 bdx_paid_back = amount_to_recollat.mul(uint(BdPoolLibrary.PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
-        uint256 bdx_cov_ratio = BDSTABLE.getEffectiveBdxCoverageRatio();
-        bdx_paid_back = bdx_paid_back.mul(bdx_cov_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
-        
+        uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
+        bdx_paid_back = bdx_paid_back.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
         TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);

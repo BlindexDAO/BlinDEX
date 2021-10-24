@@ -224,25 +224,27 @@ contract BDStable is ERC20Custom, Initializable {
         emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
     
-    function getEffectiveBdxCoverageRatio() public view returns (uint256) {
+    function get_effective_bdx_coverage_ratio() public view returns (uint256) {
         uint256 effective_collateral_ratio_d12 = effective_global_collateral_ratio_d12();
 
         uint256 cr = global_collateral_ratio_d12 > effective_collateral_ratio_d12 
             ? effective_collateral_ratio_d12 
             : global_collateral_ratio_d12;
 
-        if(cr >= BdPoolLibrary.COLLATERAL_RATIO_MAX){
-            return 0; // to avoid useless computations
-        }
-
-        uint256 globalCollateralValue_d18 = globalCollateralValue();
-
         uint256 expectedBdxValue_d18 = BdPoolLibrary
             .COLLATERAL_RATIO_MAX.sub(cr)
-            .mul(globalCollateralValue_d18)
+            .mul(totalSupply())
             .div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
+        if(expectedBdxValue_d18 == 0){
+            return BdPoolLibrary.COLLATERAL_RATIO_MAX; // in we need no BDX, the coverage is 100%
+        } 
+
         uint256 bdxPrice_d12 = oracle_price(PriceChoice.BDX);
+
+        if(bdxPrice_d12 == 0){
+            return 0; // in we need BDX but BDX price is 0, the coverage is 0%
+        } 
 
         uint256 expectedBdx_d18 = expectedBdxValue_d18
             .mul(BdPoolLibrary.PRICE_PRECISION)

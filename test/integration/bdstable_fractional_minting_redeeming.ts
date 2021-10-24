@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury, getDeployer } from "../helpers/common";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 
@@ -311,4 +311,61 @@ describe("BDStable fractional", () => {
         expect(d18_ToNumber(bdxDelta_d18)).to.be.closeTo(d18_ToNumber(expectedBdxRedemptionPaymentUser_d18), 1e-6, "invalid bdx delta (user)")
         expect(d18_ToNumber(bdxDeltaTreasury_d18)).to.be.closeTo(d18_ToNumber(expectedBdxRedemptionPaymentTreasury_d18), 1e-6, "invalid bdx delta (treasury)")
     });
-})
+
+    it("redeem should reward bdx in BDX CR amount", async () => {
+        await setUpFunctionalSystem(hre);
+
+        const deployer = await getDeployer(hre);
+        const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+
+        const bdxLeftInBdEu_d18 = to_d18(6);
+        const bdxToRemoveFromBdEu_d18 = (await bdx.balanceOf(bdEu.address)).sub(bdxLeftInBdEu_d18);
+        await bdEu.transferBdx(deployer.address, bdxToRemoveFromBdEu_d18); // deployer takes bdx form bdEu to decrease effective BDX CR
+
+        // enable fractional redeem
+        const cr = 0.7;
+        await lockBdEuCrAt(hre, cr);
+
+        const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
+        expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation
+
+        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+
+        const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
+        const userBdxBalanceBefore_d18 = await bdx.balanceOf(testUser.address);
+
+        //act
+        const bdEuToRedeem = 100;
+        const bdEuToRedeem_d18 = to_d18(bdEuToRedeem);
+        await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18); 
+        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
+        await bdEuPool.connect(testUser).collectRedemption();
+
+        const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
+        const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
+
+        const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
+
+        console.log("bdxEfCr: " + bdxEfCr);
+        console.log("bdEuBdxBalanceBefore_d18: " + bdEuBdxBalanceBefore_d18);
+        console.log("bdEuBdxBalanceAfter_d18: " + bdEuBdxBalanceAfter_d18);
+        console.log("bdxPrice: " + bdxPrice);
+
+        const expectedBdxDiffInBdEu = bdEuToRedeem * (1-cr) * bdxEfCr / bdxPrice;
+        console.log("expectedBdxDiffInBdEu: " + expectedBdxDiffInBdEu);
+
+        const actualBdxDiffInBdEu = d18_ToNumber(bdEuBdxBalanceAfter_d18.sub(bdEuBdxBalanceBefore_d18));
+        console.log("actualBdxDiffInBdEu: " + actualBdxDiffInBdEu);
+
+        const actualBdxDiffInUser = d18_ToNumber(userBdxBalanceAfter_d18.sub(userBdxBalanceBefore_d18));
+        console.log("actualBdxDiffInUser: " + actualBdxDiffInUser);
+
+        expect(actualBdxDiffInBdEu).to.be.closeTo(-expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in bdEu");
+        expect(actualBdxDiffInUser).to.be.closeTo(expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in user");
+    });
+});

@@ -61,7 +61,7 @@ describe("BDStable 1to1", () => {
         const btcInEurPrice_1e12 = (await getOnChainBtcEurPrice(hre)).price_1e12;
 
         const testUser = await getUser(hre);
-        const collateralAmount = 10;
+        const collateralAmount = 0.5;
 
         await lockBdEuCrAt(hre, 1);
         
