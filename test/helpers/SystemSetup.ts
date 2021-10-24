@@ -37,7 +37,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     await provideLiquidity(hre, deployer, wbtc, bdEu, to_d8(1000).mul(1e12).div(to_d12(initialWbtcBdEuPrice)), to_d18(1000));
     await provideLiquidity(hre, deployer, weth, bdx, to_d18(1000).mul(1e12).div(to_d12(initialWethBdxPrice)), to_d18(1000));
     await provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).mul(1e12).div(to_d12(initialWbtcBdxPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, bdx, bdEu, to_d8(1000).mul(1e12).div(to_d12(initialBdxBdEuPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(1000).mul(1e12).div(to_d12(initialBdxBdEuPrice)), to_d18(1000));
 
     if (simulateTimeElapse) {
         await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
