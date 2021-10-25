@@ -132,7 +132,7 @@ contract BDStable is ERC20Custom, Initializable {
 
     // Choice = 'BDSTABLE' or 'BDX' for now
     function oracle_price(PriceChoice choice) internal view returns (uint256) {
-        uint256 weth_fiat_price_d12 = uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
+        uint256 weth_fiat_price_d12 = weth_fiat_price();
         uint256 price_vs_weth;
 
         if (choice == PriceChoice.BDSTABLE) {
