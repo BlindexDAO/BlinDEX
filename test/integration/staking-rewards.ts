@@ -25,7 +25,7 @@ const bdxFirstYearSchedule_d18 = to_d18(21000000).mul(20).div(100);
 const bdxPerSecondFirstYear_d18 = bdxFirstYearSchedule_d18.div(365 * 24 * 60 * 60);
 const totalRewardsSupply_d18 = to_d18(21e6 / 2);
 
-let ownerUser: SignerWithAddress;
+let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 
@@ -37,15 +37,15 @@ let stakingRewardsDistribution: StakingRewardsDistribution;
 let vesting: Vesting;
 
 async function initialize() {
-  ownerUser = await getDeployer(hre);
+  deployer = await getDeployer(hre);
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
   weth = await getWeth(hre);
-  bdEu = await hre.ethers.getContract('BDEU', ownerUser) as BDStable;
-  bdx = await hre.ethers.getContract('BDXShares', ownerUser) as BDXShares;
-  stakingRewards_BDEU_WETH = await hre.ethers.getContract('StakingRewards_BDEU_WETH', ownerUser) as StakingRewards;
-  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", ownerUser) as StakingRewardsDistribution;
-  vesting = await hre.ethers.getContract("Vesting" ,ownerUser) as Vesting;
+  bdEu = await hre.ethers.getContract('BDEU', deployer) as BDStable;
+  bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
+  stakingRewards_BDEU_WETH = await hre.ethers.getContract('StakingRewards_BDEU_WETH', deployer) as StakingRewards;
+  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer) as StakingRewardsDistribution;
+  vesting = await hre.ethers.getContract("Vesting" ,deployer) as Vesting;
 }
 
 async function get_BDEU_WETH_poolWeight() {
@@ -66,11 +66,6 @@ async function setVestingRewardsRatio(contract: StakingRewardsDistribution, rati
 }
 
 describe("StakingRewards", () => {
-  before(function () {
-    return initialize();
-  })
-
-
   beforeEach(async () => {
     await setVestingRewardsRatio(stakingRewardsDistribution, 0);
   })
@@ -79,8 +74,8 @@ describe("StakingRewards", () => {
     before(async () => {
       await hre.deployments.fixture();
       await setUpFunctionalSystem(hre);
+      await initialize();
     });
-
 
     let depositedLPTokenUser1_d18_global: BigNumber;
     let depositedLPTokenUser2_d18_global: BigNumber;
@@ -139,7 +134,7 @@ describe("StakingRewards", () => {
       // we need to recalculate rewards every now and than
       for (let i = 1; i <= 5; i++) {
         await simulateTimeElapseInDays(365);
-        await stakingRewards_BDEU_WETH.connect(ownerUser).renewIfApplicable();
+        await stakingRewards_BDEU_WETH.connect(deployer).renewIfApplicable();
       }
 
       await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
@@ -183,6 +178,7 @@ describe("StakingRewards", () => {
   describe("Locked staking", () => {
     before(async () => {
       await hre.deployments.fixture();
+      await initialize();
       await setUpFunctionalSystem(hre);
     });
 
@@ -241,7 +237,7 @@ describe("StakingRewards", () => {
       // we need to recalculate rewards every now and than
       for (let i = 1; i <= 5; i++) {
         await simulateTimeElapseInDays(365);
-        await stakingRewards_BDEU_WETH.connect(ownerUser).renewIfApplicable();
+        await stakingRewards_BDEU_WETH.connect(deployer).renewIfApplicable();
       }
 
       await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
@@ -294,8 +290,8 @@ describe("StakingRewards", () => {
 describe('getReward interaction with vesting contract', () => {
 
   beforeEach(async () => {
-    await initialize();
     await hre.deployments.fixture();
+    await initialize();
     await setUpFunctionalSystem(hre);
   })
 
@@ -338,6 +334,12 @@ describe('getReward interaction with vesting contract', () => {
     const bdxReward_d18 = await bdx.balanceOf(testUser1.address);
 
     const userVestingSchedules = await vesting.vestingSchedules(testUser1.address, 0);
+
+    console.log("vesting scheduler: " + (await vesting.vestingScheduler()));
+    const deployer = await getDeployer(hre);
+    console.log("deployer: " + deployer.address);
+    console.log("deplostakingRewardsDistributionyer: " + stakingRewardsDistribution.address);
+    console.log("stakingRewards_BDEU_WETH: " + stakingRewards_BDEU_WETH.address);
 
     const vestedAmount = userVestingSchedules.totalVestedAmount_d18 as BigNumber;
 

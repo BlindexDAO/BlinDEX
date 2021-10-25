@@ -3,6 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { to_d18 } from '../utils/Helpers'
+import { Vesting } from '../typechain/Vesting';
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
@@ -20,6 +21,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
+  const vesting = await hre.ethers.getContract('Vesting') as Vesting
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
     "StakingRewardsDistribution", {
@@ -31,6 +33,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           methodName: "initialize",
           args: [
             bdx.address,
+            vesting.address,
             90
           ]
         }
@@ -42,6 +45,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Deployed StakingRewardsDistribution");
 
+  stakingRewardsDistribution_ProxyDeployment
+
+  // there is cycle dependency between staking rewards distribution and vesting
+  // once staking rewards distribution is available we override vesting params
+  await vesting.setFundsProvider(stakingRewardsDistribution_ProxyDeployment.address);
+  await vesting.setVestingScheduler(stakingRewardsDistribution_ProxyDeployment.address);
+
   await feedStakeRewardsDistribution(hre);
 
 	// One time migration
@@ -49,5 +59,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename
 func.tags = ['StakingRewardsDistribution'];
-func.dependencies = ['BDX', 'BdxMint'];
+func.dependencies = ['BDX', 'BdxMint', "Vesting"];
 export default func;
