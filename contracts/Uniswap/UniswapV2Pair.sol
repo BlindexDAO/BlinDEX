@@ -46,10 +46,10 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     uint public override price1CumulativeLast;
     uint public override kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
-    uint public PERIOD = 3600; // 1 hour TWAP (time-weighted average price)
-    uint public CONSULT_LENIENCY = 120; // Used for being able to consult past the period end
-    uint public SHOULD_UPDATE_MARGIN = 60; // on minute
-    bool public ALLOW_STALE_CONSULTS = false; // If false, consult() will fail if the TWAP is stale
+    uint public period = 3600; // 1 hour TWAP (time-weighted average price)
+    uint public consultLatency = 120; // Used for being able to consult past the period end
+    uint public shouldUpdateMargin = 60; // on minute
+    bool public allowStaleConsult = false; // If false, consult() will fail if the TWAP is stale
     FixedPoint.uq112x112 public price0AverageOracle;
     FixedPoint.uq112x112 public price1AverageOracle;
     uint    public price0CumulativeLastOracle;
@@ -340,26 +340,26 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     }
 
     function setPeriod(uint _period) external onlyByOwner {
-        PERIOD = _period;
+        period = _period;
     }
 
     function setConsultLeniency(uint _consult_leniency) external onlyByOwner {
-        CONSULT_LENIENCY = _consult_leniency;
+        consultLatency = _consult_leniency;
     }
 
     function setOracleShuldUpdateMargin(uint _should_update_margin) external onlyByOwner {
-        SHOULD_UPDATE_MARGIN = _should_update_margin;
+        shouldUpdateMargin = _should_update_margin;
     }
 
     function setAllowStaleConsults(bool _allow_stale_consults) external onlyByOwner {
-        ALLOW_STALE_CONSULTS = _allow_stale_consults;
+        allowStaleConsult = _allow_stale_consults;
     }
 
     function updateOracle() public override {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
-        if(timeElapsed >= PERIOD || msg.sender == owner_address) {
+        if(timeElapsed >= period || msg.sender == owner_address) {
             uint price0Cumulative = price0CumulativeLast;
             uint price1Cumulative = price1CumulativeLast;
 
@@ -394,7 +394,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
-        if((timeElapsed < (PERIOD + CONSULT_LENIENCY - SHOULD_UPDATE_MARGIN)) || ALLOW_STALE_CONSULTS || reserve0 == 0 || reserve1 == 0){
+        if((timeElapsed < (period + consultLatency - shouldUpdateMargin)) || allowStaleConsult || reserve0 == 0 || reserve1 == 0){
             return false;
         } else {
             return true;
@@ -407,7 +407,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
         // Ensure that the price is not stale
-        require((timeElapsed < (PERIOD + CONSULT_LENIENCY)) || ALLOW_STALE_CONSULTS,
+        require((timeElapsed < (period + consultLatency)) || allowStaleConsult,
                 'UniswapV2Pair Oracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
 
         if (token == token0) {

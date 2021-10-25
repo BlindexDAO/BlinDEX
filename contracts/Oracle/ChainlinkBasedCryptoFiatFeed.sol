@@ -27,12 +27,6 @@ contract ChainlinkBasedCryptoFiatFeed is IChainlinkBasedCryptoFiatFeed {
             .div(uint256(10)**cryptoToUsdFeed.decimals());
     }
 
-    function consult(address tokenIn, uint amountIn) external view returns (uint256) {     
-        require(tokenIn == address(cryptoToUsdFeed), "This oracle only accepts consulting crypto input");
-
-        return getPrice_1e12().mul(amountIn).div(1e12);
-    }
-
     function getLatestPrice(AggregatorV3Interface _feed) internal view returns (uint256) {
         (
             , 
