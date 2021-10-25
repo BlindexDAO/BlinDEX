@@ -13,7 +13,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
-import "./Vesting.sol";
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -43,7 +42,6 @@ contract StakingRewards is
 
     ERC20 public stakingToken;
     StakingRewardsDistribution stakingRewardsDistribution;
-    Vesting vesting;
 
     uint256 public periodFinish;
     bool public isTrueBdPool;
@@ -81,7 +79,6 @@ contract StakingRewards is
     function initialize (
         address _stakingToken,
         address _stakingRewardsDistribution,
-        address _vesting,
         bool _isTrueBdPool
     ) 
         external
@@ -92,7 +89,6 @@ contract StakingRewards is
 
         stakingToken = ERC20(_stakingToken);
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
-        vesting = Vesting(_vesting);
         DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
@@ -312,17 +308,11 @@ contract StakingRewards is
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            uint256 vestingRewardRatio = stakingRewardsDistribution.vestingRewardRatio_percent();
-            uint256 rewardAvailable = reward * (100 - vestingRewardRatio) / 100;
 
-            stakingRewardsDistribution.approveRewardTransferTo(address(vesting), reward - rewardAvailable);
+            uint256 immediatelyReleasedReward = stakingRewardsDistribution.releaseReward(msg.sender, reward);
 
-            vesting.schedule(msg.sender, reward - rewardAvailable);
-
-            stakingRewardsDistribution.transferRewards(msg.sender, rewardAvailable);
-
-            emit RewardPaid(msg.sender, rewardAvailable);
-            emit RewardVested(msg.sender, reward - rewardAvailable);
+            emit RewardPaid(msg.sender, immediatelyReleasedReward);
+            emit RewardVested(msg.sender, reward - immediatelyReleasedReward);
         }
     }
 

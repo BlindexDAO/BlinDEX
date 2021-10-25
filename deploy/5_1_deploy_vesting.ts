@@ -4,15 +4,14 @@ import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const deployer = (await hre.getNamedAccounts()).DEPLOYER;
+    const deployerAddres = (await hre.getNamedAccounts()).DEPLOYER;
     const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
-    const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
     const vestingTimeInSeconds = 60 * 60 * 24 * 30 * 9 //9 months
 
     const vesting_ProxyDeployment = await hre.deployments.deploy(
         'Vesting',
         {
-            from: deployer,
+            from: deployerAddres,
             proxy: {
                 proxyContract: 'OptimizedTransparentProxy',
                 execute: {
@@ -20,8 +19,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                         methodName: "initialize",
                         args: [
                             bdx.address,
-                            deployer,
-                            stakingRewardsDistribution.address,
+                            deployerAddres,
+                            deployerAddres,
                             vestingTimeInSeconds
                         ]
                     }
@@ -39,5 +38,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 func.id = __filename
 func.tags = ['Vesting'];
-func.dependencies = ['BDX', 'StakingRewardsDistribution'];
+func.dependencies = ['BDX'];
 export default func;

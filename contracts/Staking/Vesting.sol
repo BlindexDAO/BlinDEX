@@ -25,8 +25,8 @@ contract Vesting is OwnableUpgradeable
 
     mapping(address => VestingSchedule[]) public vestingSchedules;
     
-    address vestingScheduler;
-    address fundsProvider;
+    address public vestingScheduler;
+    address public fundsProvider;
     uint256 public vestingTimeInSeconds;
     uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 128;
 
@@ -50,6 +50,8 @@ contract Vesting is OwnableUpgradeable
         fundsProvider = _fundsProvider;
         vestingTimeInSeconds = _vestingTimeInSeconds;
     }
+
+    /* ========== MUTATIVE FUNCTIONS ========== */
 
     function schedule(address _receiver, uint256 _amount_d18) external {
         // to prevent melicious users form cloging user's schedules
@@ -89,6 +91,8 @@ contract Vesting is OwnableUpgradeable
         emit RewardClaimed(msg.sender, rewardsToClaim);
     }
 
+    /* ========== VIEWS ========== */
+
     function isFullyVested(VestingSchedule memory _schedule) internal view returns(bool) {
         return _schedule.vestingEndTimeStamp <= block.timestamp;
     }
@@ -103,6 +107,12 @@ contract Vesting is OwnableUpgradeable
         )
         .sub(_schedule.releasedAmount_d18);
     }
+
+    function vestingSchedulesOf(address account) external view returns (VestingSchedule[] memory) {
+        return vestingSchedules[account];
+    }
+
+    /* ========== RESTRICTED FUNCTIONS ========== */
 
     function setVestingScheduler(address _vestingScheduler)
         external

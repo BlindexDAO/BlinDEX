@@ -4,13 +4,16 @@ pragma solidity 0.6.11;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import '../Bdx/BDXShares.sol';
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import '../Bdx/BDXShares.sol';
+import "./Vesting.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
 
     uint256 public TOTAL_BDX_SUPPLY;
+    
+    uint256 public constant HUNDRED_PERCENT = 100;
 
     // BDX minting schedule
     // They sum up to 50% of TOTAL_BDX_SUPPLY
@@ -31,15 +34,21 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public vestingRewardRatio_percent;
 
     BDXShares rewardsToken;
+    Vesting vesting;
 
     mapping(address => uint256) public stakingRewardsWeights;
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
-    function initialize(address _rewardsToken, uint256 _vestingRewardRatio_percent) external initializer {
+    function initialize(
+        address _rewardsToken,
+        address _vesting,
+        uint256 _vestingRewardRatio_percent
+    ) external initializer {
         __Ownable_init();
 
         rewardsToken = BDXShares(_rewardsToken);
+        vesting = Vesting(_vesting);
         TOTAL_BDX_SUPPLY = rewardsToken.MAX_TOTAL_SUPPLY();
 
         BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
@@ -107,17 +116,19 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit RewardsWeightsReset();
     }
 
-    function transferRewards(address _recepient, uint256 amountErc20) external onlyStakingRewards {
-        TransferHelper.safeTransfer(address(rewardsToken), _recepient, amountErc20);
+    function releaseReward(address to, uint256 reward) external onlyStakingRewards returns(uint256 immediatelyReleasedReward) {
+        immediatelyReleasedReward = reward.mul(HUNDRED_PERCENT.sub(vestingRewardRatio_percent)).div(HUNDRED_PERCENT);
+        uint256 vestedReward = reward.sub(immediatelyReleasedReward);
+
+        rewardsToken.approve(address(vesting), vestedReward);
+        vesting.schedule(to, vestedReward);
+
+        TransferHelper.safeTransfer(address(rewardsToken), to, immediatelyReleasedReward);
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {
         require(0 <= _vestingRewardRatio && _vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
-    }
-
-    function approveRewardTransferTo(address spenderAddress, uint256 amountErc20) external onlyStakingRewards {
-        rewardsToken.approve(spenderAddress, amountErc20);
     }
 
     modifier onlyStakingRewards() {
