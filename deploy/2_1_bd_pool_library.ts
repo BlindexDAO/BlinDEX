@@ -13,5 +13,5 @@ const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 };
 func.id = __filename
 func.tags = ['BdPoolLibrary'];
-func.dependencies = ['BDX'];
+func.dependencies = ['BDX', 'BdxMint'];
 export default func;

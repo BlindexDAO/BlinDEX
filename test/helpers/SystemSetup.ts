@@ -9,6 +9,7 @@ import { ethers } from "ethers";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, simulateTimeElapse: boolean = true) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
+    const treasury = await hre.ethers.getNamedSigner('TREASURY');
 
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
@@ -18,12 +19,10 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     const bdEuWethPool = await getBdEuWethPool(hre);
     const bdEuWbtcPool = await getBdEuWbtcPool(hre);
 
-    // mint initial BDX
-    await bdx.mint(ethers.constants.AddressZero, deployer.address, to_d18(1e5));
-
+    // transfer initial BDX from treasury to owner
+    await bdx.connect(treasury).transfer(deployer.address, to_d18(1e5));
     // mint initial WETH
     await weth.deposit({ value: to_d18(100) });
-
     // mint inital WBTC
     await mintWbtc(hre, deployer, to_d18(1000));
 
@@ -59,12 +58,16 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
         .mul(7).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12); // 70% in weth
       const collateralWbtc_d8 = constants.initalBdStableToOwner_d18[hre.network.name]
         .mul(3).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12); // 30% in wbtc
-      
-      await weth.approve(bdEuWethPool.address, collateralWeth_d18);
-      await bdEuWethPool.recollateralizeBdStable(collateralWeth_d18, 1)
 
-      await wbtc.approve(bdEuWbtcPool.address, collateralWbtc_d8);
-      await bdEuWbtcPool.recollateralizeBdStable(collateralWbtc_d8, 1);
+      // recallateralize by just sending the tokens in order not to extract undeserved BDX
+      await weth.connect(deployer).transfer(bdEuWethPool.address, collateralWeth_d18);
+      await wbtc.connect(deployer).transfer(bdEuWbtcPool.address, collateralWbtc_d8);
+      
+      if (simulateTimeElapse) {
+        await simulateTimeElapseInSeconds(60*60+1); // wait before CR can be refreshed
+      }
+
+      await bdEu.refreshCollateralRatio();
     }
 }
 

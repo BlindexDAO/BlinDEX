@@ -46,6 +46,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDX_WBTC')).address)
   await lens.pushStaking(await (await ethers.getContract('StakingRewards_BDEU_WBTC')).address)
 
+  await lens.setPriceFeed_EUR_USD(await (await ethers.getContract('PriceFeed_EUR_USD')).address)
+  
 	// One time migration
 	return true;
 };

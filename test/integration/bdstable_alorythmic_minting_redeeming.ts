@@ -2,10 +2,10 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, to_d12 } from "../../utils/Helpers";
+import { d12_ToNumber, diffPct, to_d12 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber } from "../../utils/Helpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury, getDeployer } from "../helpers/common";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 
@@ -43,6 +43,7 @@ describe("BDStable algorythmic", () => {
 
         const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
         const bdEulBalanceBeforeMinting = await bdEu.balanceOf(testUser.address);
+        const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
 
         const bdxInEurPrice = await bdEu.BDX_price_d12();
 
@@ -55,24 +56,29 @@ describe("BDStable algorythmic", () => {
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by minting fee;
 
         const bdEuBalanceAfterMinting = await bdEu.balanceOf(testUser.address);
+        const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
 
         const diffPctBdEu = diffPct(bdEuBalanceAfterMinting.sub(bdEulBalanceBeforeMinting), expectedBdEuDiff);
 
         const bdxBalanceAfterMinting = await bdx.balanceOf(testUser.address);
-        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);  
+        const actualBdxCost = bdxBalanceBeforeMinting.sub(bdxBalanceAfterMinting);
+        const actualBdxIntoBdEu  = bdEuBdxBalanceAfter_d18.sub(bdEuBdxBalanceBefore_d18);
         
         const diffPctBdxCost = diffPct(actualBdxCost, expectedBdxCost);
-        const actualWeth = await weth.balanceOf(testUser.address);
+        const diffPctBdEuBdxBalance = diffPct(actualBdxIntoBdEu, expectedBdxCost);
 
+        const actualWeth = await weth.balanceOf(testUser.address);
         const diffPctWethBalance = diffPct(wethBalanceBeforeMinting, actualWeth);
 
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
         console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
+        console.log(`Diff BdEu DBX balance: ${diffPctWethBalance}%`);
 
         expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");
         expect(diffPctBdEu).to.be.closeTo(0, 0.001, "invalid bdEu diff");
+        expect(diffPctBdEuBdxBalance).to.be.closeTo(0, 0.001, "invalid bdEu bdx diff");
     });
 
     it("should redeem bdeu when CR = 0", async () => {
@@ -92,8 +98,8 @@ describe("BDStable algorythmic", () => {
         const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
-        console.log("bdxInEurPrice           : " + bdxInEurPrice_d12);
-        console.log("bdEuBalanceBeforeRedeem: " + bdEuBalanceBeforeRedeem_d18);
+        console.log("bdxInEurPrice           : " + d12_ToNumber(bdxInEurPrice_d12));
+        console.log("bdEuBalanceBeforeRedeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem_d18));
 
         const bdEuToRedeem_d18 = to_d18(100);
 
@@ -127,8 +133,8 @@ describe("BDStable algorythmic", () => {
         console.log("expected bdEu balance delta: " + expectedBdEuDelta);
 
         expect(wethDelta).to.eq(0);
-        expect(bdxDelta).to.be.closeTo(expectedBdxDelta, 0.1);
-        expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1);
+        expect(bdxDelta).to.be.closeTo(expectedBdxDelta, 0.1, "Invalid BDX delta");
+        expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1, "Invalid BdEu delta");
     });
 
     it("should tax illegal algorithmic redemption", async () => {
@@ -203,5 +209,62 @@ describe("BDStable algorythmic", () => {
         expect(bdxDeltaUser).to.be.closeTo(expectedBdxDeltaUser, 0.1);
         expect(bdxDeltaTreasury).to.be.closeTo(expectedBdxDeltaTreasury, 0.1);
         expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1);
-    });    
+    });
+
+    it("redeem should reward bdx in BDX CR amount", async () => {
+        await setUpFunctionalSystem(hre);
+
+        const deployer = await getDeployer(hre);
+        const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+
+        const bdxLeftInBdEu_d18 = to_d18(6);
+        const bdxToRemoveFromBdEu_d18 = (await bdx.balanceOf(bdEu.address)).sub(bdxLeftInBdEu_d18);
+        await bdEu.transfer_bdx(deployer.address, bdxToRemoveFromBdEu_d18); // deployer takes bdx form bdEu to decrease effective BDX CR
+
+        // enable alogirthimc redeem
+        const cr = 0;
+        await lockBdEuCrAt(hre, cr);
+
+        const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
+        expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation
+
+        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+
+        const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
+        const userBdxBalanceBefore_d18 = await bdx.balanceOf(testUser.address);
+
+        //act
+        const bdEuToRedeem = 100;
+        const bdEuToRedeem_d18 = to_d18(bdEuToRedeem);
+        await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18); 
+        await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
+        await bdEuPool.connect(testUser).collectRedemption();
+
+        const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
+        const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
+
+        const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
+
+        console.log("bdxEfCr: " + bdxEfCr);
+        console.log("bdEuBdxBalanceBefore_d18: " + bdEuBdxBalanceBefore_d18);
+        console.log("bdEuBdxBalanceAfter_d18: " + bdEuBdxBalanceAfter_d18);
+        console.log("bdxPrice: " + bdxPrice);
+
+        const expectedBdxDiffInBdEu = bdEuToRedeem * bdxEfCr / bdxPrice;
+        console.log("expectedBdxDiffInBdEu: " + expectedBdxDiffInBdEu);
+
+        const actualBdxDiffInBdEu = d18_ToNumber(bdEuBdxBalanceAfter_d18.sub(bdEuBdxBalanceBefore_d18));
+        console.log("actualBdxDiffInBdEu: " + actualBdxDiffInBdEu);
+
+        const actualBdxDiffInUser = d18_ToNumber(userBdxBalanceAfter_d18.sub(userBdxBalanceBefore_d18));
+        console.log("actualBdxDiffInUser: " + actualBdxDiffInUser);
+
+        expect(actualBdxDiffInBdEu).to.be.closeTo(-expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in bdEu");
+        expect(actualBdxDiffInUser).to.be.closeTo(expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in user");
+    });
 })

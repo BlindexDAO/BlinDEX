@@ -83,8 +83,8 @@ export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){
 
   return getOnChainCryptoFiatPrice(
     hre,
-    constants.EUR_USD_CHAINLINK_FEED[networkName],
-    constants.BTC_USD_CHAINLINK_FEED[networkName])
+    constants.EUR_USD_FEED_ADDRESS[networkName],
+    constants.BTC_USD_FEED_ADDRESS[networkName])
 }
 
 export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
@@ -92,8 +92,8 @@ export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment){
 
   return getOnChainCryptoFiatPrice(
     hre,
-    constants.EUR_USD_CHAINLINK_FEED[networkName],
-    constants.ETH_USD_CHAINLINK_FEED[networkName])
+    constants.EUR_USD_FEED_ADDRESS[networkName],
+    constants.ETH_USD_FEED_ADDRESS[networkName])
 }
 
 export async function getOnChainCryptoFiatPrice(

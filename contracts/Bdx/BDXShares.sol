@@ -24,20 +24,9 @@ contract BDXShares is ERC20Custom, Initializable {
     mapping(address => bool) bdstables;
 
     /* ========== MODIFIERS ========== */
-
-    modifier onlyPools(address bd_stable) {
-       require(bdstables[bd_stable] && BDStable(bd_stable).bdstable_pools(msg.sender) == true, "You are not a bd pool");
-        _;
-    }
     
     modifier onlyByOwner() {
         require(msg.sender == owner_address, "You are not an owner");
-        _;
-    }
-
-    modifier onlyPoolsOrOwner(address bd_stable) {
-       require(bdstables[bd_stable] && BDStable(bd_stable).bdstable_pools(msg.sender) == true || msg.sender == owner_address,
-         "You are not an owner nor a bd pool");
         _;
     }
 
@@ -70,23 +59,12 @@ contract BDXShares is ERC20Custom, Initializable {
         emit OwnerSet(_owner_address);
     }
 
-    function mint(address bd_stable, address to, uint256 amount) public onlyPoolsOrOwner(bd_stable) {
+    function mint(address bd_stable, address to, uint256 amount) public onlyByOwner {
         require(totalSupply().add(amount) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
         _mint(to, amount);
 
         emit BdxMinted(address(this), to, bd_stable, amount);
-    }
-
-    // This function is what other bd pools will call to burn BDX 
-    function pool_burn_from(address bd_stable, address b_address, uint256 b_amount) external onlyPools(bd_stable) {
-
-        _burnFrom(b_address, b_amount);
-        emit BdxBurned(b_address, address(this), bd_stable, b_amount);
-    }
-
-    function howMuchCanBeMinted() external view returns(uint256) {
-        return MAX_TOTAL_SUPPLY.sub(totalSupply());
     }
 
     /* ========== EVENTS ========== */

@@ -2,9 +2,9 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
+import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser, getOnChainEthEurPrice } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import * as constants from '../../utils/Constants';
@@ -18,6 +18,8 @@ describe("Recollateralization", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
+        const bdEuWethPool = await getBdEuWethPool(hre);
+        await bdEuWethPool.toggleRecollateralizeOnlyForOwner(); // now every user can recollateralize
     });
 
     it("should recollateralize when efCR < CR", async () => {
@@ -51,6 +53,7 @@ describe("Recollateralization", () => {
         const toRecollatInEth = d18_ToNumber(toRecollatInEth_d18);
         
         const bdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(bdEu.address);
 
         await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
         await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
@@ -80,6 +83,11 @@ describe("Recollateralization", () => {
         const diffPctWethBalance = diffPct(actualWethCost_d18, toRecollatInEth_d18);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid diffPctWethBalance");
+
+        const expecedBdEuBdx = d18_ToNumber(bdEuBdxBalanceBeforeRecolat_d18.sub(expectedBdxBack_d18));
+        const bdEuBdxBalanceAfterRecolat = d18_ToNumber(await bdx.balanceOf(bdEu.address));
+
+        expect(bdEuBdxBalanceAfterRecolat).to.be.closeTo(expecedBdEuBdx, 0.001, "invalid bdEu bdx balance");
     });
 
     it("recollateralize should NOT fail when efCR < CR", async () => {        
@@ -113,5 +121,62 @@ describe("Recollateralization", () => {
         await expect((async () => {
             await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
         })()).to.be.rejectedWith("subtraction overflow");
+    })
+
+    it("recollateralize should reward bdx in BDX CR amount", async () => {        
+        await setUpFunctionalSystem(hre, 0.3); // ~efCR
+
+        const deployer = await getDeployer(hre);
+        const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+        const bdx = await getBdx(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+        const weth = await getWeth(hre);
+
+        const cr = 0.9;
+        await lockBdEuCrAt(hre, cr); // CR
+
+        const wethPrice = (await getOnChainEthEurPrice(hre)).price;
+        const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
+
+        const bdxLeftInBdEu_d18 = to_d18(6);
+        const bdxToRemoveFromBdEu_d18 = (await bdx.balanceOf(bdEu.address)).sub(bdxLeftInBdEu_d18);
+        await bdEu.transfer_bdx(deployer.address, bdxToRemoveFromBdEu_d18); // deployer takes bdx form bdEu to decrease effective BDX CR
+
+        await weth.connect(testUser).deposit({value: to_d18(100)});
+
+        const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
+        expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation
+
+        const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
+        const userBdxBalanceBefore_d18 = await bdx.balanceOf(testUser.address);
+
+        //act
+        const toRecollatInEth_d18 = to_d18(0.001);
+        await weth.connect(testUser).approve(bdEuPool.address, toRecollatInEth_d18); 
+        await bdEuPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+
+        const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
+        const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
+
+        console.log("toRecollatInEth_d18: " + toRecollatInEth_d18);
+        console.log("bdxEfCr: " + bdxEfCr);
+        console.log("bdEuBdxBalanceBefore_d18: " + bdEuBdxBalanceBefore_d18);
+        console.log("bdEuBdxBalanceAfter_d18: " + bdEuBdxBalanceAfter_d18);
+        console.log("bdxPrice: " + bdxPrice);
+        console.log("wethPrice: " + wethPrice);
+
+        const expectedBdxDiffInBdEu = d18_ToNumber(toRecollatInEth_d18) * wethPrice * bdxEfCr / bdxPrice;
+        console.log("expectedBdxDiffInBdEu: " + expectedBdxDiffInBdEu);
+
+        const actualBdxDiffInBdEu = d18_ToNumber(bdEuBdxBalanceAfter_d18.sub(bdEuBdxBalanceBefore_d18));
+        console.log("actualBdxDiffInBdEu: " + actualBdxDiffInBdEu);
+
+        const actualBdxDiffInUser = d18_ToNumber(userBdxBalanceAfter_d18.sub(userBdxBalanceBefore_d18));
+        console.log("actualBdxDiffInUser: " + actualBdxDiffInUser);
+
+        expect(actualBdxDiffInBdEu).to.be.closeTo(-expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in bdEu");
+        expect(actualBdxDiffInUser).to.be.closeTo(expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in user");
     })
 })

@@ -20,7 +20,6 @@ async function setupStakingContract(
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
 
   const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
-  const vesting = await hre.ethers.getContract('Vesting') as Vesting
 
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
     stakingRewardsContractName, {
@@ -33,7 +32,6 @@ async function setupStakingContract(
           args: [
             pairAddress,
             stakingRewardsDistribution.address,
-            vesting.address,
             isTrueBdPool
           ]
         }
@@ -49,11 +47,6 @@ async function setupStakingContract(
 
   console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
   console.log(`${stakingRewardsContractName} deployed to impl: `, stakingRewards_ProxyDeployment.implementation);
-
-  if (nameB === 'WETH') {
-    console.log('Setting up StakingRewards_BDEU_WETH as vesting scheduler');
-    await vesting.connect(deployer).setVestingScheduler(stakingRewards_ProxyDeployment.address);
-  }
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {

@@ -19,7 +19,7 @@ describe("BDStable 1to1", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 0.7);
     });
 
     it("should mint bdeu when CR = 1 [for WETH]", async () => {
@@ -61,7 +61,7 @@ describe("BDStable 1to1", () => {
         const btcInEurPrice_1e12 = (await getOnChainBtcEurPrice(hre)).price_1e12;
 
         const testUser = await getUser(hre);
-        const collateralAmount = 10;
+        const collateralAmount = 0.5;
 
         await lockBdEuCrAt(hre, 1);
         
@@ -124,7 +124,7 @@ describe("BDStable 1to1", () => {
         const bdEuToRedeem =  to_d18(100);
 
         const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
-        expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ration shold be less than 1"); // test validation
+        expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ratio should be less than 1"); // test validation
         const expectedWethFromRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12)
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
@@ -202,8 +202,9 @@ describe("BDStable 1to1", () => {
         const bdEuToRedeem =  to_d18(100);
 
         const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
-        const usedCr = efCr_d12 > to_d12(1) ? to_d12(1) : efCr_d12;
-        let expectedWethForRedeem = bdEuToRedeem.mul(usedCr).div(1e12).mul(1e12).div(ethInEurPrice_1e12);
+        expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ratio should be less than 1"); // test validation
+        
+        let expectedWethForRedeem = bdEuToRedeem.mul(efCr_d12).div(1e12).mul(1e12).div(ethInEurPrice_1e12);
         expectedWethForRedeem = expectedWethForRedeem.mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
         const expectedWethForRedeemUser = expectedWethForRedeem.div(10)

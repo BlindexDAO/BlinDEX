@@ -8,7 +8,7 @@ import "../ERC20/ERC20Custom.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Bdx/BDXShares.sol";
-import "../Oracle/IChainlinkBasedCryptoFiatFeed.sol";
+import "../Oracle/IOracleBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
 import "./Pools/BdPoolLibrary.sol";
@@ -22,18 +22,20 @@ contract BDStable is ERC20Custom, Initializable {
 
     uint8 public constant decimals = 18;
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
+    uint256 public unclaimedPoolsBDX;
 
     string public symbol;
     string public name;
     string public fiat;
     address public owner_address;
-    address public bdx_address;
-    address public treasury_address;
+    address public treasury_address; //todo ag remove?
+
+    IERC20 private BDX;
 
     ICryptoPairOracle bdstableWethOracle;
     ICryptoPairOracle bdxWethOracle;
 
-    IChainlinkBasedCryptoFiatFeed private weth_fiat_pricer;
+    IOracleBasedCryptoFiatFeed private weth_fiat_pricer;
     uint8 private weth_fiat_pricer_decimals;
 
     uint256 public global_collateral_ratio_d12; // 12 decimals of precision
@@ -99,7 +101,7 @@ contract BDStable is ERC20Custom, Initializable {
         fiat = _fiat;
         owner_address = _owner_address;
         treasury_address = _treasury_address;
-        bdx_address = _bdx_address;
+        BDX = IERC20(_bdx_address);
 
         bdStable_step_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
         global_collateral_ratio_d12 = uint256(BdPoolLibrary.COLLATERAL_RATIO_MAX); // Bdstable system starts off fully collateralized (12 decimals of precision)
@@ -222,6 +224,41 @@ contract BDStable is ERC20Custom, Initializable {
 
         emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
+    
+    function get_effective_bdx_coverage_ratio() public view returns (uint256) {
+        uint256 effective_collateral_ratio_d12 = effective_global_collateral_ratio_d12();
+
+        uint256 cr = global_collateral_ratio_d12 > effective_collateral_ratio_d12 
+            ? effective_collateral_ratio_d12 
+            : global_collateral_ratio_d12;
+
+        uint256 expectedBdxValue_d18 = BdPoolLibrary
+            .COLLATERAL_RATIO_MAX.sub(cr)
+            .mul(totalSupply())
+            .div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+
+        if(expectedBdxValue_d18 == 0){
+            return BdPoolLibrary.COLLATERAL_RATIO_MAX; // in we need no BDX, the coverage is 100%
+        } 
+
+        uint256 bdxPrice_d12 = oracle_price(PriceChoice.BDX);
+
+        if(bdxPrice_d12 == 0){
+            return 0; // in we need BDX but BDX price is 0, the coverage is 0%
+        } 
+
+        uint256 expectedBdx_d18 = expectedBdxValue_d18
+            .mul(BdPoolLibrary.PRICE_PRECISION)
+            .div(bdxPrice_d12);
+
+        uint256 bdxSupply_d18 = BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX);
+        uint256 effectiveBdxCR_d12 = BdPoolLibrary
+            .PRICE_PRECISION
+            .mul(bdxSupply_d18)
+            .div(expectedBdx_d18);
+
+        return effectiveBdxCR_d12 > BdPoolLibrary.COLLATERAL_RATIO_MAX ? BdPoolLibrary.COLLATERAL_RATIO_MAX : effectiveBdxCR_d12;
+    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
@@ -285,7 +322,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
     
     function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyByOwner {
-        weth_fiat_pricer = IChainlinkBasedCryptoFiatFeed(_eth_fiat_consumer_address);
+        weth_fiat_pricer = IOracleBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals();
         
         emit EthFiatOracleSet(_eth_fiat_consumer_address);
@@ -302,7 +339,6 @@ contract BDStable is ERC20Custom, Initializable {
 
         emit PriceTargetSet(_price_target_d12);
     }
-
 
     function set_price_band_d12(uint256 _price_band_d12) external onlyByOwner {
         price_band_d12 = _price_band_d12;
@@ -336,6 +372,28 @@ contract BDStable is ERC20Custom, Initializable {
 
         owner_address = _owner_address;
         emit OwnerSet(_owner_address);
+    }
+
+    function pool_claim_bdx(uint256 amount) public onlyPools {
+        unclaimedPoolsBDX = unclaimedPoolsBDX.add(amount);
+    }
+
+    function pool_transfer_claimed_bdx(address to, uint256 amount) public onlyPools {
+        unclaimedPoolsBDX = unclaimedPoolsBDX.sub(amount);
+        TransferHelper.safeTransfer(address(BDX), to, amount);
+    }
+
+    function transfer_bdx(address to, uint256 BDX_amount) external onlyByOwnerOrPool {
+        require(
+            BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX) >= BDX_amount,
+            "Not enough BDX"
+        );
+
+        TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
+    }
+
+    function transfer_bdx_force(address to, uint256 BDX_amount) external onlyByOwner {
+        TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
     }
 
     /* ========== EVENTS ========== */

@@ -25,8 +25,8 @@ contract Vesting is OwnableUpgradeable
 
     mapping(address => VestingSchedule[]) public vestingSchedules;
     
-    address vestingScheduler;
-    address fundsProvider;
+    address public vestingScheduler;
+    address public fundsProvider;
     uint256 public vestingTimeInSeconds;
     uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 128;
 
