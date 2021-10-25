@@ -23,11 +23,12 @@ describe("Collateral price", () => {
 
         const wethPool = await getBdEuWethPool(hre);
 
-        const expectedWethPrice = 2800;
+        const expectedWethPrice = 3600; //ETH-EUR for 2021-10-25
+        const precision = 0.33;
         const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
 
         console.log("wethInEurPrice: " + wethInEurPrice);
-        expect(wethInEurPrice).to.be.closeTo(expectedWethPrice, expectedWethPrice*0.33);
+        expect(wethInEurPrice).to.be.closeTo(expectedWethPrice, expectedWethPrice * precision);
     });
 
     it("should get price for wbtc", async () => {
@@ -36,10 +37,11 @@ describe("Collateral price", () => {
 
         const wbtcPool = await getBdEuWbtcPool(hre);
 
-        const expectedWbtcPrice = 40000;
+        const expectedWbtcPrice = 54000; // BTC-EUR for 2021-10-25
+        const precision = 0.33;
         const wbtcInEurPrice = d12_ToNumber(await wbtcPool.getCollateralPrice_d12());
 
         console.log("wbtcInEurPrice: " + wbtcInEurPrice);
-        expect(wbtcInEurPrice).to.be.closeTo(expectedWbtcPrice, expectedWbtcPrice*0.33);
+        expect(wbtcInEurPrice).to.be.closeTo(expectedWbtcPrice, expectedWbtcPrice * precision);
     });
 })
