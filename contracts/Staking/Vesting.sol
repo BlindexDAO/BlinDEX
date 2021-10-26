@@ -93,11 +93,11 @@ contract Vesting is OwnableUpgradeable
 
     /* ========== VIEWS ========== */
 
-    function isFullyVested(VestingSchedule memory _schedule) internal view returns(bool) {
+    function isFullyVested(VestingSchedule memory _schedule) public view returns(bool) {
         return _schedule.vestingEndTimeStamp <= block.timestamp;
     }
 
-    function getAvailableReward(VestingSchedule memory _schedule) internal view returns(uint256) {
+    function getAvailableReward(VestingSchedule memory _schedule) public view returns(uint256) {
         if (isFullyVested(_schedule)) {
             return _schedule.totalVestedAmount_d18.sub(_schedule.releasedAmount_d18);
         }
