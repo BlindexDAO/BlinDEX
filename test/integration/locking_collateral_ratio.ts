@@ -75,6 +75,6 @@ describe("Locking collateral ratio", () => {
         const excessiveBdxAmount = to_d18(1000);
         await weth.approve(bdEuWethPool.address, collateralAmount);
         await bdx.approve(bdEuWethPool.address, excessiveBdxAmount);
-        await bdEuWethPool.mintFractionalBdStable(collateralAmount, excessiveBdxAmount, 1);
+        await bdEuWethPool.mintFractionalBdStable(collateralAmount, excessiveBdxAmount, 1, false, {});
     }
 });

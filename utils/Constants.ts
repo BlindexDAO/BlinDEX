@@ -47,6 +47,14 @@ export const BTC_ETH_FEED_ADDRESS = <any>{
     rsk: '', // we only ue this feed in tests
 };
 
+export const NATIVE_TOKEN_NAME = <any>{
+    localhost: "ETH",
+    mainnetFork: "ETH",
+    rinkeby: "ETH",
+    kovan: "ETH",
+    rsk: 'RBTC',
+};
+
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
 export const numberOfLPs = 11;
@@ -59,7 +67,6 @@ export const initalBdStableToOwner_d18 = <any>{
     rsk: to_d18(10000),
 };
 
-//todo ag how much bdx?
 export const initalBdStable_bdx_d18 = <any>{
     localhost: to_d18(10000),
     mainnetFork: to_d18(10000),

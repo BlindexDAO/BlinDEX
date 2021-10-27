@@ -109,7 +109,7 @@ describe("BDStable algorythmic", () => {
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18);
 
         await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
 
         const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -176,8 +176,8 @@ describe("BDStable algorythmic", () => {
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18);
 
         await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
-        await bdEuPool.connect(treasury).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
+        await bdEuPool.connect(treasury).collectRedemption(false);
 
         const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -243,7 +243,7 @@ describe("BDStable algorythmic", () => {
         const bdEuToRedeem_d18 = to_d18(bdEuToRedeem);
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18); 
         await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
 
         const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
         const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);

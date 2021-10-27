@@ -53,7 +53,7 @@ describe("BuyBack", () => {
         const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
 
         await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
-        await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
+        await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1, false, {});
 
         const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
         const userWethBalanceAfter_d18 = await weth.balanceOf(testUser.address);
@@ -91,7 +91,7 @@ describe("BuyBack", () => {
         bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
         
         await bdx.connect(testUser).approve(bdEuWethPool.address, maxBdxToBuyBack_d18); 
-        await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1);
+        await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1, false, {});
     });
 
     it("should throw if trying to buy back more than excess", async () => {        
@@ -115,7 +115,7 @@ describe("BuyBack", () => {
         await bdx.connect(testUser).approve(bdEuWethPool.address, moreThanMaxBdxToBuyBack_d18); 
 
         await expect((async () => {
-            await bdEuWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1);
+            await bdEuWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1, false, {});
         })()).to.be.rejectedWith("You are trying to buy back more than the excess!");
     });
 
@@ -133,7 +133,7 @@ describe("BuyBack", () => {
         await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
 
         await expect((async () => {
-            await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
+            await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1, false, {});
         })()).to.be.rejectedWith("No excess collateral to buy back!");
     });
 })

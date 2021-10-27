@@ -23,7 +23,7 @@ async function performFractionalMinting(testUser: SignerWithAddress, wethAmount_
     await weth.connect(testUser).approve(bdEuPool.address, wethAmount_d18);
     await bdx.connect(testUser).approve(bdEuPool.address, bdxAmount_d18); 
 
-    await bdEuPool.connect(testUser).mintFractionalBdStable(wethAmount_d18, bdxAmount_d18, to_d18(1));
+    await bdEuPool.connect(testUser).mintFractionalBdStable(wethAmount_d18, bdxAmount_d18, to_d18(1), false, {});
 }
 
 describe("BDStable fractional", () => {
@@ -138,7 +138,7 @@ describe("BDStable fractional", () => {
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
         
         // asserts
 
@@ -206,7 +206,7 @@ describe("BDStable fractional", () => {
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
         
         // asserts
 
@@ -287,8 +287,8 @@ describe("BDStable fractional", () => {
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
-        await bdEuPool.connect(treasury).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
+        await bdEuPool.connect(treasury).collectRedemption(false);
         
         // asserts
 
@@ -344,7 +344,7 @@ describe("BDStable fractional", () => {
         const bdEuToRedeem_d18 = to_d18(bdEuToRedeem);
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18); 
         await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
 
         const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
         const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);

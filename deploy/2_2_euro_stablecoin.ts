@@ -52,7 +52,8 @@ const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
               bdEu.address,
               bdx.address,
               constants.wETH_address[hre.network.name],
-              deployerAddress
+              deployerAddress,
+              true
             ]
           }
         }
@@ -82,7 +83,8 @@ const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
               bdEu.address,
               bdx.address,
               constants.wBTC_address[hre.network.name],
-              deployerAddress
+              deployerAddress,
+              false
             ]
           }
         }

@@ -129,7 +129,7 @@ describe("BDStable 1to1", () => {
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
 
         var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
         var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
@@ -211,8 +211,8 @@ describe("BDStable 1to1", () => {
         const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10)
 
         await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
-        await bdEuPool.connect(testUser).collectRedemption();
-        await bdEuPool.connect(treasury).collectRedemption();
+        await bdEuPool.connect(testUser).collectRedemption(false);
+        await bdEuPool.connect(treasury).collectRedemption(false);
 
         var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
         var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
@@ -253,7 +253,7 @@ export async function perform1To1MintingForWeth(hre: HardhatRuntimeEnvironment, 
   
     await weth.connect(user).deposit({ value: to_d18(1000) });
     await weth.connect(user).approve(bdEuPool.address, to_d18(collateralAmount));
-    await bdEuPool.connect(user).mint1t1BD(to_d18(collateralAmount), to_d18(1));
+    await bdEuPool.connect(user).mint1t1BD(to_d18(collateralAmount), to_d18(1), false, {});
 }
 
 export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, wbtcAmount: number){
@@ -263,5 +263,5 @@ export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, 
     await mintWbtcFromEth(hre, user, to_d18(wbtcAmount*100));
     
     await wbtc.connect(user).approve(bdEuPool.address, to_d8(wbtcAmount));
-    await bdEuPool.connect(user).mint1t1BD(to_d8(wbtcAmount), to_d18(1));
+    await bdEuPool.connect(user).mint1t1BD(to_d8(wbtcAmount), to_d18(1), false, {});
 }
