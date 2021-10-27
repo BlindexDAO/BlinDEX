@@ -43,7 +43,7 @@ contract BDStable is ERC20Custom, Initializable {
     address public weth_address;
 
     // The addresses in this array are added by the oracle and these contracts are able to mint bdStable
-    address[] public bdstable_pools_array;
+    address payable[] public bdstable_pools_array;
 
     // Mapping is also used for faster verification
     mapping(address => bool) public bdstable_pools; 
@@ -284,7 +284,7 @@ contract BDStable is ERC20Custom, Initializable {
         require(bdstable_pools_array.length < MAX_NUMBER_OF_POOLS, "pools limit reached");
 
         bdstable_pools[pool_address] = true; 
-        bdstable_pools_array.push(pool_address);
+        bdstable_pools_array.push(payable(pool_address));
 
         emit PoolAdded(pool_address);
     }

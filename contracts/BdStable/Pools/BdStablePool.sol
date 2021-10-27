@@ -388,7 +388,7 @@ contract BdStablePool is Initializable {
         } else {
             TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_amount);
         }
-        
+
         BDSTABLE.pool_mint(msg.sender, mint_amount);
     }
 
@@ -609,10 +609,9 @@ contract BdStablePool is Initializable {
         emit BoughtBack(BDX_amount, collateral_precision);
     }
 
-    //todo ag needed?
-    // receive() external payable {
-    //     assert(msg.sender == address(NativeTokenWrapper)); // only accept ETH via fallback from the WETH contract
-    // }
+    receive() external payable {
+        assert(msg.sender == address(NativeTokenWrapper)); // only accept ETH via fallback from the WETH contract
+    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
