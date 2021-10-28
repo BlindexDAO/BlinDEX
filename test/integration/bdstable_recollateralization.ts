@@ -56,7 +56,7 @@ describe("Recollateralization", () => {
         const bdEuBdxBalanceBeforeRecolat_d18 = await bdx.balanceOf(bdEu.address);
 
         await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
-        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1, false, {});
 
         const bdxBalanceAfterRecolat_d18 = await bdx.balanceOf(testUser.address);
 
@@ -103,7 +103,7 @@ describe("Recollateralization", () => {
 
         const toRecollatInEth_d18 = to_d18(0.001);
         await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
-        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1, false, {});
     })
 
     it("recollateralize should fail when efCR > CR", async () => {        
@@ -119,7 +119,7 @@ describe("Recollateralization", () => {
         await weth.connect(testUser).approve(bdEuWethPool.address, toRecollatInEth_d18); 
 
         await expect((async () => {
-            await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+            await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1, false, {});
         })()).to.be.rejectedWith("subtraction overflow");
     })
 
@@ -155,7 +155,7 @@ describe("Recollateralization", () => {
         //act
         const toRecollatInEth_d18 = to_d18(0.001);
         await weth.connect(testUser).approve(bdEuPool.address, toRecollatInEth_d18); 
-        await bdEuPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1);
+        await bdEuPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1, false, {});
 
         const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
         const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
@@ -178,5 +178,34 @@ describe("Recollateralization", () => {
 
         expect(actualBdxDiffInBdEu).to.be.closeTo(-expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in bdEu");
         expect(actualBdxDiffInUser).to.be.closeTo(expectedBdxDiffInBdEu, 1e-3, "invalid bdx diff in user");
+    })
+
+    it("should recollateralize native token", async () => {        
+        await setUpFunctionalSystem(hre, 0.3); // ~efCR
+        const testUser = await getUser(hre);
+        const weth = await getWeth(hre);
+
+        await lockBdEuCrAt(hre, 0.9); // CR
+
+        const bdEuWethPool = await getBdEuWethPool(hre);
+
+        const toRecollatInEth_d18 = to_d18(0.0001);
+
+        const poolWethBalanceBefore_d18 = await weth.balanceOf(bdEuWethPool.address);
+        const userEthBalanceBefore_d18 = await hre.ethers.provider.getBalance(testUser.address);
+
+        await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1, true, {value: toRecollatInEth_d18});
+
+        const poolWethBalanceAfter_d18 = await weth.balanceOf(bdEuWethPool.address);
+        const userEthBalanceAfter_d18 = await hre.ethers.provider.getBalance(testUser.address);
+
+        const poolWethBalanceDiff_d18 = poolWethBalanceAfter_d18.sub(poolWethBalanceBefore_d18);
+        const userEthBalanceDiff_d18 = userEthBalanceBefore_d18.sub(userEthBalanceAfter_d18);
+
+        console.log("poolWethBalanceAfter_d18:  "+ userEthBalanceBefore_d18);
+        console.log("poolWethBalanceBefore_d18: "+ userEthBalanceAfter_d18);
+        console.log("poolWethBalanceDiff_d18  : "+ userEthBalanceDiff_d18);
+
+        expect(poolWethBalanceDiff_d18).to.be.eq(toRecollatInEth_d18, "pool weth balance diff invalid");
     })
 })

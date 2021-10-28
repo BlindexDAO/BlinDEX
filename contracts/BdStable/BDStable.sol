@@ -28,8 +28,7 @@ contract BDStable is ERC20Custom, Initializable {
     string public name;
     string public fiat;
     address public owner_address;
-    address public treasury_address; //todo ag remove?
-
+    address public treasury_address; // used by pools
     IERC20 private BDX;
 
     ICryptoPairOracle bdstableWethOracle;
@@ -43,7 +42,7 @@ contract BDStable is ERC20Custom, Initializable {
     address public weth_address;
 
     // The addresses in this array are added by the oracle and these contracts are able to mint bdStable
-    address[] public bdstable_pools_array;
+    address payable[] public bdstable_pools_array;
 
     // Mapping is also used for faster verification
     mapping(address => bool) public bdstable_pools; 
@@ -189,12 +188,20 @@ contract BDStable is ERC20Custom, Initializable {
 
     /* ========== PUBLIC FUNCTIONS ========== */
 
+    function when_should_refresh_collateral_ratio_in_seconds() public view returns (uint256) {
+        uint256 secondsSinceLastRefresh = block.timestamp - refreshCollateralRatio_last_call_time;
+
+        return secondsSinceLastRefresh > refresh_cooldown 
+            ? 0 
+            : (refresh_cooldown - secondsSinceLastRefresh);
+    }
+
     function refreshCollateralRatio() external {
         if(collateral_ratio_paused == true){
             return;
         }
 
-        if(block.timestamp - refreshCollateralRatio_last_call_time < refresh_cooldown){
+        if(when_should_refresh_collateral_ratio_in_seconds() > 0){
             return;
         }
 
@@ -284,7 +291,7 @@ contract BDStable is ERC20Custom, Initializable {
         require(bdstable_pools_array.length < MAX_NUMBER_OF_POOLS, "pools limit reached");
 
         bdstable_pools[pool_address] = true; 
-        bdstable_pools_array.push(pool_address);
+        bdstable_pools_array.push(payable(pool_address));
 
         emit PoolAdded(pool_address);
     }

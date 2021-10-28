@@ -2,6 +2,7 @@ import { BDLens } from './../typechain/BDLens.d';
 import { ethers } from 'hardhat';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
+import * as constants from '../utils/Constants'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
@@ -14,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         execute: {
           init: {
             methodName: 'initialize',
-            args: []
+            args: [constants.NATIVE_TOKEN_NAME[hre.network.name]]
           }
         }
       },

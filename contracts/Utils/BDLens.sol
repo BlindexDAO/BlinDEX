@@ -19,10 +19,13 @@ contract BDLens is OwnableUpgradeable {
     address[] public Stakings;
     address public PriceFeed_EUR_USD;
 
-    function initialize() 
+    string public nativeTokenName;
+
+    function initialize(string memory _nativeTokenName) 
         public
         initializer
     {
+        nativeTokenName = _nativeTokenName;
         __Ownable_init();
     }
 

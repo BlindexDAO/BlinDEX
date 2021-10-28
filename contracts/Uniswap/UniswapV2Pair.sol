@@ -392,7 +392,21 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         }
     }
 
-    function shouldUpdateOracle() public view override returns (bool){
+    function when_should_update_oracle_in_seconds() external view override returns (uint256) {
+        uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
+        
+        uint256 timeElapsed = blockTimestamp <= blockTimestampLastOracle
+            ? 0
+            : blockTimestamp - blockTimestampLastOracle;
+
+        uint256 interval = period + consultLatency - shouldUpdateMargin;
+
+        return interval < timeElapsed
+            ? 0
+            : interval - timeElapsed;
+    }
+
+    function shouldUpdateOracle() public view override returns (bool) {
         uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 

@@ -7,6 +7,7 @@ import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/
 import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
 import { setUpFunctionalSystem } from "../helpers/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
+import exp from "constants";
 
 chai.use(cap);
 
@@ -53,7 +54,7 @@ describe("BuyBack", () => {
         const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
 
         await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
-        await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
+        await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1, false, {});
 
         const userBdxBalanceAfter_d18 = await bdx.balanceOf(testUser.address);
         const userWethBalanceAfter_d18 = await weth.balanceOf(testUser.address);
@@ -88,10 +89,45 @@ describe("BuyBack", () => {
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
-        bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
+        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18); // deployer sends BDX to user so user can buyback
         
         await bdx.connect(testUser).approve(bdEuWethPool.address, maxBdxToBuyBack_d18); 
-        await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1);
+        await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1, false, {});
+    });
+
+    it("should buy back max possible value with native token", async () => {        
+        const collateralizedFraction = 0.9;
+        const cr = 0.3;
+
+        await setUpFunctionalSystem(hre, collateralizedFraction);
+
+        await lockBdEuCrAt(hre, cr); // CR
+
+        const testUser = await getUser(hre);
+        const bdx = await getBdx(hre);
+        const bdEuWethPool = await getBdEuWethPool(hre);
+        const weth = await getWeth(hre);
+        const bdEu = await getBdEu(hre);
+
+        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
+
+        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18); // deployer sends BDX to user so user can buyback
+        
+        const userBdxBalanceBefore = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceBefore = await bdx.balanceOf(bdEu.address);
+        const poolWethBalanceBefore = await weth.balanceOf(bdEu.address);
+
+        await bdx.connect(testUser).approve(bdEuWethPool.address, maxBdxToBuyBack_d18); 
+        await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1, true);
+
+        const userBdxBalanceAfter = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceAfter = await bdx.balanceOf(bdEu.address);
+        const poolWethBalanceAfter = await weth.balanceOf(bdEuWethPool.address);
+
+        expect(userBdxBalanceBefore.sub(userBdxBalanceAfter))
+            .to.be.eq(bdEuBdxBalanceAfter.sub(bdEuBdxBalanceBefore), "invalid bdx changes");
+
+        expect(poolWethBalanceAfter).to.be.gt(poolWethBalanceBefore);
     });
 
     it("should throw if trying to buy back more than excess", async () => {        
@@ -115,7 +151,7 @@ describe("BuyBack", () => {
         await bdx.connect(testUser).approve(bdEuWethPool.address, moreThanMaxBdxToBuyBack_d18); 
 
         await expect((async () => {
-            await bdEuWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1);
+            await bdEuWethPool.connect(testUser).buyBackBDX(moreThanMaxBdxToBuyBack_d18, 1, false, {});
         })()).to.be.rejectedWith("You are trying to buy back more than the excess!");
     });
 
@@ -133,7 +169,7 @@ describe("BuyBack", () => {
         await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
 
         await expect((async () => {
-            await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1);
+            await bdEuWethPool.connect(testUser).buyBackBDX(bdxAmount_d18, 1, false, {});
         })()).to.be.rejectedWith("No excess collateral to buy back!");
     });
 })

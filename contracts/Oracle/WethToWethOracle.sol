@@ -30,4 +30,8 @@ contract WethToWethOracle is ICryptoPairOracle {
     function shouldUpdateOracle() public view override returns (bool) {
         return false;
     }
+
+    function when_should_update_oracle_in_seconds() public view override returns (uint256) {
+        return 1e12;
+    }
 }

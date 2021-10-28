@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IPriceFeed.sol";
 import "./IMoCBaseOracle.sol";
 
-//todo ag test against real RSK network
 contract MoneyOnChainPriceFeed is IPriceFeed, Ownable {
     IMoCBaseOracle private feed;
 
