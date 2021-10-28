@@ -394,12 +394,10 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
     function when_should_update_oracle_in_seconds() external view override returns (uint256) {
         uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
-
-        if(blockTimestamp <= blockTimestampLastOracle){
-            return 0;
-        }
-
-        uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle;
+        
+        uint256 timeElapsed = blockTimestamp <= blockTimestampLastOracle
+            ? 0
+            : blockTimestamp - blockTimestampLastOracle;
 
         uint256 interval = period + consultLatency - shouldUpdateMargin;
 

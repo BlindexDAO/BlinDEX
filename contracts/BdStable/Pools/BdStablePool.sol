@@ -558,11 +558,11 @@ contract BdStablePool is Initializable {
             assert(is_collateral_wrapping_native_token);
 
             require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
-            // no need to check collateral_units_precision, its <= then collateral_amount
+            // no need to check collateral_units_precision, it's <= then collateral_amount
 
             NativeTokenWrapper.deposit{ value: collateral_units_precision }();
 
-            // refund remaining eth, if any left
+            // refund remaining native token, if any left
             if (msg.value > collateral_units_precision) {
                 TransferHelper.safeTransferETH(msg.sender, msg.value - collateral_units_precision);
             }
