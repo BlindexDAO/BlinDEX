@@ -38,3 +38,8 @@ npm run test:integrations
 ```bash
 npm run npm-package
 ```
+
+# Credits
+We're grateful to the following projects for sharing their code, used in this project
+* FRAX (https://github.com/FraxFinance/frax-solidity)
+* Uniswap (https://github.com/Uniswap/v2-core)
