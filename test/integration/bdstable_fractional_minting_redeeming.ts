@@ -26,6 +26,15 @@ async function performFractionalMinting(testUser: SignerWithAddress, wethAmount_
     await bdEuPool.connect(testUser).mintFractionalBdStable(wethAmount_d18, bdxAmount_d18, to_d18(1), false, {});
 }
 
+async function performFractionalMintingEth(testUser: SignerWithAddress, wethAmount_d18: BigNumber, bdxAmount_d18: BigNumber){
+    const bdx = await getBdx(hre);
+    const bdEuPool = await getBdEuWethPool(hre);
+
+    await bdx.connect(testUser).approve(bdEuPool.address, bdxAmount_d18); 
+
+    await bdEuPool.connect(testUser).mintFractionalBdStable(wethAmount_d18, bdxAmount_d18, to_d18(1), true, {value: wethAmount_d18});
+}
+
 describe("BDStable fractional", () => {
 
     beforeEach(async () => {
@@ -83,6 +92,69 @@ describe("BDStable fractional", () => {
         const diffPctWethBalance = diffPct(actualWethCost_d18, wethAmountForMintigBdEu_d18);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");
+
+        const bdEuFromBdx_d18 = bdxAmountForMintigBdEu_d18.mul(bdxInEurPrice_d12).div(1e12);
+        const bdEuFromWeth_d18 = wethAmountForMintigBdEu_d18.mul(wethInEurPrice_d12).div(1e12);
+        const expectedBdEuDiff_d18 = bdEuFromBdx_d18.add(bdEuFromWeth_d18)
+            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by minting fee;
+            
+        const bdEuBalanceAfterMinting_d18 = await bdEu.balanceOf(testUser.address);
+        const diffPctBdEu = diffPct(bdEuBalanceAfterMinting_d18.sub(bdEuBalanceBeforeMinting_d18), expectedBdEuDiff_d18);
+        console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
+        expect(diffPctBdEu).to.be.closeTo(0, 0.001, "invalid bdEu diff");
+    });
+
+    it("should mint bdeu when CR > 0 & CR < 1 with native token", async () => {
+        await setUpFunctionalSystem(hre);
+
+        const testUser = await hre.ethers.getNamedSigner('TEST2');
+
+        const bdx = await getBdx(hre);
+        const weth = await getWeth(hre);
+        const bdEu = await getBdEu(hre);
+        const bdEuPool = await getBdEuWethPool(hre);
+
+        const cr = 0.7;
+        await lockBdEuCrAt(hre, cr);
+
+        await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
+        await weth.connect(testUser).deposit({ value: to_d18(100) });
+
+        const poolWethBalanceBeforeMinting_d18 = await weth.balanceOf(bdEuPool.address);
+        const bdEuBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
+        const bdxBalanceBeforeMinting_d18 = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceBeforeMinting_d18 = await bdx.balanceOf(bdEu.address);
+
+        const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
+        const wethInEurPrice_d12 = await bdEuPool.getCollateralPrice_d12();
+        const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInEurPrice_d12).div(bdxInEurPrice_d12);
+
+        // calculate how much is needed to mint
+        const wethAmountForMintigBdEu_d18 = to_d18(0.1); // CR% of total value
+        const bdxAmountForMintigBdEu_d18 = wethAmountForMintigBdEu_d18.mul(to_d8(1-cr)).div(to_d8(cr)).mul(bdxPriceInWeth_d12).div(1e12); // the remaining 30% of value
+
+        const excessiveBdxAmountForMintigBdEu_d18 = bdxAmountForMintigBdEu_d18.mul(3); // the excess should be ignored
+        await performFractionalMintingEth(testUser, wethAmountForMintigBdEu_d18, excessiveBdxAmountForMintigBdEu_d18);        
+        
+        // asserts
+    
+        const bdxBalanceAfterMinting_d18 = await bdx.balanceOf(testUser.address);
+        const actualBdxCost_d18 = bdxBalanceBeforeMinting_d18.sub(bdxBalanceAfterMinting_d18);  
+        const diffPctBdxCost = diffPct(actualBdxCost_d18, bdxAmountForMintigBdEu_d18);
+        console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
+        expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
+
+        const bdEuBdxBalanceAfterMinting_d18 = await bdx.balanceOf(bdEu.address);
+        const actualBdxIntoBdEu_d18 = bdEuBdxBalanceAfterMinting_d18.sub(bdEuBdxBalanceBeforeMinting_d18);  
+        const diffPctBdxIntoBdEu = diffPct(actualBdxIntoBdEu_d18, bdxAmountForMintigBdEu_d18);
+        console.log(`Diff BDX into BdEu: ${diffPctBdxIntoBdEu}%`);
+        expect(diffPctBdxIntoBdEu).to.be.closeTo(0, 0.001, "invalid bdx into bdeu diff");
+
+        const poolWethBalanceAfterMinging_d18 = await weth.balanceOf(bdEuPool.address);
+        const actualWethAddedToPool_d18 = poolWethBalanceAfterMinging_d18.sub(poolWethBalanceBeforeMinting_d18);
+        const diffPctWethBalance = diffPct(actualWethAddedToPool_d18, wethAmountForMintigBdEu_d18);
+        console.log(`Diff pool Weth balance: ${diffPctWethBalance}%`);
+        expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid pool weth diff");
 
         const bdEuFromBdx_d18 = bdxAmountForMintigBdEu_d18.mul(bdxInEurPrice_d12).div(1e12);
         const bdEuFromWeth_d18 = wethAmountForMintigBdEu_d18.mul(wethInEurPrice_d12).div(1e12);
