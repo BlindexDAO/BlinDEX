@@ -29,6 +29,7 @@ contract BdStablePool is Initializable {
     address public owner_address;
     
     uint256 private missing_decimals; // Number of decimals needed to get to 18
+    uint256 private collateral_decimals; // Number of decimals needed to get to 18
     address private weth_address;
 
     mapping(address => uint256) public redeemBDXBalances;
@@ -99,7 +100,8 @@ contract BdStablePool is Initializable {
         collateral_address = _collateral_address;
         owner_address = _creator_address;
         collateral_token = ERC20(_collateral_address);
-        missing_decimals = uint256(18).sub(collateral_token.decimals());
+        collateral_decimals = collateral_token.decimals();
+        missing_decimals = uint256(18).sub(collateral_decimals);
 
         is_collateral_wrapping_native_token = _is_collateral_wrapping_native_token;
 
@@ -467,7 +469,6 @@ contract BdStablePool is Initializable {
         BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
     }
 
-//todo ag test
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
     // contract to the user. Redemption is split into two functions to prevent flash loans from being able
     // to take out BdStable/collateral from the system, use an AMM to trade the new price, and then mint back into the system.
@@ -555,8 +556,17 @@ contract BdStablePool is Initializable {
 
         if(useNativeToken){
             assert(is_collateral_wrapping_native_token);
-            require(msg.value == collateral_units_precision, "msg.value and collateral_units_precision do not match");
+
+            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
+            // no need to check collateral_units_precision, its <= then collateral_amount
+
             NativeTokenWrapper.deposit{ value: collateral_units_precision }();
+
+            // refund remaining eth, if any left
+            if (msg.value > collateral_units_precision) {
+                TransferHelper.safeTransferETH(msg.sender, msg.value - collateral_units_precision);
+            }
+
         } else {
             TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);
         }
