@@ -11,4 +11,6 @@ interface ICryptoPairOracle {
     function updateOracle() external;
 
     function shouldUpdateOracle() external view returns (bool);
+
+    function when_should_update_oracle_in_seconds() external view returns (uint256);
 }
