@@ -10,7 +10,8 @@
     "deploy:rsk": "hardhat --network rsk deploy",
     "initialize": "hardhat --network mainnetFork initialize",
     "npm-package": "hardhat --network mainnetFork npm-package",
-    "compile": "hardhat compile --config hardhat.compile.config.ts"
+    "compile": "hardhat compile --config hardhat.compile.config.ts",
+    "solhint": "npx solhint 'contracts/**/*.sol'"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

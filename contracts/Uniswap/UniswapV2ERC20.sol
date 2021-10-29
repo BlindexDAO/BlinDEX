@@ -3,14 +3,14 @@
 
 pragma solidity 0.6.11;
 
-import './Interfaces/IUniswapV2ERC20.sol';
+import "./Interfaces/IUniswapV2ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract UniswapV2ERC20 is IUniswapV2ERC20 {
     using SafeMath for uint;
 
-    string public override constant name = 'Blindex Swap';
-    string public override constant symbol = 'BDSWAP';
+    string public override constant name = "Blindex Swap";
+    string public override constant symbol = "BDSWAP";
     uint8 public override constant decimals = 18;
     uint  public override totalSupply;
     mapping(address => uint) public override balanceOf;
@@ -31,9 +31,9 @@ contract UniswapV2ERC20 is IUniswapV2ERC20 {
         }
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
-                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(bytes(name)),
-                keccak256(bytes('1')),
+                keccak256(bytes("1")),
                 chainId,
                 address(this)
             )
@@ -82,16 +82,16 @@ contract UniswapV2ERC20 is IUniswapV2ERC20 {
     }
 
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external override {
-        require(deadline >= block.timestamp, 'UniswapV2: EXPIRED');
+        require(deadline >= block.timestamp, "UniswapV2: EXPIRED");
         bytes32 digest = keccak256(
             abi.encodePacked(
-                '\x19\x01',
+                "\x19\x01",
                 DOMAIN_SEPARATOR,
                 keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
             )
         );
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == owner, 'UniswapV2: INVALID_SIGNATURE');
+        require(recoveredAddress != address(0) && recoveredAddress == owner, "UniswapV2: INVALID_SIGNATURE");
         _approve(owner, spender, value);
     }
 }

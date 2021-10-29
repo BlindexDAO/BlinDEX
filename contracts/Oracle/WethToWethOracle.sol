@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
-import '../Uniswap/Interfaces/IUniswapV2Factory.sol';
-import '../Uniswap/Interfaces/IUniswapV2Pair.sol';
-import '../Math/FixedPoint.sol';
+import "../Uniswap/Interfaces/IUniswapV2Factory.sol";
+import "../Uniswap/Interfaces/IUniswapV2Pair.sol";
+import "../Math/FixedPoint.sol";
 
-import '../Uniswap/UniswapV2OracleLibrary.sol';
-import '../Uniswap/UniswapV2Library.sol';
+import "../Uniswap/UniswapV2OracleLibrary.sol";
+import "../Uniswap/UniswapV2Library.sol";
 import "./ICryptoPairOracle.sol";
 
 // Fixed window oracle that recomputes the average price for the entire period once every period
@@ -19,7 +19,7 @@ contract WethToWethOracle is ICryptoPairOracle {
         wethAddress = _wethAddress;
     }
 
-    function consult(address tokenIn, uint256 amountIn) override view external returns (uint amountOut) {
+    function consult(address tokenIn, uint256 amountIn) external view override returns (uint amountOut) {
         require(tokenIn == wethAddress, "This oracle only accepts consulting WETH input");
 
         return amountIn;

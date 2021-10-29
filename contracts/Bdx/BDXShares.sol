@@ -21,7 +21,7 @@ contract BDXShares is ERC20Custom, Initializable {
     
     address public owner_address;
 
-    mapping(address => bool) bdstables;
+    mapping(address => bool) private bdstables;
 
     /* ========== MODIFIERS ========== */
     

@@ -4,33 +4,33 @@
 pragma solidity 0.6.11;
 
 
-import './Interfaces/IUniswapV2Pair.sol';
-import './UniswapV2ERC20.sol';
+import "./Interfaces/IUniswapV2Pair.sol";
+import "./UniswapV2ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../Math/Math.sol";
-import '../Math/UQ112x112.sol';
+import "../Math/UQ112x112.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import '../Math/FixedPoint.sol';
-import './Interfaces/IUniswapV2Factory.sol';
-import './Interfaces/IUniswapV2Callee.sol';
-import './Interfaces/IUniswapV2Factory.sol';
-import '../Oracle/ICryptoPairOracle.sol';
-import './UniswapV2OracleLibrary.sol';
+import "../Math/FixedPoint.sol";
+import "./Interfaces/IUniswapV2Factory.sol";
+import "./Interfaces/IUniswapV2Callee.sol";
+import "./Interfaces/IUniswapV2Factory.sol";
+import "../Oracle/ICryptoPairOracle.sol";
+import "./UniswapV2OracleLibrary.sol";
 
 contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     using FixedPoint for *;
     using SafeMath  for uint;
     using UQ112x112 for uint224;
 
-    string public override constant name = 'Blindex Swap';
-    string public override constant symbol = 'BDSWAP';
+    string public override constant name = "Blindex Swap";
+    string public override constant symbol = "BDSWAP";
     uint8 public override constant decimals = 18;
     uint  public override totalSupply;
     mapping(address => uint) public override balanceOf;
     mapping(address => mapping(address => uint)) public override allowance;
 
     uint public override constant MINIMUM_LIQUIDITY = 10**3;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
+    bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
     bytes32 public override DOMAIN_SEPARATOR;
     // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     bytes32 public constant override PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
@@ -61,14 +61,14 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     mapping(address => uint256) public lastSwapByUserOut0;
     mapping(address => uint256) public lastSwapByUserOut1;
 
-    uint256 minimumSwapsDelayInBlocks = 0;
+    uint256 private minimumSwapsDelayInBlocks = 0;
 
     address public owner_address;
     address public treasury_address;
 
     uint private unlocked = 1;
     modifier lock() {
-        require(unlocked == 1, 'UniswapV2: LOCKED');
+        require(unlocked == 1, "UniswapV2: LOCKED");
         unlocked = 0;
         _;
         unlocked = 1;
@@ -82,7 +82,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
     function _safeTransfer(address token, address to, uint value) private {
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'UniswapV2: TRANSFER_FAILED');
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "UniswapV2: TRANSFER_FAILED");
     }
 
     event Mint(address indexed sender, uint amount0, uint amount1);
@@ -106,14 +106,14 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
     // called once by the factory at time of deployment
     function initialize(address _token0, address _token1) external override {
-        require(msg.sender == factory, 'UniswapV2: FORBIDDEN'); // sufficient check
+        require(msg.sender == factory, "UniswapV2: FORBIDDEN"); // sufficient check
         token0 = _token0;
         token1 = _token1;
     }
 
     // update reserves and, on the first call per block, price accumulators
     function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) virtual internal {
-        require(balance0 <= uint112(-1) && balance1 <= uint112(-1), 'UniswapV2: OVERFLOW');
+        require(balance0 <= uint112(-1) && balance1 <= uint112(-1), "UniswapV2: OVERFLOW");
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -169,7 +169,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
         }
 
-        require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
+        require(liquidity > 0, "UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED");
         _mint(to, liquidity);
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -191,7 +191,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         amount0 = liquidity.mul(balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = liquidity.mul(balance1) / _totalSupply; // using balances ensures pro-rata distribution
-        require(amount0 > 0 && amount1 > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED');
+        require(amount0 > 0 && amount1 > 0, "UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED");
         _burn(address(this), liquidity);
         _safeTransfer(_token0, to, amount0);
         _safeTransfer(_token1, to, amount1);
@@ -205,15 +205,15 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
     // this low-level function should be called from a contract which performs important safety checks
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external override lock {
-        require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(amount0Out > 0 || amount1Out > 0, "UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT");
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+        require(amount0Out < _reserve0 && amount1Out < _reserve1, "UniswapV2: INSUFFICIENT_LIQUIDITY");
 
         uint balance0;
         uint balance1;
 
         {
-            require(to != token0 && to != token1, 'UniswapV2: INVALID_TO');
+            require(to != token0 && to != token1, "UniswapV2: INVALID_TO");
 
             if (amount0Out > 0) {
                 if(block.number.sub(lastSwapByUserOut1[to]) < minimumSwapsDelayInBlocks) {
@@ -244,12 +244,12 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         
         uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
+        require(amount0In > 0 || amount1In > 0, "UniswapV2: INSUFFICIENT_INPUT_AMOUNT");
 
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
             uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
-            require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+            require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), "UniswapV2: K");
         }
 
         _update(balance0, balance1, _reserve0, _reserve1);
@@ -316,16 +316,16 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     }
 
     function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external override {
-        require(deadline >= block.timestamp, 'UniswapV2: EXPIRED');
+        require(deadline >= block.timestamp, "UniswapV2: EXPIRED");
         bytes32 digest = keccak256(
             abi.encodePacked(
-                '\x19\x01',
+                "\x19\x01",
                 DOMAIN_SEPARATOR,
                 keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
             )
         );
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress != address(0) && recoveredAddress == owner, 'UniswapV2: INVALID_SIGNATURE');
+        require(recoveredAddress != address(0) && recoveredAddress == owner, "UniswapV2: INVALID_SIGNATURE");
         _approve(owner, spender, value);
     }
 
@@ -424,12 +424,12 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
 
         // Ensure that the price is not stale
         require((timeElapsed < (period + consultLatency)) || allowStaleConsult,
-                'UniswapV2Pair Oracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE');
+                "UniswapV2Pair Oracle: PRICE_IS_STALE_NEED_TO_CALL_UPDATE");
 
         if (token == token0) {
             amountOut = price0AverageOracle.mul(amountIn).decode144();
         } else {
-            require(token == token1, 'UniswapV2Pair Oracle: INVALID_TOKEN');
+            require(token == token1, "UniswapV2Pair Oracle: INVALID_TOKEN");
             amountOut = price1AverageOracle.mul(amountIn).decode144();
         }
     }

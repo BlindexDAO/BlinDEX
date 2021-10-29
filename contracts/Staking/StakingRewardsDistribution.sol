@@ -2,10 +2,10 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import '../Bdx/BDXShares.sol';
+import "../Bdx/BDXShares.sol";
 import "./Vesting.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
@@ -33,8 +33,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
     uint256 public vestingRewardRatio_percent;
 
-    BDXShares rewardsToken;
-    Vesting vesting;
+    BDXShares private rewardsToken;
+    Vesting private vesting;
 
     mapping(address => uint256) public stakingRewardsWeights;
     address[] public stakingRewardsAddresses;

@@ -33,6 +33,11 @@ npm run deploy:fork -- --reset
 npm run test:integrations
 ```
 
+## Lint tool
+```bash
+npm run solhint
+```
+
 ## Generate abis and typings
 
 ```bash
