@@ -178,7 +178,7 @@ const config: HardhatUserConfig = {
         process.env.USER_BOT_PRIVATE_KEY!
       ],
       timeout: 6_000_000,
-      gasPrice: 65157483
+      gasPrice: 365157483
     },
   },
   solidity: {
