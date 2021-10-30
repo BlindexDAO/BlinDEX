@@ -8,10 +8,10 @@ import "./IPriceFeed.sol";
 // We populate our own feeds
 contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     
-    uint8 constant DECIMALS = 12;
-    uint256 recentPrice = 1e12;
+    uint8 private constant DECIMALS = 12;
+    uint256 private recentPrice = 1e12;
 
-    address updater;
+    address private updater;
 
     constructor(address _updater) public {
         updater = _updater;

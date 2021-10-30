@@ -1,8 +1,19 @@
-// {
-//   "extends": "solhint:recommended",
-//   "plugins": [],
-//   "rules": {
-//     "avoid-suicide": "error",
-//     "avoid-sha3": "warn"
-//   }
-// }
+{
+  "extends": "solhint:recommended",
+  "plugins": [],
+  "rules": {
+    "compiler-version": ["error", "^0.6.11"],
+    "avoid-suicide": "error",
+    "avoid-sha3": "warn",
+    "var-name-mixedcase": "off",
+    "func-name-mixedcase": "off",
+    "reason-string": "off",
+    "not-rely-on-time": "off",
+    "max-states-count": ["warn", 30],
+    "const-name-snakecase": "off",
+    "no-inline-assembly": "off",
+    "avoid-low-level-calls": "off",
+    "no-empty-blocks": "off",
+    "contract-name-camelcase": "off"
+  }
+}

@@ -3,8 +3,8 @@
 
 pragma solidity 0.6.11;
 
-import './Interfaces/IUniswapV2Factory.sol';
-import './UniswapV2Pair.sol';
+import "./Interfaces/IUniswapV2Factory.sol";
+import "./UniswapV2Pair.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract UniswapV2Factory is IUniswapV2Factory, Ownable {
@@ -27,10 +27,10 @@ contract UniswapV2Factory is IUniswapV2Factory, Ownable {
     }
 
     function createPair(address tokenA, address tokenB) external override returns (address pair) {
-        require(tokenA != tokenB, 'UniswapV2: IDENTICAL_ADDRESSES');
+        require(tokenA != tokenB, "UniswapV2: IDENTICAL_ADDRESSES");
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'UniswapV2: ZERO_ADDRESS');
-        require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS'); // single check is sufficient
+        require(token0 != address(0), "UniswapV2: ZERO_ADDRESS");
+        require(getPair[token0][token1] == address(0), "UniswapV2: PAIR_EXISTS"); // single check is sufficient
         bytes memory bytecode = abi.encodePacked(
             type(UniswapV2Pair).creationCode,
             abi.encode(owner()),

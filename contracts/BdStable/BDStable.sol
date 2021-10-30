@@ -31,8 +31,8 @@ contract BDStable is ERC20Custom, Initializable {
     address public treasury_address; // used by pools
     IERC20 private BDX;
 
-    ICryptoPairOracle bdstableWethOracle;
-    ICryptoPairOracle bdxWethOracle;
+    ICryptoPairOracle private bdstableWethOracle;
+    ICryptoPairOracle private bdxWethOracle;
 
     IOracleBasedCryptoFiatFeed private weth_fiat_pricer;
     uint8 private weth_fiat_pricer_decimals;
@@ -52,7 +52,7 @@ contract BDStable is ERC20Custom, Initializable {
     uint256 public price_target_d12; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
     uint256 public price_band_d12; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
 
-    uint256 minimumMintRedeemDelayInBlocks = 2;
+    uint256 private minimumMintRedeemDelayInBlocks = 2;
 
     bool public collateral_ratio_paused;
 
@@ -318,14 +318,14 @@ contract BDStable is ERC20Custom, Initializable {
         bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
         weth_address = _weth_address;
 
-        emit BDStable_WETH_OracleSet(_bdstable_oracle_addr, _weth_address);
+        emit BDStableWETHOracleSet(_bdstable_oracle_addr, _weth_address);
     }
 
     function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) external onlyByOwner {
         bdxWethOracle = ICryptoPairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
 
-        emit BDX_WETH_OracleSet(_bdx_oracle_addr, _weth_address);
+        emit BDXWETHOracleSet(_bdx_oracle_addr, _weth_address);
     }
     
     function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyByOwner {
@@ -411,8 +411,8 @@ contract BDStable is ERC20Custom, Initializable {
     event BdStableMinted(address indexed from, address indexed to, uint256 amount);
     event PoolAdded(address pool_address);
     event PoolRemoved(address pool_address);
-    event BDStable_WETH_OracleSet(address indexed bdstable_oracle_addr, address indexed weth_address);
-    event BDX_WETH_OracleSet(address indexed bdx_oracle_address, address indexed weth_address);
+    event BDStableWETHOracleSet(address indexed bdstable_oracle_addr, address indexed weth_address);
+    event BDXWETHOracleSet(address indexed bdx_oracle_address, address indexed weth_address);
     event EthFiatOracleSet(address eth_fiat_consumer_address);
     event BdStableStepSet(uint256 bdStable_step_d12);
     event PriceBandSet(uint256 _price_band_d12);

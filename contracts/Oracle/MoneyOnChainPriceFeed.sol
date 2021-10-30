@@ -8,7 +8,7 @@ import "./IMoCBaseOracle.sol";
 contract MoneyOnChainPriceFeed is IPriceFeed, Ownable {
     IMoCBaseOracle private feed;
 
-    uint8 precision = 18;
+    uint8 private precision = 18;
 
     constructor(address _feedAddress) public {
         feed = IMoCBaseOracle(_feedAddress);
