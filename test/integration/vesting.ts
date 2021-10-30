@@ -2,7 +2,7 @@ import cap from 'chai-as-promised';
 import chai from "chai";
 import { solidity } from 'ethereum-waffle';
 import hre from 'hardhat';
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { getDeployer } from "../helpers/common";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { Vesting } from '../../typechain/Vesting';

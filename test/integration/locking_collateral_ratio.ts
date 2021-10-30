@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, to_d18 } from "../../utils/Helpers";
 import { getBdEu,  getBdEuWethPool, getBdx, getWeth } from "../helpers/common";
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { swapWethAsDeployer, swapForWethAsDeployer } from "../helpers/swaps";
 

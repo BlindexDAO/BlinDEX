@@ -122,5 +122,6 @@ export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: ERC
   const factory = await getUniswapFactory(hre);
   const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
   const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
+
   return pair;
 }

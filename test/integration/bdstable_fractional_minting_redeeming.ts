@@ -8,7 +8,7 @@ import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury, getDeployer } from "../helpers/common";
 import { BigNumber } from "ethers";
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 
 chai.use(cap);
 

@@ -12,18 +12,21 @@ async function setupStakingContract(
   addressB: string,
   nameA: string,
   nameB: string,
-  isTrueBdPool: boolean)
-  {
+  isTrueBdPool: boolean
+) {
+  console.log("starting deployment: euro staking");
+
+  const deploerAddersss = (await hre.getNamedAccounts()).DEPLOYER;
+  const deployer = await hre.ethers.getSigner(deploerAddersss);
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
 
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
-
   const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
 
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
     stakingRewardsContractName, {
-    from: (await hre.getNamedAccounts()).DEPLOYER,
+    from: deploerAddersss,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
       execute: {
@@ -41,12 +44,10 @@ async function setupStakingContract(
     args: []
   });
 
-  const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
+  console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
 
   await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6])).wait();
-
-  console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
-  console.log(`${stakingRewardsContractName} deployed to impl: `, stakingRewards_ProxyDeployment.implementation);
+  console.log("redistered staking rewards pool to staking rewards distribution");
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -72,7 +73,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(hre, bdeu.address, constants.wBTC_address[networkName], "BDEU", "WBTC", false);
   console.log("Set up statking: BDEU/WBTC");
 
-  console.log("Bdx shares connected with StakingRewards");
+  console.log("finished deployment: euro stable staking");
 
   // One time migration
   return true;

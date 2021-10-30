@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d18 } from "../../utils/Helpers";
 import { getBdx, getDeployer } from "../helpers/common";
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 
 chai.use(cap);
 

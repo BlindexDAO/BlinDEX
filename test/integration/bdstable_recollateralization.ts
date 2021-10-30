@@ -5,7 +5,7 @@ import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
 import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser, getOnChainEthEurPrice } from "../helpers/common";
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import * as constants from '../../utils/Constants';
 

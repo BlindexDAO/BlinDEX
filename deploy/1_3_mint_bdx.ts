@@ -5,18 +5,20 @@ import { to_d18 } from '../utils/Helpers';
 import { ethers } from "hardhat";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
-    
-    const treasury = await hre.ethers.getNamedSigner("TREASURY");
+    console.log("starting deployment: mint bdx");
 
+    const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
+    const treasury = await hre.ethers.getNamedSigner("TREASURY");
     const bdxInstance = await hre.ethers.getContract("BDXShares") as BDXShares;
 
     // mint all of the BDX up front to the treasury
-    await bdxInstance.connect(deployer).mint(
+    await (await bdxInstance.connect(deployer).mint(
         ethers.constants.AddressZero,
         treasury.address,
         to_d18(21).mul(1e6)
-    );
+    )).wait();
+
+    console.log("finished deployment: mint bdx");
 
     // One time migration
     return true;

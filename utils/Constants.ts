@@ -31,6 +31,7 @@ export const ETH_USD_FEED_ADDRESS = <any>{
     rsk: '0x7B19bb8e6c5188eC483b784d6fB5d807a77b21bF', // actually btc/usd, reversed to reflect rbtc native coin
 };
 
+// we only ue this feed in tests moce it out
 export const BTC_USD_FEED_ADDRESS = <any>{
     localhost: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c",
     mainnetFork: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c",
@@ -44,7 +45,7 @@ export const BTC_ETH_FEED_ADDRESS = <any>{
     mainnetFork: "0xdeb288F737066589598e9214E782fa5A8eD689e8",
     rinkeby: "0x2431452A0010a43878bF198e170F6319Af6d27F4",
     kovan: "0xF7904a295A029a3aBDFFB6F12755974a958C7C25",
-    rsk: '', // we only ue this feed in tests
+    rsk: '0x68862c30d45605ead8d01ef1632f7bfb18fab587', // actually ETH/BTC, reversed to reflect rbtc native coin
 };
 
 export const NATIVE_TOKEN_NAME = <any>{
@@ -55,6 +56,7 @@ export const NATIVE_TOKEN_NAME = <any>{
     rsk: 'RBTC',
 };
 
+// used in tests only move it out
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
 export const numberOfLPs = 11;

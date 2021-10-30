@@ -1,15 +1,18 @@
 import { BDStable } from '../typechain/BDStable';
 import { BDXShares } from '../typechain/BDXShares';
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
-import {DeployFunction} from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
 import { BdStablePool } from '../typechain/BdStablePool';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-const deployerAddress = (await hre.getNamedAccounts()).DEPLOYER;
-const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
-  const bdx = await hre.ethers.getContract('BDXShares', deployerAddress) as BDXShares;
+  console.log("starting deployment: euro stable");
 
+  const deployerAddress = (await hre.getNamedAccounts()).DEPLOYER;
+  const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
+  const treasury = await hre.ethers.getSigner(treasuryAddress);
+
+  const bdx = await hre.ethers.getContract('BDXShares', deployerAddress) as BDXShares;
   const bdPoolLibraryDeployment = await hre.ethers.getContract('BdPoolLibrary');
 
   const bdeu_proxy = await hre.deployments.deploy('BDEU', {
@@ -36,11 +39,10 @@ const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
   });
 
   const bdEu = await hre.ethers.getContract('BDEU') as BDStable;
-
   console.log("BDEU deployed to:", bdEu.address);
-  
+
   const bdeu_weth_BdStablePoolDeployment = await hre.deployments.deploy(
-    'BDEU_WETH_POOL', 
+    'BDEU_WETH_POOL',
     {
       from: deployerAddress,
       proxy: {
@@ -65,13 +67,12 @@ const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
       }
     }
   );
-  
-  const bdeu_weth_BdStablePool = await hre.ethers.getContract('BDEU_WETH_POOL') as BdStablePool;
 
+  const bdeu_weth_BdStablePool = await hre.ethers.getContract('BDEU_WETH_POOL') as BdStablePool;
   console.log("BDEU WETH Pool deployed to:", bdeu_weth_BdStablePool.address);
-  
+
   const bdeu_wbtc_BdStablePoolDeployment = await hre.deployments.deploy(
-    'BDEU_WBTC_POOL', 
+    'BDEU_WBTC_POOL',
     {
       from: deployerAddress,
       proxy: {
@@ -98,21 +99,24 @@ const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
   );
 
   const bdeu_wbtc_BdStablePool = await hre.ethers.getContract('BDEU_WBTC_POOL') as BdStablePool;
-  
   console.log("BDEU WBTC Pool deployed to:", bdeu_wbtc_BdStablePool.address);
 
-  const treasury = await hre.ethers.getSigner(treasuryAddress);
-
-  await bdx.connect(treasury).transfer(bdEu.address, constants.initalBdStable_bdx_d18[hre.network.name]);
+  await (await bdx.connect(treasury).transfer(bdEu.address, constants.initalBdStable_bdx_d18[hre.network.name])).wait();
   console.log("BDEU provided with BDX");
 
   await (await bdEu.addPool(bdeu_weth_BdStablePool.address)).wait()
+  console.log("added weth pool");
+
   await (await bdEu.addPool(bdeu_wbtc_BdStablePool.address)).wait()
+  console.log("added wbtc pool");
 
   await (await bdx.addBdStableAddress(bdEu.address)).wait()
+  console.log("bdStable address set");
 
-	// One time migration
-	return true;
+  console.log("finished deployment: euro stable");
+
+  // One time migration
+  return true;
 };
 func.id = __filename
 func.tags = ['BDEU'];

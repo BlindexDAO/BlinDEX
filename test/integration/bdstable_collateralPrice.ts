@@ -5,7 +5,7 @@ import cap from "chai-as-promised";
 import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
 import { to_d18, d18_ToNumber, d12_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
 import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
-import { setUpFunctionalSystem } from "../helpers/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 chai.use(cap);
 
 chai.use(solidity);

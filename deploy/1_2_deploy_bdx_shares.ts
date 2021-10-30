@@ -1,8 +1,9 @@
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
-import { BDXShares } from '../typechain/BDXShares';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  console.log("starting deployment: bdx");
+
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 
   const bdx_proxy = await hre.deployments.deploy(
@@ -29,6 +30,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("BDXShares deployed to:", bdx_proxy.address);
 
+  console.log("finished deployment: bdx");
+  
 	// One time migration
 	return true;
 };

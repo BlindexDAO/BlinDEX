@@ -3,6 +3,8 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+    console.log("starting deployment: uniswap helpers");
+
     const deployer = (await hre.getNamedAccounts()).DEPLOYER;
     const treasury = (await hre.getNamedAccounts()).TREASURY;
 
@@ -21,6 +23,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     console.log("UniswapV2Router02 deployed to:", uniswapV2Router02.address);
+
+    console.log("finished deployment: uniswap helpers");
 
     // One time migration
     return true;

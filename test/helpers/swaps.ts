@@ -142,14 +142,14 @@ export async function provideLiquidity(
   const router = await getUniswapRouter(hre);
 
   // add liquidity to the uniswap pool (weth-bdeu)
-  // reveive LP tokens
+  // receive LP tokens
   await tokenA.connect(user).approve(router.address, amountA);
   await tokenB.connect(user).approve(router.address, amountB);
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");
 
   // router routes to the proper pair
-  await router.connect(user).addLiquidity(
+  await (await router.connect(user).addLiquidity(
     tokenA.address, 
     tokenB.address, 
     amountA, 
@@ -157,7 +157,7 @@ export async function provideLiquidity(
     1, 
     1, 
     user.address, 
-    currentBlock.timestamp + 60);
+    currentBlock.timestamp + 600)).wait();
 }
 
 export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: SignerWithAddress, amountETH: BigNumber){

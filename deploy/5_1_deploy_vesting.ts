@@ -4,6 +4,8 @@ import { BDXShares } from '../typechain/BDXShares';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+    console.log("starting deployment: vesting");
+
     const deployerAddres = (await hre.getNamedAccounts()).DEPLOYER;
     const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
     const vestingTimeInSeconds = 60 * 60 * 24 * 30 * 9 //9 months
@@ -31,7 +33,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }
     );
     
-    console.log("Deployed Vesting");
+    console.log("Vesting deployed to: " + vesting_ProxyDeployment.address);
+
+    console.log("finished deployment: vesting");
 
     return true;
 }

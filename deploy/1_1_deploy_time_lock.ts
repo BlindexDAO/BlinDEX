@@ -2,6 +2,8 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  console.log("starting deployment: Timelock");
+
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
   const timelock = await hre.deployments.deploy('Timelock', {
     from: deployer,
@@ -12,6 +14,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   console.log("Timelock deployed to:", timelock.address);
+
+  console.log("finished deployment: Timelock");
 
 	// One time migration
 	return true;
