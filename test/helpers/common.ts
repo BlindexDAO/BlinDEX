@@ -12,6 +12,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import * as constants from '../../utils/Constants'
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { bigNumberToDecimal, to_d12 } from "../../utils/Helpers";
+import { BDLens } from "../../typechain/BDLens";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -61,6 +62,11 @@ export async function getBdx(hre: HardhatRuntimeEnvironment){
 export async function getWeth(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
   return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as ERC20;
+}
+
+export async function getBdLens(hre: HardhatRuntimeEnvironment){
+  const ownerUser = await getDeployer(hre);
+  return await hre.ethers.getContract("BDLens", ownerUser) as BDLens;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment){
