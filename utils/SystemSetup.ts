@@ -115,29 +115,16 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
 }
 
 export async function updateOracles(hre: HardhatRuntimeEnvironment){
-
-  const weth = await getWeth(hre);
-  const wbtc = await getWbtc(hre);
-
-  const bdx = await getBdx(hre);
-  const bdEu = await getBdEu(hre);
-
   console.log("starting updating oracles");
   
-  await updateOracle(hre, weth, bdEu);
-  console.log("updated weth/wrbtc / bdeu oracle");
+  const pools = await getPools(hre);
 
-  await updateOracle(hre, wbtc, bdEu);
-  console.log("updated wbtc/eths / bdeu oracle");
-  
-  await updateOracle(hre, weth, bdx);
-  console.log("updated weth/wrbtc / bdx oracle");
+  for(let pool of pools){
+    await updateOracle(hre, pool[0].address, pool[1].address)
+    console.log(`updated ${pool[0].name} / ${pool[1].name}`);
+  }
 
-  await updateOracle(hre, wbtc, bdx);
-  console.log("updated wbtc/eths / bdx oracle");
-
-  await updateOracle(hre, bdx, bdEu);
-  console.log("updated bdx bdeu oracle");
+  console.log("finished updating oracles")
 }
 
 export async function updateOracle(
@@ -148,4 +135,19 @@ export async function updateOracle(
   const pair = await getUniswapPair(hre, tokenA, tokenB);
 
   await (await pair.updateOracle()).wait();
+}
+
+async function getPools(hre: HardhatRuntimeEnvironment) {
+  const weth = await getWeth(hre);
+  const wbtc = await getWbtc(hre);
+  const bdx = await getBdx(hre);
+  const bdEu = await getBdEu(hre);
+
+  return [
+    [{name: "weth", address: weth}, {name: "bdEu", address: bdEu}],
+    [{name: "wbtc", address: wbtc}, {name: "bdEu", address: bdEu}],
+    [{name: "weth", address: weth}, {name: "bdx", address: bdx}],
+    [{name: "wbtc", address: wbtc}, {name: "bdx", address: bdx}],
+    [{name: "bdx", address: bdx}, {name: "bdEu", address: bdEu}],
+  ]
 }
