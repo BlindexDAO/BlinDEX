@@ -120,7 +120,7 @@ export async function updateOracles(hre: HardhatRuntimeEnvironment){
   const pools = await getPools(hre);
 
   for(let pool of pools){
-    await updateOracle(hre, pool[0].address, pool[1].address)
+    await updateOracle(hre, pool[0].token, pool[1].token)
     console.log(`updated ${pool[0].name} / ${pool[1].name}`);
   }
 
@@ -144,10 +144,10 @@ export async function getPools(hre: HardhatRuntimeEnvironment) {
   const bdEu = await getBdEu(hre);
 
   return [
-    [{name: "weth", address: weth}, {name: "bdEu", address: bdEu}],
-    [{name: "wbtc", address: wbtc}, {name: "bdEu", address: bdEu}],
-    [{name: "weth", address: weth}, {name: "bdx", address: bdx}],
-    [{name: "wbtc", address: wbtc}, {name: "bdx", address: bdx}],
-    [{name: "bdx", address: bdx}, {name: "bdEu", address: bdEu}],
+    [{name: "weth", token: weth}, {name: "bdEu", token: bdEu}],
+    [{name: "wbtc", token: wbtc}, {name: "bdEu", token: bdEu}],
+    [{name: "weth", token: weth}, {name: "bdx", token: bdx}],
+    [{name: "wbtc", token: wbtc}, {name: "bdx", token: bdx}],
+    [{name: "bdx", token: bdx}, {name: "bdEu", token: bdEu}],
   ]
 }
