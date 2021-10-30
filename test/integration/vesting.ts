@@ -47,7 +47,7 @@ describe('Vesting', () => {
     })
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1, true);
         await vesting.connect(ownerUser).setVestingScheduler(testScheduler.address);
         await vesting.connect(ownerUser).setFundsProvider(testRewardProvider.address);
         await bdx.connect(ownerUser).transfer(testRewardProvider.address, to_d18(20));

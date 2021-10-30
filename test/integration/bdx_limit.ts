@@ -15,7 +15,7 @@ describe("BDX limit", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1, true);
     });
 
     it("should mint max total supply of BDX", async () => {

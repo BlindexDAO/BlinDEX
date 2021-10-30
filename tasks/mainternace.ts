@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getUniswapPair, getWbtc, getWeth } from "../test/helpers/common";
+import { getDeployer, getTreasury, getUniswapPair, getWbtc, getWeth } from "../test/helpers/common";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d18_ToNumber } from "../utils/Helpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
@@ -56,5 +56,14 @@ export function load() {
       const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
       const reserves = await pair.getReserves();
       console.log(`Reserves: ${d18_ToNumber(reserves[0])} ${d18_ToNumber(reserves[1])}`)
+    });
+
+  task("showUsers")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
+      const treasury = await getTreasury(hre);
+
+      console.log("deployer: " + deployer.address);
+      console.log("treasury: " + treasury.address);
     });
 }

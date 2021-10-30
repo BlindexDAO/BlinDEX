@@ -1,12 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { to_d12, to_d18, to_d8 } from "./Helpers";
+import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./Helpers";
 import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice } from "../test/helpers/common";
 import * as constants from './Constants';
 import { ERC20 } from "../typechain/ERC20";
 import { simulateTimeElapseInSeconds } from "./HelpersHardhat";
 import { provideLiquidity } from "../test/helpers/swaps";
 
-export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, simulateTimeElapse: boolean = true) {
+export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, forIntegrationTests: boolean) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
     const treasury = await hre.ethers.getNamedSigner('TREASURY');
 
@@ -20,10 +20,13 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
 
     // transfer initial BDX from treasury to owner
     await bdx.connect(treasury).transfer(deployer.address, to_d18(1e5));
-    // mint initial WETH
-    await weth.deposit({ value: to_d18(100) });
-    // mint inital WBTC
-    await mintWbtc(hre, deployer, to_d18(1000));
+
+    if(forIntegrationTests) {
+      // mint initial WETH
+      await weth.deposit({ value: to_d18(100) });
+      // mint inital WBTC
+      await mintWbtc(hre, deployer, to_d18(1000));
+    }
 
     // initial prices don't need to be very precise, in real world they will never be very precise
     const initialWethBdEuPrice = (await getOnChainEthEurPrice(hre)).price;
@@ -32,13 +35,16 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     const initialWethBdxPrice = initialWethBdEuPrice / initialBdxBdEuPrice;
     const initialWbtcBdxPrice = initialWbtcBdEuPrice / initialBdxBdEuPrice;
 
-    await provideLiquidity(hre, deployer, weth, bdEu, to_d18(1000).mul(1e12).div(to_d12(initialWethBdEuPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, wbtc, bdEu, to_d8(1000).mul(1e12).div(to_d12(initialWbtcBdEuPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, weth, bdx, to_d18(1000).mul(1e12).div(to_d12(initialWethBdxPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, wbtc, bdx, to_d8(1000).mul(1e12).div(to_d12(initialWbtcBdxPrice)), to_d18(1000));
+    var wethDecimals = await weth.decimals();
+    var wbtcDecimals = await wbtc.decimals();
+
+    await provideLiquidity(hre, deployer, weth, bdEu, numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, wbtc, bdEu, numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, weth, bdx, numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdxPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, wbtc, bdx, numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdxPrice)), to_d18(1000));
     await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(1000).mul(1e12).div(to_d12(initialBdxBdEuPrice)), to_d18(1000));
 
-    if (simulateTimeElapse) {
+    if (forIntegrationTests) {
         await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
     }
 
@@ -58,7 +64,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
       await weth.connect(deployer).transfer(bdEuWethPool.address, collateralWeth_d18);
       await wbtc.connect(deployer).transfer(bdEuWbtcPool.address, collateralWbtc_d8);
       
-      if (simulateTimeElapse) {
+      if (forIntegrationTests) {
         await simulateTimeElapseInSeconds(60*60+1); // wait before CR can be refreshed
       }
 
@@ -84,32 +90,32 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   await (await bdx.connect(treasury).transfer(deployer.address, to_d18(1e3))).wait();
   console.log("transferred bdx to deployer");
 
-  //mint initial WETH/wRBTC
-  await weth.deposit({ value: to_d18(0.001) });
-  console.log("minted weth / wrbtc");
+  // different of different chains
+  var wethDecimals = await weth.decimals();
+  var wbtcDecimals = await wbtc.decimals();
 
-  await provideLiquidity(hre, deployer, weth, bdEu, to_d18(0.0002), to_d18(11));
-  console.log("provided weth/wrbtc / bdeu liquidity");
+  await provideLiquidity(hre, deployer, weth, bdEu, numberToBigNumberFixed(0.0002, wethDecimals), to_d18(11));
+  console.log("provided weth / bdeu liquidity");
 
-  await provideLiquidity(hre, deployer, wbtc, bdEu, to_d18(0.0002), to_d18(9));
-  console.log("provided wbtc/eths / bdeu liquidity");
+  await provideLiquidity(hre, deployer, wbtc, bdEu, numberToBigNumberFixed(0.0002, wbtcDecimals), to_d18(9));
+  console.log("provided wbtc / bdeu liquidity");
 
-  await provideLiquidity(hre, deployer, weth, bdx, to_d18(0.0003), to_d18(1000));
-  console.log("provided weth/wrbtv / bdx liquidity");
+  await provideLiquidity(hre, deployer, weth, bdx, numberToBigNumberFixed(0.0003, wethDecimals), to_d18(10));
+  console.log("provided weth / bdx liquidity");
 
-  await provideLiquidity(hre, deployer, wbtc, bdx, to_d18(0.0003), to_d18(9));
-  console.log("provided wbtc/eths / bdx liquidity");
+  await provideLiquidity(hre, deployer, wbtc, bdx, numberToBigNumberFixed(0.0003, wbtcDecimals), to_d18(9));
+  console.log("provided wbtc / bdx liquidity");
 
   await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(15), to_d18(10));
   console.log("provided bdx / bdeu liquidity");
 
   //recallateralize by just sending the tokens in order not to extract undeserved BDX
   await (await weth.connect(deployer).transfer(bdEuWethPool.address, to_d18(0.0001))).wait();
-  console.log("recollateralized bdeu / weth/wrbtc pool");
+  console.log("recollateralized bdeu / weth pool");
 
   //recallateralize by just sending the tokens in order not to extract undeserved BDX
   await (await weth.connect(deployer).transfer(bdEuWbtcPool.address, to_d18(0.00009))).wait();
-  console.log("recollateralized bdeu / wbtc/eths pool");
+  console.log("recollateralized bdeu / wbtc pool");
 
   console.log("finished");
 }

@@ -42,7 +42,7 @@ describe("BDStable fractional", () => {
     });
 
     it("should mint bdeu when CR > 0 & CR < 1", async () => {
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1 , true);
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
@@ -105,7 +105,7 @@ describe("BDStable fractional", () => {
     });
 
     it("should mint bdeu when CR > 0 & CR < 1 with native token", async () => {
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1, true);
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
@@ -168,7 +168,7 @@ describe("BDStable fractional", () => {
     });
 
     it("should redeem bdeu when CR > 0 & CR < 1 & efCR > CR", async () => {
-        await setUpFunctionalSystem(hre, 0.9); // low initial collateralization so efCR is low (for test purposes)
+        await setUpFunctionalSystem(hre, 0.9, true); // low initial collateralization so efCR is low (for test purposes)
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
@@ -236,7 +236,7 @@ describe("BDStable fractional", () => {
     });
 
     it("should redeem bdeu when CR > 0 & CR < 1 & efCR < CR", async () => {
-        await setUpFunctionalSystem(hre, 0.4); // low initial collateralization so efCR is low (for test purposes)
+        await setUpFunctionalSystem(hre, 0.4, true); // low initial collateralization so efCR is low (for test purposes)
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
 
@@ -304,7 +304,7 @@ describe("BDStable fractional", () => {
     });
 
     it("should tax illegal fractional redemption", async () => {
-        await setUpFunctionalSystem(hre, 0.9); // low initial collateralization so efCR is low (for test purposes)
+        await setUpFunctionalSystem(hre, 0.9, true); // low initial collateralization so efCR is low (for test purposes)
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
         const treasury = await getTreasury(hre);
@@ -385,7 +385,7 @@ describe("BDStable fractional", () => {
     });
 
     it("redeem should reward bdx in BDX CR amount", async () => {
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1, true);
 
         const deployer = await getDeployer(hre);
         const testUser = await hre.ethers.getNamedSigner('TEST2');

@@ -12,7 +12,6 @@ import { BigNumber } from '@ethersproject/bignumber';
 import * as constants from '../../utils/Constants'
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { bigNumberToDecimal, to_d12 } from "../../utils/Helpers";
-import { Address } from "node:cluster";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -73,9 +72,9 @@ export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithA
   const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, user)
   const networkName = hre.network.name;
 
-  await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], user.address,  Date.now() + 3600, {
+  await(await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], user.address,  Date.now() + 3600, {
     value: amount_in_eth_d18
-  })
+  })).wait();
 }
 
 export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){

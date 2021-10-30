@@ -19,7 +19,7 @@ describe("BDStable 1to1", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 0.7);
+        await setUpFunctionalSystem(hre, 0.7, true);
     });
 
     it("should mint bdeu when CR = 1 [for WETH]", async () => {

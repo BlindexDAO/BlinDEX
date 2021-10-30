@@ -19,7 +19,7 @@ describe("Collateral price", () => {
 
     it("should get price for weth", async () => {
 
-        await setUpFunctionalSystem(hre, 1);
+        await setUpFunctionalSystem(hre, 1, true);
 
         const wethPool = await getBdEuWethPool(hre);
 
@@ -33,7 +33,7 @@ describe("Collateral price", () => {
 
     it("should get price for wbtc", async () => {
 
-        await setUpFunctionalSystem(hre, 1);
+        await setUpFunctionalSystem(hre, 1, true);
 
         const wbtcPool = await getBdEuWbtcPool(hre);
 

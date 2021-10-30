@@ -24,7 +24,7 @@ describe("BuyBack", () => {
     });
 
     it("should buy back", async () => {        
-        await setUpFunctionalSystem(hre, 0.9);
+        await setUpFunctionalSystem(hre, 0.9, true);
 
         await lockBdEuCrAt(hre, 0.3); // CR
 
@@ -79,7 +79,7 @@ describe("BuyBack", () => {
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
-        await setUpFunctionalSystem(hre, collateralizedFraction);
+        await setUpFunctionalSystem(hre, collateralizedFraction, true);
 
         await lockBdEuCrAt(hre, cr); // CR
 
@@ -99,7 +99,7 @@ describe("BuyBack", () => {
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
-        await setUpFunctionalSystem(hre, collateralizedFraction);
+        await setUpFunctionalSystem(hre, collateralizedFraction, true);
 
         await lockBdEuCrAt(hre, cr); // CR
 
@@ -134,7 +134,7 @@ describe("BuyBack", () => {
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
-        await setUpFunctionalSystem(hre, collateralizedFraction);
+        await setUpFunctionalSystem(hre, collateralizedFraction, true);
 
         await lockBdEuCrAt(hre, cr); // CR
 
@@ -156,7 +156,7 @@ describe("BuyBack", () => {
     });
 
     it("should throw if no excess collateral", async () => {        
-        await setUpFunctionalSystem(hre, 0.3);
+        await setUpFunctionalSystem(hre, 0.3, true);
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);

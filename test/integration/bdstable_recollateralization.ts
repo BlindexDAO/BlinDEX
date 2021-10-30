@@ -24,7 +24,7 @@ describe("Recollateralization", () => {
 
     it("should recollateralize when efCR < CR", async () => {
 
-        await setUpFunctionalSystem(hre, 0.4);
+        await setUpFunctionalSystem(hre, 0.4, true);
 
         const testUser = await getUser(hre);
 
@@ -91,7 +91,7 @@ describe("Recollateralization", () => {
     });
 
     it("recollateralize should NOT fail when efCR < CR", async () => {        
-        await setUpFunctionalSystem(hre, 0.3); // ~efCR
+        await setUpFunctionalSystem(hre, 0.3, true); // ~efCR
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
 
@@ -107,7 +107,7 @@ describe("Recollateralization", () => {
     })
 
     it("recollateralize should fail when efCR > CR", async () => {        
-        await setUpFunctionalSystem(hre, 0.9); // ~efCR
+        await setUpFunctionalSystem(hre, 0.9, true); // ~efCR
 
         await lockBdEuCrAt(hre, 0.3); // CR
 
@@ -124,7 +124,7 @@ describe("Recollateralization", () => {
     })
 
     it("recollateralize should reward bdx in BDX CR amount", async () => {        
-        await setUpFunctionalSystem(hre, 0.3); // ~efCR
+        await setUpFunctionalSystem(hre, 0.3, true); // ~efCR
 
         const deployer = await getDeployer(hre);
         const testUser = await hre.ethers.getNamedSigner('TEST2');
@@ -181,7 +181,7 @@ describe("Recollateralization", () => {
     })
 
     it("should recollateralize native token", async () => {        
-        await setUpFunctionalSystem(hre, 0.3); // ~efCR
+        await setUpFunctionalSystem(hre, 0.3, true); // ~efCR
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
 

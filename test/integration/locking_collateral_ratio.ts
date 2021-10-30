@@ -17,7 +17,7 @@ describe("Locking collateral ratio", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 0.8);
+        await setUpFunctionalSystem(hre, 0.8, true);
 
         // decrease CR so fractional minting works
         const bdEu = await getBdEu(hre);

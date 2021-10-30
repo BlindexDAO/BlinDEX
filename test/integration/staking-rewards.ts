@@ -73,7 +73,7 @@ describe("StakingRewards", () => {
   describe("Normal staking", () => {
     before(async () => {
       await hre.deployments.fixture();
-      await setUpFunctionalSystem(hre);
+      await setUpFunctionalSystem(hre, 1, true);
       await initialize();
     });
 
@@ -179,7 +179,7 @@ describe("StakingRewards", () => {
     before(async () => {
       await hre.deployments.fixture();
       await initialize();
-      await setUpFunctionalSystem(hre);
+      await setUpFunctionalSystem(hre, 1, true);
     });
 
     it("should get reward", async () => {
@@ -292,7 +292,7 @@ describe('getReward interaction with vesting contract', () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     await initialize();
-    await setUpFunctionalSystem(hre);
+    await setUpFunctionalSystem(hre, 1, true);
   })
 
 

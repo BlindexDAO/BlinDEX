@@ -26,7 +26,7 @@ describe("BDStable algorythmic", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1, true);
     });
 
     it("should mint bdeu when CR = 0", async () => {
@@ -212,7 +212,7 @@ describe("BDStable algorythmic", () => {
     });
 
     it("redeem should reward bdx in BDX CR amount", async () => {
-        await setUpFunctionalSystem(hre);
+        await setUpFunctionalSystem(hre, 1, true);
 
         const deployer = await getDeployer(hre);
         const testUser = await hre.ethers.getNamedSigner('TEST2');
