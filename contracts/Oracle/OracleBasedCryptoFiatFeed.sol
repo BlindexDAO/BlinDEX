@@ -28,6 +28,6 @@ contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
     }
     
     function getDecimals() override public view returns (uint8) {
-        return 12 + fiatToUsdFeed.decimals() - cryptoToUsdFeed.decimals();
+        return 12;
     }
 }

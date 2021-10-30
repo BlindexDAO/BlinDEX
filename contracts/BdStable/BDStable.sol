@@ -35,7 +35,7 @@ contract BDStable is ERC20Custom, Initializable {
     ICryptoPairOracle private bdxWethOracle;
 
     IOracleBasedCryptoFiatFeed private weth_fiat_pricer;
-    uint8 private weth_fiat_pricer_decimals;
+    uint8 private UNUSED_PLACEHOLDER_1; //todo ag remove
 
     uint256 public global_collateral_ratio_d12; // 12 decimals of precision
     
@@ -179,7 +179,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     function weth_fiat_price() public view returns (uint256) {
-        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(uint256(10) ** weth_fiat_pricer_decimals);
+        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(1e12);
     }
     
     function canLegallyRedeem(address who) external view returns (bool) {
@@ -239,8 +239,9 @@ contract BDStable is ERC20Custom, Initializable {
             ? effective_collateral_ratio_d12 
             : global_collateral_ratio_d12;
 
-        uint256 expectedBdxValue_d18 = BdPoolLibrary
-            .COLLATERAL_RATIO_MAX.sub(cr)
+
+        uint256 expectedBdxValue_d18 = 
+            BdPoolLibrary.COLLATERAL_RATIO_MAX.sub(cr)
             .mul(totalSupply())
             .div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
@@ -330,7 +331,6 @@ contract BDStable is ERC20Custom, Initializable {
     
     function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyByOwner {
         weth_fiat_pricer = IOracleBasedCryptoFiatFeed(_eth_fiat_consumer_address);
-        weth_fiat_pricer_decimals = weth_fiat_pricer.getDecimals();
         
         emit EthFiatOracleSet(_eth_fiat_consumer_address);
     }
