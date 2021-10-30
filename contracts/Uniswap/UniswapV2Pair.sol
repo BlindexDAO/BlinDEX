@@ -49,8 +49,7 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
     uint public override kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
 
     uint public period = 3600; // 1 hour TWAP (time-weighted average price)
-    uint public consultLatency = 120; // Used for being able to consult past the period end
-    uint public shouldUpdateMargin = 60; // on minute
+    uint public consultLatency = 360; // Used for being able to consult past the period end
     bool public allowStaleConsult = false; // If false, consult() will fail if the TWAP is stale
     FixedPoint.uq112x112 public price0AverageOracle;
     FixedPoint.uq112x112 public price1AverageOracle;
@@ -269,8 +268,6 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
-
-
     // Migrated over from UniswapV2ERC20. Needed for ^0.6.11
     // ===============================================
 
@@ -349,10 +346,6 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
         consultLatency = _consult_leniency;
     }
 
-    function setOracleShuldUpdateMargin(uint _should_update_margin) external onlyByOwner {
-        shouldUpdateMargin = _should_update_margin;
-    }
-
     function setAllowStaleConsults(bool _allow_stale_consults) external onlyByOwner {
         allowStaleConsult = _allow_stale_consults;
     }
@@ -399,18 +392,16 @@ contract UniswapV2Pair is IUniswapV2Pair, ICryptoPairOracle {
             ? 0
             : blockTimestamp - blockTimestampLastOracle;
 
-        uint256 interval = period + consultLatency - shouldUpdateMargin;
-
-        return interval < timeElapsed
+        return period < timeElapsed
             ? 0
-            : interval - timeElapsed;
+            : period - timeElapsed;
     }
 
     function shouldUpdateOracle() public view override returns (bool) {
         uint256 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint256 timeElapsed = blockTimestamp - blockTimestampLastOracle; // Overflow is desired
 
-        if((timeElapsed < (period + consultLatency - shouldUpdateMargin)) || allowStaleConsult || reserve0 == 0 || reserve1 == 0){
+        if((timeElapsed < period) || allowStaleConsult || reserve0 == 0 || reserve1 == 0){
             return false;
         } else {
             return true;
