@@ -137,7 +137,7 @@ export async function updateOracle(
   await (await pair.updateOracle()).wait();
 }
 
-async function getPools(hre: HardhatRuntimeEnvironment) {
+export async function getPools(hre: HardhatRuntimeEnvironment) {
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
