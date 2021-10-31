@@ -30,7 +30,7 @@ const config: HardhatUserConfig = {
       },
       accounts: {
         mnemonic: process.env.MNEMONIC_PHRASE!,
-        accountsBalance: '13443950000000000000000000',
+        accountsBalance: '100000000000000000000000',
       },
       chainId: 1337
     },

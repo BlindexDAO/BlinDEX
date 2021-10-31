@@ -5,6 +5,7 @@ import { MoneyOnChainPriceFeed } from "../typechain/MoneyOnChainPriceFeed";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d18_ToNumber, to_d18 } from "../utils/Helpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
+import { BDStable } from "../typechain/BDStable";
 
 export function load() {
 
@@ -38,6 +39,21 @@ export function load() {
         await(await pair.setAllowStaleConsults(enable == 0 ? false : true)).wait();
         console.log(`oracle ${pool[0].name} / ${pool[1].name} allow stale consults = ${enable}`);
       }
+    });
+
+  task("set:lock-cr-at")
+    .addPositionalParam("stableAddress", "stable address")
+    .addPositionalParam("val", "value")
+    .setAction(async ({ stableAddress, val }, hre) => {
+
+      if(val < 0 || val > 1) {
+        throw "invalid cr value"
+      }
+
+      const deployer = getDeployer(hre);
+
+      const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
+      await stable.connect((await deployer).address).lockCollateralRatioAt(val);
     });
 
   // -------------------------- readonly
@@ -137,6 +153,4 @@ export function load() {
       const price2 = await bdStableWbtcPool.getCollateralPrice_d12();
       console.log("price2: " + price2);
     });
-
-  
 }
