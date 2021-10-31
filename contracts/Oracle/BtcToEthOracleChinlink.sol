@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./AggregatorV3Interface.sol";
 import "./ICryptoPairOracle.sol";
 
-contract BtcToEthOracle is ICryptoPairOracle {
+contract BtcToEthOracleChinlink is ICryptoPairOracle {
     using SafeMath for uint256;
 
     AggregatorV3Interface internal feed;
