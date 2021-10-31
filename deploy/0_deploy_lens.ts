@@ -63,6 +63,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await (await lens.setPriceFeed_EUR_USD(await (await ethers.getContract('PriceFeed_EUR_USD')).address)).wait()
   console.log("BDLENS eur usd feed set");
+
+  await (await lens.setBtcToEthOracle(await (await ethers.getContract('BtcToEthOracle')).address)).wait()
+  console.log("BDLENS btc eth oracle set");
   
   console.log("finished deployment: BDLens");
 

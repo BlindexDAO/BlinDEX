@@ -18,6 +18,7 @@ contract BDLens is OwnableUpgradeable {
     address[] public BdStables;
     address[] public Stakings;
     address public PriceFeed_EUR_USD;
+    address public BtcToEthOracle;
 
     string public nativeTokenName;
 
@@ -83,6 +84,13 @@ contract BDLens is OwnableUpgradeable {
         onlyByOwner
     {
         PriceFeed_EUR_USD = feed;
+    }
+    
+    function setBtcToEthOracle(address feed)
+        external
+        onlyByOwner
+    {
+        BtcToEthOracle = feed;
     }
 
     function deleteFromBdStables(address _bdStable)
