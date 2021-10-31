@@ -3,7 +3,7 @@ import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdLens, getDeployer, getT
 import { OracleBasedCryptoFiatFeed } from "../typechain/OracleBasedCryptoFiatFeed";
 import { MoneyOnChainPriceFeed } from "../typechain/MoneyOnChainPriceFeed";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { d18_ToNumber, to_d18 } from "../utils/Helpers";
+import { d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
 import { BDStable } from "../typechain/BDStable";
 
@@ -53,7 +53,17 @@ export function load() {
       const deployer = getDeployer(hre);
 
       const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
-      await stable.connect((await deployer).address).lockCollateralRatioAt(val);
+      await (await stable.connect((await deployer).address).lockCollateralRatioAt(to_d12(val))).wait();
+    });
+
+  task("set:toggle-pause-cr")
+    .addPositionalParam("stableAddress", "stable address")
+    .setAction(async ({ stableAddress }, hre) => {
+
+      const deployer = getDeployer(hre);
+
+      const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
+      await(await stable.connect((await deployer).address).toggleCollateralRatioPaused()).wait();
     });
 
   // -------------------------- readonly
@@ -105,52 +115,5 @@ export function load() {
       for (let stable of stables) {
         console.log(`${stable.fiat} ${stable.token}`);
       }
-    });
-
-  task("show:tmp")
-    .setAction(async (args, hre) => {
-      const bdEu = await getBdEu(hre);
-      const bdStablePool = await getBdEuWethPool(hre);
-
-      const collatPrice = await bdStablePool.getCollateralPrice_d12();
-      const bdxPrice = await bdEu.BDX_price_d12();
-      const wethFiatPrice = await bdEu.weth_fiat_price();
-
-      const ownerUser = await getDeployer(hre);
-      const feed = await hre.ethers.getContract('OracleBasedCryptoFiatFeed_ETH_EUR', ownerUser) as OracleBasedCryptoFiatFeed;
-      const feedDecimals = await feed.getDecimals();
-      const feedPrice = await feed.getPrice_1e12();
-
-      var feed2 = await hre.ethers.getContract('PriceFeed_ETH_USD', ownerUser) as MoneyOnChainPriceFeed;
-      const feed2Decimals = await feed2.decimals();
-      const feed2Price = await feed2.price();
-
-      console.log(`collatPrice: ${collatPrice}  bdxPrice: ${bdxPrice}   wethFiatPrice: ${wethFiatPrice}`);
-      console.log(`feedPrice: ${feedPrice} feedDecimals: ${feedDecimals}`);
-      console.log(`feed2Price: ${feed2Price} feed2Decimals: ${feed2Decimals}`);
-
-
-      const bdStableWbtcPool = await getBdEuWbtcPool(hre);
-      const price = await bdStableWbtcPool.getCollateralPrice_d12();
-
-      console.log("price: " + price)
-    });
-  
-  task("show:tmp-red")
-    .setAction(async (args, hre) => {
-      const bdStablePool = await getBdEuWethPool(hre);
-
-      await(await bdStablePool.redeemAlgorithmicBdStable(to_d18(0.1),0)).wait(1);
-    });
-
-  task("show:tmp-demo")
-    .setAction(async (args, hre) => {
-      const bdStablePool = await getBdEuWethPool(hre);
-      const price1 = await bdStablePool.getCollateralPrice_d12();      
-      console.log("price1: " + price1);
-
-      const bdStableWbtcPool = await getBdEuWbtcPool(hre);
-      const price2 = await bdStableWbtcPool.getCollateralPrice_d12();
-      console.log("price2: " + price2);
     });
 }

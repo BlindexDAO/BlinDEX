@@ -2,6 +2,8 @@ import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
 import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
 import { to_d18, to_d8 } from "../utils/Helpers";
+import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
+import { lockBdEuCrAt } from "../test/helpers/bdStable";
 
 const fs = require('fs');
 
@@ -103,7 +105,7 @@ export function load() {
                 [bigDaiHolder]
             )
         }
-    );
+        );
 
     task("setup:feed-test-user-ag")
         .setAction(async (args, hre) => {
@@ -114,15 +116,15 @@ export function load() {
             const bdx = await getBdx(hre);
             const bdeu = await getBdEu(hre);
 
-            await weth.deposit({value: to_d18(200) });
+            await weth.deposit({ value: to_d18(200) });
             await mintWbtc(hre, deployer, to_d18(100))
 
             const testUserAddress = "0xED3622f02b1619d397502a9FFF1dfe3d0fB2988c";
 
-            await(await weth.transfer(testUserAddress, to_d18(1))).wait();
-            await(await wbtc.transfer(testUserAddress, to_d8(1))).wait();
+            await (await weth.transfer(testUserAddress, to_d18(1))).wait();
+            await (await wbtc.transfer(testUserAddress, to_d8(1))).wait();
         }
-    );
+        );
 
     task("setup:test-user-balance-ag")
         .setAction(async (args, hre) => {
@@ -140,6 +142,25 @@ export function load() {
             console.log("wbtc: " + await wbtc.balanceOf(testUserAddress));
             console.log("bdx: " + await bdx.balanceOf(testUserAddress));
             console.log("bdeu: " + await bdeu.balanceOf(testUserAddress));
-        }
-    );
+        });
+
+    task("simulateTimeElapse")
+        .setAction(async () => {
+            await simulateTimeElapseInSeconds(3600 * 24 * 365 * 6);
+        });
+
+    task("setBdEuCollateralRatioTo1")
+        .setAction(async (args, hre) => {
+            await lockBdEuCrAt(hre, 1)
+        });
+
+    task("setBdEuCollateralRatioTo05")
+        .setAction(async (args, hre) => {
+            await lockBdEuCrAt(hre, 0.5)
+        });
+
+    task("setBdEuCollateralRatioTo0")
+        .setAction(async (args, hre) => {
+            await lockBdEuCrAt(hre, 0)
+        });
 }
