@@ -85,6 +85,32 @@ contract BDLens is OwnableUpgradeable {
         PriceFeed_EUR_USD = feed;
     }
 
+    function deleteFromBdStables(address _bdStable)
+        external
+        onlyByOwner
+    {
+        for (uint i = 0; i < BdStables.length; i++) {
+            if (BdStables[i] == _bdStable) {
+                BdStables[i] = BdStables[BdStables.length - 1];
+                BdStables.pop();
+                return;
+            }
+        }
+    }
+
+    function deleteFromStakings(address _stakings)
+        external
+        onlyByOwner
+    {
+        for (uint i = 0; i < Stakings.length; i++) {
+            if (Stakings[i] == _stakings) {
+                Stakings[i] = Stakings[Stakings.length - 1];
+                Stakings.pop();
+                return;
+            }
+        }
+    }
+
     function BdStablesLength() public view returns (uint256) {
         return BdStables.length;
     }
