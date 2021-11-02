@@ -402,9 +402,9 @@ contract BdStablePool is Initializable {
 
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
 
-        require(    
-            global_collateral_ratio_d12 < BdPoolLibrary.COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0,
-            "Collateral ratio needs to be between .000001 and .999999");
+        // due to introducing effective BDX coverage ratio, we allow for fractional redemption when CR=1
+        // this doesn't make user suddenly loose value (all of the BDX porion) when efCR < 1 and CR moves form 0.9975 to 1
+        require(global_collateral_ratio_d12 > 0, "Collateral ratio needs to be: > 0");
 
         uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
 
