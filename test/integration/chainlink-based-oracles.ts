@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { IOracleBasedCryptoFiatFeed } from '../../typechain/IOracleBasedCryptoFiatFeed';
-import { BtcToEthOracle } from '../../typechain/BtcToEthOracle';
+import { BtcToEthOracleChinlink } from '../../typechain/BtcToEthOracleChinlink';
 import cap from "chai-as-promised";
 
 import { bigNumberToDecimal } from "../../utils/Helpers";
@@ -38,7 +38,7 @@ describe("Chainlink besed Oracles", () => {
         const ownerUser = await hre.ethers.getNamedSigner('DEPLOYER');
         const btcToEthOracle = await hre.ethers.getContract(
             'BtcToEthOracle', 
-            ownerUser) as BtcToEthOracle;
+            ownerUser) as BtcToEthOracleChinlink;
 
         const price = await btcToEthOracle.getPrice_1e12();
 
