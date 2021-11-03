@@ -52,7 +52,7 @@ contract BDStable is ERC20Custom, Initializable {
     uint256 public price_target_d12; // The price of BDSTABLE at which the collateral ratio will respond to; this value is only used for the collateral ratio mechanism and not for minting and redeeming which are hardcoded at 1 <fiat>
     uint256 public price_band_d12; // The bound above and below the price target at which the refreshCollateralRatio() will not change the collateral ratio
 
-    uint256 private minimumMintRedeemDelayInBlocks = 2;
+    uint256 private minimumMintRedeemDelayInBlocks = 1;
 
     bool public collateral_ratio_paused;
 
