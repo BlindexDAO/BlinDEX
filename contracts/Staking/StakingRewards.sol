@@ -304,6 +304,62 @@ contract StakingRewards is
         }
     }
 
+    function lockExistingStake(uint256 amount, uint256 yearsNo) external nonReentrant whenNotPaused updateReward(msg.sender) {
+        require(amount > 0, "amount must be > 0");
+        if(yearsNo == 10){
+            require(
+                isTrueBdPool,
+                "You can only stake locked liquidity 10 years for true BD pools"
+            );
+        }
+        else{
+            require(
+                yearsNo == 1 || yearsNo == 2 || yearsNo == 3 || yearsNo == 5 || yearsNo == 10,
+                "You can only stake locked liquidity for 1, 2, 3, 5 or 10 years"
+            );
+        }
+
+        require(greylist[msg.sender] == false, "address has been greylisted");
+
+        //
+        // unstake the part of the unlocked stake
+        //
+
+        // Staking token balance and boosted balance
+        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender].sub(amount);
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].sub(amount);
+
+        // Staking token supply and boosted supply
+        _staking_token_supply = _staking_token_supply.sub(amount);
+        _staking_token_boosted_supply = _staking_token_boosted_supply.sub(amount);
+
+        //
+        //  stake (locked) the part of the unstaked pard of the unlocked stake
+        //
+
+        uint256 secs = yearsNo * 365 * 24 * 60 * 60;
+
+        uint256 multiplier = lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(yearsNo);
+        uint256 boostedAmount = amount.mul(multiplier).div(LOCK_MULTIPLIER_PRECISION);
+        lockedStakes[msg.sender].push(LockedStake(
+            keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
+            block.timestamp,
+            amount,
+            block.timestamp.add(secs),
+            multiplier
+        ));
+
+        // Staking token supply and boosted supply
+        _staking_token_supply = _staking_token_supply.add(amount);
+        _staking_token_boosted_supply = _staking_token_boosted_supply.add(boostedAmount);
+
+        // Staking token balance and boosted balance
+        _locked_balances[msg.sender] = _locked_balances[msg.sender].add(amount);
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
+
+        emit ExistingStakeLocked(msg.sender, amount, secs);
+    }
+
     function getReward() public nonReentrant updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
@@ -419,4 +475,5 @@ contract StakingRewards is
     event Recovered(address token, uint256 amount);
     event RewardsPeriodRenewed(address token);
     event RewardVested(address user, uint256 amount);
+    event ExistingStakeLocked(address indexed user, uint256 amount, uint256 secs);
 }

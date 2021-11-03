@@ -81,7 +81,7 @@ describe("StakingRewards", () => {
     let depositedLPTokenUser2_d18_global: BigNumber;
 
     it("should get first reward", async () => {
-      // provide some initaila weth for the users
+      // provide some initaial weth for the users
       await weth.connect(testUser1).deposit({ value: to_d18(100) });
       await weth.connect(testUser2).deposit({ value: to_d18(100) });
 
@@ -287,6 +287,49 @@ describe("StakingRewards", () => {
   });
 });
 
+describe('locking an unlocked stake', () => {
+  before(async () => {
+    await hre.deployments.fixture();
+    await setUpFunctionalSystem(hre, 1, true);
+    await initialize();
+  });
+
+  it('shuld lock an unlocked stake', async () => {
+    // provide some initaial weth for the users
+    await weth.connect(testUser1).deposit({ value: to_d18(100) });
+
+    // deployer gives some bdeu to the uses so they can stake
+    await bdEu.transfer(testUser1.address, to_d18(100));
+
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
+
+    const { depositedLPTokenUser1_d18 } = await getUsersCurrentLpBalance();
+
+    const pair = await getUniswapPair(hre, bdEu, weth);
+    await pair.connect(testUser1).approve(stakingRewards_BDEU_WETH.address, depositedLPTokenUser1_d18);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stake(depositedLPTokenUser1_d18);
+
+    const days = 30;
+    await simulateTimeElapseInDays(days)
+
+    // now user decides to lock 60% of their stake
+    const lockedStake = depositedLPTokenUser1_d18.mul(60).div(100);
+    const unlockedStake = depositedLPTokenUser1_d18.sub(lockedStake);
+
+    // act
+    await stakingRewards_BDEU_WETH.connect(testUser1).lockExistingStake(lockedStake, 5);
+
+    //assert
+    expect((await stakingRewards_BDEU_WETH.unlockedBalanceOf(testUser1.address))).to.be.eq(unlockedStake, "incalid unlocked stake");
+    expect((await stakingRewards_BDEU_WETH.lockedBalanceOf(testUser1.address))).to.be.eq(lockedStake, "invalid locked stake");
+    
+    const userLockedStaks = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address);
+    const latestStake = userLockedStaks[userLockedStaks.length-1]
+    const latestStakeLockedValue = latestStake[2];
+    expect(latestStakeLockedValue).to.be.eq(lockedStake, "invalid latest locked stake value");
+  });
+});
+
 describe('getReward interaction with vesting contract', () => {
 
   beforeEach(async () => {
@@ -294,7 +337,6 @@ describe('getReward interaction with vesting contract', () => {
     await initialize();
     await setUpFunctionalSystem(hre, 1, true);
   })
-
 
   it('should transfer only fraction of total rewards', async () => {
     // provide some initaila weth for the users
