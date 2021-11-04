@@ -1,13 +1,15 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
-import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
-import { to_d18, to_d8 } from "../utils/Helpers";
+import { getBdEu, getBdx, getDeployer, getUniswapFactory, getUniswapRouter, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
+import { d18_ToNumber, to_d18, to_d8 } from "../utils/Helpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
 import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
 import { BtcToEthOracleMoneyOnChain } from "../typechain/BtcToEthOracleMoneyOnChain";
 import { BdStablePool } from "../typechain/BdStablePool";
+import { IUniswapV2Pair } from "../typechain/IUniswapV2Pair";
 import * as constants from '../utils/Constants'
+import { provideLiquidity } from "../test/helpers/swaps";
 
 const fs = require('fs');
 
@@ -16,6 +18,7 @@ export function load() {
     // generl purpose task to run any ad-hoc job
     task("run:job")
         .setAction(async (args, hre) => {
+
         });
 
     task("accounts", "Prints the list of accounts", async (args, hre) => {

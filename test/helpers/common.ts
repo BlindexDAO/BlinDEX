@@ -13,6 +13,8 @@ import * as constants from '../../utils/Constants'
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { bigNumberToDecimal, to_d12 } from "../../utils/Helpers";
 import { BDLens } from "../../typechain/BDLens";
+import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
+import { Vesting } from "../../typechain/Vesting";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -42,6 +44,16 @@ export async function getUniswapRouter(hre: HardhatRuntimeEnvironment){
 export async function getUniswapFactory(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
   return await hre.ethers.getContract('UniswapV2Factory', ownerUser) as UniswapV2Factory;
+}
+
+export async function getStakingRewardsDistribution(hre: HardhatRuntimeEnvironment){
+  const ownerUser = await getDeployer(hre);
+  return await hre.ethers.getContract('StakingRewardsDistribution', ownerUser) as StakingRewardsDistribution;
+}
+
+export async function getVesting(hre: HardhatRuntimeEnvironment){
+  const ownerUser = await getDeployer(hre);
+  return await hre.ethers.getContract('Vesting', ownerUser) as Vesting;
 }
 
 export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment){
