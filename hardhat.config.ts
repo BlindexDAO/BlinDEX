@@ -12,6 +12,7 @@ import dotenv from 'dotenv'
 import * as setupTasks from "./tasks/setup"
 import * as maintenanceTasks from "./tasks/mainternace"
 import * as developmentTasks from "./tasks/development"
+import * as feConfig from "./tasks/fe-confg"
 
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
@@ -20,6 +21,7 @@ dotenv.config({ path: envPath });
 developmentTasks.load();
 maintenanceTasks.load();
 setupTasks.load();
+feConfig.load();
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",

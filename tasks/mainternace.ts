@@ -6,7 +6,9 @@ import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
 import { BDStable } from "../typechain/BDStable";
+import { BdStablePool } from "../typechain/BdStablePool";
 import { StakingRewards } from "../typechain/StakingRewards";
+import { resourceUsage } from "process";
 
 export function load() {
 
@@ -116,39 +118,5 @@ export function load() {
       for (let stable of stables) {
         console.log(`${stable.fiat} ${stable.token}`);
       }
-    });
-  
-  task("show:fe-config")
-    .setAction(async (args, hre) => {
-      const deployer = await getDeployer(hre);
-
-      const bdEu = await getBdEu(hre);
-      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-      
-      let stakingRewardsAddresses = "";
-      for(let i = 0; i < 100; i++){
-        try{
-          const address = await stakingRewardsDistribution.stakingRewardsAddresses(i);
-          const stakingRewards = (await hre.ethers.getContractAt('StakingRewards', address)) as StakingRewards;
-          const stakingTokenAddress = await stakingRewards.stakingToken();
-          if(stakingRewardsAddresses.length > 0){
-            stakingRewardsAddresses += ",";
-          }
-          stakingRewardsAddresses += address + ";" + stakingTokenAddress;
-        } catch(ex){
-          break;
-        }
-      }
-
-      console.log(`ADDRESS_WETH: "${(await getWeth(hre)).address}",`);
-      console.log(`ADDRESS_BDX: "${(await getBdx(hre)).address}",`);
-      console.log(`ADDRESS_SWAP_ROUTER: "${(await getUniswapRouter(hre)).address}",`);
-      console.log(`ADDRESS_SWAP_FACTORY: "${(await getUniswapFactory(hre)).address}",`);
-      console.log(`ADDRESS_STAKING_REWARDS_DISTRIBUTION: "${stakingRewardsDistribution.address}",`);
-      console.log(`ADDRESS_VESTING: "${(await getVesting(hre)).address}",`);
-      console.log(`ADDRESS_PLUS_BD_STABLE_LIST: "${bdEu.address}",`); // comma separated
-      console.log(`ADDRESS_PLUS_STAKING_REWARDS_LIST: "${stakingRewardsAddresses};EUR",`); // comma separated
-      console.log(`ADDRESS_PRICE_FEED_EUR_USD: "${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address}",`);
-      console.log(`ADDRESS_BTC_TO_ETH_ORACLE: "${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address}",`);
     });
 }
