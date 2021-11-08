@@ -10,6 +10,8 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     
     uint8 private constant DECIMALS = 12;
     uint256 private recentPrice = 1e12;
+    
+    uint256 public lastUpdateTimestamp;
 
     address private updater;
 
@@ -33,6 +35,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
 
     function setPrice(uint256 _price) public onlyUpdater {
         recentPrice = _price;
+        lastUpdateTimestamp = block.timestamp;
         emit PriceChanged(_price);
     }
 
