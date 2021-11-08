@@ -1,14 +1,10 @@
 import { task } from "hardhat/config";
 import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdLens, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth } from "../test/helpers/common";
-import { OracleBasedCryptoFiatFeed } from "../typechain/OracleBasedCryptoFiatFeed";
-import { MoneyOnChainPriceFeed } from "../typechain/MoneyOnChainPriceFeed";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
+import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
 import { BDStable } from "../typechain/BDStable";
-import { BdStablePool } from "../typechain/BdStablePool";
-import { StakingRewards } from "../typechain/StakingRewards";
-import { resourceUsage } from "process";
+import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 
 export function load() {
 
@@ -69,6 +65,21 @@ export function load() {
       await(await stable.connect((await deployer).address).toggleCollateralRatioPaused()).wait();
     });
 
+  task("set:rsk-eur-usd")
+    .addPositionalParam("newPrice", "new price")
+    .setAction(async ({newPrice}, hre) => {
+      const bot = await hre.ethers.getNamedSigner('BOT');
+
+      if(newPrice < 0.5 || newPrice > 2){
+        throw "invalid price";
+      }
+
+      console.log("Setting EUR/USD: " + newPrice);
+
+      const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as FiatToFiatPseudoOracleFeed;
+      await(await feed.connect(bot).setPrice(to_d12(newPrice))).wait();
+    });
+
   // -------------------------- readonly
 
   task("show:oracles-validFor")
@@ -118,5 +129,12 @@ export function load() {
       for (let stable of stables) {
         console.log(`${stable.fiat} ${stable.token}`);
       }
+    });
+
+  task("show:rsk-eur-usd")
+    .setAction(async (args, hre) => {
+      const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as FiatToFiatPseudoOracleFeed;
+      const price = d12_ToNumber(await feed.price());      
+      console.log("EUR/USD: " + price);
     });
 }
