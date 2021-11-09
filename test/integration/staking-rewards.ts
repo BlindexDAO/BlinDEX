@@ -81,7 +81,7 @@ describe("StakingRewards", () => {
     let depositedLPTokenUser2_d18_global: BigNumber;
 
     it("should get first reward", async () => {
-      // provide some initaial weth for the users
+      // provide some initial weth for the users
       await weth.connect(testUser1).deposit({ value: to_d18(100) });
       await weth.connect(testUser2).deposit({ value: to_d18(100) });
 
@@ -295,7 +295,7 @@ describe('locking an unlocked stake', () => {
   });
 
   it('shuld lock an unlocked stake', async () => {
-    // provide some initaial weth for the users
+    // provide some initial weth for the users
     await weth.connect(testUser1).deposit({ value: to_d18(100) });
 
     // deployer gives some bdeu to the uses so they can stake
