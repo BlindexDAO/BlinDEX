@@ -5,6 +5,8 @@ import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
+import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
+import * as constants from '../utils/Constants'
 
 export function load() {
 
@@ -136,5 +138,12 @@ export function load() {
       const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as FiatToFiatPseudoOracleFeed;
       const price = d12_ToNumber(await feed.price());      
       console.log("EUR/USD: " + price);
+    });
+  
+  task("show:btc-eth")
+    .setAction(async (args, hre) => {
+      const feed = await hre.ethers.getContract("BtcToEthOracle") as ICryptoPairOracle;
+      const price = d18_ToNumber(await feed.consult(constants.wETH_address[hre.network.name], to_d18(1)));      
+      console.log("BTC/ETH: " + price);
     });
 }

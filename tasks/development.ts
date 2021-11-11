@@ -7,6 +7,7 @@ import { lockBdEuCrAt } from "../test/helpers/bdStable";
 import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
 import { BtcToEthOracleMoneyOnChain } from "../typechain/BtcToEthOracleMoneyOnChain";
 import { BdStablePool } from "../typechain/BdStablePool";
+import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import { IUniswapV2Pair } from "../typechain/IUniswapV2Pair";
 import * as constants from '../utils/Constants'
 import { provideLiquidity } from "../test/helpers/swaps";
@@ -174,5 +175,17 @@ export function load() {
     task("setBdEuCollateralRatioTo0")
         .setAction(async (args, hre) => {
             await lockBdEuCrAt(hre, 0)
+        });
+
+    task("show:moc-feeds")
+        .setAction(async (args, hre) => {
+          async function showFor(address: string, priceName: string){
+            const feed = await hre.ethers.getContractAt("IMoCBaseOracle", address) as IMoCBaseOracle;
+            const [price_d18_str, isValid] = await feed.peek();
+            console.log(priceName + ": " + d18_ToNumber(BigNumber.from(price_d18_str)));
+          }
+
+          await showFor("0x972a21C61B436354C0F35836195D7B67f54E482C", "BTC/USD");
+          await showFor("0x84c260568cFE148dBcFb4C8cc62C4e0b6d998F91", "ETH/USD");
         });
 }
