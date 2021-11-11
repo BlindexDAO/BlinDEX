@@ -9,6 +9,9 @@ import { Vesting } from '../../typechain/Vesting';
 import { BDXShares } from '../../typechain/BDXShares';
 import { to_d18, d18_ToNumber } from '../../utils/Helpers';
 import { BigNumber } from '@ethersproject/bignumber';
+import { simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
+import { constants } from 'buffer';
+import exp from 'constants';
 
 chai.use(cap);
 
@@ -173,6 +176,61 @@ describe('Vesting', () => {
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
+    });
+
+    it('should free up the vesting schedule slot when vesting finished and rewards claimed', async () => {
+        const amount1_d18 = to_d18(1);
+        const amount2_d18 = to_d18(2);
+        const amount3_d18 = to_d18(3);
+        const amount4_d18 = to_d18(4);
+        const amount5_d18 = to_d18(5);
+        const vestingTimeSeconds = (await vesting.vestingTimeInSeconds()).toNumber();
+        const secondsInDay = 60*60*24;
+
+        const balanceBefore = await bdx.balanceOf(testUser1.address);
+
+        await bdx.connect(testRewardProvider).approve(vesting.address, to_d18(100)); // excessive
+
+        await vesting.connect(testScheduler).schedule(testUser1.address, amount1_d18); // [1]
+        await simulateTimeElapseInDays(2);
+        await vesting.connect(testScheduler).schedule(testUser1.address, amount2_d18); // [1,2]
+        await simulateTimeElapseInDays(2);
+        await vesting.connect(testScheduler).schedule(testUser1.address, amount3_d18); // [1,2,3]
+        await simulateTimeElapseInDays(2);
+        await vesting.connect(testScheduler).schedule(testUser1.address, amount4_d18); // [1,2,3,4]
+        
+        const schedulesCount1 = await vesting.userVestingSchedulesCount(testUser1.address);
+        expect(schedulesCount1).to.be.eq(4, "invalid schedules count after schedule 4");
+
+        await simulateTimeElapseInSeconds(vestingTimeSeconds-3*secondsInDay); // make only 1st and 2nd vestings schedule fully claimable
+        await vesting.connect(testUser1).claim(); // [4,3] // now the first vesting schedule should be removed
+
+        const schedulesCount2 = await vesting.userVestingSchedulesCount(testUser1.address);
+        expect(schedulesCount2).to.be.eq(2, "invalid schedules count after claim 1");
+
+        await vesting.connect(testScheduler).schedule(testUser1.address, amount5_d18); // [4,3,5]
+
+        const schedulesCount3 = await vesting.userVestingSchedulesCount(testUser1.address);
+        expect(schedulesCount3).to.be.eq(3, "invalid schedules count after schedule 4");
+
+        const vestingSchedule0 = await vesting.vestingSchedules(testUser1.address, 0);
+        const vestingSchedule1 = await vesting.vestingSchedules(testUser1.address, 1);
+        const vestingSchedule2 = await vesting.vestingSchedules(testUser1.address, 2);
+
+        expect(d18_ToNumber(vestingSchedule0.totalVestedAmount_d18)).to.be.eq(4, "invalid vesting schedule[0]");
+        expect(d18_ToNumber(vestingSchedule1.totalVestedAmount_d18)).to.be.eq(3, "invalid vesting schedule[1]");
+        expect(d18_ToNumber(vestingSchedule2.totalVestedAmount_d18)).to.be.eq(5, "invalid vesting schedule[2]");
+
+        await simulateTimeElapseInSeconds(vestingTimeSeconds); // make all vesting schedules fully claimable
+        await vesting.connect(testUser1).claim(); // [] // now all vesting schedule should be removed 
+
+        const schedulesCount4 = await vesting.userVestingSchedulesCount(testUser1.address);
+        expect(schedulesCount4).to.be.eq(0, "not all vesting schedules have been removed");
+
+        const balanceAfter = await bdx.balanceOf(testUser1.address);
+        const balanceDiff = d18_ToNumber(balanceAfter.sub(balanceBefore));
+
+        expect(balanceDiff).to.be.eq(1+2+3+4+5, "invalid balance diff");
     });
 
     it('claim should transfer full when claimed twice during vesting and after vesting ended', async () => {

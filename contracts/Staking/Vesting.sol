@@ -28,7 +28,7 @@ contract Vesting is OwnableUpgradeable
     address public vestingScheduler;
     address public fundsProvider;
     uint256 public vestingTimeInSeconds;
-    uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 128;
+    uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 256;
 
     ERC20 private vestedToken;
 
@@ -75,10 +75,16 @@ contract Vesting is OwnableUpgradeable
     function claim() external {
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
         uint256 rewardsToClaim = 0;
-        for (uint256 i = 0; i < userVestingSchedules.length; i++) {
+        uint256 userVestingSchedulesCount = userVestingSchedules.length;
+        for (uint256 i = 0; i < userVestingSchedulesCount; i++) {
             if (isFullyVested(userVestingSchedules[i])) {
                 rewardsToClaim = rewardsToClaim.add(userVestingSchedules[i].totalVestedAmount_d18.sub(userVestingSchedules[i].releasedAmount_d18));
-                delete userVestingSchedules[i];
+                
+                userVestingSchedulesCount--;
+                userVestingSchedules[i] = userVestingSchedules[userVestingSchedulesCount];
+                delete userVestingSchedules[userVestingSchedulesCount];
+                userVestingSchedules.pop();
+                i--;
             } else {
                 uint256 proprtionalReward = getAvailableReward(userVestingSchedules[i]);
                 rewardsToClaim = rewardsToClaim.add(proprtionalReward);
@@ -92,6 +98,10 @@ contract Vesting is OwnableUpgradeable
     }
 
     /* ========== VIEWS ========== */
+
+    function userVestingSchedulesCount(address user) external view returns (uint256) {
+        return vestingSchedules[user].length;
+    }
 
     function isFullyVested(VestingSchedule memory _schedule) public view returns(bool) {
         return _schedule.vestingEndTimeStamp <= block.timestamp;
