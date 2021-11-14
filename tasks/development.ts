@@ -1,14 +1,16 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
 import { getBdEu, getBdx, getDeployer, getUniswapFactory, getUniswapRouter, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
-import { d18_ToNumber, to_d18, to_d8 } from "../utils/Helpers";
+import { bigNumberToDecimal, d18_ToNumber, to_d18, to_d8 } from "../utils/Helpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
 import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
 import { BtcToEthOracleMoneyOnChain } from "../typechain/BtcToEthOracleMoneyOnChain";
 import { BdStablePool } from "../typechain/BdStablePool";
 import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
-import { IUniswapV2Pair } from "../typechain/IUniswapV2Pair";
+import { ISovrynLiquidityPoolV2Converter } from "../typechain/ISovrynLiquidityPoolV2Converter";
+import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
+import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import * as constants from '../utils/Constants'
 import { provideLiquidity } from "../test/helpers/swaps";
 
@@ -187,5 +189,34 @@ export function load() {
 
           await showFor("0x972a21C61B436354C0F35836195D7B67f54E482C", "BTC/USD");
           await showFor("0x84c260568cFE148dBcFb4C8cc62C4e0b6d998F91", "ETH/USD");
+        });
+    
+    task("show:tmp")
+        .setAction(async (args, hre) => {
+            const swapNetwork = await hre.ethers.getContractAt("ISovrynSwapNetwork", "0x98ace08d2b759a265ae326f010496bcd63c15afc") as ISovrynSwapNetwork;
+
+            const rusdtAddress = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
+            const wrbtcAddress = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
+            const ethsAddress = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
+            const conversionPath = await swapNetwork.conversionPath(wrbtcAddress, ethsAddress);
+
+            console.log("path length: " + conversionPath.length);
+
+            if(conversionPath.length != 3){
+                // error
+            }
+
+            var anchorAddress = conversionPath[1];
+            var anchor = await hre.ethers.getContractAt("ISovrynAnchor", anchorAddress) as ISovrynAnchor;
+
+            console.log("-----1");
+
+            var lpAddress = await anchor.owner();
+            var lp = await hre.ethers.getContractAt("ISovrynLiquidityPoolV2Converter", lpAddress) as ISovrynLiquidityPoolV2Converter;
+
+            console.log("-----2");
+
+            const {numerator, denominator} = await lp.effectiveTokensRate();
+            console.log("Price: " + numerator.toNumber() / denominator.toNumber());
         });
 }
