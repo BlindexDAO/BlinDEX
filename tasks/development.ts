@@ -1,18 +1,14 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
 import { getBdEu, getBdx, getDeployer, getUniswapFactory, getUniswapRouter, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
-import { bigNumberToDecimal, d18_ToNumber, to_d18, to_d8 } from "../utils/Helpers";
+import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/Helpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
-import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
-import { BtcToEthOracleMoneyOnChain } from "../typechain/BtcToEthOracleMoneyOnChain";
-import { BdStablePool } from "../typechain/BdStablePool";
 import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
-import { ISovrynLiquidityPoolV2Converter } from "../typechain/ISovrynLiquidityPoolV2Converter";
+import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import * as constants from '../utils/Constants'
-import { provideLiquidity } from "../test/helpers/swaps";
 
 const fs = require('fs');
 
@@ -191,32 +187,44 @@ export function load() {
           await showFor("0x84c260568cFE148dBcFb4C8cc62C4e0b6d998F91", "ETH/USD");
         });
     
-    task("show:tmp")
+    task("show:sovryn-swap-prices")
         .setAction(async (args, hre) => {
-            const swapNetwork = await hre.ethers.getContractAt("ISovrynSwapNetwork", "0x98ace08d2b759a265ae326f010496bcd63c15afc") as ISovrynSwapNetwork;
+            async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
+                const swapNetwork = await hre.ethers.getContractAt("ISovrynSwapNetwork", "0x98ace08d2b759a265ae326f010496bcd63c15afc") as ISovrynSwapNetwork;
+                
+                // format:  token1 - acnchor_A - token2
+                const conversionPath = await swapNetwork.conversionPath(token1, token2);
 
+                console.log("path length: " + conversionPath.length);
+
+                if(conversionPath.length != 3){
+                    throw `conversion path shoulb be 3, but is ${conversionPath.length}`;
+                }
+
+                for(let a of conversionPath){
+                    console.log(a);
+                }
+
+                var anchorAddress = conversionPath[1];
+                var anchor = await hre.ethers.getContractAt("ISovrynAnchor", anchorAddress) as ISovrynAnchor;            
+
+                var lpAddress = await anchor.owner();
+                console.log(`lp ${token1Name}-${token2Name}: ` + lpAddress);
+
+                var lpBtcEth = await hre.ethers.getContractAt("ISovrynLiquidityPoolV1Converter", lpAddress) as ISovrynLiquidityPoolV1Converter;
+
+                const res1 = await lpBtcEth.targetAmountAndFee(token1, token2, to_d12(1));
+                console.log(`${token1Name}/${token2Name}: ` + d12_ToNumber(res1.amountMinusFee.add(res1.fee)));
+                const res2 = await lpBtcEth.targetAmountAndFee(token2, token1, to_d12(1));
+                console.log(`${token2Name}/${token1Name}: ` + d12_ToNumber(res2.amountMinusFee.add(res2.fee)));
+            }
+            
             const rusdtAddress = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
             const wrbtcAddress = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
             const ethsAddress = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
-            const conversionPath = await swapNetwork.conversionPath(wrbtcAddress, ethsAddress);
-
-            console.log("path length: " + conversionPath.length);
-
-            if(conversionPath.length != 3){
-                // error
-            }
-
-            var anchorAddress = conversionPath[1];
-            var anchor = await hre.ethers.getContractAt("ISovrynAnchor", anchorAddress) as ISovrynAnchor;
-
-            console.log("-----1");
-
-            var lpAddress = await anchor.owner();
-            var lp = await hre.ethers.getContractAt("ISovrynLiquidityPoolV2Converter", lpAddress) as ISovrynLiquidityPoolV2Converter;
-
-            console.log("-----2");
-
-            const {numerator, denominator} = await lp.effectiveTokensRate();
-            console.log("Price: " + numerator.toNumber() / denominator.toNumber());
+            // const conversionPath = await swapNetwork.conversionPath(rusdtAddress, wrbtcAddress);
+            
+            await run(ethsAddress, wrbtcAddress, "eth", "btc");
+            await run(rusdtAddress, wrbtcAddress, "usd", "btc");
         });
 }
