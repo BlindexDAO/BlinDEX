@@ -35,7 +35,6 @@ contract BDStable is ERC20Custom, Initializable {
     ICryptoPairOracle private bdxWethOracle;
 
     IOracleBasedCryptoFiatFeed private weth_fiat_pricer;
-    uint8 private UNUSED_PLACEHOLDER_1; //todo ag remove
 
     uint256 public global_collateral_ratio_d12; // 12 decimals of precision
     
