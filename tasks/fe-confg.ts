@@ -22,7 +22,7 @@ export function load() {
 
             const stables = await getStablesConfig(hre);
             const swaps = await getSwapsConfig(hre);
-            const stakings = await getStakingsConfig(hre);
+            const stakings = await getStakingsConfig(hre, swaps);
 
             const blockchainConfig = {
                 STABLES: stables,
@@ -45,7 +45,24 @@ export function load() {
         });
 };
 
-async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
+async function getPairsWhitelist(hre: HardhatRuntimeEnvironment){
+    const weth = await getWeth(hre);
+    const wbtc = await getWbtc(hre);
+    const bdEu = await getBdEu(hre);
+    const bdx = await getBdx(hre);
+
+    const whitelist = [
+        [weth, bdEu],
+        [wbtc, bdEu],
+        [weth, bdx],
+        [wbtc, bdx],
+        [bdx, bdEu]
+    ]
+
+    return whitelist;
+}
+
+async function getStakingsConfig(hre: HardhatRuntimeEnvironment, allowedSwapPairs: Array<{address: string}>) {
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stakingRewardsAddresses = [];
@@ -68,12 +85,18 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
         }
     }));
 
-    return stakings;
+    const approvedStakings = stakings
+        .filter(s => allowedSwapPairs
+            .some(allowedSwap => s.stakingTokenAddress.toLowerCase() === allowedSwap.address.toLowerCase()))
+
+    return approvedStakings;
 }
 
 async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
     const factory = await getUniswapFactory(hre);
     const pairsCount = (await factory.allPairsLength()).toNumber();
+
+    const whitelist = await getPairsWhitelist(hre);
 
     const pairs = await Promise.all([...Array(pairsCount).keys()].map(async i => {
         const pairAddress = await factory.allPairs(i);
@@ -87,7 +110,18 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
         };
     }));
 
-    return pairs;
+    const approvedPairs = pairs.filter(pair => {
+        const sortedPair = [pair.token0.toLowerCase(), pair.token1.toLowerCase()].sort();
+        for(let wlPair of whitelist){
+            const wlPairSorted = [wlPair[0].address.toLowerCase(), wlPair[1].address.toLowerCase()].sort();
+            if(wlPairSorted[0] === sortedPair[0] && wlPairSorted[1] === sortedPair[1]){
+                return true;
+            }
+        }
+        return  false;
+    })
+
+    return approvedPairs;
 }
 
 async function getStablesConfig(hre: HardhatRuntimeEnvironment) {

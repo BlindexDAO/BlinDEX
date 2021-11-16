@@ -90,7 +90,7 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   await (await bdx.connect(treasury).transfer(deployer.address, to_d18(1e3))).wait();
   console.log("transferred bdx to deployer");
 
-  // different of different chains
+  // different for different chains
   var wethDecimals = await weth.decimals();
   var wbtcDecimals = await wbtc.decimals();
 
