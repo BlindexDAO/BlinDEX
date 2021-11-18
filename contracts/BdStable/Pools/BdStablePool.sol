@@ -431,19 +431,9 @@ contract BdStablePool is Initializable {
         require(COLLATERAL_out_min <= collateral_needed, "Slippage limit reached [collateral]");
         require(BDX_out_min <= bdx_amount, "Slippage limit reached [BDX]");
 
-        if(BDSTABLE.canLegallyRedeem(msg.sender)){
-            redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);
-        } else {
-            uint256 collateral_needed_sender = collateral_needed.div(10);
-            uint256 collateral_needed_treasury = collateral_needed.mul(9).div(10);
+        require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
 
-            redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender]
-                .add(collateral_needed_sender);
-
-            address treasury_address = BDSTABLE.treasury_address();
-            redeemCollateralBalances[treasury_address] = redeemCollateralBalances[treasury_address]
-                .add(collateral_needed_treasury);
-        }
+        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);
 
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
 
