@@ -11,6 +11,7 @@ import { getWethPair } from "../../utils/Swaps";
 import { getDeployer, getUniswapRouter, getWeth } from "./common";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from "ethers";
+import { IERC20 } from "../../typechain/IERC20";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
   var pair = await getWethPair(hre, tokenName);
@@ -92,8 +93,8 @@ export async function swapForWethAsDeployer(
 
 export async function swapAsDeployerByContract(
   hre: HardhatRuntimeEnvironment, 
-  tokenIn: ERC20,
-  tokenOut: ERC20, 
+  tokenIn: IERC20,
+  tokenOut: IERC20, 
   tokenInValue: number, 
   tokenOutMinValue: number)
 {
@@ -134,8 +135,8 @@ export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: str
 export async function provideLiquidity(
   hre: HardhatRuntimeEnvironment,
   user: SignerWithAddress,
-  tokenA: ERC20,
-  tokenB: ERC20,
+  tokenA: ERC20 | WETH,
+  tokenB: ERC20 | WETH,
   amountA: BigNumber,
   amountB: BigNumber
 ){

@@ -5,6 +5,7 @@ import * as constants from './Constants';
 import { ERC20 } from "../typechain/ERC20";
 import { simulateTimeElapseInSeconds } from "./HelpersHardhat";
 import { provideLiquidity } from "../test/helpers/swaps";
+import { IERC20 } from "../typechain/IERC20";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, forIntegrationTests: boolean) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -135,8 +136,8 @@ export async function updateOracles(hre: HardhatRuntimeEnvironment){
 
 export async function updateOracle(
   hre: HardhatRuntimeEnvironment,
-  tokenA: ERC20,
-  tokenB: ERC20) 
+  tokenA: IERC20,
+  tokenB: IERC20) 
 {
   const pair = await getUniswapPair(hre, tokenA, tokenB);
 

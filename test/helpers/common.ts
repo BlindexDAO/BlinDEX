@@ -1,3 +1,4 @@
+import { IERC20 } from './../../typechain/IERC20';
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { BdStablePool } from "../../typechain/BdStablePool";
@@ -15,6 +16,7 @@ import { bigNumberToDecimal, to_d12 } from "../../utils/Helpers";
 import { BDLens } from "../../typechain/BDLens";
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import { Vesting } from "../../typechain/Vesting";
+import { WETH } from "../../typechain/WETH";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -73,7 +75,7 @@ export async function getBdx(hre: HardhatRuntimeEnvironment){
 
 export async function getWeth(hre: HardhatRuntimeEnvironment){
   const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as ERC20;
+  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as WETH;
 }
 
 export async function getBdLens(hre: HardhatRuntimeEnvironment){
@@ -135,7 +137,7 @@ export async function getOnChainCryptoFiatPrice(
   return {price_1e12: cryptoInFiatPrice_1e12, price: cryptoInFiatPrice};
 }
 
-export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: ERC20, tokenB: ERC20) {
+export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: IERC20, tokenB: IERC20) {
   const factory = await getUniswapFactory(hre);
   const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
   const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;

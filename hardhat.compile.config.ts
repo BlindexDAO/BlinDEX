@@ -1,5 +1,5 @@
 import { HardhatUserConfig } from 'hardhat/types';
-import '@typechain/hardhat'
+import 'hardhat-typechain'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import 'hardhat-dependency-compiler'
