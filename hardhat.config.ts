@@ -1,4 +1,5 @@
 // Dirty hack to enforce hardhat-deploy-ethers type precedence over hardhat-ethers, while making hardhat-deploy-ethers extendEnvironment function execute last 
+// import type * as deployEthers from "hardhat-deploy-ethers";
 import type * as deployEthers from "hardhat-deploy-ethers";
 
 import { HardhatUserConfig } from "hardhat/config";
