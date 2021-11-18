@@ -271,12 +271,9 @@ describe("BDStable 1to1", () => {
         })()).to.be.rejectedWith("Collateral ratio must be == 1");
     });
 
-    it("should tax illegal 1to1 redemption", async () => {
-        const ownerUser = await getDeployer(hre);
+    it("should fail illegal 1to1 redemption", async () => {
         const testUser = await getUser(hre);
-        const treasury = await getTreasury(hre);
 
-        const weth = await getWeth(hre);
         const bdEuPool = await getBdEuWethPool(hre);
         const bdEu = await getBdEu(hre);
 
@@ -294,8 +291,6 @@ describe("BDStable 1to1", () => {
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user so user can redeem it
 
         var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
-        var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
-        var wethBalanceBeforeRedeemTreasury = await weth.balanceOf(treasury.address);
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem);
 
@@ -307,41 +302,9 @@ describe("BDStable 1to1", () => {
         let expectedWethForRedeem = bdEuToRedeem.mul(efCr_d12).div(1e12).mul(1e12).div(ethInEurPrice_1e12);
         expectedWethForRedeem = expectedWethForRedeem.mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
-        const expectedWethForRedeemUser = expectedWethForRedeem.div(10)
-        const expectedWethForRedeemTreasury = expectedWethForRedeem.mul(9).div(10)
-
-        await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
-        await bdEuPool.connect(testUser).collectRedemption(false);
-        await bdEuPool.connect(treasury).collectRedemption(false);
-
-        var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
-        var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
-        var wethBalanceAfterRedeemTreasury = await weth.balanceOf(treasury.address);
-
-        console.log("bdEu balance before redeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem));
-        console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem));
-        
-        console.log("weth balance before redeem:  " + d18_ToNumber(wethBalanceBeforeRedeem));
-        console.log("weth balance after redeem:   " + d18_ToNumber(wethBalanceAfterRedeem));
-
-        console.log("weth balance before redeem (tresury):  " + d18_ToNumber(wethBalanceBeforeRedeemTreasury));
-        console.log("weth balance after redeem (tresury) :   " + d18_ToNumber(wethBalanceAfterRedeemTreasury));
-
-        const wethDelta = d18_ToNumber(wethBalanceAfterRedeem.sub(wethBalanceBeforeRedeem));
-        console.log("weth balance delta:        " + wethDelta);
-        console.log("expectedWethForRedeemUser: " + d18_ToNumber(expectedWethForRedeemUser));
-
-        const wethDeltaTreasury = d18_ToNumber(wethBalanceAfterRedeemTreasury.sub(wethBalanceBeforeRedeemTreasury));
-        console.log("weth balance delta:            " + wethDeltaTreasury);
-        console.log("expectedWethForRedeemTreasury: " + d18_ToNumber(expectedWethForRedeemTreasury));
-
-        const bdEuDelta = d18_ToNumber(bdEuBalanceBeforeRedeem.sub(bdEuBalanceAfterRedeem));
-        console.log("bdEu balance delta: " + bdEuDelta);
-
-        expect(bdEuBalanceBeforeRedeem).to.be.gt(0);
-        expect(bdEuDelta).to.eq(d18_ToNumber(bdEuToRedeem), "unexpected bdeu delta");
-        expect(wethDelta).to.be.closeTo(d18_ToNumber(expectedWethForRedeemUser), 1e-3, "unexpected weth delta (user)");
-        expect(wethDeltaTreasury).to.be.closeTo(d18_ToNumber(expectedWethForRedeemTreasury), 1e-3, "unexpected weth delta (treasury)");
+        await expect(
+            bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1)
+        ).to.be.revertedWith('Cannot legally redeem');
     });
 
 })

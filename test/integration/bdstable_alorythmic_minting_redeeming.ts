@@ -137,12 +137,10 @@ describe("BDStable algorythmic", () => {
         expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1, "Invalid BdEu delta");
     });
 
-    it("should tax illegal algorithmic redemption", async () => {
+    it("should fail illegal algorithmic redemption", async () => {
         const testUser = await getUser(hre);
-        const treasury = await getTreasury(hre);
 
         const bdx = await getBdx(hre);
-        const weth = await getWeth(hre);
         const bdEu = await getBdEu(hre);
         const bdEuPool = await getBdEuWethPool(hre);
 
@@ -157,9 +155,6 @@ describe("BDStable algorythmic", () => {
         // setup finished
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
-        const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
-        const bdxBalanceBeforeRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
-        const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
 
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
         console.log("bdxInEurPrice           : " + bdxInEurPrice_d12);
@@ -167,48 +162,11 @@ describe("BDStable algorythmic", () => {
 
         const bdEuToRedeem_d18 = to_d18(100);
 
-        const expectedBdxDelta = d18_ToNumber(bdEuToRedeem_d18.mul(1e12).div(bdxInEurPrice_d12));
-        const expectedBdxDeltaUser = expectedBdxDelta / 10;
-        const expectedBdxDeltaTreasury = expectedBdxDelta * 9 / 10;
-
-        const expectedBdEuDelta = d18_ToNumber(bdEuToRedeem_d18);
-
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18);
 
-        await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
-        await bdEuPool.connect(testUser).collectRedemption(false);
-        await bdEuPool.connect(treasury).collectRedemption(false);
-
-        const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(testUser.address);
-        const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
-        const bdxBalanceAfterRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
-        const wethBalanceAfterRedeem_d18 = await weth.balanceOf(testUser.address);
-
-        console.log("bdEu balance before redeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem_d18));
-        console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem_d18));
-        
-        console.log("weth balance before redeem:  " + d18_ToNumber(wethBalanceBeforeRedeem_d18));
-        console.log("weth balance after redeem:   " + d18_ToNumber(wethBalanceAfterRedeem_d18));
-
-        const wethDelta = d18_ToNumber(wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18));
-        console.log("weth balance delta: " + wethDelta);
-        
-        const bdxDeltaUser = d18_ToNumber(bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18));
-        console.log("bdx balance delta (user):          " + bdxDeltaUser);
-        console.log("expected bdx balance delta (user): " + expectedBdxDeltaUser);
-
-        const bdxDeltaTreasury = d18_ToNumber(bdxBalanceAfterRedeemTreasury_d18.sub(bdxBalanceBeforeRedeemTreasury_d18));
-        console.log("bdx balance delta (treasury):          " + bdxDeltaTreasury);
-        console.log("expected bdx balance delta (treasury): " + expectedBdxDeltaTreasury);
-
-        const bdEuDelta = d18_ToNumber(bdEuBalanceBeforeRedeem_d18.sub(bdEuBalanceAfterRedeem_d18));
-        console.log("bdEu balance delta:          " + bdEuDelta);
-        console.log("expected bdEu balance delta: " + expectedBdEuDelta);
-
-        expect(wethDelta).to.eq(0);
-        expect(bdxDeltaUser).to.be.closeTo(expectedBdxDeltaUser, 0.1);
-        expect(bdxDeltaTreasury).to.be.closeTo(expectedBdxDeltaTreasury, 0.1);
-        expect(bdEuDelta).to.be.closeTo(expectedBdEuDelta, 0.1);
+        await expect(
+            bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1)
+        ).to.be.revertedWith('Cannot legally redeem');
     });
 
     it("redeem should reward bdx in BDX CR amount", async () => {
