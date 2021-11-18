@@ -6,7 +6,7 @@ import "@nomiclabs/hardhat-ethers";
 import '@openzeppelin/hardhat-upgrades';
 import "hardhat-deploy-ethers";
 import 'hardhat-deploy';
-import "hardhat-typechain";
+import '@typechain/hardhat';
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 import * as setupTasks from "./tasks/setup"
