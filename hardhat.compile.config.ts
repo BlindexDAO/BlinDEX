@@ -1,5 +1,7 @@
-import { extendEnvironment, HardhatUserConfig, task } from "hardhat/config";
-import "hardhat-typechain";
+import { HardhatUserConfig } from 'hardhat/types';
+import '@typechain/hardhat'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -28,6 +30,7 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
+    externalArtifacts: ['']
   },
 };
 
