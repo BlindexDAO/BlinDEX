@@ -303,11 +303,10 @@ describe("BDStable fractional", () => {
         expect(bdxDiffPct).to.be.closeTo(0, 0.0001, "unexpected bdx balance");
     });
 
-    it("should tax illegal fractional redemption", async () => {
+    it("should fail illegal fractional redemption", async () => {
         await setUpFunctionalSystem(hre, 0.9, true); // low initial collateralization so efCR is low (for test purposes)
 
         const testUser = await hre.ethers.getNamedSigner('TEST2');
-        const treasury = await getTreasury(hre);
 
         const bdx = await getBdx(hre);
         const weth = await getWeth(hre);
@@ -317,9 +316,6 @@ describe("BDStable fractional", () => {
         const cr = 0.2;
 
         await lockBdEuCrAt(hre, cr);   
-
-        const wethInEurPrice_d12 = await bdEuPool.getCollateralPrice_d12();
-        const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
 
         // calculate how much is needed to mint
         await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
@@ -333,55 +329,15 @@ describe("BDStable fractional", () => {
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
-        const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
-        const bdxBalanceBeforeRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
-        const wethBalanceBeforeRedeem_d18 = await weth.balanceOf(testUser.address);
-        const wethBalanceBeforeRedeemTreasury_d18 = await weth.balanceOf(treasury.address);
+
 
         const bdEuToRedeem_d18 = to_d18(100);
 
-        // calculate how much is needed to mint
-        const expectedWethRedemptionPayment_d18 = bdEuToRedeem_d18
-            .mul(to_d12(cr)).div(1e12)
-            .mul(1e12).div(wethInEurPrice_d12)
-            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
-
-        const expectedWethRedemptionPaymentUser_d18 = expectedWethRedemptionPayment_d18.div(10)
-        const expectedWethRedemptionPaymentTreasury_d18 = expectedWethRedemptionPayment_d18.mul(9).div(10)
-
-        const expectedBdxRedemptionPayment_d18 = bdEuToRedeem_d18
-            .mul(to_d12(1-cr)).div(1e12)
-            .mul(1e12).div(bdxInEurPrice_d12)
-            .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
-        
-        const expectedBdxRedemptionPaymentUser_d18 = expectedBdxRedemptionPayment_d18.div(10);
-        const expectedBdxRedemptionPaymentTreasury_d18 = expectedBdxRedemptionPayment_d18.mul(9).div(10);
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem_d18);
-        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1);
-        await bdEuPool.connect(testUser).collectRedemption(false);
-        await bdEuPool.connect(treasury).collectRedemption(false);
-        
-        // asserts
-
-        const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(testUser.address);
-        console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem_d18));
-        expect(bdEuBalanceAfterRedeem_d18).to.eq(bdEuBalanceBeforeRedeem_d18.sub(bdEuToRedeem_d18), "unexpected bdEu balance");
-
-        const wethBalanceAfterRedeem_d18 = await weth.balanceOf(testUser.address);
-        const wethBalanceAfterRedeemTreasury_d18 = await weth.balanceOf(treasury.address);
-        const wethDelta_d18 = wethBalanceAfterRedeem_d18.sub(wethBalanceBeforeRedeem_d18);
-        const wethDeltaTreasury_d18 = wethBalanceAfterRedeemTreasury_d18.sub(wethBalanceBeforeRedeemTreasury_d18);
-
-        expect(d18_ToNumber(wethDelta_d18)).to.be.closeTo(d18_ToNumber(expectedWethRedemptionPaymentUser_d18), 1e-6, "invalid weth delta (user)");
-        expect(d18_ToNumber(wethDeltaTreasury_d18)).to.be.closeTo(d18_ToNumber(expectedWethRedemptionPaymentTreasury_d18), 1e-6, "invalid weth delta (treasury)");
-        
-        const bdxBalanceAfterRedeem_d18 = await bdx.balanceOf(testUser.address);
-        const bdxBalanceAfterRedeemTreasury_d18 = await bdx.balanceOf(treasury.address);
-        const bdxDelta_d18 = bdxBalanceAfterRedeem_d18.sub(bdxBalanceBeforeRedeem_d18);
-        const bdxDeltaTreasury_d18 = bdxBalanceAfterRedeemTreasury_d18.sub(bdxBalanceBeforeRedeemTreasury_d18);
-        expect(d18_ToNumber(bdxDelta_d18)).to.be.closeTo(d18_ToNumber(expectedBdxRedemptionPaymentUser_d18), 1e-6, "invalid bdx delta (user)")
-        expect(d18_ToNumber(bdxDeltaTreasury_d18)).to.be.closeTo(d18_ToNumber(expectedBdxRedemptionPaymentTreasury_d18), 1e-6, "invalid bdx delta (treasury)")
+        await expect(
+            bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 1)
+        ).to.be.revertedWith('Cannot legally redeem');
     });
 
     it("redeem should reward bdx in BDX CR amount", async () => {
