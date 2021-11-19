@@ -35,32 +35,77 @@ const config: HardhatUserConfig = {
           }
         }
       },
-      {
-        version: "0.8.0",
+    ],
+    overrides: {
+      "contracts/Oracle/UniswapPairOracle.sol": {
+        version: "0.6.6",
         settings: {
           optimizer: {
             enabled: true,
             runs: 200
           }
         }
-      }
-    ],
-    overrides: {
-      "contracts/Oracle/UniswapPairOracle.sol": {
-        version: "0.6.6",
-        settings: { }
       },
       "@uniswap/lib/contracts/libraries/FixedPoint.sol": {
         version: "0.6.6",
-        settings: { }
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       },
       "@uniswap/lib/contracts/libraries/BitMath.sol": {
         version: "0.6.6",
-        settings: { }
+        settings: {optimizer: {
+          enabled: true,
+          runs: 200
+        }}
       },
       "@uniswap/lib/contracts/libraries/FullMath.sol": {
         version: "0.6.6",
-        settings: { }
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      "@uniswap/v2-core/contracts/UniswapV2Pair.sol": {
+        version: "0.5.16",
+        settings: { 
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      "@uniswap/v2-core/contracts/UniswapV2Factory.sol": {
+        version: "0.5.16",
+        settings: { 
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      "@uniswap/v2-periphery/contracts/UniswapV2Router02.sol": {
+        version: "0.6.6",
+        settings: { 
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+      "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol": {
+        version: "0.6.6",
+        settings: { 
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
       }
     }
   },

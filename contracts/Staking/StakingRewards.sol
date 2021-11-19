@@ -7,7 +7,6 @@ pragma experimental ABIEncoderV2;
 // Then modified from FRAX
 // https://github.com/blindexgit/BlinDEX/blob/551b521/contracts/Staking/StakingRewards.sol
 
-import "../Math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
@@ -158,7 +157,7 @@ contract StakingRewards is
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
-        return Math.min(block.timestamp, periodFinish);
+        return block.timestamp < periodFinish ? block.timestamp : periodFinish;
     }
 
     function rewardPerToken() public view returns (uint256) {
