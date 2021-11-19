@@ -26,7 +26,9 @@ export function load() {
       for (let pool of pools) {
         const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
         console.log(`starting for ${pool[0].name} / ${pool[1].name}`);
-        await (await pair.setConsultLeniency(newVal)).wait();
+        
+        //todo ag
+        // await (await pair.setConsultLeniency(newVal)).wait();
         console.log("pool done");
       }
       console.log("all done");
@@ -38,7 +40,8 @@ export function load() {
       const pools = await getPools(hre);
       for (let pool of pools) {
         const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        await(await pair.setAllowStaleConsults(enable == 0 ? false : true)).wait();
+        //todo ag
+        // await(await pair.setAllowStaleConsults(enable == 0 ? false : true)).wait();
         console.log(`oracle ${pool[0].name} / ${pool[1].name} allow stale consults = ${enable}`);
       }
     });
@@ -90,8 +93,9 @@ export function load() {
       const pools = await getPools(hre);
       for (let pool of pools) {
         const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        const validFor = await pair.when_should_update_oracle_in_seconds();
-        console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
+        //todo ag
+        // const validFor = await pair.when_should_update_oracle_in_seconds();
+        // console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
       }
     });
 

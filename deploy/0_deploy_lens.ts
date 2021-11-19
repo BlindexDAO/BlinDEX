@@ -1,4 +1,4 @@
-import { BDLens } from './../typechain/BDLens.d';
+import { BDLens } from './../typechain/BDLens';
 import { ethers } from 'hardhat';
 import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';

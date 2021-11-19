@@ -16,7 +16,7 @@ import { IERC20 } from "../../typechain/IERC20";
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
   var pair = await getWethPair(hre, tokenName);
 
-  await pair.updateOracle();
+  // await pair.updateOracle(); //todo ag
 }
 
 export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: string, wEthToSwap: number) {
@@ -120,16 +120,19 @@ export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: str
 
   const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as UniswapV2Router02;
 
-  const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], to_d18(1), bdStable.address);
-  const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, to_d18(1), constants.wETH_address[hre.network.name]);
+  //todo ag
+  // const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], to_d18(1), bdStable.address);
+  // const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, to_d18(1), constants.wETH_address[hre.network.name]);
 
-  const wethInBdStablePriceDecimal = bigNumberToDecimal(wethInBdStablePrice, 18);
-  const bdStableInWethPriceDecimal = bigNumberToDecimal(bdStableWethPrice, 18);
+  // const wethInBdStablePriceDecimal = bigNumberToDecimal(wethInBdStablePrice, 18);
+  // const bdStableInWethPriceDecimal = bigNumberToDecimal(bdStableWethPrice, 18);
 
-  console.log(`WETH in ${bdStableName} price: ` + wethInBdStablePriceDecimal);
-  console.log(`${bdStableName} in WETH price: ` + bdStableInWethPriceDecimal);
+  // console.log(`WETH in ${bdStableName} price: ` + wethInBdStablePriceDecimal);
+  // console.log(`${bdStableName} in WETH price: ` + bdStableInWethPriceDecimal);
 
-  return [wethInBdStablePriceDecimal, bdStableInWethPriceDecimal];
+  // return [wethInBdStablePriceDecimal, bdStableInWethPriceDecimal];
+
+  return [0,0];
 }
 
 export async function provideLiquidity(

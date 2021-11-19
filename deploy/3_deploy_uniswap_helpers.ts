@@ -8,11 +8,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const deployer = (await hre.getNamedAccounts()).DEPLOYER;
     const treasury = (await hre.getNamedAccounts()).TREASURY;
 
+    //todo ag deploy uniswap oracle
     const maxSpotVsOraclePriceDivergence_d12 = 1e10; // 1%
 
     const uniswapV2Factory = await hre.deployments.deploy('UniswapV2Factory', {
         from: deployer,
-        args: [treasury, maxSpotVsOraclePriceDivergence_d12]
+        args: [treasury]
     });    
     
     console.log("UniswapV2Factory deployed to:", uniswapV2Factory.address);

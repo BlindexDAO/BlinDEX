@@ -141,7 +141,7 @@ export async function updateOracle(
 {
   const pair = await getUniswapPair(hre, tokenA, tokenB);
 
-  await (await pair.updateOracle()).wait();
+  // await (await pair.updateOracle()).wait(); //todo ag
 }
 
 export async function getPools(hre: HardhatRuntimeEnvironment) {

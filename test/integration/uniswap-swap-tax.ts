@@ -42,7 +42,8 @@ describe("Uniswap swap tax", () => {
         const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
 
         //============= illegal swaps margin ==============//
-        await pair.setMinimumSwapsDelayInBlocks(1000);
+        //todo ag
+        //await pair.setMinimumSwapsDelayInBlocks(1000);
 
         await weth.connect(user).approve(uniswapRouter.address, to_d18(10));
         await uniswapRouter.connect(user).swapTokensForExactTokens(
@@ -96,7 +97,8 @@ describe("Uniswap swap tax", () => {
 
         const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
 
-        await pair.setMinimumSwapsDelayInBlocks(1000);
+        //todo ag
+        // await pair.setMinimumSwapsDelayInBlocks(1000);
 
         await weth.connect(user).approve(uniswapRouter.address, to_d18(10));
         await uniswapRouter.connect(user).swapTokensForExactTokens(
@@ -150,7 +152,8 @@ describe("Uniswap swap tax", () => {
         const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
 
         //============= illegal swaps margin to 0 essentially allowing for immediate swaps ==============//
-        await pair.setMinimumSwapsDelayInBlocks(0);
+        //todo ag
+        // await pair.setMinimumSwapsDelayInBlocks(0);
 
         await weth.connect(user).approve(uniswapRouter.address, to_d18(10));
         await uniswapRouter.connect(user).swapTokensForExactTokens(

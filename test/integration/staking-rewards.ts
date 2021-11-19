@@ -15,6 +15,7 @@ import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import { setUpFunctionalSystem, updateOracle } from "../../utils/SystemSetup";
 import { Vesting } from "../../typechain/Vesting";
+import { WETH } from "../../typechain/WETH";
 
 chai.use(cap);
 
@@ -29,7 +30,7 @@ let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 
-let weth: ERC20;
+let weth: WETH;
 let bdEu: BDStable;
 let bdx: BDXShares;
 let stakingRewards_BDEU_WETH: StakingRewards;

@@ -108,7 +108,10 @@ async function getWethPrices(){
     expect(bdeuAmount).to.not.be.null;
 
     const wethSpotPrice = d18_ToNumber(bdeuAmount ?? to_d18(0)) / d18_ToNumber(wethAmount ?? to_d18(0));
-    const wethOraclePrice = d18_ToNumber(await pair.consult(weth.address, to_d18(1)));
+    
+    //todo ag
+    // const wethOraclePrice = d18_ToNumber(await pair.consult(weth.address, to_d18(1)));
+    // return {wethSpotPrice, wethOraclePrice};
 
-    return {wethSpotPrice, wethOraclePrice};
+    return {wethSpotPrice, wethOraclePrice: 1};
 }
