@@ -44,7 +44,25 @@ const config: HardhatUserConfig = {
           }
         }
       }
-    ]
+    ],
+    overrides: {
+      "contracts/Oracle/UniswapPairOracle.sol": {
+        version: "0.6.6",
+        settings: { }
+      },
+      "@uniswap/lib/contracts/libraries/FixedPoint.sol": {
+        version: "0.6.6",
+        settings: { }
+      },
+      "@uniswap/lib/contracts/libraries/BitMath.sol": {
+        version: "0.6.6",
+        settings: { }
+      },
+      "@uniswap/lib/contracts/libraries/FullMath.sol": {
+        version: "0.6.6",
+        settings: { }
+      }
+    }
   },
   dependencyCompiler: {
     paths: [
