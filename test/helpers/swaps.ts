@@ -138,8 +138,8 @@ export async function getPrices(hre: HardhatRuntimeEnvironment, bdStableName: st
 export async function provideLiquidity(
   hre: HardhatRuntimeEnvironment,
   user: SignerWithAddress,
-  tokenA: ERC20 | WETH,
-  tokenB: ERC20 | WETH,
+  tokenA: IERC20 | WETH,
+  tokenB: IERC20 | WETH,
   amountA: BigNumber,
   amountB: BigNumber
 ){
