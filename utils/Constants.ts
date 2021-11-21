@@ -77,3 +77,8 @@ export const initalBdStable_bdx_d18 = <any>{
     kovan: to_d18(10000),
     rsk: to_d18(100000),
 };
+
+export const RUSDT_ADDRESS = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
+export const WRBTC_ADDRESS = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
+export const ETHS_ADDRESS = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
+export const XUSD_ADDRESS = "0xb5999795BE0eBb5BAb23144Aa5fD6a02d080299f";

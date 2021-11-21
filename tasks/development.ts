@@ -1,17 +1,15 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapFactory, getUniswapRouter, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
-import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "../utils/Helpers";
+import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
+import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/Helpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
 import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import * as constants from '../utils/Constants'
 import { WETH } from "../typechain/WETH";
-import { BdStablePool } from "../typechain/BdStablePool";
-import { provideLiquidity } from "../test/helpers/swaps";
+import { ETHS_ADDRESS, WRBTC_ADDRESS, XUSD_ADDRESS } from '../utils/Constants';
 
 const fs = require('fs');
 
@@ -227,11 +225,8 @@ export function load() {
                 console.log(`${token2Name}/${token1Name}: ` + d12_ToNumber(res2.amountMinusFee.add(res2.fee)));
             }
             
-            const rusdtAddress = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
-            const wrbtcAddress = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
-            const ethsAddress = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
             
-            await run(ethsAddress, wrbtcAddress, "eth", "btc");
-            await run(rusdtAddress, wrbtcAddress, "usd", "btc");
+            await run(ETHS_ADDRESS, WRBTC_ADDRESS, "eth", "btc");
+            await run(XUSD_ADDRESS, WRBTC_ADDRESS, "usd", "btc");
         });
 }
