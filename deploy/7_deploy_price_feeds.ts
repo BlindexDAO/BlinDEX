@@ -35,7 +35,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         constants.RSK_SOVRYN_rUSDT_wrBTC_SWAP_ADDRESS,
         constants.wETH_address[hre.network.name], // it's actually wrBTC (on RSK)
-        constants.RSK_rUSDT_ADDRESS
+        constants.XUSD_ADDRESS,
+        60 * 60 * 2, //2h
+        60 * 60 * 5 //5h
       ]
     });
     console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);

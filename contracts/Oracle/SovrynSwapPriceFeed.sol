@@ -13,15 +13,26 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle {
 
     uint8 private constant DECIMALS = 12;
     uint256 private constant PRECISION = 1e12;
+    uint256 private constant PRICE_DISPARITY_TOLERANCE_d12 = 5e10; //5% difference allowed
 
     ISovrynLiquidityPoolV1Converter public sovrynConverter;
     address public tokenSource;
     address public tokenTarget;
+    uint256 private timeBeforeShouldUpdate;
+    uint256 private timeBeforeMustUpdate;
+    uint256 private updateTimestamp;
+    uint256 private oraclePrice;
 
-    constructor(address _sovrynConverterAddress, address _tokenSource, address _tokenTarget) public {
+    constructor(address _sovrynConverterAddress,
+        address _tokenSource,
+        address _tokenTarget,
+        uint256 _timeBeforeShouldUpdate,
+        uint256 _timeBeforeMustUpdate) public {
         sovrynConverter = ISovrynLiquidityPoolV1Converter(_sovrynConverterAddress);
         tokenSource = _tokenSource;
         tokenTarget = _tokenTarget;
+        timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
+        timeBeforeMustUpdate = _timeBeforeMustUpdate;
     }
 
     // IPriceFeed
@@ -31,23 +42,32 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle {
     }
 
     function price() external view override returns (uint256) {
-        (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
-        return amountMinusFee.add(fee);
+        require(oraclePrice != 0, "Oracle not yet initiated");
+        require(block.timestamp < updateTimestamp.add(timeBeforeMustUpdate), "Price is stale. Update oracle");
+        return oraclePrice;
     }
 
     // ICryptoPairOracle
 
     function consult(address tokenIn, uint256 amountIn) external view override returns (uint256) {     
         require(tokenIn == tokenSource, "This oracle only accepts consulting source token input");
-
-        (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, amountIn);
-        return amountMinusFee.add(fee);
+        require(oraclePrice != 0, "Oracle not yet initiated");
+        require(block.timestamp < updateTimestamp.add(timeBeforeMustUpdate), "Price is stale. Update oracle");
+        return oraclePrice;
     }
 
     function updateOracle() public override {}
 
+    function updateOracleWithVerificatoin(uint verificationPrice_d12) public {
+        (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
+        uint256 priceDifference = verificationPrice_d12 > amountMinusFee ? verificationPrice_d12.sub(amountMinusFee) : amountMinusFee.sub(verificationPrice_d12);
+        require(priceDifference / amountMinusFee * PRECISION < PRICE_DISPARITY_TOLERANCE_d12, "Price disparity too big");
+        oraclePrice = amountMinusFee.add(fee);
+        updateTimestamp = block.timestamp;
+    }
+
     function shouldUpdateOracle() public view override returns (bool) {
-        return false;
+        return block.timestamp > updateTimestamp + timeBeforeShouldUpdate;
     }
 
     function when_should_update_oracle_in_seconds() public view override returns (uint256) {
