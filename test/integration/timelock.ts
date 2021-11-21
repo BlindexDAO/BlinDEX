@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { Timelock } from "../../typechain/TimeLock";
+import { Timelock } from "../../typechain/Timelock";
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import TimeTraveler from "../../utils/TimeTraveler";
 import func from "../../deploy/2_2_euro_stablecoin";
