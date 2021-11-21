@@ -99,6 +99,13 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
     target: "ethers-v5",
   },
+  external: {
+    contracts: [{
+      artifacts: 'node_modules/@uniswap/v2-core/build'
+    }, {
+      artifacts: 'node_modules/@uniswap/v2-periphery/build'
+    }]
+  },
   namedAccounts: {
 
     DEPLOYER: {
