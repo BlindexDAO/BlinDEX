@@ -1,18 +1,19 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { BDXShares } from '../typechain/BDXShares';
-import { to_d18 } from '../utils/Helpers';
+import { to_d18 } from '../utils/NumbersHelpers';
 import { ethers } from "hardhat";
+import { getBdx, getDeployer, getTreasury } from '../utils/DeployedContractsHelpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("starting deployment: mint bdx");
 
-    const deployer = await hre.ethers.getSigner((await hre.getNamedAccounts()).DEPLOYER);
-    const treasury = await hre.ethers.getNamedSigner("TREASURY");
-    const bdxInstance = await hre.ethers.getContract("BDXShares") as BDXShares;
+    const deployer = await getDeployer(hre);
+    const treasury = await getTreasury(hre);
+    const bdx = await getBdx(hre);
 
     // mint all of the BDX up front to the treasury
-    await (await bdxInstance.connect(deployer).mint(
+    await (await bdx.connect(deployer).mint(
         ethers.constants.AddressZero,
         treasury.address,
         to_d18(21).mul(1e6)

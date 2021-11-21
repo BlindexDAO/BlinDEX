@@ -3,15 +3,13 @@ import chai from "chai";
 import { solidity } from 'ethereum-waffle';
 import hre from 'hardhat';
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
-import { getDeployer } from "../helpers/common";
+import { getBdx, getDeployer, getVesting } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { Vesting } from '../../typechain/Vesting';
 import { BDXShares } from '../../typechain/BDXShares';
-import { to_d18, d18_ToNumber } from '../../utils/Helpers';
+import { to_d18, d18_ToNumber } from '../../utils/NumbersHelpers';
 import { BigNumber } from '@ethersproject/bignumber';
 import { simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { constants } from 'buffer';
-import exp from 'constants';
 
 chai.use(cap);
 
@@ -36,8 +34,8 @@ async function initialize() {
     testRewardProvider = await hre.ethers.getNamedSigner('TEST_VESTING_REWARDS_PROVIDER');
     testNotScheduler = await hre.ethers.getNamedSigner('TEST2');
     testUser2 = await hre.ethers.getNamedSigner('TEST2');
-    bdx = await hre.ethers.getContract('BDXShares', ownerUser) as BDXShares;
-    vesting = await hre.ethers.getContract("Vesting", ownerUser) as Vesting;
+    bdx = await getBdx(hre);
+    vesting = await getVesting(hre);
 }
 
 export async function moveTimeForwardBy(seconds: BigNumber) {

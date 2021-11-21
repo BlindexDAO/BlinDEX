@@ -7,8 +7,8 @@ import { StakingRewards } from "../../typechain/StakingRewards";
 import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { to_d18, d18_ToNumber } from '../../utils/Helpers';
-import { getDeployer, getUniswapPair, getWeth } from "../helpers/common"
+import { to_d18, d18_ToNumber } from '../../utils/NumbersHelpers';
+import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWeth } from "../../utils/DeployedContractsHelpers"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber, Contract } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
@@ -42,11 +42,11 @@ async function initialize() {
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
   weth = await getWeth(hre);
-  bdEu = await hre.ethers.getContract('BDEU', deployer) as BDStable;
-  bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
+  bdEu = await getBdEu(hre);
+  bdx = await getBdx(hre);
   stakingRewards_BDEU_WETH = await hre.ethers.getContract('StakingRewards_BDEU_WETH', deployer) as StakingRewards;
-  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer) as StakingRewardsDistribution;
-  vesting = await hre.ethers.getContract("Vesting" ,deployer) as Vesting;
+  stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+  vesting = await getVesting(hre);
 }
 
 async function get_BDEU_WETH_poolWeight() {

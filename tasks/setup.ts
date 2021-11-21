@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
-import { getWeth, mintWbtc } from "../test/helpers/common";
-import { to_d18 } from "../utils/Helpers";
+import { getWeth, mintWbtc } from "../utils/DeployedContractsHelpers";
+import { to_d18 } from "../utils/NumbersHelpers";
 import { setUpFunctionalSystem, setUpMinimalFunctionalSystem } from "../utils/SystemSetup";
 
 export function load() {

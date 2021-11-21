@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.6 <0.6.12;
+pragma solidity >=0.6.6 <=0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol";
 import "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
+import "./ICryptoPairOracle.sol";
+
+import "hardhat/console.sol";
 
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
-contract UniswapPairOracle is Ownable {
+contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     using FixedPoint for *;
     
     address owner_address;
@@ -29,14 +32,19 @@ contract UniswapPairOracle is Ownable {
     FixedPoint.uq112x112 public price1Average;
 
     constructor(address factory, address tokenA, address tokenB, address _owner_address) public {
+        console.log("--------1");
         IUniswapV2Pair _pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, tokenA, tokenB));
         pair = _pair;
+        console.log("--------2");
+        console.log("address: %s", address(_pair));
         token0 = _pair.token0();
         token1 = _pair.token1();
+        console.log("--------3");
         price0CumulativeLast = _pair.price0CumulativeLast(); // Fetch the current accumulated price value (1 / 0)
         price1CumulativeLast = _pair.price1CumulativeLast(); // Fetch the current accumulated price value (0 / 1)
         uint112 reserve0;
         uint112 reserve1;
+        console.log("--------4");
         (reserve0, reserve1, blockTimestampLast) = _pair.getReserves();
         require(reserve0 != 0 && reserve1 != 0, "UniswapPairOracle: NO_RESERVES"); // Ensure that there's liquidity in the pair
 
@@ -60,13 +68,25 @@ contract UniswapPairOracle is Ownable {
     }
 
     // Check if update() can be called instead of wasting gas calling it
-    function canUpdate() public view returns (bool) {
+    function shouldUpdateOracle() override public view returns (bool) {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
         return (timeElapsed >= period);
     }
 
-    function update() external {
+    function when_should_update_oracle_in_seconds() override external view returns (uint256){
+        uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
+        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
+
+        if(timeElapsed >= period){
+            return 0;
+        }
+        else{
+            return period - timeElapsed;
+        }
+    }
+
+    function updateOracle() override external {
         (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
             UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
@@ -85,7 +105,7 @@ contract UniswapPairOracle is Ownable {
     }
 
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) external view returns (uint amountOut) {
+    function consult(address token, uint amountIn) override external view returns (uint amountOut) {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
 

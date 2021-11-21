@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdLens, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth } from "../test/helpers/common";
+import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
+import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
 import { getPools, updateOracles } from "../utils/SystemSetup";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
@@ -125,17 +125,6 @@ export function load() {
 
       console.log("deployer: " + deployer.address);
       console.log("treasury: " + treasury.address);
-    });
-
-  task("show:bdstables")
-    .setAction(async (args, hre) => {
-      const bdLens = await getBdLens(hre);
-
-      const stables = await bdLens.AllBdStables()
-
-      for (let stable of stables) {
-        console.log(`${stable.fiat} ${stable.token}`);
-      }
     });
 
   task("show:rsk-eur-usd")

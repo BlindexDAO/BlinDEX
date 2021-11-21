@@ -1,22 +1,22 @@
-import { IERC20 } from './../../typechain/IERC20';
+import { IERC20 } from '../typechain/IERC20';
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BDStable } from "../../typechain/BDStable";
-import { BdStablePool } from "../../typechain/BdStablePool";
-import { BDXShares } from "../../typechain/BDXShares";
-import { AggregatorV3Interface } from "../../typechain/AggregatorV3Interface";
-import { ERC20 } from "../../typechain/ERC20";
-import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
-import { UniswapV2Factory } from "../../typechain/UniswapV2Factory";
-import { UniswapV2Pair } from "../../typechain/UniswapV2Pair";
-import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
+import { BDStable } from "../typechain/BDStable";
+import { BdStablePool } from "../typechain/BdStablePool";
+import { BDXShares } from "../typechain/BDXShares";
+import { AggregatorV3Interface } from "../typechain/AggregatorV3Interface";
+import { ERC20 } from "../typechain/ERC20";
+import { UniswapV2Router02__factory } from "../typechain/factories/UniswapV2Router02__factory";
+import { UniswapV2Factory } from "../typechain/UniswapV2Factory";
+import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
+import { UniswapV2Router02 } from "../typechain/UniswapV2Router02";
 import { BigNumber } from '@ethersproject/bignumber';
-import * as constants from '../../utils/Constants'
+import * as constants from './Constants'
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { bigNumberToDecimal, to_d12 } from "../../utils/Helpers";
-import { BDLens } from "../../typechain/BDLens";
-import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import { Vesting } from "../../typechain/Vesting";
-import { WETH } from "../../typechain/WETH";
+import { bigNumberToDecimal, to_d12 } from "./NumbersHelpers";
+import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import { Vesting } from "../typechain/Vesting";
+import { WETH } from "../typechain/WETH";
+import { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -34,58 +34,58 @@ export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<Signe
 }
 
 export async function getBdEu(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEU', ownerUser) as BDStable;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('BDEU', deployer) as BDStable;
 }
 
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('UniswapV2Router02', ownerUser) as UniswapV2Router02;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('UniswapV2Router02', deployer) as UniswapV2Router02;
 }
 
 export async function getUniswapFactory(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('UniswapV2Factory', ownerUser) as UniswapV2Factory;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('UniswapV2Factory', deployer) as UniswapV2Factory;
 }
 
 export async function getStakingRewardsDistribution(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('StakingRewardsDistribution', ownerUser) as StakingRewardsDistribution;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('StakingRewardsDistribution', deployer) as StakingRewardsDistribution;
 }
 
 export async function getVesting(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('Vesting', ownerUser) as Vesting;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('Vesting', deployer) as Vesting;
 }
 
 export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEU_WETH_POOL', ownerUser) as BdStablePool;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('BDEU_WETH_POOL', deployer) as BdStablePool;
 }
 
 export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDEU_WBTC_POOL', ownerUser) as BdStablePool;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('BDEU_WBTC_POOL', deployer) as BdStablePool;
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract('BDXShares', ownerUser) as BDXShares;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContract('BDX', deployer) as BDXShares;
 }
 
 export async function getWeth(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], ownerUser) as WETH;
-}
-
-export async function getBdLens(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContract("BDLens", ownerUser) as BDLens;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], deployer) as WETH;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment){
-  const ownerUser = await getDeployer(hre);
-  return await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], ownerUser) as ERC20;
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], deployer) as ERC20;
+}
+
+export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string){
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContractAt("IERC20", address, deployer) as IERC20;
 }
 
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_in_eth_d18: BigNumber){
@@ -143,4 +143,32 @@ export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: IER
   const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
 
   return pair;
+}
+
+export async function getWethPair(hre: HardhatRuntimeEnvironment, tokenName: string): Promise<UniswapV2Pair> {
+  const deployer = await getDeployer(hre);
+  const uniswapFactory = await hre.ethers.getContract("UniswapV2Factory", deployer) as UniswapV2Factory;
+
+  const token = await hre.ethers.getContract(tokenName) as BDStable;
+
+  const pairAddress = await uniswapFactory.getPair(token.address, constants.wETH_address[hre.network.name]);
+
+  const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
+
+  return pair;
+}
+
+export async function getWethPairOracle(hre: HardhatRuntimeEnvironment, tokenName: string): Promise<UniswapPairOracle> {
+  return getUniswapPairOracle(hre, tokenName, "WETH");
+}
+
+export function getWbtcPairOracle(hre: HardhatRuntimeEnvironment, tokenName: string): Promise<UniswapPairOracle> {
+  return getUniswapPairOracle(hre, tokenName, "WBTC");
+}
+
+export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, tokenA: string, tokenB: string): Promise<UniswapPairOracle> {
+  const deployer = await getDeployer(hre);
+  const oracle = await hre.ethers.getContract(`UniswapPairOracle_${tokenA}_${tokenB}`, deployer) as UniswapPairOracle;
+
+  return oracle;
 }

@@ -1,14 +1,14 @@
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
-import { d18_ToNumber, to_d18, to_d8 } from "../../utils/Helpers";
+import { d18_ToNumber, to_d18, to_d8 } from "../../utils/NumbersHelpers";
 import * as constants from '../../utils/Constants';
 import { WETH } from "../../typechain/WETH";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { ERC20 } from "../../typechain/ERC20";
-import { bigNumberToDecimal } from "../../utils/Helpers";
-import { getWethPair } from "../../utils/Swaps";
-import { getDeployer, getUniswapRouter, getWeth } from "./common";
+import { bigNumberToDecimal } from "../../utils/NumbersHelpers";
+import { getWethPair } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from "ethers";
 import { IERC20 } from "../../typechain/IERC20";
@@ -113,7 +113,7 @@ export async function swapAsDeployerByContract(
     currentBlock.timestamp + 24*60*60*7);
 }
 
-export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: string) {
+export async function getPrices(hre: HardhatRuntimeEnvironment, bdStableName: string) {
   const bdStable = await hre.ethers.getContract(bdStableName) as BDStable;
 
   const testUser = await hre.ethers.getNamedSigner('TEST2');

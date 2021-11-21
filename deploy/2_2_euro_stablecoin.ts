@@ -1,9 +1,9 @@
 import { BDStable } from '../typechain/BDStable';
-import { BDXShares } from '../typechain/BDXShares';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
 import { BdStablePool } from '../typechain/BdStablePool';
+import { getBdx } from '../utils/DeployedContractsHelpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: euro stable");
@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
   const treasury = await hre.ethers.getSigner(treasuryAddress);
 
-  const bdx = await hre.ethers.getContract('BDXShares', deployerAddress) as BDXShares;
+  const bdx = await getBdx(hre);
   const bdPoolLibraryDeployment = await hre.ethers.getContract('BdPoolLibrary');
 
   const bdeu_proxy = await hre.deployments.deploy('BDEU', {

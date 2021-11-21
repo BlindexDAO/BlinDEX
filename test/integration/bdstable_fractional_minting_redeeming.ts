@@ -2,11 +2,11 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/Helpers";
-import { to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
+import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury, getDeployer } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 

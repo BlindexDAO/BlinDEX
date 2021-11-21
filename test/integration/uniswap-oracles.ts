@@ -9,9 +9,9 @@ import {
     swapWethFor,
     getPrices
 } from "../helpers/swaps"
-import { to_d18 } from "../../utils/Helpers"
+import { to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { getBdEu, getUser, getWeth, getBdx } from "../helpers/common";
+import { getBdEu, getUser, getWeth, getBdx } from "../../utils/DeployedContractsHelpers";
 
 chai.use(cap);
 

@@ -2,8 +2,8 @@ import hre, { ethers } from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { to_d18 } from "../../utils/Helpers";
-import { getBdx, getDeployer } from "../helpers/common";
+import { to_d18 } from "../../utils/NumbersHelpers";
+import { getBdx, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 
 chai.use(cap);

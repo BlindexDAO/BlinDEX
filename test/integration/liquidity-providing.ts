@@ -9,10 +9,10 @@ import {
     swapWethFor,
     getPrices
 } from "../helpers/swaps"
-import { getWethPair } from "../../utils/Swaps"
-import { d18_ToNumber, to_d18 } from "../../utils/Helpers"
+import { getWethPair, getWethPairOracle } from "../../utils/DeployedContractsHelpers"
+import { d18_ToNumber, to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { getBdEu, getUser, getWeth, getBdx } from "../helpers/common";
+import { getBdEu, getUser, getWeth, getBdx } from "../../utils/DeployedContractsHelpers";
 
 chai.use(cap);
 
@@ -87,6 +87,7 @@ async function getWethPrices(){
     const weth = await getWeth(hre);
 
     const pair = await getWethPair(hre, "BDEU");
+    const pairOracle = await getWethPairOracle(hre, "BDEU");
 
     const token0 = (await pair.token0()).toLowerCase();
     const token1 = (await pair.token1()).toLowerCase();
@@ -109,9 +110,6 @@ async function getWethPrices(){
 
     const wethSpotPrice = d18_ToNumber(bdeuAmount ?? to_d18(0)) / d18_ToNumber(wethAmount ?? to_d18(0));
     
-    //todo ag
-    // const wethOraclePrice = d18_ToNumber(await pair.consult(weth.address, to_d18(1)));
-    // return {wethSpotPrice, wethOraclePrice};
-
-    return {wethSpotPrice, wethOraclePrice: 1};
+    const wethOraclePrice = d18_ToNumber(await pairOracle.consult(weth.address, to_d18(1)));
+    return {wethSpotPrice, wethOraclePrice};
 }

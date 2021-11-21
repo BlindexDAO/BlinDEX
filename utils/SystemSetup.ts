@@ -1,11 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./Helpers";
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice } from "../test/helpers/common";
+import { numberToBigNumberFixed, to_d12, to_d18 } from "./NumbersHelpers";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice, getUniswapPairOracle, getIERC20 } from "./DeployedContractsHelpers";
 import * as constants from './Constants';
-import { ERC20 } from "../typechain/ERC20";
 import { simulateTimeElapseInSeconds } from "./HelpersHardhat";
 import { provideLiquidity } from "../test/helpers/swaps";
 import { IERC20 } from "../typechain/IERC20";
+import { ERC20 } from "../typechain/ERC20";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, forIntegrationTests: boolean) {
     const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -139,9 +139,17 @@ export async function updateOracle(
   tokenA: IERC20,
   tokenB: IERC20) 
 {
+  // pair is tokens order corresponds to oracle toknes order
   const pair = await getUniswapPair(hre, tokenA, tokenB);
+  const token0 = await getIERC20(hre, await pair.token0()) as ERC20;
+  const token1 = await getIERC20(hre, await pair.token1()) as ERC20;
 
-  // await (await pair.updateOracle()).wait(); //todo ag
+  const symbol0 = await token0.symbol();
+  const symbol1 = await token1.symbol();
+
+  const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
+
+  await (await oracle.updateOracle()).wait();
 }
 
 export async function getPools(hre: HardhatRuntimeEnvironment) {
@@ -151,10 +159,10 @@ export async function getPools(hre: HardhatRuntimeEnvironment) {
   const bdEu = await getBdEu(hre);
 
   return [
-    [{name: "weth", token: weth}, {name: "bdEu", token: bdEu}],
-    [{name: "wbtc", token: wbtc}, {name: "bdEu", token: bdEu}],
-    [{name: "weth", token: weth}, {name: "bdx", token: bdx}],
-    [{name: "wbtc", token: wbtc}, {name: "bdx", token: bdx}],
-    [{name: "bdx", token: bdx}, {name: "bdEu", token: bdEu}],
+    [{name: "WETH", token: weth}, {name: "BDEU", token: bdEu}],
+    [{name: "WBTC", token: wbtc}, {name: "BDEU", token: bdEu}],
+    [{name: "WETH", token: weth}, {name: "BDX", token: bdx}],
+    [{name: "WBTC", token: wbtc}, {name: "BDX", token: bdx}],
+    [{name: "BDX", token: bdx}, {name: "BDEU", token: bdEu}],
   ]
 }
