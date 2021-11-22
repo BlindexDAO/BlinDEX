@@ -3,12 +3,10 @@ pragma solidity >=0.6.6 <=0.6.11;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-// import "@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol";
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
 import "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 import "./ICryptoPairOracle.sol";
-
-import "hardhat/console.sol";
 
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
@@ -31,29 +29,14 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
-    constructor(address factory, address tokenA, address tokenB, address _owner_address) public {
-        //todo ag
-        // console.log("--------1");
-        // IUniswapV2Pair _pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, tokenA, tokenB));
-        // pair = _pair;
-        // console.log("--------2");
-        // console.log("address: %s", address(_pair));
-        // token0 = _pair.token0();
-        // token1 = _pair.token1();
-        // console.log("--------3");
-        // price0CumulativeLast = _pair.price0CumulativeLast(); // Fetch the current accumulated price value (1 / 0)
-        // price1CumulativeLast = _pair.price1CumulativeLast(); // Fetch the current accumulated price value (0 / 1)
-        // uint112 reserve0;
-        // uint112 reserve1;
-        // console.log("--------4");
-        // (reserve0, reserve1, blockTimestampLast) = _pair.getReserves();
-        // require(reserve0 != 0 && reserve1 != 0, "UniswapPairOracle: NO_RESERVES"); // Ensure that there's liquidity in the pair
-        // owner_address = _owner_address;
+    constructor(address factoryAddress, address tokenA, address tokenB, address _owner_address) public {
+        IUniswapV2Factory factory = IUniswapV2Factory(factoryAddress);
 
-        owner_address = address(0);
-        token0 = address(0);
-        token1 = address(0);
-        pair = IUniswapV2Pair(address(0));
+        IUniswapV2Pair _pair = IUniswapV2Pair(factory.getPair(tokenA, tokenB));
+        pair = _pair;
+        token0 = _pair.token0();
+        token1 = _pair.token1();
+        owner_address = _owner_address;
     }
 
     function setOwner(address _owner_address) external onlyOwner {
@@ -70,6 +53,16 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
 
     function setAllowStaleConsults(bool _allow_stale_consults) external onlyOwner {
         allow_stale_consults = _allow_stale_consults;
+    }
+
+    function reset() external onlyOwner {
+        price0CumulativeLast = pair.price0CumulativeLast(); // Fetch the current accumulated price value (1 / 0)
+        price1CumulativeLast = pair.price1CumulativeLast(); // Fetch the current accumulated price value (0 / 1)
+        uint112 reserve0;
+        uint112 reserve1;
+
+        (reserve0, reserve1, blockTimestampLast) = pair.getReserves();
+        require(reserve0 != 0 && reserve1 != 0, "UniswapPairOracle: NO_RESERVES"); // Ensure that there's liquidity in the pair
     }
 
     // Check if update() can be called instead of wasting gas calling it
@@ -92,6 +85,8 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     }
 
     function updateOracle() override external {
+        require(blockTimestampLast > 0, "Oracle not ready");
+
         (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
             UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired

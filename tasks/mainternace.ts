@@ -1,8 +1,8 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth } from "../utils/DeployedContractsHelpers";
+import { getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, updateOracles } from "../utils/SystemSetup";
+import { getPools, updateOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { IPriceFeed } from "../typechain/IPriceFeed";
@@ -24,11 +24,10 @@ export function load() {
       console.log("setting consultLeniency to: " + newVal);
 
       for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         console.log(`starting for ${pool[0].name} / ${pool[1].name}`);
         
-        //todo ag
-        // await (await pair.setConsultLeniency(newVal)).wait();
+        await (await oracle.setConsultLeniency(newVal)).wait();
         console.log("pool done");
       }
       console.log("all done");
@@ -39,9 +38,9 @@ export function load() {
     .setAction(async ({ enable }, hre) => {
       const pools = await getPools(hre);
       for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        //todo ag
-        // await(await pair.setAllowStaleConsults(enable == 0 ? false : true)).wait();
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        
+        await(await oracle.setAllowStaleConsults(enable == 0 ? false : true)).wait();
         console.log(`oracle ${pool[0].name} / ${pool[1].name} allow stale consults = ${enable}`);
       }
     });
@@ -92,10 +91,9 @@ export function load() {
     .setAction(async (args, hre) => {
       const pools = await getPools(hre);
       for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        //todo ag
-        // const validFor = await pair.when_should_update_oracle_in_seconds();
-        // console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        const validFor = await oracle.when_should_update_oracle_in_seconds();
+        console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
       }
     });
 

@@ -1,15 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { numberToBigNumberFixed, to_d12, to_d18 } from "./NumbersHelpers";
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice, getUniswapPairOracle, getIERC20 } from "./DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice, getUniswapPairOracle, getIERC20, getERC20, getDeployer, getTreasury } from "./DeployedContractsHelpers";
 import * as constants from './Constants';
 import { simulateTimeElapseInSeconds } from "./HelpersHardhat";
 import { provideLiquidity } from "../test/helpers/swaps";
-import { IERC20 } from "../typechain/IERC20";
-import { ERC20 } from "../typechain/ERC20";
+import { resetOracles, updateOracles } from "./UniswapPoolsHelpers";
 
 export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number = 1, forIntegrationTests: boolean) {
-    const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
-    const treasury = await hre.ethers.getNamedSigner('TREASURY');
+    const deployer = await getDeployer(hre);
+    const treasury = await getTreasury(hre);
 
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
@@ -39,11 +38,13 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     var wethDecimals = await weth.decimals();
     var wbtcDecimals = await wbtc.decimals();
 
-    await provideLiquidity(hre, deployer, weth, bdEu, numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, wbtc, bdEu, numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, weth, bdx, numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdxPrice)), to_d18(1000));
-    await provideLiquidity(hre, deployer, wbtc, bdx, numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdxPrice)), to_d18(1000));
+    await provideLiquidity(hre, deployer, bdEu, weth, to_d18(1000), numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)));
+    await provideLiquidity(hre, deployer, bdEu, wbtc, to_d18(1000), numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)));
+    await provideLiquidity(hre, deployer, bdx, weth, to_d18(1000), numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdxPrice)));
+    await provideLiquidity(hre, deployer, bdx, wbtc, to_d18(1000), numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdxPrice)));
     await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(1000).mul(1e12).div(to_d12(initialBdxBdEuPrice)), to_d18(1000));
+
+    await resetOracles(hre);
 
     if (forIntegrationTests) {
         await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
@@ -110,6 +111,8 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(15), to_d18(10));
   console.log("provided bdx / bdeu liquidity");
 
+  await resetOracles(hre);
+
   //recallateralize by just sending the tokens in order not to extract undeserved BDX
   await (await weth.connect(deployer).transfer(bdEuWethPool.address, to_d18(0.0001))).wait();
   console.log("recollateralized bdeu / weth pool");
@@ -119,50 +122,4 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   console.log("recollateralized bdeu / wbtc pool");
 
   console.log("finished");
-}
-
-export async function updateOracles(hre: HardhatRuntimeEnvironment){
-  console.log("starting updating oracles");
-  
-  const pools = await getPools(hre);
-
-  for(let pool of pools){
-    await updateOracle(hre, pool[0].token, pool[1].token)
-    console.log(`updated ${pool[0].name} / ${pool[1].name}`);
-  }
-
-  console.log("finished updating oracles")
-}
-
-export async function updateOracle(
-  hre: HardhatRuntimeEnvironment,
-  tokenA: IERC20,
-  tokenB: IERC20) 
-{
-  // pair is tokens order corresponds to oracle toknes order
-  const pair = await getUniswapPair(hre, tokenA, tokenB);
-  const token0 = await getIERC20(hre, await pair.token0()) as ERC20;
-  const token1 = await getIERC20(hre, await pair.token1()) as ERC20;
-
-  const symbol0 = await token0.symbol();
-  const symbol1 = await token1.symbol();
-
-  const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
-
-  await (await oracle.updateOracle()).wait();
-}
-
-export async function getPools(hre: HardhatRuntimeEnvironment) {
-  const weth = await getWeth(hre);
-  const wbtc = await getWbtc(hre);
-  const bdx = await getBdx(hre);
-  const bdEu = await getBdEu(hre);
-
-  return [
-    [{name: "WETH", token: weth}, {name: "BDEU", token: bdEu}],
-    [{name: "WBTC", token: wbtc}, {name: "BDEU", token: bdEu}],
-    [{name: "WETH", token: weth}, {name: "BDX", token: bdx}],
-    [{name: "WBTC", token: wbtc}, {name: "BDX", token: bdx}],
-    [{name: "BDX", token: bdx}, {name: "BDEU", token: bdEu}],
-  ]
 }

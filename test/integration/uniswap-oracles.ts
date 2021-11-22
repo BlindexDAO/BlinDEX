@@ -12,6 +12,8 @@ import {
 import { to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
 import { getBdEu, getUser, getWeth, getBdx } from "../../utils/DeployedContractsHelpers";
+import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
+import { expectToFail } from "../helpers/common";
 
 chai.use(cap);
 
@@ -28,7 +30,7 @@ describe("Uniswap Oracles", () => {
 
     const oneHour = 60*60;
 
-    it("should update price after swap", async () => {
+    it("should be able to update price after swap", async () => {
         const bdeu = await getBdEu(hre);
         const weth = await getWeth(hre);
 
@@ -36,24 +38,26 @@ describe("Uniswap Oracles", () => {
         
         await weth.connect(user).deposit({ value: to_d18(20) });
         await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
-        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80));
-        
-        await simulateTimeElapseInSeconds(oneHour);
 
+        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80));
+        await resetOracle(hre, bdeu, weth);
+
+        await simulateTimeElapseInSeconds(oneHour);
         await swapWethFor(hre, "BDEU", 5);
+        await simulateTimeElapseInSeconds(2*oneHour);
+
+        await updateOracle(hre, bdeu, weth);
+
         const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEU");
 
-        // swap triggers price update based on PREVIOUS reserves and time elapased since PREVIOUS update
-        expect(wethInBdStablePriceDecimal1).to.be.eq(4);
-        expect(bdStableInWethPriceDecimal1).to.be.eq(0.25);
+        const wethBdBeforeSwap = 80/20;
+        const wethBdSwapPrice = 80/(20+5)
+        const wethBdAfterSwap = (80-5*wethBdSwapPrice)/(20+5);
+        const wethBdTwap = (1*wethBdBeforeSwap + 2*wethBdAfterSwap) / (1+2);
+        const bdWethTwap = (1*(1/wethBdBeforeSwap) + 2*(1/wethBdAfterSwap)) / (1+2);
 
-        await simulateTimeElapseInSeconds(oneHour);
-
-        await swapWethFor(hre, "BDEU", 1);
-        const [wethInBdStablePriceDecimal2, bdStableInWethPriceDecimal2]  = await getPrices(hre, "BDEU");
-
-        expect(wethInBdStablePriceDecimal2).to.be.lt(wethInBdStablePriceDecimal1);
-        expect(bdStableInWethPriceDecimal2).to.be.gt(bdStableInWethPriceDecimal1);
+        expect(wethInBdStablePriceDecimal1).to.be.closeTo(wethBdTwap, 1e-2);
+        expect(bdStableInWethPriceDecimal1).to.be.closeTo(bdWethTwap, 1e-2);
     });
 
     it("should not update price before one hour elapses", async () => {
@@ -65,26 +69,10 @@ describe("Uniswap Oracles", () => {
         await weth.connect(user).deposit({ value: to_d18(20) });
         await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
         await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80));
-        
-        await simulateTimeElapseInSeconds(oneHour);
+        await resetOracle(hre, bdeu, weth);
 
         await swapWethFor(hre, "BDEU", 5);
-        const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEU");
 
-        await simulateTimeElapseInSeconds(60);
-
-        await swapWethFor(hre, "BDEU", 15);
-        const [wethInBdStablePriceDecimal2, bdStableInWethPriceDecimal2]  = await getPrices(hre, "BDEU");
-
-        expect(wethInBdStablePriceDecimal2).to.be.eq(wethInBdStablePriceDecimal1);
-        expect(bdStableInWethPriceDecimal2).to.be.eq(bdStableInWethPriceDecimal1);
-
-        await simulateTimeElapseInSeconds(oneHour);
-
-        await updateWethPair(hre, "BDEU");
-        const [wethInBdStablePriceDecimal3, bdStableInWethPriceDecimal3] = await getPrices(hre, "BDEU");
-
-        expect(wethInBdStablePriceDecimal3).to.be.lt(wethInBdStablePriceDecimal1);
-        expect(bdStableInWethPriceDecimal3).to.be.gt(bdStableInWethPriceDecimal1);
+        await expectToFail(() => updateOracle(hre, bdeu, weth), 'UniswapPairOracle: PERIOD_NOT_ELAPSED');
     });
 })

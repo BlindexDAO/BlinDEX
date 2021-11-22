@@ -71,9 +71,9 @@ describe("BDStable algorythmic", () => {
         const diffPctWethBalance = diffPct(wethBalanceBeforeMinting, actualWeth);
 
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
-        console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
-        console.log(`Diff BdEu DBX balance: ${diffPctWethBalance}%`);
+        console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
+        console.log(`Diff BdEu BDX balance: ${diffPctBdEuBdxBalance}%`);
 
         expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");

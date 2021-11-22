@@ -3,19 +3,18 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { BDStable } from "../../typechain/BDStable";
-import { StakingRewards } from "../../typechain/StakingRewards";
-import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber } from '../../utils/NumbersHelpers';
 import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWeth } from "../../utils/DeployedContractsHelpers"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
-import { BigNumber, Contract } from 'ethers';
+import { BigNumber } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import { setUpFunctionalSystem, updateOracle } from "../../utils/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { Vesting } from "../../typechain/Vesting";
 import { WETH } from "../../typechain/WETH";
+import { StakingRewards } from "../../typechain/StakingRewards";
 
 chai.use(cap);
 

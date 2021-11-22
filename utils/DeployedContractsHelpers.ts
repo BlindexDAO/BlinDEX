@@ -88,6 +88,11 @@ export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string)
   return await hre.ethers.getContractAt("IERC20", address, deployer) as IERC20;
 }
 
+export async function getERC20(hre: HardhatRuntimeEnvironment, address: string){
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContractAt("ERC20", address, deployer) as ERC20;
+}
+
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_in_eth_d18: BigNumber){
   const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, user)
   const networkName = hre.network.name;
@@ -166,9 +171,9 @@ export function getWbtcPairOracle(hre: HardhatRuntimeEnvironment, tokenName: str
   return getUniswapPairOracle(hre, tokenName, "WBTC");
 }
 
-export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, tokenA: string, tokenB: string): Promise<UniswapPairOracle> {
+export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, tokenAName: string, tokenBName: string): Promise<UniswapPairOracle> {
   const deployer = await getDeployer(hre);
-  const oracle = await hre.ethers.getContract(`UniswapPairOracle_${tokenA}_${tokenB}`, deployer) as UniswapPairOracle;
+  const oracle = await hre.ethers.getContract(`UniswapPairOracle_${tokenAName}_${tokenBName}`, deployer) as UniswapPairOracle;
 
   return oracle;
 }

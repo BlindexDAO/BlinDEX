@@ -7,11 +7,6 @@ async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, n
     const deployer = await getDeployer(hre);
     const uniswapFactory = await getUniswapFactory(hre);
     
-    console.log("-------------1");
-    console.log(uniswapFactory.address);
-    console.log(addressA);
-    console.log(addressB);
-    console.log(deployer.address);
     const uniswapV2Factory = await hre.deployments.deploy(`UniswapPairOracle_${nameA}_${nameB}`, {
         from: deployer.address,
         contract: "UniswapPairOracle",
@@ -30,11 +25,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const wbtcAddress = constants.wBTC_address[hre.network.name];
 
     await (await factory.createPair(bdx.address, bdeu.address)).wait();
-
-    const pairAddress = await factory.allPairs(0);
-    console.log("--------------- allPairs.len: " + await factory.allPairsLength());
-    console.log("--------------- allPairs[0]: " + pairAddress);
-
     await deployPairOracle(hre, "BDX", "BDEU", bdx.address, bdeu.address);
     console.log("created bdx bdeu pair");
 
