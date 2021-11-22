@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
 import { getPools, updateOracles } from "../utils/UniswapPoolsHelpers";
@@ -145,5 +145,12 @@ export function load() {
       const btcFor1Eth = d18_ToNumber(await feed.consult(constants.wETH_address[hre.network.name], to_d18(1)));
       const btcEthPrice = 1 / btcFor1Eth;
       console.log("BTC/ETH: (RSK: ETH/BTC)" + btcEthPrice);
+    });
+
+  task("show:bdeu-ef-bdx-cov")
+    .setAction(async (args, hre) => {
+      const bdeu = await getBdEu(hre);
+      const efBdxCov = await bdeu.get_effective_bdx_coverage_ratio();
+      console.log("BEDU efBDXCov: " + d12_ToNumber(efBdxCov));
     });
 }

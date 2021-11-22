@@ -238,7 +238,6 @@ contract BDStable is ERC20Custom, Initializable {
             ? effective_collateral_ratio_d12 
             : global_collateral_ratio_d12;
 
-
         uint256 expectedBdxValue_d18 = 
             BdPoolLibrary.COLLATERAL_RATIO_MAX.sub(cr)
             .mul(totalSupply())

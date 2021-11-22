@@ -11,7 +11,7 @@ import {
 } from "../helpers/swaps"
 import { to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { getBdEu, getUser, getWeth, getBdx } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getUser, getWeth, getBdx, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
 import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
 
@@ -73,6 +73,9 @@ describe("Uniswap Oracles", () => {
 
         await swapWethFor(hre, "BDEU", 5);
 
-        await expectToFail(() => updateOracle(hre, bdeu, weth), 'UniswapPairOracle: PERIOD_NOT_ELAPSED');
+        let oracle = await getUniswapPairOracle(hre, "BDEU", "WETH");
+        oracle = oracle.connect(user); // this restriction doesn't apply to the owner
+
+        await expectToFail(() => oracle.updateOracle(), 'UniswapPairOracle: PERIOD_NOT_ELAPSED');
     });
 })

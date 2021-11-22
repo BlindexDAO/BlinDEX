@@ -45,11 +45,6 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(1000).mul(1e12).div(to_d12(initialBdxBdEuPrice)), to_d18(1000));
 
     await resetOracles(hre);
-
-    if (forIntegrationTests) {
-        await simulateTimeElapseInSeconds(60*60+1); // wait the uniswap pair oracle update period
-    }
-
     await updateOracles(hre);
 
     if(initialBdEuColltFraction > 0){
@@ -65,10 +60,6 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
       // recallateralize by just sending the tokens in order not to extract undeserved BDX
       await weth.connect(deployer).transfer(bdEuWethPool.address, collateralWeth_d18);
       await wbtc.connect(deployer).transfer(bdEuWbtcPool.address, collateralWbtc_d8);
-      
-      if (forIntegrationTests) {
-        await simulateTimeElapseInSeconds(60*60+1); // wait before CR can be refreshed
-      }
 
       await bdEu.refreshCollateralRatio();
     }
@@ -112,6 +103,7 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   console.log("provided bdx / bdeu liquidity");
 
   await resetOracles(hre);
+  await updateOracles(hre);
 
   //recallateralize by just sending the tokens in order not to extract undeserved BDX
   await (await weth.connect(deployer).transfer(bdEuWethPool.address, to_d18(0.0001))).wait();
