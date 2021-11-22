@@ -3,6 +3,7 @@ import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import 'hardhat-dependency-compiler'
+import 'hardhat-deploy';
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -44,6 +45,13 @@ const config: HardhatUserConfig = {
       './node_modules/@uniswap/v2-core/build/[!C]*.json', //excluding Combined-Json.json file
       './node_modules/@uniswap/v2-periphery/build/[!C]*.json',
     ]
+  },
+  external: {
+    contracts: [{
+      artifacts: 'node_modules/@uniswap/v2-core/build'
+    }, {
+      artifacts: 'node_modules/@uniswap/v2-periphery/build'
+    }]
   },
 };
 

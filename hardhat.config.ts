@@ -98,6 +98,10 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
+    externalArtifacts: [
+      './node_modules/@uniswap/v2-core/build/[!C]*.json', //excluding Combined-Json.json file
+      './node_modules/@uniswap/v2-periphery/build/[!C]*.json',
+    ]
   },
   external: {
     contracts: [{
