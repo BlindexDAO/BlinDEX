@@ -9,13 +9,11 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./StakingRewardsDistribution.sol";
-
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "./StakingRewardsDistribution.sol";
 
 contract StakingRewards is 
     PausableUpgradeable,
@@ -204,7 +202,7 @@ contract StakingRewards is
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(amount);
 
         // Pull the tokens from the staker
-        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit Staked(msg.sender, amount);
     }
@@ -246,7 +244,7 @@ contract StakingRewards is
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
 
         // Pull the tokens from the staker
-        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit StakeLocked(msg.sender, amount, secs);
     }
