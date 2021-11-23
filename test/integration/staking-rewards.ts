@@ -272,19 +272,49 @@ describe("StakingRewards", () => {
 
       const kekId = onlyStake.kek_id;
 
-      await stakingRewards_BDEU_WETH.connect(testUser1).withdrawLocked(kekId);
-    });
-
-    it("should not be able to withdraw LP tokens after all locked stakes have been withdrawn", async () => {
-      const lockedStakes = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address)
-
-      expect(lockedStakes[0].kek_id).to.eq(BigNumber.from(0)); // deletion only fills whole object with 0s
-
-      await expect((async () => {
-        await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(1);
-      })()).to.be.rejectedWith("subtraction overflow");
+      await stakingRewards_BDEU_WETH.connect(testUser1).withdrawLocked(kekId, 0, 100000);
     });
   });
+});
+
+describe('Staking - withdrawLocked', () => {
+  before(async () => {
+    await hre.deployments.fixture();
+    await setUpFunctionalSystem(hre, 1, true);
+    await initialize();
+  });
+
+  it("should remove stakes when withdrawn", async () => {
+    // provide some initaila weth for the users
+    await weth.connect(testUser1).deposit({ value: to_d18(100) });
+
+    // deployer gives some bdeu to users so they can stake
+    await bdEu.transfer(testUser1.address, to_d18(100));
+
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
+
+    const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
+
+    const pair = await getUniswapPair(hre, bdEu, weth);
+
+    await pair.connect(testUser1).approve(stakingRewards_BDEU_WETH.address, depositedLPTokenUser1_d18);
+
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.001), 1);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.002), 1);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.003), 1);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.004), 1);
+
+    const lockedStakesBefore = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address);
+    expect(lockedStakesBefore.length).to.eq(4);
+
+    await simulateTimeElapseInDays(365);
+
+    await stakingRewards_BDEU_WETH.connect(testUser1).withdrawLocked(lockedStakesBefore[1].kek_id, 0, 10); // removing 0.002 stake
+
+    const lockedStakesAfter = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address);
+    expect(lockedStakesAfter.length).to.eq(3);
+    expect(lockedStakesAfter.map(s => d18_ToNumber(s.amount))).to.members([0.001, 0.004, 0.003]);
+  })
 });
 
 describe('locking an unlocked stake', () => {
