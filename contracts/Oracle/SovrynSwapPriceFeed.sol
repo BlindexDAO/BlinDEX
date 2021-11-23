@@ -82,6 +82,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     }
 
     function when_should_update_oracle_in_seconds() public view override returns (uint256) {
-        return uint256(-1);
+        uint256 updateTime = updateTimestamp.add(timeBeforeShouldUpdate);
+        return block.timestamp > updateTime ? block.timestamp.sub(updateTime) : 0;
     }
 }
