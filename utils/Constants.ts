@@ -8,12 +8,24 @@ export const wETH_address = <any>{
     rsk: '0x542fda317318ebf1d3deaf76e0b632741a7e677d', // actually wrBTC, reversed to reflect rbtc native coin
 };
 
+export const wETH_precision = <any>{
+    localhost: 18,
+    mainnetFork: 18,
+    rsk: 18, // actually wrBTC, reversed to reflect rbtc native coin
+};
+
 export const wBTC_address = <any>{
     localhost: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     mainnetFork: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     rinkeby: '0xc778417e063141139fce010982780140aa0cd5ab',
     kovan: '0xCf516441828895f47aA02C335b6c0d37F9B7c3C2',
     rsk: '0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f', // actually eths, reversed to reflect rbtc native coin
+};
+
+export const wBTC_precision = <any>{
+    localhost: 8,
+    mainnetFork: 8,
+    rsk: 18, // actually eths, reversed to reflect rbtc native coin
 };
 
 export const EUR_USD_FEED_ADDRESS = <any>{

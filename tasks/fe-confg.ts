@@ -131,7 +131,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
 
         const mingingFee = await pool.minting_fee();
         const redemptionFee = await pool.redemption_fee();
-        const collateralAddress = await pool.collateral_address();
+        const collateralAddress = await pool.collateral_token();
 
         return {
             address: pool.address,

@@ -53,6 +53,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdEu.address,
               bdx.address,
               constants.wETH_address[hre.network.name],
+              constants.wETH_precision[hre.network.name],
               deployer.address,
               true
             ]
@@ -83,6 +84,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdEu.address,
               bdx.address,
               constants.wBTC_address[hre.network.name],
+              constants.wBTC_precision[hre.network.name],
               deployer.address,
               false
             ]

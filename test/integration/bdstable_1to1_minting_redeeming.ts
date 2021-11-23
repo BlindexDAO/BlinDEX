@@ -139,7 +139,7 @@ describe("BDStable 1to1", () => {
 
         await expect((async () => {
             await (await perform1To1MintingForWeth(hre, testUser, collateralAmount))
-        })()).to.be.rejectedWith("Collateral ratio must be >= 1");
+        })()).to.be.rejectedWith("Collateral ratio must be == 1");
     });
 
     it("should redeem bdeu when CR = 1", async () => {
