@@ -4,8 +4,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
 
@@ -13,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract Vesting is OwnableUpgradeable
 {
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     struct VestingSchedule {
@@ -29,8 +28,7 @@ contract Vesting is OwnableUpgradeable
     address public fundsProvider;
     uint256 public vestingTimeInSeconds;
     uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 256;
-
-    ERC20 private vestedToken;
+    IERC20 public vestedToken;
 
     function initialize(
         address _vestedTokenAddress,
@@ -45,7 +43,7 @@ contract Vesting is OwnableUpgradeable
 
         __Ownable_init();
 
-        vestedToken = ERC20(_vestedTokenAddress);
+        vestedToken = IERC20(_vestedTokenAddress);
         vestingScheduler = _vestingScheduler;
         fundsProvider = _fundsProvider;
         vestingTimeInSeconds = _vestingTimeInSeconds;
@@ -67,7 +65,7 @@ contract Vesting is OwnableUpgradeable
             0
         ));
 
-        TransferHelper.safeTransferFrom(address(vestedToken), fundsProvider, address(this), _amount_d18);
+        vestedToken.safeTransferFrom(fundsProvider, address(this), _amount_d18);
 
         emit ScheduleCreated(_receiver, _amount_d18);
     }
@@ -92,7 +90,7 @@ contract Vesting is OwnableUpgradeable
             }
         }
 
-        TransferHelper.safeTransfer(address(vestedToken), msg.sender, rewardsToClaim);
+        vestedToken.safeTransfer(msg.sender, rewardsToClaim);
 
         emit RewardClaimed(msg.sender, rewardsToClaim);
     }

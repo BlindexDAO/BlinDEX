@@ -5,7 +5,7 @@ import { IOracleBasedCryptoFiatFeed } from '../../typechain/IOracleBasedCryptoFi
 import { BtcToEthOracleChinlink } from '../../typechain/BtcToEthOracleChinlink';
 import cap from "chai-as-promised";
 
-import { bigNumberToDecimal } from "../../utils/Helpers";
+import { bigNumberToDecimal } from "../../utils/NumbersHelpers";
 
 chai.use(cap);
 

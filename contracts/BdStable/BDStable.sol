@@ -4,18 +4,19 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../ERC20/ERC20Custom.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "../Bdx/BDXShares.sol";
 import "../Oracle/IOracleBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
+import "../ERC20/ERC20Custom.sol";
 import "./Pools/BdPoolLibrary.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 contract BDStable is ERC20Custom, Initializable {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
     enum PriceChoice { BDSTABLE, BDX }
@@ -238,7 +239,6 @@ contract BDStable is ERC20Custom, Initializable {
             ? effective_collateral_ratio_d12 
             : global_collateral_ratio_d12;
 
-
         uint256 expectedBdxValue_d18 = 
             BdPoolLibrary.COLLATERAL_RATIO_MAX.sub(cr)
             .mul(totalSupply())
@@ -388,7 +388,7 @@ contract BDStable is ERC20Custom, Initializable {
 
     function pool_transfer_claimed_bdx(address to, uint256 amount) public onlyPools {
         unclaimedPoolsBDX = unclaimedPoolsBDX.sub(amount);
-        TransferHelper.safeTransfer(address(BDX), to, amount);
+        BDX.safeTransfer(to, amount);
     }
 
     function transfer_bdx(address to, uint256 BDX_amount) external onlyByOwnerOrPool {
@@ -397,11 +397,11 @@ contract BDStable is ERC20Custom, Initializable {
             "Not enough BDX"
         );
 
-        TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
+        BDX.safeTransfer(to, BDX_amount);
     }
 
     function transfer_bdx_force(address to, uint256 BDX_amount) external onlyByOwner {
-        TransferHelper.safeTransfer(address(BDX), to, BDX_amount);
+        BDX.safeTransfer(to, BDX_amount);
     }
 
     /* ========== EVENTS ========== */

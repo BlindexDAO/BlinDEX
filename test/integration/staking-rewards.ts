@@ -3,18 +3,18 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { BDStable } from "../../typechain/BDStable";
-import { StakingRewards } from "../../typechain/StakingRewards";
-import { ERC20 } from "../../typechain/ERC20";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { to_d18, d18_ToNumber } from '../../utils/Helpers';
-import { getDeployer, getUniswapPair, getWeth } from "../helpers/common"
+import { to_d18, d18_ToNumber } from '../../utils/NumbersHelpers';
+import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWeth } from "../../utils/DeployedContractsHelpers"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
-import { BigNumber, Contract } from 'ethers';
+import { BigNumber } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import { setUpFunctionalSystem, updateOracle } from "../../utils/SystemSetup";
+import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { Vesting } from "../../typechain/Vesting";
+import { WETH } from "../../typechain/WETH";
+import { StakingRewards } from "../../typechain/StakingRewards";
 
 chai.use(cap);
 
@@ -29,7 +29,7 @@ let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 
-let weth: ERC20;
+let weth: WETH;
 let bdEu: BDStable;
 let bdx: BDXShares;
 let stakingRewards_BDEU_WETH: StakingRewards;
@@ -41,11 +41,11 @@ async function initialize() {
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
   weth = await getWeth(hre);
-  bdEu = await hre.ethers.getContract('BDEU', deployer) as BDStable;
-  bdx = await hre.ethers.getContract('BDXShares', deployer) as BDXShares;
+  bdEu = await getBdEu(hre);
+  bdx = await getBdx(hre);
   stakingRewards_BDEU_WETH = await hre.ethers.getContract('StakingRewards_BDEU_WETH', deployer) as StakingRewards;
-  stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer) as StakingRewardsDistribution;
-  vesting = await hre.ethers.getContract("Vesting" ,deployer) as Vesting;
+  stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+  vesting = await getVesting(hre);
 }
 
 async function get_BDEU_WETH_poolWeight() {
@@ -272,19 +272,49 @@ describe("StakingRewards", () => {
 
       const kekId = onlyStake.kek_id;
 
-      await stakingRewards_BDEU_WETH.connect(testUser1).withdrawLocked(kekId);
-    });
-
-    it("should not be able to withdraw LP tokens after all locked stakes have been withdrawn", async () => {
-      const lockedStakes = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address)
-
-      expect(lockedStakes[0].kek_id).to.eq(BigNumber.from(0)); // deletion only fills whole object with 0s
-
-      await expect((async () => {
-        await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(1);
-      })()).to.be.rejectedWith("subtraction overflow");
+      await stakingRewards_BDEU_WETH.connect(testUser1).withdrawLocked(kekId, 0, 100000);
     });
   });
+});
+
+describe('Staking - withdrawLocked', () => {
+  before(async () => {
+    await hre.deployments.fixture();
+    await setUpFunctionalSystem(hre, 1, true);
+    await initialize();
+  });
+
+  it("should remove stakes when withdrawn", async () => {
+    // provide some initaila weth for the users
+    await weth.connect(testUser1).deposit({ value: to_d18(100) });
+
+    // deployer gives some bdeu to users so they can stake
+    await bdEu.transfer(testUser1.address, to_d18(100));
+
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
+
+    const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
+
+    const pair = await getUniswapPair(hre, bdEu, weth);
+
+    await pair.connect(testUser1).approve(stakingRewards_BDEU_WETH.address, depositedLPTokenUser1_d18);
+
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.001), 1);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.002), 1);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.003), 1);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stakeLocked(to_d18(0.004), 1);
+
+    const lockedStakesBefore = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address);
+    expect(lockedStakesBefore.length).to.eq(4);
+
+    await simulateTimeElapseInDays(365);
+
+    await stakingRewards_BDEU_WETH.connect(testUser1).withdrawLocked(lockedStakesBefore[1].kek_id, 0, 10); // removing 0.002 stake
+
+    const lockedStakesAfter = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address);
+    expect(lockedStakesAfter.length).to.eq(3);
+    expect(lockedStakesAfter.map(s => d18_ToNumber(s.amount))).to.members([0.001, 0.004, 0.003]);
+  })
 });
 
 describe('locking an unlocked stake', () => {

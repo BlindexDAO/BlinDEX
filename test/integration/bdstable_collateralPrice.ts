@@ -2,9 +2,9 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, to_d12, to_d8 } from "../../utils/Helpers";
-import { to_d18, d18_ToNumber, d12_ToNumber, bigNumberToDecimal } from "../../utils/Helpers"
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../helpers/common";
+import { diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
+import { to_d18, d18_ToNumber, d12_ToNumber, bigNumberToDecimal } from "../../utils/NumbersHelpers"
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 chai.use(cap);
 

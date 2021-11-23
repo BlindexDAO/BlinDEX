@@ -7,16 +7,13 @@ pragma experimental ABIEncoderV2;
 // Then modified from FRAX
 // https://github.com/blindexgit/BlinDEX/blob/551b521/contracts/Staking/StakingRewards.sol
 
-import "../Math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "./StakingRewardsDistribution.sol";
-
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "./StakingRewardsDistribution.sol";
 
 contract StakingRewards is 
     PausableUpgradeable,
@@ -158,7 +155,7 @@ contract StakingRewards is
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
-        return Math.min(block.timestamp, periodFinish);
+        return block.timestamp < periodFinish ? block.timestamp : periodFinish;
     }
 
     function rewardPerToken() public view returns (uint256) {
@@ -205,7 +202,7 @@ contract StakingRewards is
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(amount);
 
         // Pull the tokens from the staker
-        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit Staked(msg.sender, amount);
     }
@@ -247,7 +244,7 @@ contract StakingRewards is
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
 
         // Pull the tokens from the staker
-        TransferHelper.safeTransferFrom(address(stakingToken), msg.sender, address(this), amount);
+        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit StakeLocked(msg.sender, amount, secs);
     }
@@ -268,14 +265,23 @@ contract StakingRewards is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawLocked(bytes32 kek_id) public nonReentrant updateReward(msg.sender) {
+    function withdrawLocked(bytes32 kek_id, uint256 fromIndex, uint256 toIndex) public nonReentrant updateReward(msg.sender) {
+        // fromIndex & toIndex parameters serve as an optinal range, 
+        // to prevent the loop from running out of gas
+        // when user has too many stakes
+
+        toIndex = toIndex < lockedStakes[msg.sender].length 
+            ? toIndex 
+            : lockedStakes[msg.sender].length;
+        
         LockedStake memory thisStake;
-        thisStake.amount = 0;
-        uint theIndex;
-        for (uint i = 0; i < lockedStakes[msg.sender].length; i++){ 
+
+        for (uint i = fromIndex; i < toIndex; i++){ 
             if (kek_id == lockedStakes[msg.sender][i].kek_id){
                 thisStake = lockedStakes[msg.sender][i];
-                theIndex = i;
+
+                lockedStakes[msg.sender][i] = lockedStakes[msg.sender][lockedStakes[msg.sender].length-1];
+                lockedStakes[msg.sender].pop();
                 break;
             }
         }
@@ -293,9 +299,6 @@ contract StakingRewards is
             // Staking token supply and boosted supply
             _staking_token_supply = _staking_token_supply.sub(theAmount);
             _staking_token_boosted_supply = _staking_token_boosted_supply.sub(boostedAmount);
-
-            // Remove the stake from the array
-            delete lockedStakes[msg.sender][theIndex];
 
             // Give the tokens to the withdrawer
             stakingToken.safeTransfer(msg.sender, theAmount);

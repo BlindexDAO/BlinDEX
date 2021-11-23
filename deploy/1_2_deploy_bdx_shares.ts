@@ -7,7 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 
   const bdx_proxy = await hre.deployments.deploy(
-    'BDXShares', 
+    'BDX', 
     {
       from: deployer,
       proxy: {
@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           init: {
             methodName: "initialize",
             args: [
-              'BDXShares',
+              'BlindexShares',
               'BDX',
               deployer
             ]
@@ -28,7 +28,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
   );
 
-  console.log("BDXShares deployed to:", bdx_proxy.address);
+  console.log("BDX deployed to:", bdx_proxy.address);
 
   console.log("finished deployment: bdx");
   

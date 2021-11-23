@@ -3,33 +3,32 @@ pragma solidity 0.6.11;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../../Bdx/BDXShares.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../../BdStable/BDStable.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../../ERC20/IWETH.sol";
 
 contract BdStablePool is Initializable {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
 
-    ERC20 private collateral_token;
-    BDXShares private BDX;
-    BDStable private BDSTABLE;
+    IERC20 private BDX;
     IWETH private NativeTokenWrapper;
+    
+    IERC20 public collateral_token;
+    BDStable public BDSTABLE;
+    ICryptoPairOracle public collatWEthOracle;
+    
     bool public is_collateral_wrapping_native_token;
 
-    ICryptoPairOracle private collatWEthOracle;
-    address public collateral_address; // Required by frontend - frontend needs to know what collateral is used to mint
-
     address public owner_address;
-    
+
     uint256 private missing_decimals; // Number of decimals needed to get to 18
-    uint256 private collateral_decimals; // Number of decimals needed to get to 18
     address private weth_address;
 
     mapping(address => uint256) public redeemBDXBalances;
@@ -86,6 +85,7 @@ contract BdStablePool is Initializable {
         address _bdstable_contract_address,
         address _bdx_contract_address,
         address _collateral_address,
+        uint256 _collateral_decimals,
         address _creator_address,
         bool _is_collateral_wrapping_native_token
     ) 
@@ -93,15 +93,13 @@ contract BdStablePool is Initializable {
         initializer
     {
         BDSTABLE = BDStable(_bdstable_contract_address);
-        BDX = BDXShares(_bdx_contract_address);
+        BDX = IERC20(_bdx_contract_address);
         if(_is_collateral_wrapping_native_token) {
             NativeTokenWrapper = IWETH(_collateral_address);
         }
-        collateral_address = _collateral_address;
         owner_address = _creator_address;
-        collateral_token = ERC20(_collateral_address);
-        collateral_decimals = collateral_token.decimals();
-        missing_decimals = uint256(18).sub(collateral_decimals);
+        collateral_token = IERC20(_collateral_address);
+        missing_decimals = uint256(18).sub(_collateral_decimals);
 
         is_collateral_wrapping_native_token = _is_collateral_wrapping_native_token;
 
@@ -184,6 +182,11 @@ contract BdStablePool is Initializable {
         payable
         notMintPaused
     {
+        if(useNativeToken){
+            require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
+            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
+        }
+
         updateOraclesIfNeeded();
         uint256 collateral_amount_d18 =
             collateral_amount * (10**missing_decimals);
@@ -192,8 +195,8 @@ contract BdStablePool is Initializable {
         uint256 globalCR = BDSTABLE.global_collateral_ratio_d12();
 
         require(
-            globalCR >= BdPoolLibrary.COLLATERAL_RATIO_MAX,
-            "Collateral ratio must be >= 1"
+            globalCR == BdPoolLibrary.COLLATERAL_RATIO_MAX,
+            "Collateral ratio must be == 1"
         );
         
         require(
@@ -213,12 +216,9 @@ contract BdStablePool is Initializable {
         require(BD_out_min <= bd_amount_d18, "Slippage limit reached");
 
         if(useNativeToken){
-            assert(is_collateral_wrapping_native_token);
-            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
             NativeTokenWrapper.deposit{ value: collateral_amount }();
         } else {
-            TransferHelper.safeTransferFrom(
-                address(collateral_token),
+            collateral_token.safeTransferFrom(
                 msg.sender,
                 address(this),
                 collateral_amount
@@ -289,7 +289,7 @@ contract BdStablePool is Initializable {
         bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
         require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
 
-        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(BDSTABLE), bdx_amount_d18);
+        BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_amount_d18);
         BDSTABLE.pool_mint(msg.sender, bdStable_amount_d18);
     }
 
@@ -310,6 +310,8 @@ contract BdStablePool is Initializable {
         uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
         bdx_amount = bdx_amount.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
         
+        require(bdx_out_min < bdx_amount, "Slippage limit reached");
+
         if(bdx_amount > 0){
             require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
             
@@ -319,8 +321,6 @@ contract BdStablePool is Initializable {
         }
         
         lastRedeemed[msg.sender] = block.number;
-        
-        require(bdx_out_min < bdx_amount, "Slippage limit reached");
 
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
@@ -333,6 +333,11 @@ contract BdStablePool is Initializable {
         payable
         notMintPaused
     {
+        if(useNativeToken){
+            require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
+            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
+        }
+
         updateOraclesIfNeeded();
         BDSTABLE.refreshCollateralRatio();
 
@@ -364,14 +369,12 @@ contract BdStablePool is Initializable {
 
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
-        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(BDSTABLE), bdx_needed);
+        BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_needed);
 
         if(useNativeToken){
-            assert(is_collateral_wrapping_native_token);
-            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
             NativeTokenWrapper.deposit{ value: collateral_amount }();
         } else {
-            TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_amount);
+            collateral_token.safeTransferFrom(msg.sender, address(this), collateral_amount);
         }
 
         BDSTABLE.pool_mint(msg.sender, mint_amount);
@@ -473,9 +476,9 @@ contract BdStablePool is Initializable {
         if (sendCollateral == true) {
             if(useNativeToken){
                 NativeTokenWrapper.withdraw(CollateralAmount);
-                TransferHelper.safeTransferETH(msg.sender, CollateralAmount);
+                safeTransferETH(msg.sender, CollateralAmount);
             } else {
-                TransferHelper.safeTransfer(address(collateral_token), msg.sender, CollateralAmount);
+                collateral_token.safeTransfer(msg.sender, CollateralAmount);
             }
         }
     }
@@ -492,6 +495,11 @@ contract BdStablePool is Initializable {
 
         if(recollateralizeOnlyForOwner){
             require(msg.sender == owner_address, "Currently only owner can recollateralize");
+        }
+
+        if(useNativeToken){
+            require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
+            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
         }
 
         updateOraclesIfNeeded();
@@ -520,20 +528,17 @@ contract BdStablePool is Initializable {
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
         if(useNativeToken){
-            assert(is_collateral_wrapping_native_token);
-
-            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
             // no need to check collateral_units_precision, it's <= then collateral_amount
 
             NativeTokenWrapper.deposit{ value: collateral_units_precision }();
 
             // refund remaining native token, if any left
             if (msg.value > collateral_units_precision) {
-                TransferHelper.safeTransferETH(msg.sender, msg.value - collateral_units_precision);
+                safeTransferETH(msg.sender, msg.value.sub(collateral_units_precision));
             }
 
         } else {
-            TransferHelper.safeTransferFrom(address(collateral_token), msg.sender, address(this), collateral_units_precision);
+            collateral_token.safeTransferFrom(msg.sender, address(this), collateral_units_precision);
         }
 
         if(bdx_paid_back > 0){
@@ -570,16 +575,16 @@ contract BdStablePool is Initializable {
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
         
         // Take bdx form sender
-        TransferHelper.safeTransferFrom(address(BDX), msg.sender, address(BDSTABLE), BDX_amount);
+        BDX.safeTransferFrom(msg.sender, address(BDSTABLE), BDX_amount);
         
         if(useNativeToken){
             // Give the sender their desired collateral
             NativeTokenWrapper.withdraw(collateral_precision);
-            TransferHelper.safeTransferETH(msg.sender, collateral_precision);
+            safeTransferETH(msg.sender, collateral_precision);
         }
         else {
             // Give the sender their desired collateral
-            TransferHelper.safeTransfer(address(collateral_token), msg.sender, collateral_precision);
+            collateral_token.safeTransfer(msg.sender, collateral_precision);
         }
         emit BoughtBack(BDX_amount, collateral_precision);
     }
@@ -680,6 +685,11 @@ contract BdStablePool is Initializable {
 
         owner_address = _owner_address;
         emit OwnerSet(_owner_address);
+    }
+
+    function safeTransferETH(address to, uint256 value) internal {
+        (bool success, ) = to.call{value: value}(new bytes(0));
+        require(success, "ETH transfer failed");
     }
 
     /* ========== EVENTS ========== */

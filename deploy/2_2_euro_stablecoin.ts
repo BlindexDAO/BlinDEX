@@ -1,22 +1,21 @@
 import { BDStable } from '../typechain/BDStable';
-import { BDXShares } from '../typechain/BDXShares';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import * as constants from '../utils/Constants'
 import { BdStablePool } from '../typechain/BdStablePool';
+import { getBdx, getDeployer, getTreasury } from '../utils/DeployedContractsHelpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: euro stable");
 
-  const deployerAddress = (await hre.getNamedAccounts()).DEPLOYER;
-  const treasuryAddress = (await hre.getNamedAccounts()).TREASURY;
-  const treasury = await hre.ethers.getSigner(treasuryAddress);
+  const deployer = await getDeployer(hre);
+  const treasury = await getTreasury(hre);
 
-  const bdx = await hre.ethers.getContract('BDXShares', deployerAddress) as BDXShares;
+  const bdx = await getBdx(hre);
   const bdPoolLibraryDeployment = await hre.ethers.getContract('BdPoolLibrary');
 
   const bdeu_proxy = await hre.deployments.deploy('BDEU', {
-    from: deployerAddress,
+    from: deployer.address,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
       execute: {
@@ -26,8 +25,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             'BlindexEuro',
             'BDEU',
             'EURO',
-            deployerAddress,
-            treasuryAddress,
+            deployer.address,
+            treasury.address,
             bdx.address,
             constants.initalBdStableToOwner_d18[hre.network.name]
           ]
@@ -44,7 +43,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeu_weth_BdStablePoolDeployment = await hre.deployments.deploy(
     'BDEU_WETH_POOL',
     {
-      from: deployerAddress,
+      from: deployer.address,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
         execute: {
@@ -54,7 +53,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdEu.address,
               bdx.address,
               constants.wETH_address[hre.network.name],
-              deployerAddress,
+              constants.wETH_precision[hre.network.name],
+              deployer.address,
               true
             ]
           }
@@ -74,7 +74,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeu_wbtc_BdStablePoolDeployment = await hre.deployments.deploy(
     'BDEU_WBTC_POOL',
     {
-      from: deployerAddress,
+      from: deployer.address,
       proxy: {
         proxyContract: 'OptimizedTransparentProxy',
         execute: {
@@ -84,7 +84,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdEu.address,
               bdx.address,
               constants.wBTC_address[hre.network.name],
-              deployerAddress,
+              constants.wBTC_precision[hre.network.name],
+              deployer.address,
               false
             ]
           }

@@ -1,19 +1,18 @@
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { BDXShares } from '../typechain/BDXShares';
-import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
+import { getBdx, getDeployer } from '../utils/DeployedContractsHelpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("starting deployment: vesting");
 
-    const deployerAddres = (await hre.getNamedAccounts()).DEPLOYER;
-    const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
+    const deployer = await getDeployer(hre);
+    const bdx = await getBdx(hre);
     const vestingTimeInSeconds = 60 * 60 * 24 * 30 * 9 //9 months
 
     const vesting_ProxyDeployment = await hre.deployments.deploy(
         'Vesting',
         {
-            from: deployerAddres,
+            from: deployer.address,
             proxy: {
                 proxyContract: 'OptimizedTransparentProxy',
                 execute: {
@@ -21,8 +20,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                         methodName: "initialize",
                         args: [
                             bdx.address,
-                            deployerAddres,
-                            deployerAddres,
+                            deployer.address,
+                            deployer.address,
                             vestingTimeInSeconds
                         ]
                     }

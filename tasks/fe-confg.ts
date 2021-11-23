@@ -1,14 +1,12 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdLens, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth } from "../test/helpers/common";
-import { OracleBasedCryptoFiatFeed } from "../typechain/OracleBasedCryptoFiatFeed";
-import { MoneyOnChainPriceFeed } from "../typechain/MoneyOnChainPriceFeed";
+import { 
+    getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getDeployer, getStakingRewardsDistribution,
+    getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth 
+} from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
-import { getPools, updateOracles } from "../utils/SystemSetup";
-import { BDStable } from "../typechain/BDStable";
+import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
 import { BdStablePool } from "../typechain/BdStablePool";
 import { StakingRewards } from "../typechain/StakingRewards";
-import { resourceUsage } from "process";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export function load() {
@@ -133,7 +131,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
 
         const mingingFee = await pool.minting_fee();
         const redemptionFee = await pool.redemption_fee();
-        const collateralAddress = await pool.collateral_address();
+        const collateralAddress = await pool.collateral_token();
 
         return {
             address: pool.address,
