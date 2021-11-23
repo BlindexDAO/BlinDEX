@@ -19,6 +19,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     ISovrynLiquidityPoolV1Converter public sovrynConverter;
     address public tokenSource;
     address public tokenTarget;
+    address public updater;
     uint256 private timeBeforeShouldUpdate;
     uint256 private timeBeforeMustUpdate;
     uint256 private updateTimestamp;
@@ -27,11 +28,13 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     constructor(address _sovrynConverterAddress,
         address _tokenSource,
         address _tokenTarget,
+        address _updater,
         uint256 _timeBeforeShouldUpdate,
         uint256 _timeBeforeMustUpdate) public {
         sovrynConverter = ISovrynLiquidityPoolV1Converter(_sovrynConverterAddress);
         tokenSource = _tokenSource;
         tokenTarget = _tokenTarget;
+        updater = _updater;
         timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
         timeBeforeMustUpdate = _timeBeforeMustUpdate;
     }
@@ -69,12 +72,13 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function updateOracle() public override {}
 
-    function updateOracleWithVerificatoin(uint verificationPrice_d12) public onlyOwner {
+    function updateOracleWithVerificatoin(uint verificationPrice_d12) public onlyUpdater {
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
         uint256 priceDifference = verificationPrice_d12 > amountMinusFee ? verificationPrice_d12.sub(amountMinusFee) : amountMinusFee.sub(verificationPrice_d12);
         require(priceDifference.div(amountMinusFee).mul(PRECISION) < PRICE_DISPARITY_TOLERANCE_d12, "Price disparity too big");
         oraclePrice = amountMinusFee.add(fee);
         updateTimestamp = block.timestamp;
+        emit PriceChanged(oraclePrice);
     }
 
     function shouldUpdateOracle() public view override returns (bool) {
@@ -85,4 +89,19 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         uint256 updateTime = updateTimestamp.add(timeBeforeShouldUpdate);
         return block.timestamp < updateTime ? updateTime.sub(block.timestamp) : 0;
     }
+
+    function setUpdater(address newUpdater) public onlyOwner {
+        address oldUpdater = updater;
+        updater = newUpdater;
+        emit UpdaterChanged(oldUpdater, updater);
+    }
+
+    modifier onlyUpdater()
+    {
+        require(msg.sender == updater, "You're not updater");
+        _;
+    }
+
+    event UpdaterChanged(address indexed oldUpdater, address indexed newUpdater);
+    event PriceChanged(uint256 indexed newPrice);
 }
