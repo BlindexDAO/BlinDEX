@@ -8,6 +8,11 @@ import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleF
 import { IPriceFeed } from "../typechain/IPriceFeed";
 import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
 import * as constants from '../utils/Constants'
+import { SovrynSwapPriceFeed__factory } from '../typechain/factories/SovrynSwapPriceFeed__factory';
+import { Signer, BigNumber } from 'ethers';
+import { SignerWithAddress } from 'hardhat-deploy-ethers/dist/src/signers';
+import { ISovrynLiquidityPoolV1Converter__factory } from '../typechain/factories/ISovrynLiquidityPoolV1Converter__factory';
+import { RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS } from "../utils/Constants";
 
 export function load() {
 
@@ -148,11 +153,46 @@ export function load() {
       console.log("ETH/USD (RSK: BTC/USD): " + price);
     });
 
-  task("show:rsk-btc-eth")
+  task("show:rsk-btc-usd")
     .setAction(async (args, hre) => {
-      const feed = await hre.ethers.getContract("BtcToEthOracle") as ICryptoPairOracle;
-      const btcFor1Eth = d18_ToNumber(await feed.consult(constants.wETH_address[hre.network.name], to_d18(1)));
-      const btcEthPrice = 1 / btcFor1Eth;
-      console.log("BTC/ETH: (RSK: ETH/BTC)" + btcEthPrice);
+      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
+      const feed =  SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
+      const btcFor1usd = d18_ToNumber(await feed.consult(constants.wETH_address[hre.network.name], to_d18(1)));
+      console.log("BTC/usd: " + btcFor1usd);
+    });
+
+    task("update:rsk-btc-usd")
+    .setAction(async (args, hre) => {
+      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
+      const feed =  SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
+      const tx = await feed.updateOracleWithVerification(BigNumber.from('56845406814023944'));
+      const result = await tx.wait(1);
+      console.log(result.blockHash);
+    });
+
+    task("show:rsk-btc-usd-sovryn")
+    .setAction(async (args, hre) => {
+      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
+      const feed =  ISovrynLiquidityPoolV1Converter__factory.connect(RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS, await hre.ethers.getSigner(updater))
+      const tokenSource = '0x542fda317318ebf1d3deaf76e0b632741a7e677d';
+      const targetToken = constants.XUSD_ADDRESS;
+      const [amountMinusFee, fee] = (await feed.targetAmountAndFee(tokenSource, targetToken, 1e12));
+      console.log(`BTC/USD: ${amountMinusFee}, fee: ${fee}, amount with fee: ${amountMinusFee.add(fee)}`);
+    });
+
+    task("show:rsk-btc-usd-seconds")
+    .setAction(async (args, hre) => {
+      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
+      const feed =  SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
+      const secondsToUpdate = await feed.when_should_update_oracle_in_seconds();
+      console.log("remaining seconds: " + secondsToUpdate);
+    });
+
+    task("show:rsk-btc-usd-should-update")
+    .setAction(async (args, hre) => {
+      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
+      const feed =  SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
+      const shouldUpdate = await feed.shouldUpdateOracle();
+      console.log("should update: " + shouldUpdate);
     });
 }
