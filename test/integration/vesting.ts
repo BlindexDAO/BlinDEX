@@ -87,10 +87,10 @@ describe('Vesting', () => {
         await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
         await vesting.connect(testScheduler).schedule(testUser1.address, amount_d18);
 
-        await moveTimeForwardBy(vestingTimeSeconds)
+        await moveTimeForwardBy(vestingTimeSeconds);
 
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
@@ -106,9 +106,9 @@ describe('Vesting', () => {
 
         await moveTimeForwardBy(vestingTimeSeconds)
 
-        await vesting.connect(ownerUser).claim();
+        await vesting.connect(ownerUser).claim(0, 100);
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-        await vesting.connect(ownerUser).claim();
+        await vesting.connect(ownerUser).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(0);
@@ -128,7 +128,7 @@ describe('Vesting', () => {
         await moveTimeForwardBy(vestingTimeSeconds)
 
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(2));
@@ -146,7 +146,7 @@ describe('Vesting', () => {
         await moveTimeForwardBy(vestingTimeSeconds.div(timePartition))
 
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         const transferredAmount = balanceAfterClaim.sub(balanceBeforeClaim);
@@ -168,9 +168,9 @@ describe('Vesting', () => {
 
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
         await moveTimeForwardBy(vestingTimeSeconds.div(2));
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         await moveTimeForwardBy(vestingTimeSeconds);
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
@@ -201,7 +201,7 @@ describe('Vesting', () => {
         expect(schedulesCount1).to.be.eq(4, "invalid schedules count after schedule 4");
 
         await simulateTimeElapseInSeconds(vestingTimeSeconds-3*secondsInDay); // make only 1st and 2nd vestings schedule fully claimable
-        await vesting.connect(testUser1).claim(); // [4,3] // now the first vesting schedule should be removed
+        await vesting.connect(testUser1).claim(0, 100); // [4,3] // now the first vesting schedule should be removed
 
         const schedulesCount2 = await vesting.userVestingSchedulesCount(testUser1.address);
         expect(schedulesCount2).to.be.eq(2, "invalid schedules count after claim 1");
@@ -220,7 +220,7 @@ describe('Vesting', () => {
         expect(d18_ToNumber(vestingSchedule2.totalVestedAmount_d18)).to.be.eq(5, "invalid vesting schedule[2]");
 
         await simulateTimeElapseInSeconds(vestingTimeSeconds); // make all vesting schedules fully claimable
-        await vesting.connect(testUser1).claim(); // [] // now all vesting schedule should be removed 
+        await vesting.connect(testUser1).claim(0, 100); // [] // now all vesting schedule should be removed 
 
         const schedulesCount4 = await vesting.userVestingSchedulesCount(testUser1.address);
         expect(schedulesCount4).to.be.eq(0, "not all vesting schedules have been removed");
@@ -241,11 +241,11 @@ describe('Vesting', () => {
 
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
         await moveTimeForwardBy(vestingTimeSeconds.div(5));
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         await moveTimeForwardBy(vestingTimeSeconds.div(5));
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         await moveTimeForwardBy(vestingTimeSeconds);
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18);
@@ -262,7 +262,7 @@ describe('Vesting', () => {
         await moveTimeForwardBy(vestingTimeSeconds)
 
         const balanceBeforeClaim = await bdx.balanceOf(testUser2.address);
-        await vesting.connect(testUser2).claim();
+        await vesting.connect(testUser2).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser2.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(0);
@@ -278,38 +278,11 @@ describe('Vesting', () => {
 
         await moveTimeForwardBy(vestingTimeSeconds.div(2))
 
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-        await vesting.connect(testUser1).claim();
+        await vesting.connect(testUser1).claim(0, 100);
         const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
 
         expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.lt(to_d18(amount / 100));
-    })
-
-    it('should not create more schedules for user than the limit, max amount of schedules is possible to claim', async () => {
-        const amount = 0.001;
-        const amount_d18 = to_d18(amount);
-        const schedulesLimit = Number(await vesting.MAX_VESTING_SCHEDULES_PER_USER());
-        const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
-
-
-        for (var i = 0; i < schedulesLimit; i++) {
-            await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
-            await vesting.connect(testScheduler).schedule(testUser1.address, amount_d18);
-        }
-
-        await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
-
-        await expect(
-            vesting.connect(testScheduler).schedule(testUser1.address, amount_d18)
-        ).to.be.revertedWith('Limit for vesting schedules for user exceeded');
-
-        await moveTimeForwardBy(vestingTimeSeconds)
-
-        const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-        await vesting.connect(testUser1).claim();
-        const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
-
-        expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(schedulesLimit));
-    })
+    });
 });

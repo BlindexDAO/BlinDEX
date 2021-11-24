@@ -27,7 +27,6 @@ contract Vesting is OwnableUpgradeable
     address public vestingScheduler;
     address public fundsProvider;
     uint256 public vestingTimeInSeconds;
-    uint256 public constant MAX_VESTING_SCHEDULES_PER_USER = 256;
     IERC20 public vestedToken;
 
     function initialize(
@@ -55,8 +54,6 @@ contract Vesting is OwnableUpgradeable
         // to prevent melicious users form cloging user's schedules
         require(msg.sender == vestingScheduler,
             "Only vesting scheduler can create vesting schedules");
-        require(vestingSchedules[_receiver].length < MAX_VESTING_SCHEDULES_PER_USER,
-            "Limit for vesting schedules for user exceeded");
 
         vestingSchedules[_receiver].push(VestingSchedule(
             block.timestamp,
@@ -70,17 +67,17 @@ contract Vesting is OwnableUpgradeable
         emit ScheduleCreated(_receiver, _amount_d18);
     }
 
-    function claim() external {
+    function claim(uint256 from, uint256 to) external {
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
+
         uint256 rewardsToClaim = 0;
         uint256 userVestingSchedulesCount = userVestingSchedules.length;
-        for (uint256 i = 0; i < userVestingSchedulesCount; i++) {
+        for (uint256 i = from; i < to && i < userVestingSchedulesCount; i++) {
             if (isFullyVested(userVestingSchedules[i])) {
                 rewardsToClaim = rewardsToClaim.add(userVestingSchedules[i].totalVestedAmount_d18.sub(userVestingSchedules[i].releasedAmount_d18));
                 
                 userVestingSchedulesCount--;
                 userVestingSchedules[i] = userVestingSchedules[userVestingSchedulesCount];
-                delete userVestingSchedules[userVestingSchedulesCount];
                 userVestingSchedules.pop();
                 i--;
             } else {

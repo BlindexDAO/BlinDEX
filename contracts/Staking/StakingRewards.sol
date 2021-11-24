@@ -262,18 +262,18 @@ contract StakingRewards is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawLocked(bytes32 kek_id, uint256 fromIndex, uint256 toIndex) public nonReentrant updateReward(msg.sender) {
-        // fromIndex & toIndex parameters serve as an optinal range, 
+    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) public nonReentrant updateReward(msg.sender) {
+        // from & to parameters serve as an optinal range, 
         // to prevent the loop from running out of gas
         // when user has too many stakes
 
-        toIndex = toIndex < lockedStakes[msg.sender].length 
-            ? toIndex 
+        to = to < lockedStakes[msg.sender].length 
+            ? to 
             : lockedStakes[msg.sender].length;
         
         LockedStake memory thisStake;
 
-        for (uint i = fromIndex; i < toIndex; i++){ 
+        for (uint i = from; i < to; i++){ 
             if (kek_id == lockedStakes[msg.sender][i].kek_id){
                 thisStake = lockedStakes[msg.sender][i];
 
