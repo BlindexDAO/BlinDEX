@@ -47,6 +47,7 @@ export const BTC_ETH_FEED_ADDRESS = <any>{
 
 export const RSK_SOVRYN_ETHs_wrBTC_SWAP_ADDRESS = "0xcef26b429e272960d8fa2ea190b06df5dd8f68e2";
 export const RSK_SOVRYN_rUSDT_wrBTC_SWAP_ADDRESS = "0x448c2474b255576554eed36c24430ccfac131ce3";
+export const RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS = "0x029448377A56C15928ec783bAf6Ca736ed99a57f";
 export const RSK_rUSDT_ADDRESS = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
 
 export const NATIVE_TOKEN_NAME = <any>{
@@ -81,4 +82,4 @@ export const initalBdStable_bdx_d18 = <any>{
 export const RUSDT_ADDRESS = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
 export const WRBTC_ADDRESS = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
 export const ETHS_ADDRESS = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
-export const XUSD_ADDRESS = "0xb5999795BE0eBb5BAb23144Aa5fD6a02d080299f";
+export const XUSD_ADDRESS = "0xb5999795be0ebb5bab23144aa5fd6a02d080299f";

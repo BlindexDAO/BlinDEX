@@ -15,6 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const networkName = hre.network.name;
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
+  const bot = (await hre.getNamedAccounts()).BOT;
   const bdeu = await hre.ethers.getContract("BDEU") as BDStable;
 
   let priceFeed_EUR_USD_Deployment : DeployResult;
@@ -33,9 +34,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer,
       contract: "SovrynSwapPriceFeed",
       args: [
-        constants.RSK_SOVRYN_rUSDT_wrBTC_SWAP_ADDRESS,
+        constants.RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS,
         constants.wETH_address[hre.network.name], // it's actually wrBTC (on RSK)
         constants.XUSD_ADDRESS,
+        1e12,
+        bot,
         60 * 10, //10min
         60 * 20 //20min
       ]

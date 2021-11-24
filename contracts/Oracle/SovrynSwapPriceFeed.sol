@@ -14,11 +14,11 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     uint8 private constant DECIMALS = 12;
     uint256 private constant PRECISION = 1e12;
-    uint256 private constant PRICE_DISPARITY_TOLERANCE_d12 = 5e10; //5% difference allowed
 
     ISovrynLiquidityPoolV1Converter public sovrynConverter;
     address public tokenSource;
     address public tokenTarget;
+    uint256 private priceDisparityTolerance_d12;
     address public updater;
     uint256 private timeBeforeShouldUpdate;
     uint256 private timeBeforeMustUpdate;
@@ -28,12 +28,14 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     constructor(address _sovrynConverterAddress,
         address _tokenSource,
         address _tokenTarget,
+        uint256 _priceDisparityTolerance_d12,
         address _updater,
         uint256 _timeBeforeShouldUpdate,
         uint256 _timeBeforeMustUpdate) public {
         sovrynConverter = ISovrynLiquidityPoolV1Converter(_sovrynConverterAddress);
         tokenSource = _tokenSource;
         tokenTarget = _tokenTarget;
+        priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
         updater = _updater;
         timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
         timeBeforeMustUpdate = _timeBeforeMustUpdate;
@@ -72,10 +74,11 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function updateOracle() public override {}
 
-    function updateOracleWithVerificatoin(uint verificationPrice_d12) public onlyUpdater {
+    function updateOracleWithVerification(uint verificationPrice_d12) public onlyUpdater {
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
-        uint256 priceDifference = verificationPrice_d12 > amountMinusFee ? verificationPrice_d12.sub(amountMinusFee) : amountMinusFee.sub(verificationPrice_d12);
-        require(priceDifference.div(amountMinusFee).mul(PRECISION) < PRICE_DISPARITY_TOLERANCE_d12, "Price disparity too big");
+        uint256 amount = amountMinusFee.add(fee);
+        uint256 priceDifference = verificationPrice_d12 > amount ? verificationPrice_d12.sub(amount) : amount.sub(verificationPrice_d12);
+        require(priceDifference.mul(PRECISION).div(amount) < priceDisparityTolerance_d12, "Price disparity too big");
         oraclePrice = amountMinusFee.add(fee);
         updateTimestamp = block.timestamp;
         emit PriceChanged(oraclePrice);
@@ -94,6 +97,10 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
+    }
+
+    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) public onlyOwner {
+        priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
     }
 
     modifier onlyUpdater()
