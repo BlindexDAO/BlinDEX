@@ -86,7 +86,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             yearSchedule = 0;
         }
 
-        uint256 bdxPerSecond = yearSchedule.div(365*24*60*60).mul(stakingRewardsWeights[_stakingRewardsAddress]).div(stakingRewardsWeightsTotal);
+        uint256 bdxPerSecond = yearSchedule.mul(stakingRewardsWeights[_stakingRewardsAddress]).div(365*24*60*60).div(stakingRewardsWeightsTotal);
 
         return bdxPerSecond;
     }
