@@ -5,6 +5,7 @@ import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import * as constants from '../utils/Constants'
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { Vesting } from '../typechain/Vesting';
+import { getBdEu, getBdx } from '../utils/DeployedContractsHelpers';
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -53,8 +54,8 @@ async function setupStakingContract(
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
 
-  const bdeu = await hre.deployments.get('BDEU');
-  const bdx = await hre.ethers.getContract("BDXShares") as BDXShares;
+  const bdeu = await getBdEu(hre);
+  const bdx = await getBdx(hre);
 
   console.log("Setting up staking contracts");
 

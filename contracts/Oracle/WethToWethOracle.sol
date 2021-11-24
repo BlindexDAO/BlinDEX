@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.11;
 
-import "../Uniswap/Interfaces/IUniswapV2Factory.sol";
-import "../Uniswap/Interfaces/IUniswapV2Pair.sol";
-import "../Math/FixedPoint.sol";
-
-import "../Uniswap/UniswapV2OracleLibrary.sol";
-import "../Uniswap/UniswapV2Library.sol";
 import "./ICryptoPairOracle.sol";
 
 // Fixed window oracle that recomputes the average price for the entire period once every period

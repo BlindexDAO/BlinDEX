@@ -2,10 +2,10 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber, diffPct, to_d12 } from "../../utils/Helpers";
-import { to_d18, d18_ToNumber } from "../../utils/Helpers"
+import { d12_ToNumber, diffPct, to_d12 } from "../../utils/NumbersHelpers";
+import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury, getDeployer } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 
@@ -71,9 +71,9 @@ describe("BDStable algorythmic", () => {
         const diffPctWethBalance = diffPct(wethBalanceBeforeMinting, actualWeth);
 
         console.log(`Diff BDX cost: ${diffPctBdxCost}%`);
-        console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
         console.log(`Diff Weth balance: ${diffPctWethBalance}%`);
-        console.log(`Diff BdEu DBX balance: ${diffPctWethBalance}%`);
+        console.log(`Diff BdEu balance: ${diffPctBdEu}%`);
+        console.log(`Diff BdEu BDX balance: ${diffPctBdEuBdxBalance}%`);
 
         expect(diffPctBdxCost).to.be.closeTo(0, 0.001, "invalid bdx diff");
         expect(diffPctWethBalance).to.be.closeTo(0, 0.001, "invalid weth diff");

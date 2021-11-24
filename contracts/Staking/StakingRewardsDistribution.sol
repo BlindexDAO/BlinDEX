@@ -2,14 +2,16 @@
 pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../Bdx/BDXShares.sol";
 import "./Vesting.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
+    using SafeERC20 for BDXShares;
 
     uint256 public TOTAL_BDX_SUPPLY;
     
@@ -123,7 +125,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         rewardsToken.approve(address(vesting), vestedReward);
         vesting.schedule(to, vestedReward);
 
-        TransferHelper.safeTransfer(address(rewardsToken), to, immediatelyReleasedReward);
+        rewardsToken.safeTransfer(to, immediatelyReleasedReward);
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {

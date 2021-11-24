@@ -1,21 +1,21 @@
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
-import { d18_ToNumber, to_d18, to_d8 } from "../../utils/Helpers";
+import { bigNumberToDecimal, d18_ToNumber, to_d18, to_d8 } from "../../utils/NumbersHelpers";
 import * as constants from '../../utils/Constants';
 import { WETH } from "../../typechain/WETH";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { ERC20 } from "../../typechain/ERC20";
-import { bigNumberToDecimal } from "../../utils/Helpers";
-import { getWethPair } from "../../utils/Swaps";
-import { getDeployer, getUniswapRouter, getWeth } from "./common";
+import { getWethPairOracle } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from "ethers";
+import { IERC20 } from "../../typechain/IERC20";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string){
-  var pair = await getWethPair(hre, tokenName);
+  var oracle = await getWethPairOracle(hre, tokenName);
 
-  await pair.updateOracle();
+  await oracle.updateOracle();
 }
 
 export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: string, wEthToSwap: number) {
@@ -92,8 +92,8 @@ export async function swapForWethAsDeployer(
 
 export async function swapAsDeployerByContract(
   hre: HardhatRuntimeEnvironment, 
-  tokenIn: ERC20,
-  tokenOut: ERC20, 
+  tokenIn: IERC20,
+  tokenOut: IERC20, 
   tokenInValue: number, 
   tokenOutMinValue: number)
 {
@@ -112,15 +112,13 @@ export async function swapAsDeployerByContract(
     currentBlock.timestamp + 24*60*60*7);
 }
 
-export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: string) {
+export async function getPrices(hre: HardhatRuntimeEnvironment, bdStableName: string) {
   const bdStable = await hre.ethers.getContract(bdStableName) as BDStable;
 
-  const testUser = await hre.ethers.getNamedSigner('TEST2');
+  const oracle = await getWethPairOracle(hre, bdStableName);
 
-  const uniswapV2Router02 = await hre.ethers.getContract('UniswapV2Router02', testUser) as UniswapV2Router02;
-
-  const wethInBdStablePrice = await uniswapV2Router02.consult(constants.wETH_address[hre.network.name], to_d18(1), bdStable.address);
-  const bdStableWethPrice = await uniswapV2Router02.consult(bdStable.address, to_d18(1), constants.wETH_address[hre.network.name]);
+  const wethInBdStablePrice = await oracle.consult(constants.wETH_address[hre.network.name], to_d18(1));
+  const bdStableWethPrice = await oracle.consult(bdStable.address, to_d18(1));
 
   const wethInBdStablePriceDecimal = bigNumberToDecimal(wethInBdStablePrice, 18);
   const bdStableInWethPriceDecimal = bigNumberToDecimal(bdStableWethPrice, 18);
@@ -134,8 +132,8 @@ export async function getPrices(hre: HardhatRuntimeEnvironment,bdStableName: str
 export async function provideLiquidity(
   hre: HardhatRuntimeEnvironment,
   user: SignerWithAddress,
-  tokenA: ERC20,
-  tokenB: ERC20,
+  tokenA: IERC20 | WETH,
+  tokenB: IERC20 | WETH,
   amountA: BigNumber,
   amountB: BigNumber
 ){
@@ -146,7 +144,7 @@ export async function provideLiquidity(
   await tokenA.connect(user).approve(router.address, amountA);
   await tokenB.connect(user).approve(router.address, amountB);
 
-  const currentBlock = await hre.ethers.provider.getBlock("latest");
+  const currentBlock = await hre.ethers.provider.getBlock("latest");  
 
   // router routes to the proper pair
   await (await router.connect(user).addLiquidity(

@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
-import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc } from "../test/helpers/common";
-import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/Helpers";
+import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapFactory, getUniswapRouter, getWbtc, getWeth, mintWbtc } from "../utils/DeployedContractsHelpers";
+import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
 import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";

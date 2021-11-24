@@ -1,28 +1,47 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import * as constants from '../utils/Constants'
+import { getBdEu, getBdx, getDeployer, getUniswapFactory } from '../utils/DeployedContractsHelpers';
+
+async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string, addressA: string, addressB: string) {
+    const deployer = await getDeployer(hre);
+    const uniswapFactory = await getUniswapFactory(hre);
+    
+    const uniswapV2Factory = await hre.deployments.deploy(`UniswapPairOracle_${nameA}_${nameB}`, {
+        from: deployer.address,
+        contract: "UniswapPairOracle",
+        args: [uniswapFactory.address, addressA, addressB, deployer.address]
+    });  
+}
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("starting deployment: liquidity pools");
 
-    const bdx = await hre.deployments.get('BDXShares')
-    const bdeu = await hre.deployments.get('BDEU')
-    const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
+    const bdx = await getBdx(hre);
+    const bdeu = await getBdEu(hre);
+    const factory = await getUniswapFactory(hre);
 
-    await (await uniswapFactoryContract.createPair(bdx.address, bdeu.address)).wait();
+    const wethAddress = constants.wETH_address[hre.network.name];
+    const wbtcAddress = constants.wBTC_address[hre.network.name];
+
+    await (await factory.createPair(bdx.address, bdeu.address)).wait();
+    await deployPairOracle(hre, "BDX", "BDEU", bdx.address, bdeu.address);
     console.log("created bdx bdeu pair");
 
-    await (await uniswapFactoryContract.createPair(bdx.address, constants.wETH_address[hre.network.name])).wait();
+    await (await factory.createPair(bdx.address, wethAddress)).wait();
+    await deployPairOracle(hre, "BDX", "WETH", bdx.address, wethAddress);
     console.log("created bdx weth pair");
 
-    await (await uniswapFactoryContract.createPair(bdx.address, constants.wBTC_address[hre.network.name])).wait();
+    await (await factory.createPair(bdx.address, wbtcAddress)).wait();
+    await deployPairOracle(hre, "BDX", "WBTC", bdx.address, wbtcAddress);
     console.log("created bdx wbtc pair");
 
-    await (await uniswapFactoryContract.createPair(bdeu.address, constants.wETH_address[hre.network.name])).wait();
+    await (await factory.createPair(bdeu.address, wethAddress)).wait();
+    await deployPairOracle(hre, "BDEU", "WETH", bdeu.address, wethAddress);
     console.log("created bdeu weth pair");
 
-    await (await uniswapFactoryContract.createPair(bdeu.address, constants.wBTC_address[hre.network.name])).wait();
+    await (await factory.createPair(bdeu.address, wbtcAddress)).wait();
+    await deployPairOracle(hre, "BDEU", "WBTC", bdeu.address, wbtcAddress);
     console.log("created bdeu wbtc pair");
 
     console.log("finished deployment: liquidity pools");

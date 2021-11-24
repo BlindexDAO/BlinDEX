@@ -1,8 +1,8 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdLens, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapFactory, getUniswapPair, getUniswapRouter, getVesting, getWbtc, getWeth } from "../test/helpers/common";
+import { getBdEu, getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/Helpers";
-import { getPools, updateOracles } from "../utils/SystemSetup";
+import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
+import { getPools, updateOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { IPriceFeed } from "../typechain/IPriceFeed";
@@ -29,9 +29,10 @@ export function load() {
       console.log("setting consultLeniency to: " + newVal);
 
       for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         console.log(`starting for ${pool[0].name} / ${pool[1].name}`);
-        await (await pair.setConsultLeniency(newVal)).wait();
+        
+        await (await oracle.setConsultLeniency(newVal)).wait();
         console.log("pool done");
       }
       console.log("all done");
@@ -42,8 +43,9 @@ export function load() {
     .setAction(async ({ enable }, hre) => {
       const pools = await getPools(hre);
       for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        await(await pair.setAllowStaleConsults(enable == 0 ? false : true)).wait();
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        
+        await(await oracle.setAllowStaleConsults(enable == 0 ? false : true)).wait();
         console.log(`oracle ${pool[0].name} / ${pool[1].name} allow stale consults = ${enable}`);
       }
     });
@@ -94,8 +96,8 @@ export function load() {
     .setAction(async (args, hre) => {
       const pools = await getPools(hre);
       for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        const validFor = await pair.when_should_update_oracle_in_seconds();
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        const validFor = await oracle.when_should_update_oracle_in_seconds();
         console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
       }
     });
@@ -126,17 +128,6 @@ export function load() {
 
       console.log("deployer: " + deployer.address);
       console.log("treasury: " + treasury.address);
-    });
-
-  task("show:bdstables")
-    .setAction(async (args, hre) => {
-      const bdLens = await getBdLens(hre);
-
-      const stables = await bdLens.AllBdStables()
-
-      for (let stable of stables) {
-        console.log(`${stable.fiat} ${stable.token}`);
-      }
     });
 
   task("show:rsk-eur-usd")
@@ -194,5 +185,12 @@ export function load() {
       const feed =  SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
       const shouldUpdate = await feed.shouldUpdateOracle();
       console.log("should update: " + shouldUpdate);
+    });
+
+  task("show:bdeu-ef-bdx-cov")
+    .setAction(async (args, hre) => {
+      const bdeu = await getBdEu(hre);
+      const efBdxCov = await bdeu.get_effective_bdx_coverage_ratio();
+      console.log("BEDU efBDXCov: " + d12_ToNumber(efBdxCov));
     });
 }

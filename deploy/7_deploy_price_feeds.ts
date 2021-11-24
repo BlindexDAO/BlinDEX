@@ -3,12 +3,12 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { OracleBasedCryptoFiatFeed } from '../typechain/OracleBasedCryptoFiatFeed';
 import * as constants from '../utils/Constants'
-import { getWethPair } from '../utils/Swaps'
+import { getWethPair, getWethPairOracle } from '../utils/DeployedContractsHelpers'
 import { BDStable } from '../typechain/BDStable';
 import { ICryptoPairOracle } from '../typechain/ICryptoPairOracle';
 import { BdStablePool } from '../typechain/BdStablePool';
 import { DeployResult } from 'hardhat-deploy/dist/types';
-import { to_d12 } from '../utils/Helpers';
+import { to_d12 } from '../utils/NumbersHelpers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: price feeds");
@@ -71,7 +71,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);
 
-    //todo ag replace with a better implementaion (price from uniswap3?)
+    // if deployed on ETH, probably we should replace with a better implementaion (price from uniswap3?)
+    // chainlink has big lag
     btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
       from: deployer,
       contract: "BtcToEthOracleChinlink",
@@ -92,11 +93,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (await bdeu.setETH_fiat_Oracle(oracleBasedCryptoFiatFeed_ETH_EUR.address)).wait();
   console.log(`Added WETH EUR oracle to BDEU`)
 
-  const bdxWethOracle = await getWethPair(hre,"BDXShares");
+  const bdxWethOracle = await getWethPairOracle(hre,"BDX");
   await (await bdeu.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDX ETH Uniswap oracle`);
 
-  const bdeuWethOracle = await getWethPair(hre,"BDEU");
+  const bdeuWethOracle = await getWethPairOracle(hre,"BDEU");
   await (await bdeu.setBDStable_WETH_Oracle(bdeuWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDEU ETH Uniswap oracle`);
 

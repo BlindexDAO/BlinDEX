@@ -1,4 +1,5 @@
 // Dirty hack to enforce hardhat-deploy-ethers type precedence over hardhat-ethers, while making hardhat-deploy-ethers extendEnvironment function execute last 
+// import type * as deployEthers from "hardhat-deploy-ethers";
 import type * as deployEthers from "hardhat-deploy-ethers";
 
 import { HardhatUserConfig } from "hardhat/config";
@@ -6,7 +7,7 @@ import "@nomiclabs/hardhat-ethers";
 import '@openzeppelin/hardhat-upgrades';
 import "hardhat-deploy-ethers";
 import 'hardhat-deploy';
-import "hardhat-typechain";
+import '@typechain/hardhat';
 import "@nomiclabs/hardhat-waffle";
 import dotenv from 'dotenv'
 import * as setupTasks from "./tasks/setup"
@@ -63,7 +64,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.6.11",
+        version: "0.5.16",
         settings: {
           optimizer: {
             enabled: true,
@@ -72,15 +73,24 @@ const config: HardhatUserConfig = {
         }
       },
       {
-        version: "0.8.0",
+        version: "0.6.6",
         settings: {
           optimizer: {
             enabled: true,
             runs: 200
           }
         }
-      }
-    ]
+      },
+      {
+        version: "0.6.11",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      },
+    ],
   },
   mocha: {
     timeout: 20000000
@@ -88,6 +98,21 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
+    externalArtifacts: [
+      './node_modules/@uniswap/v2-core/build/UniswapV2Pair.json',
+      './node_modules/@uniswap/v2-core/build/UniswapV2Pair__factory.json',
+      './node_modules/@uniswap/v2-core/build/UniswapV2Factory.json',
+      './node_modules/@uniswap/v2-core/build/UniswapV2Factory__factory.json',
+      './node_modules/@uniswap/v2-periphery/build/UniswapV2Router02.json',
+      './node_modules/@uniswap/v2-periphery/build/UniswapV2Router02__factors.json'
+    ]
+  },
+  external: {
+    contracts: [{
+      artifacts: 'node_modules/@uniswap/v2-core/build'
+    }, {
+      artifacts: 'node_modules/@uniswap/v2-periphery/build'
+    }]
   },
   namedAccounts: {
 
