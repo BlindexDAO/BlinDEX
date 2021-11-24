@@ -400,15 +400,11 @@ contract StakingRewards is
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwner {
         // Admin cannot withdraw the staking token from the contract
         require(tokenAddress != address(stakingToken));
-        ERC20(tokenAddress).transfer(owner(), tokenAmount);
+        ERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
     function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyByOwner {
-        require(
-            periodFinish == 0 || block.timestamp > periodFinish,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
         rewardsDurationSeconds = _rewardsDurationSeconds;
         emit RewardsDurationUpdated(rewardsDurationSeconds);
     }
