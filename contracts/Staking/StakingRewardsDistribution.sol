@@ -106,16 +106,23 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function resetRewardsWeights() external onlyByOwner {
-        for(uint i = 0; i < stakingRewardsAddresses.length; i++){
-            stakingRewardsWeights[stakingRewardsAddresses[i]] = 0;
+    function unregisterPool(address pool, uint256 from, uint256 to) external onlyByOwner {
+        to = to < stakingRewardsAddresses.length
+            ? to
+            : stakingRewardsAddresses.length;
+
+        stakingRewardsWeightsTotal -= stakingRewardsWeights[pool];
+        stakingRewardsWeights[pool] = 0;
+
+        for(uint256 i = from; i < to; i++){
+            if(stakingRewardsAddresses[i] == pool){
+                stakingRewardsAddresses[i] = stakingRewardsAddresses[stakingRewardsAddresses.length-1];
+                stakingRewardsAddresses.pop();
+
+                emit PoolRemoved(pool);
+                return;
+            }
         }
-
-        stakingRewardsWeightsTotal = 0;
-
-        delete stakingRewardsAddresses;
-
-        emit RewardsWeightsReset();
     }
 
     function releaseReward(address to, uint256 reward) external onlyStakingRewards returns(uint256 immediatelyReleasedReward) {
@@ -144,6 +151,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     // ---------- EVENTS ----------
-    event RewardsWeightsReset();
-    event PoolRegistered(address stakingRewardsAddress, uint stakingRewardsWeight);
+    event PoolRemoved(address indexed pool);
+    event PoolRegistered(address indexed stakingRewardsAddress, uint indexed stakingRewardsWeight);
 }

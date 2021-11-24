@@ -8,10 +8,6 @@ import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import * as constants from '../utils/Constants'
-import { WETH } from "../typechain/WETH";
-import { BdStablePool } from "../typechain/BdStablePool";
-import { provideLiquidity } from "../test/helpers/swaps";
 
 const fs = require('fs');
 
@@ -20,12 +16,7 @@ export function load() {
     // generl purpose task to run any ad-hoc job
     task("run:job")
         .setAction(async (args, hre) => {
-           const deployer = await getDeployer(hre);
-           
-           const wethOld =  await hre.ethers.getContractAt("WETH", "0x967F8799aF07dF1534d48A95a5C9FEBE92c53AE0") as WETH;
-           const balance = await wethOld.balanceOf(deployer.address);
-           console.log("balance: " + balance);
-           await (await wethOld.withdraw(balance, {gasLimit: 100000})).wait();
+
         });
 
     task("accounts", "Prints the list of accounts", async (args, hre) => {
