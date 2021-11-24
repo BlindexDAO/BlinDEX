@@ -27,8 +27,6 @@ contract StakingRewards is
 
     uint256 public constant REWARD_PRECISION = 1e18;
 
-    uint256 private DeploymentTimestamp;
-
     uint256 private constant _REENTRY_GUARD_NOT_ENTERED = 1;
     uint256 private constant _REENTRY_GUARD_ENTERED = 2;
 
@@ -86,7 +84,6 @@ contract StakingRewards is
 
         stakingToken = ERC20(_stakingToken);
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
-        DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
         rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
