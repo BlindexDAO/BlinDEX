@@ -12,7 +12,7 @@ import { SovrynSwapPriceFeed__factory } from '../typechain/factories/SovrynSwapP
 import { Signer, BigNumber } from 'ethers';
 import { SignerWithAddress } from 'hardhat-deploy-ethers/dist/src/signers';
 import { ISovrynLiquidityPoolV1Converter__factory } from '../typechain/factories/ISovrynLiquidityPoolV1Converter__factory';
-import { RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS } from "../utils/Constants";
+import { RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS } from "../utils/Constants";
 
 export function load() {
 
@@ -164,9 +164,9 @@ export function load() {
     task("show:rsk-btc-usd-sovryn")
     .setAction(async (args, hre) => {
       const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
-      const feed =  ISovrynLiquidityPoolV1Converter__factory.connect(RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS, await hre.ethers.getSigner(updater))
+      const feed =  ISovrynLiquidityPoolV1Converter__factory.connect(RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, await hre.ethers.getSigner(updater))
       const tokenSource = '0x542fda317318ebf1d3deaf76e0b632741a7e677d';
-      const targetToken = constants.XUSD_ADDRESS;
+      const targetToken = constants.RSK_XUSD_ADDRESS;
       const [amountMinusFee, fee] = (await feed.targetAmountAndFee(tokenSource, targetToken, 1e12));
       console.log(`BTC/USD: ${amountMinusFee}, fee: ${fee}, amount with fee: ${amountMinusFee.add(fee)}`);
     });

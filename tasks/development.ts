@@ -9,7 +9,7 @@ import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPo
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import { WETH } from "../typechain/WETH";
-import { ETHS_ADDRESS, WRBTC_ADDRESS, XUSD_ADDRESS } from '../utils/Constants';
+import { RSK_ETHS_ADDRESS, RSK_WRBTC_ADDRESS, RSK_XUSD_ADDRESS } from '../utils/Constants';
 
 const fs = require('fs');
 
@@ -226,7 +226,7 @@ export function load() {
             }
             
             
-            await run(ETHS_ADDRESS, WRBTC_ADDRESS, "eth", "btc");
-            await run(XUSD_ADDRESS, WRBTC_ADDRESS, "usd", "btc");
+            await run(RSK_ETHS_ADDRESS, RSK_WRBTC_ADDRESS, "eth", "btc");
+            await run(RSK_XUSD_ADDRESS, RSK_WRBTC_ADDRESS, "usd", "btc");
         });
 }

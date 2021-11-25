@@ -76,10 +76,10 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function updateOracleWithVerification(uint verificationPrice_d12) public onlyUpdater {
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
-        uint256 amount = amountMinusFee.add(fee);
-        uint256 priceDifference = verificationPrice_d12 > amount ? verificationPrice_d12.sub(amount) : amount.sub(verificationPrice_d12);
-        require(priceDifference.mul(PRECISION).div(amount) < priceDisparityTolerance_d12, "Price disparity too big");
-        oraclePrice = amountMinusFee.add(fee);
+        uint256 newPrice = amountMinusFee.add(fee);
+        uint256 priceDifference = verificationPrice_d12 > newPrice ? verificationPrice_d12.sub(newPrice) : newPrice.sub(verificationPrice_d12);
+        require(priceDifference.mul(PRECISION).div(newPrice) < priceDisparityTolerance_d12, "Price disparity too big");
+        oraclePrice = newPrice;
         updateTimestamp = block.timestamp;
         emit PriceChanged(oraclePrice);
     }

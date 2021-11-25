@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { OracleBasedCryptoFiatFeed } from '../typechain/OracleBasedCryptoFiatFeed';
 import * as constants from '../utils/Constants'
-import { getWethPair, getWethPairOracle } from '../utils/DeployedContractsHelpers'
+import { getBot, getDeployer, getWethPair, getWethPairOracle } from '../utils/DeployedContractsHelpers'
 import { BDStable } from '../typechain/BDStable';
 import { ICryptoPairOracle } from '../typechain/ICryptoPairOracle';
 import { BdStablePool } from '../typechain/BdStablePool';
@@ -14,8 +14,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: price feeds");
 
   const networkName = hre.network.name;
-  const deployer = (await hre.getNamedAccounts()).DEPLOYER;
-  const bot = (await hre.getNamedAccounts()).BOT;
+  const deployer = await getDeployer(hre);
+  const bot = await getBot(hre);
   const bdeu = await hre.ethers.getContract("BDEU") as BDStable;
 
   let priceFeed_EUR_USD_Deployment : DeployResult;
@@ -34,9 +34,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer,
       contract: "SovrynSwapPriceFeed",
       args: [
-        constants.RSK_SOVRYN_xUSDT_wrBTC_SWAP_ADDRESS,
+        constants.RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS,
         constants.wETH_address[hre.network.name], // it's actually wrBTC (on RSK)
-        constants.XUSD_ADDRESS,
+        constants.RSK_XUSD_ADDRESS,
         1e12,
         bot,
         60 * 10, //10min
