@@ -179,7 +179,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     function weth_fiat_price() public view returns (uint256) {
-        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(1e12);
+        return uint256(weth_fiat_pricer.getPrice_1e12());
     }
     
     function canLegallyRedeem(address who) external view returns (bool) {
@@ -359,7 +359,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyByOwner {
-        require(wantedCR_d12 >=0 && wantedCR_d12 <=1e12, "CR must be <0;1>");
+        require(wantedCR_d12 >=0 && wantedCR_d12 <= BdPoolLibrary.COLLATERAL_RATIO_MAX, "CR must be <0;1>");
 
         global_collateral_ratio_d12 = wantedCR_d12;
         collateral_ratio_paused = true;
