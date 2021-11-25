@@ -23,6 +23,11 @@ export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   return deployer;
 }
 
+export async function getBot(hre: HardhatRuntimeEnvironment) {
+  const bot = await hre.ethers.getNamedSigner('BOT');
+  return bot;
+}
+
 export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   const user = await hre.ethers.getNamedSigner('TEST2');
   return user;
