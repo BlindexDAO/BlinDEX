@@ -2,11 +2,11 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "../Bdx/BDXShares.sol";
 import "../Oracle/IOracleBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
@@ -14,21 +14,16 @@ import "./Pools/BdStablePool.sol";
 import "../ERC20/ERC20Custom.sol";
 import "./Pools/BdPoolLibrary.sol";
 
-contract BDStable is ERC20Custom, Initializable {
-    using SafeMath for uint256;
+contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
     enum PriceChoice { BDSTABLE, BDX }
 
-    uint8 public constant decimals = 18;
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
     uint256 public unclaimedPoolsBDX;
 
-    string public symbol;
-    string public name;
     string public fiat;
-    address public owner_address;
     address public treasury_address; // used by pools
     IERC20 private BDX;
 
@@ -67,15 +62,10 @@ contract BDStable is ERC20Custom, Initializable {
        require(bdstable_pools[msg.sender] == true, "Only bd pools can call this function");
         _;
     } 
-    
-    modifier onlyByOwner() {
-        require(msg.sender == owner_address, "You are not the owner");
-        _;
-    }
 
-    modifier onlyByOwnerOrPool() {
+    modifier onlyOwnerOrPool() {
         require(
-            msg.sender == owner_address 
+            msg.sender == owner()
             || bdstable_pools[msg.sender] == true, 
             "You are not the owner or a pool");
         _;
@@ -87,18 +77,17 @@ contract BDStable is ERC20Custom, Initializable {
         string memory _name,
         string memory _symbol,
         string memory _fiat,
-        address _owner_address,
         address _treasury_address,
         address _bdx_address,
         uint256 _initalBdStableToOwner_d18
     ) 
-        public 
+        external 
         initializer
     {
-        name = _name;
-        symbol = _symbol;
+        __ERC20_init(_name, _symbol);
+        __Ownable_init();
+
         fiat = _fiat;
-        owner_address = _owner_address;
         treasury_address = _treasury_address;
         BDX = IERC20(_bdx_address);
 
@@ -109,7 +98,7 @@ contract BDStable is ERC20Custom, Initializable {
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
 
         if(_initalBdStableToOwner_d18 > 0) {
-            _mint(_owner_address, _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps
+            _mint(owner(), _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps
         }
     }
 
@@ -288,7 +277,7 @@ contract BDStable is ERC20Custom, Initializable {
 
     // Used by pools when user redeems
     function pool_burn_from(address b_address, uint256 b_amount) public onlyPools {
-        super.burnFrom(b_address, b_amount);
+        burnFrom(b_address, b_amount);
 
         emit BdStableBurned(b_address, msg.sender, b_amount);
     }
@@ -303,7 +292,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     // Adds collateral addresses supported, such as tether and busd, must be ERC20 
-    function addPool(address pool_address) external onlyByOwner {
+    function addPool(address pool_address) external onlyOwner {
         require(bdstable_pools[pool_address] == false, "pool already exists");
         require(bdstable_pools_array.length < MAX_NUMBER_OF_POOLS, "pools limit reached");
 
@@ -314,7 +303,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     // Remove a pool 
-    function removePool(address pool_address) external onlyByOwner {
+    function removePool(address pool_address) external onlyOwner {
         require(bdstable_pools[pool_address] == true, "address doesn't exist already");
         
         delete bdstable_pools[pool_address];
@@ -331,51 +320,51 @@ contract BDStable is ERC20Custom, Initializable {
         emit PoolRemoved(pool_address);
     }
 
-    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) external onlyByOwner {
+    function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) external onlyOwner {
         bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
         weth_address = _weth_address;
 
         emit BDStableWETHOracleSet(_bdstable_oracle_addr, _weth_address);
     }
 
-    function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) external onlyByOwner {
+    function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) external onlyOwner {
         bdxWethOracle = ICryptoPairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
 
         emit BDXWETHOracleSet(_bdx_oracle_addr, _weth_address);
     }
     
-    function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyByOwner {
+    function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyOwner {
         weth_fiat_pricer = IOracleBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         
         emit EthFiatOracleSet(_eth_fiat_consumer_address);
     }
 
-    function setBdStable_step_d12(uint256 _bdStable_step_d12) external onlyByOwner {
+    function setBdStable_step_d12(uint256 _bdStable_step_d12) external onlyOwner {
         bdStable_step_d12 = _bdStable_step_d12;
 
         emit BdStableStepSet(_bdStable_step_d12);
     }
 
-    function set_price_target_d12(uint256 _price_target_d12) external onlyByOwner {
+    function set_price_target_d12(uint256 _price_target_d12) external onlyOwner {
         price_target_d12 = _price_target_d12;
 
         emit PriceTargetSet(_price_target_d12);
     }
 
-    function set_price_band_d12(uint256 _price_band_d12) external onlyByOwner {
+    function set_price_band_d12(uint256 _price_band_d12) external onlyOwner {
         price_band_d12 = _price_band_d12;
 
         emit PriceBandSet(_price_band_d12);
     }
 
-    function toggleCollateralRatioPaused() external onlyByOwner {
+    function toggleCollateralRatioPaused() external onlyOwner {
         collateral_ratio_paused = !collateral_ratio_paused;
 
         emit CollateralRatioPausedToggled(collateral_ratio_paused);
     }
 
-    function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyByOwner {
+    function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyOwner {
         require(wantedCR_d12 <= BdPoolLibrary.COLLATERAL_RATIO_MAX, "CR must be <0;1>");
 
         global_collateral_ratio_d12 = wantedCR_d12;
@@ -384,19 +373,12 @@ contract BDStable is ERC20Custom, Initializable {
         emit CollateralRatioLocked(wantedCR_d12);
     }
 
-    function setTreasury_address(address _treasury_address) external onlyByOwner {
+    function setTreasury_address(address _treasury_address) external onlyOwner {
         treasury_address = _treasury_address;
     }
 
-    function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyByOwner{
+    function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner{
         minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
-    }
-
-    function setOwner(address _owner_address) external onlyByOwner {
-        require(_owner_address != address(0), "New owner can't be zero address");
-
-        owner_address = _owner_address;
-        emit OwnerSet(_owner_address);
     }
 
     function pool_claim_bdx(uint256 amount) public onlyPools {
@@ -408,7 +390,7 @@ contract BDStable is ERC20Custom, Initializable {
         BDX.safeTransfer(to, amount);
     }
 
-    function transfer_bdx(address to, uint256 BDX_amount) external onlyByOwnerOrPool {
+    function transfer_bdx(address to, uint256 BDX_amount) external onlyOwnerOrPool {
         require(
             BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX) >= BDX_amount,
             "Not enough BDX"
@@ -417,13 +399,19 @@ contract BDStable is ERC20Custom, Initializable {
         BDX.safeTransfer(to, BDX_amount);
     }
 
-    function transfer_bdx_force(address to, uint256 BDX_amount) external onlyByOwner {
+    function transfer_bdx_force(address to, uint256 BDX_amount) external onlyOwner {
         BDX.safeTransfer(to, BDX_amount);
+    }
+
+    function burnFrom(address account, uint256 amount) public virtual {
+        uint256 decreasedAllowance = allowance(account, _msgSender()).sub(amount, "ERC20: burn amount exceeds allowance");
+
+        super._approve(account, _msgSender(), decreasedAllowance);
+        super._burn(account, amount);
     }
 
     /* ========== EVENTS ========== */
     
-    event OwnerSet(address indexed newOwner);
     event CollateralRatioRefreshed(uint256 global_collateral_ratio);
     event BdStableBurned(address indexed from, address indexed to, uint256 amount);
     event BdStableMinted(address indexed from, address indexed to, uint256 amount);
