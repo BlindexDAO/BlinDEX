@@ -186,6 +186,23 @@ contract BDStable is ERC20Custom, Initializable {
         return block.number.sub(lastMintByUserBlock[who]) >= minimumMintRedeemDelayInBlocks;
     }
 
+    // Returns the value of excess collateral held in all BdStablePool related to this BdStable, compared to what is needed to maintain the global collateral ratio
+    function availableExcessCollatDV() external view returns (uint256) {
+        uint256 total_supply = totalSupply();
+        uint256 global_collat_value = globalCollateralValue();
+
+        // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
+        uint256 required_collat_fiat_value_d18 = total_supply
+            .mul(global_collateral_ratio_d12)
+            .div(BdPoolLibrary.COLLATERAL_RATIO_MAX); 
+
+        if (global_collat_value > required_collat_fiat_value_d18) {
+            return global_collat_value.sub(required_collat_fiat_value_d18);
+        } else {
+            return 0;
+        }
+    }
+
     /* ========== PUBLIC FUNCTIONS ========== */
 
     function when_should_refresh_collateral_ratio_in_seconds() public view returns (uint256) {
