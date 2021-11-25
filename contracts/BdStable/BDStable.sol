@@ -359,7 +359,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyByOwner {
-        require(wantedCR_d12 >=0 && wantedCR_d12 <= BdPoolLibrary.COLLATERAL_RATIO_MAX, "CR must be <0;1>");
+        require(wantedCR_d12 <= BdPoolLibrary.COLLATERAL_RATIO_MAX, "CR must be <0;1>");
 
         global_collateral_ratio_d12 = wantedCR_d12;
         collateral_ratio_paused = true;

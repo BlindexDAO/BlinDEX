@@ -136,7 +136,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {
-        require(0 <= _vestingRewardRatio && _vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
+        require(_vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
     }
 
