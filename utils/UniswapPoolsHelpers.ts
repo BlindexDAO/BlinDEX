@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IERC20 } from "../typechain/IERC20";
+import { IWETH } from "../typechain/IWETH";
 import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20 } from "./DeployedContractsHelpers";
 
 export async function updateOracles(hre: HardhatRuntimeEnvironment) {
@@ -58,7 +59,7 @@ export async function resetOracle(
     await (await oracle.reset()).wait();
 }
 
-export async function getPools(hre: HardhatRuntimeEnvironment) {
+export async function getPools(hre: HardhatRuntimeEnvironment) : Promise<{name: string, token: IERC20}[][]> {
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
     const bdx = await getBdx(hre);

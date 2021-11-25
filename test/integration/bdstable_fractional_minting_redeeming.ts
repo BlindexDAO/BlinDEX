@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getDeployer, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 
@@ -55,7 +55,7 @@ describe("BDStable fractional", () => {
         await lockBdEuCrAt(hre, cr);
 
         await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
-        await weth.connect(testUser).deposit({ value: to_d18(100) });
+        await mintWeth(hre, testUser, to_d18(100));
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
         const bdEuBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
@@ -118,7 +118,7 @@ describe("BDStable fractional", () => {
         await lockBdEuCrAt(hre, cr);
 
         await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
-        await weth.connect(testUser).deposit({ value: to_d18(100) });
+        await mintWeth(hre, testUser, to_d18(100));
 
         const poolWethBalanceBeforeMinting_d18 = await weth.balanceOf(bdEuPool.address);
         const bdEuBalanceBeforeMinting_d18 = await bdEu.balanceOf(testUser.address);
@@ -186,7 +186,7 @@ describe("BDStable fractional", () => {
         expect(d12_ToNumber(efCR_d12)).to.be.gt(cr, "we want efCR > CR, for test purposes"); // test valitation
 
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
-        await weth.connect(testUser).deposit({ value: to_d18(100) });
+        await mintWeth(hre, testUser, to_d18(100));
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -254,7 +254,7 @@ describe("BDStable fractional", () => {
         expect(d12_ToNumber(efCR_d12)).to.be.lt(cr, "we want efCR < CR, for test purposes"); // test valitation
 
         await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
-        await weth.connect(testUser).deposit({ value: to_d18(100) });
+        await mintWeth(hre, testUser, to_d18(100));
 
         const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
         const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -319,7 +319,7 @@ describe("BDStable fractional", () => {
 
         // calculate how much is needed to mint
         await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
-        await weth.connect(testUser).deposit({ value: to_d18(100) });
+        await mintWeth(hre, testUser, to_d18(100));
 
         // setup bdEu so it's illegal to redeem for testUser
         await performFractionalMinting(testUser, to_d18(0.1), to_d18(100));   

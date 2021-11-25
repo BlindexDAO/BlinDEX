@@ -6,15 +6,15 @@ import { BDStable } from "../../typechain/BDStable";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber } from '../../utils/NumbersHelpers';
-import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWeth } from "../../utils/DeployedContractsHelpers"
+import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWeth, mintWeth } from "../../utils/DeployedContractsHelpers"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { Vesting } from "../../typechain/Vesting";
-import { WETH } from "../../typechain/WETH";
 import { StakingRewards } from "../../typechain/StakingRewards";
+import { IERC20 } from "../../typechain/IERC20";
 
 chai.use(cap);
 
@@ -29,7 +29,7 @@ let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 
-let weth: WETH;
+let weth: IERC20;
 let bdEu: BDStable;
 let bdx: BDXShares;
 let stakingRewards_BDEU_WETH: StakingRewards;
@@ -82,8 +82,8 @@ describe("StakingRewards", () => {
 
     it("should get first reward", async () => {
       // provide some initial weth for the users
-      await weth.connect(testUser1).deposit({ value: to_d18(100) });
-      await weth.connect(testUser2).deposit({ value: to_d18(100) });
+      await mintWeth(hre, testUser1, to_d18(100));
+      await mintWeth(hre, testUser2, to_d18(100));
 
       // deployer gives some bdeu to users so they can stake
       await bdEu.transfer(testUser1.address, to_d18(100));
@@ -187,8 +187,8 @@ describe("StakingRewards", () => {
       const user1LockBonusMultiplier = 10;
 
       // provide some initaila weth for the users
-      await weth.connect(testUser1).deposit({ value: to_d18(100) });
-      await weth.connect(testUser2).deposit({ value: to_d18(100) });
+      await mintWeth(hre, testUser1, to_d18(100));
+      await mintWeth(hre, testUser2, to_d18(100));
 
       // deployer gives some bdeu to users so they can stake
       await bdEu.transfer(testUser1.address, to_d18(100));
@@ -286,7 +286,7 @@ describe('Staking - withdrawLocked', () => {
 
   it("should remove stakes when withdrawn", async () => {
     // provide some initaila weth for the users
-    await weth.connect(testUser1).deposit({ value: to_d18(100) });
+    await mintWeth(hre, testUser1, to_d18(100));
 
     // deployer gives some bdeu to users so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
@@ -326,7 +326,7 @@ describe('locking an unlocked stake', () => {
 
   it('shuld lock an unlocked stake', async () => {
     // provide some initial weth for the users
-    await weth.connect(testUser1).deposit({ value: to_d18(100) });
+    await mintWeth(hre, testUser1, to_d18(100));
 
     // deployer gives some bdeu to the uses so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
@@ -370,7 +370,7 @@ describe('getReward interaction with vesting contract', () => {
 
   it('should transfer only fraction of total rewards', async () => {
     // provide some initaila weth for the users
-    await weth.connect(testUser1).deposit({ value: to_d18(100) });
+    await mintWeth(hre, testUser1, to_d18(100));
 
     // deployer gives some bdeu to users so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));

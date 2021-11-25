@@ -3,10 +3,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable } from "../../typechain/BDStable";
 import { bigNumberToDecimal, d18_ToNumber, to_d18, to_d8 } from "../../utils/NumbersHelpers";
 import * as constants from '../../utils/Constants';
-import { WETH } from "../../typechain/WETH";
+import { IWETH } from "../../typechain/IWETH";
 import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import { ERC20 } from "../../typechain/ERC20";
-import { getWethPairOracle } from "../../utils/DeployedContractsHelpers";
+import { getWethPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import { BigNumber } from "ethers";
@@ -27,8 +27,8 @@ export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: 
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");
 
-  const weth = await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], testUser.address) as WETH;
-  await weth.deposit({ value: to_d18(100) });
+  const weth = await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], testUser.address) as IWETH;
+  await mintWeth(hre, testUser, to_d18(100));
 
   await weth.approve(uniswapV2Router02.address, to_d18(wEthToSwap));
   await uniswapV2Router02.swapExactTokensForTokens(
@@ -132,8 +132,8 @@ export async function getPrices(hre: HardhatRuntimeEnvironment, bdStableName: st
 export async function provideLiquidity(
   hre: HardhatRuntimeEnvironment,
   user: SignerWithAddress,
-  tokenA: IERC20 | WETH,
-  tokenB: IERC20 | WETH,
+  tokenA: IERC20,
+  tokenB: IERC20,
   amountA: BigNumber,
   amountB: BigNumber
 ){

@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getTreasury, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getTreasury, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
@@ -314,7 +314,7 @@ export async function perform1To1MintingForWeth(hre: HardhatRuntimeEnvironment, 
   
     const weth = await getWeth(hre);
   
-    await weth.connect(user).deposit({ value: to_d18(1000) });
+    await mintWeth(hre, user, to_d18(1000));
     await weth.connect(user).approve(bdEuPool.address, to_d18(collateralAmount));
     await bdEuPool.connect(user).mint1t1BD(to_d18(collateralAmount), to_d18(1), false, {});
 }

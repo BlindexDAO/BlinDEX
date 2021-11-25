@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
-import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
@@ -129,7 +129,7 @@ export function load() {
       const bdx = await getBdx(hre);
       const bdeu = await getBdEu(hre);
 
-      await weth.deposit({ value: to_d18(200) });
+      await mintWeth(hre, deployer, to_d18(200));
       await mintWbtc(hre, deployer, to_d18(100))
 
       const testUserAddress = "0xED3622f02b1619d397502a9FFF1dfe3d0fB2988c";

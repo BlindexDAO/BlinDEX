@@ -15,8 +15,8 @@ import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { bigNumberToDecimal, to_d12 } from "./NumbersHelpers";
 import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
 import { Vesting } from "../typechain/Vesting";
-import { WETH } from "../typechain/WETH";
 import { UniswapPairOracle } from "../typechain/UniswapPairOracle";
+import { IWETH } from '../typechain/IWETH';
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
@@ -80,7 +80,12 @@ export async function getBdx(hre: HardhatRuntimeEnvironment){
 
 export async function getWeth(hre: HardhatRuntimeEnvironment){
   const deployer = await getDeployer(hre);
-  return await hre.ethers.getContractAt("WETH", constants.wETH_address[hre.network.name], deployer) as WETH;
+  return await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer) as IERC20;
+}
+
+export async function getWethConcrete(hre: HardhatRuntimeEnvironment){
+  const deployer = await getDeployer(hre);
+  return await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer) as IWETH;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment){
@@ -105,6 +110,11 @@ export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithA
   await(await uniRouter.swapExactETHForTokens(0, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], user.address,  Date.now() + 3600, {
     value: amount_in_eth_d18
   })).wait();
+}
+
+export async function mintWeth(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount: BigNumber){
+  const weth = await getWethConcrete(hre);
+  await weth.connect(user).deposit({ value: amount});
 }
 
 export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment){

@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/NumbersHelpers"
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser, getOnChainEthEurPrice } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser, getOnChainEthEurPrice, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystem } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import * as constants from '../../utils/Constants';
@@ -35,7 +35,7 @@ describe("Recollateralization", () => {
 
         await lockBdEuCrAt(hre, 0.7);
 
-        await weth.connect(testUser).deposit({value: to_d18(100)  });
+        await mintWeth(hre, testUser, to_d18(100));
 
         const wethPoolBalanceBeforeRecolat_d18 = await weth.balanceOf(bdEuWethPool.address);
         const wethUserBalanceBeforeRecolat_d18 = await weth.balanceOf(testUser.address);
@@ -97,7 +97,7 @@ describe("Recollateralization", () => {
 
         await lockBdEuCrAt(hre, 0.9); // CR
 
-        await weth.connect(testUser).deposit({value: to_d18(100)  });
+        await mintWeth(hre, testUser, to_d18(100));
 
         const bdEuWethPool = await getBdEuWethPool(hre);
 
@@ -144,7 +144,7 @@ describe("Recollateralization", () => {
         const bdxToRemoveFromBdEu_d18 = (await bdx.balanceOf(bdEu.address)).sub(bdxLeftInBdEu_d18);
         await bdEu.transfer_bdx(deployer.address, bdxToRemoveFromBdEu_d18); // deployer takes bdx form bdEu to decrease effective BDX CR
 
-        await weth.connect(testUser).deposit({value: to_d18(100)});
+        await mintWeth(hre, testUser, to_d18(100));
 
         const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
         expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation

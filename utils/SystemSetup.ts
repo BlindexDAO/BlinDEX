@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { numberToBigNumberFixed, to_d12, to_d18 } from "./NumbersHelpers";
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice, getUniswapPairOracle, getIERC20, getERC20, getDeployer, getTreasury } from "./DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice, getUniswapPairOracle, getIERC20, getERC20, getDeployer, getTreasury, getWethConcrete, mintWeth } from "./DeployedContractsHelpers";
 import * as constants from './Constants';
 import { resetOracles, updateOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
@@ -22,7 +22,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
 
     if(forIntegrationTests) {
       // mint initial WETH
-      await weth.deposit({ value: to_d18(100) });
+      await mintWeth(hre, deployer, to_d18(100));
       // mint inital WBTC
       await mintWbtc(hre, deployer, to_d18(1000));
     }
@@ -34,8 +34,13 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
     const initialWethBdxPrice = initialWethBdEuPrice / initialBdxBdEuPrice;
     const initialWbtcBdxPrice = initialWbtcBdEuPrice / initialBdxBdEuPrice;
 
-    var wethDecimals = await weth.decimals();
-    var wbtcDecimals = await wbtc.decimals();
+    let wethDecimals = 18;
+    let wbtcDecimals = 8;
+
+    if(hre.network.name == "rsk"){
+      wethDecimals = 18;
+      wbtcDecimals = 18;
+    }
 
     await provideLiquidity(hre, deployer, bdEu, weth, to_d18(1000), numberToBigNumberFixed(1000, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)));
     await provideLiquidity(hre, deployer, bdEu, wbtc, to_d18(1000), numberToBigNumberFixed(1000, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)));
@@ -68,6 +73,7 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
   const treasury = await hre.ethers.getNamedSigner('TREASURY');
 
+  const wethConcrete = await getWethConcrete(hre);
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
 
@@ -83,7 +89,7 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   console.log("transferred bdx to deployer");
 
   // different for different chains
-  var wethDecimals = await weth.decimals();
+  var wethDecimals = await wethConcrete.decimals();
   var wbtcDecimals = await wbtc.decimals();
 
   await provideLiquidity(hre, deployer, weth, bdEu, numberToBigNumberFixed(0.0002, wethDecimals), to_d18(11));
@@ -105,11 +111,11 @@ export async function setUpMinimalFunctionalSystem(hre: HardhatRuntimeEnvironmen
   await updateOracles(hre);
 
   //recallateralize by just sending the tokens in order not to extract undeserved BDX
-  await (await weth.connect(deployer).transfer(bdEuWethPool.address, to_d18(0.0001))).wait();
+  await (await wethConcrete.connect(deployer).transfer(bdEuWethPool.address, to_d18(0.0001))).wait();
   console.log("recollateralized bdeu / weth pool");
 
   //recallateralize by just sending the tokens in order not to extract undeserved BDX
-  await (await weth.connect(deployer).transfer(bdEuWbtcPool.address, to_d18(0.00009))).wait();
+  await (await wethConcrete.connect(deployer).transfer(bdEuWbtcPool.address, to_d18(0.00009))).wait();
   console.log("recollateralized bdeu / wbtc pool");
 
   console.log("finished");

@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getWeth, mintWbtc } from "../utils/DeployedContractsHelpers";
+import { getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18 } from "../utils/NumbersHelpers";
 import { setUpFunctionalSystem, setUpMinimalFunctionalSystem } from "../utils/SystemSetup";
 
@@ -15,7 +15,8 @@ export function load() {
             const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
 
             // mint initial WETH
-            await weth.deposit({ value: to_d18(100) });
+            await mintWeth(hre, deployer, to_d18(100));
+
             // mint inital WBTC
             await mintWbtc(hre, deployer, to_d18(1000));
 
@@ -33,7 +34,8 @@ export function load() {
             const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
 
             // mint initial WETH
-            await weth.deposit({ value: to_d18(1) });
+            await mintWeth(hre, deployer, to_d18(1));
+            
             // mint inital WBTC
             await mintWbtc(hre, deployer, to_d18(1));
 
