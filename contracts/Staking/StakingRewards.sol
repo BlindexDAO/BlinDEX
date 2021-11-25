@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 // Modified from Synthetixio
@@ -26,8 +26,6 @@ contract StakingRewards is
     uint256 public constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
     uint256 public constant REWARD_PRECISION = 1e18;
-
-    uint256 private DeploymentTimestamp;
 
     uint256 private constant _REENTRY_GUARD_NOT_ENTERED = 1;
     uint256 private constant _REENTRY_GUARD_ENTERED = 2;
@@ -86,7 +84,6 @@ contract StakingRewards is
 
         stakingToken = ERC20(_stakingToken);
         stakingRewardsDistribution = StakingRewardsDistribution(_stakingRewardsDistribution);
-        DeploymentTimestamp = block.timestamp;
         isTrueBdPool = _isTrueBdPool;
 
         rewardsDurationSeconds = 604800; // 7 * 86400  (7 days)
@@ -265,18 +262,18 @@ contract StakingRewards is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawLocked(bytes32 kek_id, uint256 fromIndex, uint256 toIndex) public nonReentrant updateReward(msg.sender) {
-        // fromIndex & toIndex parameters serve as an optinal range, 
+    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) public nonReentrant updateReward(msg.sender) {
+        // from & to parameters serve as an optinal range, 
         // to prevent the loop from running out of gas
         // when user has too many stakes
 
-        toIndex = toIndex < lockedStakes[msg.sender].length 
-            ? toIndex 
+        to = to < lockedStakes[msg.sender].length 
+            ? to 
             : lockedStakes[msg.sender].length;
         
         LockedStake memory thisStake;
 
-        for (uint i = fromIndex; i < toIndex; i++){ 
+        for (uint i = from; i < to; i++){ 
             if (kek_id == lockedStakes[msg.sender][i].kek_id){
                 thisStake = lockedStakes[msg.sender][i];
 
@@ -403,15 +400,11 @@ contract StakingRewards is
     function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwner {
         // Admin cannot withdraw the staking token from the contract
         require(tokenAddress != address(stakingToken));
-        ERC20(tokenAddress).transfer(owner(), tokenAmount);
+        ERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
     function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyByOwner {
-        require(
-            periodFinish == 0 || block.timestamp > periodFinish,
-            "Previous rewards period must be complete before changing the duration for the new period"
-        );
         rewardsDurationSeconds = _rewardsDurationSeconds;
         emit RewardsDurationUpdated(rewardsDurationSeconds);
     }

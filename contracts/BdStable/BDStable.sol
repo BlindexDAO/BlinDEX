@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -179,11 +179,28 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     function weth_fiat_price() public view returns (uint256) {
-        return uint256(weth_fiat_pricer.getPrice_1e12()).mul(BdPoolLibrary.PRICE_PRECISION).div(1e12);
+        return uint256(weth_fiat_pricer.getPrice_1e12());
     }
     
     function canLegallyRedeem(address who) external view returns (bool) {
         return block.number.sub(lastMintByUserBlock[who]) >= minimumMintRedeemDelayInBlocks;
+    }
+
+    // Returns the value of excess collateral held in all BdStablePool related to this BdStable, compared to what is needed to maintain the global collateral ratio
+    function availableExcessCollatDV() external view returns (uint256) {
+        uint256 total_supply = totalSupply();
+        uint256 global_collat_value = globalCollateralValue();
+
+        // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
+        uint256 required_collat_fiat_value_d18 = total_supply
+            .mul(global_collateral_ratio_d12)
+            .div(BdPoolLibrary.COLLATERAL_RATIO_MAX); 
+
+        if (global_collat_value > required_collat_fiat_value_d18) {
+            return global_collat_value.sub(required_collat_fiat_value_d18);
+        } else {
+            return 0;
+        }
     }
 
     /* ========== PUBLIC FUNCTIONS ========== */
@@ -271,7 +288,7 @@ contract BDStable is ERC20Custom, Initializable {
 
     // Used by pools when user redeems
     function pool_burn_from(address b_address, uint256 b_amount) public onlyPools {
-        super._burnFrom(b_address, b_amount);
+        super.burnFrom(b_address, b_amount);
 
         emit BdStableBurned(b_address, msg.sender, b_amount);
     }
@@ -359,7 +376,7 @@ contract BDStable is ERC20Custom, Initializable {
     }
 
     function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyByOwner {
-        require(wantedCR_d12 >=0 && wantedCR_d12 <=1e12, "CR must be <0;1>");
+        require(wantedCR_d12 <= BdPoolLibrary.COLLATERAL_RATIO_MAX, "CR must be <0;1>");
 
         global_collateral_ratio_d12 = wantedCR_d12;
         collateral_ratio_paused = true;

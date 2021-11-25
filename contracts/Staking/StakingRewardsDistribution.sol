@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -86,7 +86,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             yearSchedule = 0;
         }
 
-        uint256 bdxPerSecond = yearSchedule.div(365*24*60*60).mul(stakingRewardsWeights[_stakingRewardsAddress]).div(stakingRewardsWeightsTotal);
+        uint256 bdxPerSecond = yearSchedule.mul(stakingRewardsWeights[_stakingRewardsAddress]).div(365*24*60*60).div(stakingRewardsWeightsTotal);
 
         return bdxPerSecond;
     }
@@ -106,16 +106,23 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function resetRewardsWeights() external onlyByOwner {
-        for(uint i = 0; i < stakingRewardsAddresses.length; i++){
-            stakingRewardsWeights[stakingRewardsAddresses[i]] = 0;
+    function unregisterPool(address pool, uint256 from, uint256 to) external onlyByOwner {
+        to = to < stakingRewardsAddresses.length
+            ? to
+            : stakingRewardsAddresses.length;
+
+        stakingRewardsWeightsTotal -= stakingRewardsWeights[pool];
+        stakingRewardsWeights[pool] = 0;
+
+        for(uint256 i = from; i < to; i++){
+            if(stakingRewardsAddresses[i] == pool){
+                stakingRewardsAddresses[i] = stakingRewardsAddresses[stakingRewardsAddresses.length-1];
+                stakingRewardsAddresses.pop();
+
+                emit PoolRemoved(pool);
+                return;
+            }
         }
-
-        stakingRewardsWeightsTotal = 0;
-
-        delete stakingRewardsAddresses;
-
-        emit RewardsWeightsReset();
     }
 
     function releaseReward(address to, uint256 reward) external onlyStakingRewards returns(uint256 immediatelyReleasedReward) {
@@ -129,7 +136,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {
-        require(0 <= _vestingRewardRatio && _vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
+        require(_vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
     }
 
@@ -144,6 +151,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     // ---------- EVENTS ----------
-    event RewardsWeightsReset();
-    event PoolRegistered(address stakingRewardsAddress, uint stakingRewardsWeight);
+    event PoolRemoved(address indexed pool);
+    event PoolRegistered(address indexed stakingRewardsAddress, uint indexed stakingRewardsWeight);
 }

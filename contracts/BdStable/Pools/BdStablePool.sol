@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -114,24 +114,6 @@ contract BdStablePool is Initializable {
     }
 
     /* ========== VIEWS ========== */
-
-    // Returns the value of excess collateral held in all BdStablePool related to this BdStable, compared to what is needed to maintain the global collateral ratio
-    function availableExcessCollatDV() public view returns (uint256) {
-        uint256 total_supply = BDSTABLE.totalSupply();
-        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
-        uint256 global_collat_value = BDSTABLE.globalCollateralValue();
-
-        // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
-        uint256 required_collat_fiat_value_d18 = total_supply
-            .mul(global_collateral_ratio_d12)
-            .div(BdPoolLibrary.COLLATERAL_RATIO_MAX); 
-
-        if (global_collat_value > required_collat_fiat_value_d18) {
-            return global_collat_value.sub(required_collat_fiat_value_d18);
-        } else {
-            return 0;
-        }
-    }
 
      // Returns the price of the pool collateral in fiat
     function getCollateralPrice_d12() public view returns (uint256) {
@@ -564,7 +546,7 @@ contract BdStablePool is Initializable {
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
     
         (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(
-            availableExcessCollatDV(),
+            BDSTABLE.availableExcessCollatDV(),
             bdx_price,
             getCollateralPrice_d12(),
             BDX_amount

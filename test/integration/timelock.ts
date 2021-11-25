@@ -2,30 +2,19 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
 import { Timelock } from "../../typechain/Timelock";
-import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import TimeTraveler from "../../utils/TimeTraveler";
-import func from "../../deploy/2_2_euro_stablecoin";
+import { getDeployer, getStakingRewardsDistribution } from "../../utils/DeployedContractsHelpers";
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-const timeTraveler = new TimeTraveler(hre.network.provider);
-
 const day = 60*60*24;
 
-async function GetSRD() : Promise<StakingRewardsDistribution> {
-    const deployer = (await hre.getNamedAccounts()).DEPLOYER;
-    const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution", deployer) as StakingRewardsDistribution;
-    return stakingRewardsDistribution;
-}
-
 async function GetTimelock() : Promise<Timelock> {
-    const deployer = (await hre.getNamedAccounts()).DEPLOYER;
+    const deployer = await getDeployer(hre);
     const timelock = await hre.ethers.getContract("Timelock", deployer) as Timelock;
     return timelock;
 }
@@ -35,13 +24,12 @@ async function ExecuteTranasactionWithTimelock(executionEta: number, elapseTime:
 
     const now = (await hre.ethers.provider.getBlock('latest')).timestamp;
 
-    const stakingRewardsDistribution = await GetSRD();
-
+    const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
     await timelock.queueTransaction(
         stakingRewardsDistribution.address,
         0,
         "",
-        stakingRewardsDistribution.interface.encodeFunctionData("resetRewardsWeights"),
+        stakingRewardsDistribution.interface.encodeFunctionData("setVestingRewardRatio", [13]),
         now + executionEta);
 
     simulateTimeElapseInSeconds(elapseTime);
@@ -50,7 +38,7 @@ async function ExecuteTranasactionWithTimelock(executionEta: number, elapseTime:
         stakingRewardsDistribution.address,
         0,
         "",
-        stakingRewardsDistribution.interface.encodeFunctionData("resetRewardsWeights"),
+        stakingRewardsDistribution.interface.encodeFunctionData("setVestingRewardRatio", [13]),
         now + executionEta)
 }
 
@@ -60,21 +48,21 @@ describe("Execute with timelock", () => {
         await hre.deployments.fixture();
         
         const timelock = await GetTimelock();
-        const stakingRewardsDistribution = await GetSRD();
+        const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
         stakingRewardsDistribution.transferOwnership(timelock.address)
     });
 
     it("transaction should be executed before eta, withing grace period", async () => {
-        const stakingRewardsDistribution = await GetSRD();
+        const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
-        const totalBefore = await stakingRewardsDistribution.stakingRewardsWeightsTotal();
+        const pctBefore = await stakingRewardsDistribution.vestingRewardRatio_percent();
         
         await ExecuteTranasactionWithTimelock(day*(15+1), day*(15+1+1));
 
-        const totalAfter = await stakingRewardsDistribution.stakingRewardsWeightsTotal();
+        const pctAfter = await stakingRewardsDistribution.vestingRewardRatio_percent();
 
-        expect(totalBefore).be.gt(0);
-        expect(totalAfter).be.eq(0);
+        expect(pctBefore).be.not.eq(13);
+        expect(pctAfter).be.eq(13);
     });
 
     it("transaction fail if executed before eta", async () => {

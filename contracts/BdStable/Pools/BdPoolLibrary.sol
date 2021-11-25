@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.11;
+pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -50,7 +50,7 @@ library BdPoolLibrary {
     ) public pure returns (uint256, uint256) {
         uint256 collat_value_attempted = collateral_amount_d18.mul(col_price).div(PRICE_PRECISION);
         uint256 effective_collateral_ratio = global_collat_value.mul(PRICE_PRECISION).div(bdStable_total_supply); //returns it in 1e12
-        uint256 recollat_possible = (global_collateral_ratio.mul(bdStable_total_supply).sub(bdStable_total_supply.mul(effective_collateral_ratio))).div(COLLATERAL_RATIO_PRECISION);
+        uint256 recollat_possible = global_collateral_ratio.sub(effective_collateral_ratio).mul(bdStable_total_supply).div(COLLATERAL_RATIO_PRECISION);
 
         uint256 amount_to_recollat;
         if(collat_value_attempted <= recollat_possible){

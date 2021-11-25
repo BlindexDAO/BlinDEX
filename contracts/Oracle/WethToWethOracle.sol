@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "./ICryptoPairOracle.sol";
 
@@ -26,6 +26,6 @@ contract WethToWethOracle is ICryptoPairOracle {
     }
 
     function when_should_update_oracle_in_seconds() public view override returns (uint256) {
-        return 1e12;
+        return type(uint256).max;
     }
 }

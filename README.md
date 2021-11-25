@@ -44,7 +44,16 @@ npm run solhint
 npm run npm-package
 ```
 
+# Accounts
+Blindex uses 3 accounts. Deployer and Treasury will be converted to multisig accounts after deployment
+## Deployer account
+The owner of every owned contract.
+## Treasury account
+The holder of BDX reserves.
+## Bot account
+The account responsible for updating oracles and refreshing other parts of the system e.g. collateral ratio.
+
 # Credits
-We're grateful to the following projects for sharing their code, used in this project
+We're grateful to the following projects for sharing their code an packages, used in this project
 * FRAX (https://github.com/FraxFinance/frax-solidity)
 * Uniswap (https://github.com/Uniswap/v2-core)

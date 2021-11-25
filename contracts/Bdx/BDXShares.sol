@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -21,7 +21,7 @@ contract BDXShares is ERC20Custom, Initializable {
     
     address public owner_address;
 
-    mapping(address => bool) private bdstables;
+    mapping(address => bool) public bdstables;
 
     /* ========== MODIFIERS ========== */
     

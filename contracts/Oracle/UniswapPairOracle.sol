@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.6 <=0.6.11;
+pragma solidity >=0.6.6 <=0.6.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
@@ -65,7 +65,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         require(reserve0 != 0 && reserve1 != 0, "UniswapPairOracle: NO_RESERVES"); // Ensure that there's liquidity in the pair
     }
 
-    // Check if update() can be called instead of wasting gas calling it
+    // Check if updateOracle() can be called instead of wasting gas calling it
     function shouldUpdateOracle() override public view returns (bool) {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired

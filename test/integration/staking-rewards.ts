@@ -421,6 +421,35 @@ describe('getReward interaction with vesting contract', () => {
   })
 });
 
+describe('Unregistering pools', () => {
+
+  beforeEach(async () => {
+    await hre.deployments.fixture();
+    await initialize();
+    await setUpFunctionalSystem(hre, 1, true);
+  })
+
+  it('should unregister pool', async () => {
+    const srd = await getStakingRewardsDistribution(hre);
+
+    const pools = await Promise.all([...Array(5).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
+    const pool2 = pools[2];
+    const pool4 = pools[4];
+    const pool2Weight = await srd.stakingRewardsWeights(pool2);
+
+    expect(pool2Weight).to.be.gt(0); // test validation
+
+    const totalWeightsBefore = await srd.stakingRewardsWeightsTotal();
+
+    await srd.unregisterPool(pool2, 0, 100);
+
+    const totalWeightsAfter = await srd.stakingRewardsWeightsTotal();
+
+    expect(totalWeightsAfter).to.eq(totalWeightsBefore.sub(pool2Weight));
+    expect(await srd.stakingRewardsAddresses(2)).to.eq(pool4); // the last pool (4) replaced the pool no 2 (the one unregistered)
+  })
+});
+
 async function getUsersCurrentLpBalance() {
   const pair = await getUniswapPair(hre, bdEu, weth);
   const depositedLPTokenUser1_d18 = await pair.balanceOf(testUser1.address);

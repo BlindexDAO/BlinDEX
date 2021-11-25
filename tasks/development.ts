@@ -1,15 +1,16 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapFactory, getUniswapRouter, getWbtc, getWeth, mintWbtc } from "../utils/DeployedContractsHelpers";
-import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
+import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc } from "../utils/DeployedContractsHelpers";
+import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
 import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import { WETH } from "../typechain/WETH";
-import { RSK_ETHS_ADDRESS, RSK_WRBTC_ADDRESS, RSK_XUSD_ADDRESS } from '../utils/Constants';
+import { SovrynSwapPriceFeed__factory } from "../typechain/factories/SovrynSwapPriceFeed__factory";
+import { ISovrynLiquidityPoolV1Converter__factory } from "../typechain/factories/ISovrynLiquidityPoolV1Converter__factory";
+import { RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, RSK_XUSD_ADDRESS, wETH_address } from "../utils/Constants";
 
 const fs = require('fs');
 
@@ -18,12 +19,7 @@ export function load() {
   // generl purpose task to run any ad-hoc job
   task("run:job")
     .setAction(async (args, hre) => {
-      const deployer = await getDeployer(hre);
 
-      const wethOld = await hre.ethers.getContractAt("WETH", "0x967F8799aF07dF1534d48A95a5C9FEBE92c53AE0") as WETH;
-      const balance = await wethOld.balanceOf(deployer.address);
-      console.log("balance: " + balance);
-      await (await wethOld.withdraw(balance, { gasLimit: 100000 })).wait();
     });
 
   task("accounts", "Prints the list of accounts", async (args, hre) => {
@@ -225,15 +221,18 @@ export function load() {
         console.log(`${token2Name}/${token1Name}: ` + d12_ToNumber(res2.amountMinusFee.add(res2.fee)));
       }
 
+      const rusdtAddress = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
+      const wrbtcAddress = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
+      const ethsAddress = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
 
-      await run(RSK_ETHS_ADDRESS, RSK_WRBTC_ADDRESS, "eth", "btc");
-      await run(RSK_XUSD_ADDRESS, RSK_WRBTC_ADDRESS, "usd", "btc");
+      await run(ethsAddress, wrbtcAddress, "eth", "btc");
+      await run(rusdtAddress, wrbtcAddress, "usd", "btc");
     });
 
   task("show:rsk-btc-usd")
     .setAction(async (args, hre) => {
       const feed = SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await getDeployer(hre));
-      const btcFor1usd = d18_ToNumber(await feed.consult(constants.wETH_address[hre.network.name], to_d18(1)));
+      const btcFor1usd = d18_ToNumber(await feed.consult(wETH_address[hre.network.name], to_d18(1)));
       console.log("BTC/usd: " + btcFor1usd);
     });
 
@@ -251,7 +250,7 @@ export function load() {
       const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
       const feed = ISovrynLiquidityPoolV1Converter__factory.connect(RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, await hre.ethers.getSigner(updater))
       const tokenSource = '0x542fda317318ebf1d3deaf76e0b632741a7e677d';
-      const targetToken = constants.RSK_XUSD_ADDRESS;
+      const targetToken = RSK_XUSD_ADDRESS;
       const [amountMinusFee, fee] = (await feed.targetAmountAndFee(tokenSource, targetToken, 1e12));
       console.log(`BTC/USD: ${amountMinusFee}, fee: ${fee}, amount with fee: ${amountMinusFee.add(fee)}`);
     });
