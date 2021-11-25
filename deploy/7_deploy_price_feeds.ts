@@ -24,14 +24,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   if(networkName == "rsk") {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy('PriceFeed_EUR_USD', {
-      from: deployer,
+      from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
       args: [(await hre.getNamedAccounts()).BOT]
     });
     console.log("deployed PriceFeed_EUR_USD to: " + priceFeed_EUR_USD_Deployment.address);
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy('PriceFeed_ETH_USD', { 
-      from: deployer,
+      from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
         constants.RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS,
@@ -46,7 +46,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);
 
     btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
-      from: deployer,
+      from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
         constants.RSK_SOVRYN_ETHs_wrBTC_SWAP_ADDRESS,
@@ -58,14 +58,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   } else {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy('PriceFeed_EUR_USD', {
-      from: deployer,
+      from: deployer.address,
       contract: "AggregatorV3PriceFeed",
       args: [constants.EUR_USD_FEED_ADDRESS[networkName]]
     });
     console.log("deployed PriceFeed_EUR_USD to: " + priceFeed_EUR_USD_Deployment.address);
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy('PriceFeed_ETH_USD', {
-      from: deployer,
+      from: deployer.address,
       contract: "AggregatorV3PriceFeed",
       args: [constants.ETH_USD_FEED_ADDRESS[networkName]]
     });
@@ -74,7 +74,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // if deployed on ETH, probably we should replace with a better implementaion (price from uniswap3?)
     // chainlink has big lag
     btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
-      from: deployer,
+      from: deployer.address,
       contract: "BtcToEthOracleChinlink",
       args: [constants.BTC_ETH_FEED_ADDRESS[networkName], constants.wETH_address[networkName]]
     });
@@ -82,7 +82,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   await hre.deployments.deploy('OracleBasedCryptoFiatFeed_ETH_EUR', {
-    from: deployer,
+    from: deployer.address,
     contract: "OracleBasedCryptoFiatFeed",
     args: [priceFeed_EUR_USD_Deployment.address, priceFeed_ETH_USD_Deployment.address]
   });
@@ -104,7 +104,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeuWethPool = await hre.ethers.getContract('BDEU_WETH_POOL') as BdStablePool;
   const bdeuWbtcPool = await hre.ethers.getContract('BDEU_WBTC_POOL') as BdStablePool;
   const weth_to_weth_oracle = await hre.deployments.deploy('WethToWethOracle', {
-    from: deployer,
+    from: deployer.address,
     args: [constants.wETH_address[networkName]]
   });
 
