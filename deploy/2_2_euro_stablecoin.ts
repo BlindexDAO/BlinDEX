@@ -25,7 +25,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             'BlindexEuro',
             'BDEU',
             'EURO',
-            deployer.address,
             treasury.address,
             bdx.address,
             constants.initalBdStableToOwner_d18[hre.network.name]
@@ -54,7 +53,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdx.address,
               constants.wETH_address[hre.network.name],
               constants.wETH_precision[hre.network.name],
-              deployer.address,
               true
             ]
           }
@@ -85,7 +83,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdx.address,
               constants.wBTC_address[hre.network.name],
               constants.wBTC_precision[hre.network.name],
-              deployer.address,
               false
             ]
           }

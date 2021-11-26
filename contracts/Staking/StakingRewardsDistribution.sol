@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -11,7 +11,7 @@ import "./Vesting.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
-    using SafeERC20 for BDXShares;
+    using SafeERC20Upgradeable for BDXShares;
 
     uint256 public TOTAL_BDX_SUPPLY;
     
@@ -91,7 +91,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         return bdxPerSecond;
     }
 
-    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyByOwner {
+    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyOwner {
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
         for(uint i = 0; i < _stakingRewardsAddresses.length; i++){
@@ -106,7 +106,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function unregisterPool(address pool, uint256 from, uint256 to) external onlyByOwner {
+    function unregisterPool(address pool, uint256 from, uint256 to) external onlyOwner {
         to = to < stakingRewardsAddresses.length
             ? to
             : stakingRewardsAddresses.length;
@@ -135,18 +135,13 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         rewardsToken.safeTransfer(to, immediatelyReleasedReward);
     }
 
-    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {
+    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {
         require(_vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
     }
 
     modifier onlyStakingRewards() {
         require(stakingRewardsWeights[msg.sender] > 0, "Only registered staking rewards contracts allowed");
-        _;
-    }
-
-    modifier onlyByOwner() {
-        require(msg.sender == owner(), "You are not the owner");
         _;
     }
 

@@ -397,27 +397,27 @@ contract StakingRewards is
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     // Added to support recovering LP Rewards from other systems to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwner {
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         // Admin cannot withdraw the staking token from the contract
         require(tokenAddress != address(stakingToken));
         ERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyByOwner {
+    function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyOwner {
         rewardsDurationSeconds = _rewardsDurationSeconds;
         emit RewardsDurationUpdated(rewardsDurationSeconds);
     }
 
-    function setIsAddressGraylisted(address _address, bool isGraylisted) external onlyByOwner {
+    function setIsAddressGraylisted(address _address, bool isGraylisted) external onlyOwner {
         greylist[_address] = isGraylisted;
     }
 
-    function toggleUnlockStakes() external onlyByOwner {
+    function toggleUnlockStakes() external onlyOwner {
         unlockedStakes = !unlockedStakes;
     }
 
-    function setOwner(address _new_owner) external onlyByOwner {
+    function setOwner(address _new_owner) external onlyOwner {
         transferOwnership(_new_owner);
     }
 
@@ -438,11 +438,6 @@ contract StakingRewards is
             rewards[account] = earned(account);
             userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
         }
-        _;
-    }
-
-    modifier onlyByOwner() {
-        require(msg.sender == owner(), "You are not the owner");
         _;
     }
 

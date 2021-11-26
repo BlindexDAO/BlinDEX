@@ -18,7 +18,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             args: [
               'BlindexShares',
               'BDX',
-              deployer
             ]
           }
         }
