@@ -11,7 +11,7 @@ import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
 import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { Vesting } from "../../typechain/Vesting";
 import { StakingRewards } from "../../typechain/StakingRewards";
 import { IERC20 } from "../../typechain/IERC20";
@@ -73,7 +73,7 @@ describe("StakingRewards", () => {
   describe("Normal staking", () => {
     before(async () => {
       await hre.deployments.fixture();
-      await setUpFunctionalSystem(hre, 1, true);
+      await setUpFunctionalSystemForTests(hre, 1);
       await initialize();
     });
 
@@ -179,7 +179,7 @@ describe("StakingRewards", () => {
     before(async () => {
       await hre.deployments.fixture();
       await initialize();
-      await setUpFunctionalSystem(hre, 1, true);
+      await setUpFunctionalSystemForTests(hre, 1);
     });
 
     it("should get reward", async () => {
@@ -280,7 +280,7 @@ describe("StakingRewards", () => {
 describe('Staking - withdrawLocked', () => {
   before(async () => {
     await hre.deployments.fixture();
-    await setUpFunctionalSystem(hre, 1, true);
+    await setUpFunctionalSystemForTests(hre, 1);
     await initialize();
   });
 
@@ -320,7 +320,7 @@ describe('Staking - withdrawLocked', () => {
 describe('locking an unlocked stake', () => {
   before(async () => {
     await hre.deployments.fixture();
-    await setUpFunctionalSystem(hre, 1, true);
+    await setUpFunctionalSystemForTests(hre, 1);
     await initialize();
   });
 
@@ -365,7 +365,7 @@ describe('getReward interaction with vesting contract', () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     await initialize();
-    await setUpFunctionalSystem(hre, 1, true);
+    await setUpFunctionalSystemForTests(hre, 1);
   })
 
   it('should transfer only fraction of total rewards', async () => {
@@ -426,7 +426,7 @@ describe('Unregistering pools', () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     await initialize();
-    await setUpFunctionalSystem(hre, 1, true);
+    await setUpFunctionalSystemForTests(hre, 1);
   })
 
   it('should unregister pool', async () => {

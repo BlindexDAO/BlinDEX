@@ -1,44 +1,42 @@
 import { task } from "hardhat/config";
-import { getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { getDeployer, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18 } from "../utils/NumbersHelpers";
-import { setUpFunctionalSystem, setUpMinimalFunctionalSystem } from "../utils/SystemSetup";
+import { setUpFunctionalSystem, setUpFunctionalSystemSmall } from "../utils/SystemSetup";
 
 export function load() {
-    task("initialize")
-        .setAction(async (args, hre) => {
-            await setUpFunctionalSystem(hre, 1, false);
-        });
+  task("initialize")
+    .setAction(async (args, hre) => {
+      await setUpFunctionalSystem(hre, 1, 1000, false);
+    });
 
-    task("initialize:local")
-        .setAction(async (args, hre) => {
-            const weth = await getWeth(hre);
-            const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
+  task("initialize:local")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
 
-            // mint initial WETH
-            await mintWeth(hre, deployer, to_d18(100));
+      // mint initial WETH
+      await mintWeth(hre, deployer, to_d18(100));
 
-            // mint inital WBTC
-            await mintWbtc(hre, deployer, to_d18(1000));
+      // mint inital WBTC
+      await mintWbtc(hre, deployer, to_d18(1000));
 
-            await setUpFunctionalSystem(hre, 1, false);
-        });
+      await setUpFunctionalSystem(hre, 1, 1000, false);
+    });
 
-    task("initialize:min")
-        .setAction(async (args, hre) => {
-            await setUpMinimalFunctionalSystem(hre);
-        });
+  task("initialize:min")
+    .setAction(async (args, hre) => {
+      await setUpFunctionalSystemSmall(hre);
+    });
 
-    task("initialize:min:local")
-        .setAction(async (args, hre) => {
-            const weth = await getWeth(hre);
-            const deployer = await hre.ethers.getNamedSigner('DEPLOYER');
+  task("initialize:min:local")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
 
-            // mint initial WETH
-            await mintWeth(hre, deployer, to_d18(1));
-            
-            // mint inital WBTC
-            await mintWbtc(hre, deployer, to_d18(1));
+      // mint initial WETH
+      await mintWeth(hre, deployer, to_d18(1));
 
-            await setUpMinimalFunctionalSystem(hre);
-        });
+      // mint inital WBTC
+      await mintWbtc(hre, deployer, to_d18(1));
+
+      await setUpFunctionalSystemSmall(hre);
+    });
 }

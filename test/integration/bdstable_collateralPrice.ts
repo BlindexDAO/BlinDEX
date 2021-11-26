@@ -2,10 +2,10 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
-import { to_d18, d18_ToNumber, d12_ToNumber, bigNumberToDecimal } from "../../utils/NumbersHelpers"
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../../utils/DeployedContractsHelpers";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { d12_ToNumber } from "../../utils/NumbersHelpers"
+import { getBdEuWbtcPool, getBdEuWethPool } from "../../utils/DeployedContractsHelpers";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
+
 chai.use(cap);
 
 chai.use(solidity);
@@ -19,7 +19,7 @@ describe("Collateral price", () => {
 
     it("should get price for weth", async () => {
 
-        await setUpFunctionalSystem(hre, 1, true);
+        await setUpFunctionalSystemForTests(hre, 1);
 
         const wethPool = await getBdEuWethPool(hre);
 
@@ -33,7 +33,7 @@ describe("Collateral price", () => {
 
     it("should get price for wbtc", async () => {
 
-        await setUpFunctionalSystem(hre, 1, true);
+        await setUpFunctionalSystemForTests(hre, 1);
 
         const wbtcPool = await getBdEuWbtcPool(hre);
 

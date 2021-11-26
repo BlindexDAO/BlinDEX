@@ -5,7 +5,7 @@ import cap from "chai-as-promised";
 import { diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
 import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/NumbersHelpers"
 import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../../utils/DeployedContractsHelpers";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import exp from "constants";
 
@@ -24,7 +24,7 @@ describe("BuyBack", () => {
     });
 
     it("should buy back", async () => {        
-        await setUpFunctionalSystem(hre, 0.9, true);
+        await setUpFunctionalSystemForTests(hre, 0.9);
 
         await lockBdEuCrAt(hre, 0.3); // CR
 
@@ -79,7 +79,7 @@ describe("BuyBack", () => {
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
-        await setUpFunctionalSystem(hre, collateralizedFraction, true);
+        await setUpFunctionalSystemForTests(hre, collateralizedFraction);
 
         await lockBdEuCrAt(hre, cr); // CR
 
@@ -99,7 +99,7 @@ describe("BuyBack", () => {
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
-        await setUpFunctionalSystem(hre, collateralizedFraction, true);
+        await setUpFunctionalSystemForTests(hre, collateralizedFraction);
 
         await lockBdEuCrAt(hre, cr); // CR
 
@@ -134,7 +134,7 @@ describe("BuyBack", () => {
         const collateralizedFraction = 0.9;
         const cr = 0.3;
 
-        await setUpFunctionalSystem(hre, collateralizedFraction, true);
+        await setUpFunctionalSystemForTests(hre, collateralizedFraction);
 
         await lockBdEuCrAt(hre, cr); // CR
 
@@ -156,7 +156,7 @@ describe("BuyBack", () => {
     });
 
     it("should throw if no excess collateral", async () => {        
-        await setUpFunctionalSystem(hre, 0.3, true);
+        await setUpFunctionalSystemForTests(hre, 0.3);
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);

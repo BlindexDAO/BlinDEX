@@ -4,9 +4,9 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, to_d18 } from "../../utils/NumbersHelpers";
 import { getBdEu,  getBdEuWethPool, getBdx, getWeth } from "../../utils/DeployedContractsHelpers";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { swapWethAsDeployer, swapForWethAsDeployer } from "../helpers/swaps";
+import { swapWethAsDeployer } from "../helpers/swaps";
 
 chai.use(cap);
 
@@ -17,7 +17,7 @@ describe("Locking collateral ratio", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 0.8, true);
+        await setUpFunctionalSystemForTests(hre, 0.8);
 
         // decrease CR so fractional minting works
         const bdEu = await getBdEu(hre);

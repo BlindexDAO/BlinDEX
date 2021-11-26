@@ -2,10 +2,10 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
-import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/NumbersHelpers"
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser, getOnChainEthEurPrice, mintWeth } from "../../utils/DeployedContractsHelpers";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { d12_ToNumber, diffPct } from "../../utils/NumbersHelpers";
+import { to_d18 as to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getDeployer, getUser, getOnChainEthEurPrice, mintWeth } from "../../utils/DeployedContractsHelpers";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import * as constants from '../../utils/Constants';
 
@@ -24,7 +24,7 @@ describe("Recollateralization", () => {
 
     it("should recollateralize when efCR < CR", async () => {
 
-        await setUpFunctionalSystem(hre, 0.4, true);
+        await setUpFunctionalSystemForTests(hre, 0.4);
 
         const testUser = await getUser(hre);
 
@@ -91,7 +91,7 @@ describe("Recollateralization", () => {
     });
 
     it("recollateralize should NOT fail when efCR < CR", async () => {        
-        await setUpFunctionalSystem(hre, 0.3, true); // ~efCR
+        await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
 
@@ -107,7 +107,7 @@ describe("Recollateralization", () => {
     })
 
     it("recollateralize should fail when efCR > CR", async () => {        
-        await setUpFunctionalSystem(hre, 0.9, true); // ~efCR
+        await setUpFunctionalSystemForTests(hre, 0.9); // ~efCR
 
         await lockBdEuCrAt(hre, 0.3); // CR
 
@@ -124,7 +124,7 @@ describe("Recollateralization", () => {
     })
 
     it("recollateralize should reward bdx in BDX CR amount", async () => {        
-        await setUpFunctionalSystem(hre, 0.3, true); // ~efCR
+        await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
 
         const deployer = await getDeployer(hre);
         const testUser = await hre.ethers.getNamedSigner('TEST2');
@@ -181,7 +181,7 @@ describe("Recollateralization", () => {
     })
 
     it("should recollateralize native token", async () => {        
-        await setUpFunctionalSystem(hre, 0.3, true); // ~efCR
+        await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
         const testUser = await getUser(hre);
         const weth = await getWeth(hre);
 

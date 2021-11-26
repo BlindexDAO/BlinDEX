@@ -7,7 +7,7 @@ import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getTreasury, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth, mintWeth } from "../../utils/DeployedContractsHelpers";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
 chai.use(cap);
@@ -19,7 +19,7 @@ describe("BDStable 1to1", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 0.7, true);
+        await setUpFunctionalSystemForTests(hre, 0.7);
     });
 
     it("should mint bdeu when CR = 1 [for WETH]", async () => {

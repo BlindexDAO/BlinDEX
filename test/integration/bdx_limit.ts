@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d18 } from "../../utils/NumbersHelpers";
 import { getBdx, getDeployer } from "../../utils/DeployedContractsHelpers";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 
 chai.use(cap);
 
@@ -15,7 +15,7 @@ describe("BDX limit", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 1, true);
+        await setUpFunctionalSystemForTests(hre, 1);
     });
 
     it("should mint max total supply of BDX", async () => {

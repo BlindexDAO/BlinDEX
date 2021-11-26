@@ -7,7 +7,7 @@ import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 
 chai.use(cap);
 
@@ -26,7 +26,7 @@ describe("BDStable algorythmic", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 1, true);
+        await setUpFunctionalSystemForTests(hre, 1);
     });
 
     it("should mint bdeu when CR = 0", async () => {
@@ -170,7 +170,7 @@ describe("BDStable algorythmic", () => {
     });
 
     it("redeem should reward bdx in BDX CR amount", async () => {
-        await setUpFunctionalSystem(hre, 1, true);
+        await setUpFunctionalSystemForTests(hre, 1);
 
         const deployer = await getDeployer(hre);
         const testUser = await hre.ethers.getNamedSigner('TEST2');

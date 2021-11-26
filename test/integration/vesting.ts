@@ -2,7 +2,7 @@ import cap from 'chai-as-promised';
 import chai from "chai";
 import { solidity } from 'ethereum-waffle';
 import hre from 'hardhat';
-import { setUpFunctionalSystem } from "../../utils/SystemSetup";
+import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { getBdx, getDeployer, getVesting } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { Vesting } from '../../typechain/Vesting';
@@ -48,7 +48,7 @@ describe('Vesting', () => {
     })
     beforeEach(async () => {
         await hre.deployments.fixture();
-        await setUpFunctionalSystem(hre, 1, true);
+        await setUpFunctionalSystemForTests(hre, 1);
         await vesting.connect(ownerUser).setVestingScheduler(testScheduler.address);
         await vesting.connect(ownerUser).setFundsProvider(testRewardProvider.address);
         await bdx.connect(ownerUser).transfer(testRewardProvider.address, to_d18(20));
