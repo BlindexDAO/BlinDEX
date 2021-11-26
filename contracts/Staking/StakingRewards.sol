@@ -97,7 +97,7 @@ contract StakingRewards is
 
     /* ========== VIEWS ========== */
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _staking_token_supply;
     }
 
@@ -123,7 +123,7 @@ contract StakingRewards is
     }
 
     // Total unlocked and locked liquidity tokens
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(address account) external view returns (uint256) {
         return (_unlocked_balances[account]).add(_locked_balances[account]);
     }
 
@@ -133,7 +133,7 @@ contract StakingRewards is
     }
 
     // Total locked liquidity tokens
-    function lockedBalanceOf(address account) public view returns (uint256) {
+    function lockedBalanceOf(address account) external view returns (uint256) {
         return _locked_balances[account];
     }
 
@@ -262,7 +262,7 @@ contract StakingRewards is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) public nonReentrant updateReward(msg.sender) {
+    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) external nonReentrant updateReward(msg.sender) {
         // from & to parameters serve as an optinal range, 
         // to prevent the loop from running out of gas
         // when user has too many stakes
@@ -360,7 +360,7 @@ contract StakingRewards is
         emit ExistingStakeLocked(msg.sender, amount, secs);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() external nonReentrant updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;

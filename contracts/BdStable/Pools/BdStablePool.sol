@@ -82,7 +82,7 @@ contract BdStablePool is OwnableUpgradeable {
         uint256 _collateral_decimals,
         bool _is_collateral_wrapping_native_token
     ) 
-        public
+        external
         initializer
     {
         __Ownable_init();
@@ -126,7 +126,7 @@ contract BdStablePool is OwnableUpgradeable {
     }
 
     // Returns fiat value of collateral held in this BdStable pool
-    function collatFiatBalance() public view returns (uint256) {
+    function collatFiatBalance() external view returns (uint256) {
         //Expressed in collateral token decimals
         if(collateralPricePaused == true){
             return collateral_token.balanceOf(address(this))
