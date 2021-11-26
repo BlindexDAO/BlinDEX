@@ -121,26 +121,21 @@ contract Vesting is OwnableUpgradeable
 
     function setVestingScheduler(address _vestingScheduler)
         external
-        onlyByOwner
+        onlyOwner
     {
         vestingScheduler = _vestingScheduler;
     }
 
     function setVestingTimeInSeconds(uint256 _vestingTimeInSeconds)
         external
-        onlyByOwner
+        onlyOwner
     {
         require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
         vestingTimeInSeconds = _vestingTimeInSeconds;
     }
 
-    function setFundsProvider(address _fundsProvider) external onlyByOwner {
+    function setFundsProvider(address _fundsProvider) external onlyOwner {
         fundsProvider = _fundsProvider;
-    }
-
-    modifier onlyByOwner() {
-        require(msg.sender == owner(),  "You are not the owner");
-        _;
     }
 
     event ScheduleCreated(address user, uint256 amount);

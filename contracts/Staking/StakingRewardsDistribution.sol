@@ -91,7 +91,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         return bdxPerSecond;
     }
 
-    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyByOwner {
+    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyOwner {
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
         for(uint i = 0; i < _stakingRewardsAddresses.length; i++){
@@ -106,7 +106,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function unregisterPool(address pool, uint256 from, uint256 to) external onlyByOwner {
+    function unregisterPool(address pool, uint256 from, uint256 to) external onlyOwner {
         to = to < stakingRewardsAddresses.length
             ? to
             : stakingRewardsAddresses.length;
@@ -135,18 +135,13 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         rewardsToken.safeTransfer(to, immediatelyReleasedReward);
     }
 
-    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyByOwner {
+    function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {
         require(_vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
     }
 
     modifier onlyStakingRewards() {
         require(stakingRewardsWeights[msg.sender] > 0, "Only registered staking rewards contracts allowed");
-        _;
-    }
-
-    modifier onlyByOwner() {
-        require(msg.sender == owner(), "You are not the owner");
         _;
     }
 
