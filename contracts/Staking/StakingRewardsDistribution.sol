@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -11,7 +11,7 @@ import "./Vesting.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
-    using SafeERC20 for BDXShares;
+    using SafeERC20Upgradeable for BDXShares;
 
     uint256 public TOTAL_BDX_SUPPLY;
     
