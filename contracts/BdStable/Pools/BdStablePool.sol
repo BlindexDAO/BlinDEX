@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../../BdStable/BDStable.sol";
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
-import "../../ERC20/IWETH.sol";
+import "../../Utils/IWETH.sol";
 
 contract BdStablePool is Initializable {
     using SafeMath for uint256;
