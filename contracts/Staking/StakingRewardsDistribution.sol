@@ -138,6 +138,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {
         require(_vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
         vestingRewardRatio_percent = _vestingRewardRatio;
+
+        emit VestingRewardRatioSet(_vestingRewardRatio);
     }
 
     modifier onlyStakingRewards() {
@@ -148,4 +150,5 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     // ---------- EVENTS ----------
     event PoolRemoved(address indexed pool);
     event PoolRegistered(address indexed stakingRewardsAddress, uint indexed stakingRewardsWeight);
+    event VestingRewardRatioSet(uint256 vestingRewardRatio_percent);
 }
