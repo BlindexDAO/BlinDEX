@@ -22,15 +22,16 @@ export function load() {
             const pairOracles = await getPairOracles(hre, deployer);
             const stringifiedPairOracles = "[" + pairOracles.map(pairOracle => `{ "pairAddress": "${pairOracle.pairAddress}", "oracleAddress": "${pairOracle.oracleAddress}"}`).join(',') + "]";
             const blockchainConfig = `
-                BDEU_ADDRESS = ${(await getBdEu(hre)).address}
-                UNISWAP_FACTORY_ADDRESS = ${(await getUniswapFactory(hre)).address}
-                BDX_ADDRESS = ${(await getBdx(hre)).address}
-                STAKING_REWARDS_DISTRIBUTION_ADDRESS = ${(await getStakingRewardsDistribution(hre)).address}
-                AVAILABLE_PAIRS = ${stringifiedSwaps}
-                STAKING_REWARDS = ${stringifiedStakingRewards}
-                PAIR_ORACLES = ${stringifiedPairOracles}
-                PRICE_FEED_EUR_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address}
-                PRICE_FEED_BTC_ETH_ADDRESS = ${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address}
+BDEU_ADDRESS = ${(await getBdEu(hre)).address}
+UNISWAP_FACTORY_ADDRESS = ${(await getUniswapFactory(hre)).address}
+BDX_ADDRESS = ${(await getBdx(hre)).address}
+STAKING_REWARDS_DISTRIBUTION_ADDRESS = ${(await getStakingRewardsDistribution(hre)).address}
+AVAILABLE_PAIRS = ${stringifiedSwaps}
+STAKING_REWARDS = ${stringifiedStakingRewards}
+PAIR_ORACLES = ${stringifiedPairOracles}
+PRICE_FEED_EUR_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address}
+PRICE_FEED_BTC_ETH_ADDRESS = ${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address}
+PRICE_FEED_ETH_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address}
             `;
 
             console.log(blockchainConfig);
