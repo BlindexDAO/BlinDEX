@@ -18,6 +18,11 @@ library BdPoolLibrary {
         return (collateral_amount_d18.mul(col_price)).div(PRICE_PRECISION);
     }
 
+    function calcMintAlgorithmicBD(uint256 bdx_price_fiat_d12, uint256 bdx_amount_d18) public pure returns (uint256) {
+        return bdx_amount_d18.mul(bdx_price_fiat_d12).div(PRICE_PRECISION);
+    }
+
+
     // Must be internal because of the struct
     function calcMintFractionalBD(uint256 bdx_price_fiat_d12, uint256 col_price_fiat_d12, uint256 collateral_amount_d18, uint256 col_ratio_d12) internal pure returns (uint256, uint256) {
         // Since solidity truncates division, every division operation must be the last operation in the equation to ensure minimum error
@@ -35,10 +40,6 @@ library BdPoolLibrary {
             c_fiat_value_d18.add(calculated_bdx_fiat_value_d18),
             calculated_bdx_needed
         );
-    }
-
-    function calcMintAlgorithmicBD(uint256 bdx_price_fiat_d12, uint256 bdx_amount_d18) public pure returns (uint256) {
-        return bdx_amount_d18.mul(bdx_price_fiat_d12).div(PRICE_PRECISION);
     }
 
     function calcRecollateralizeBdStableInner(

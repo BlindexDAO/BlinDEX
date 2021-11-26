@@ -131,17 +131,6 @@ describe("BDStable 1to1", () => {
         expect(pctDiff).to.be.closeTo(0, 2);
     });
 
-    it("minting should throw when CR < 1", async () => {
-        const testUser = await getUser(hre);
-        const collateralAmount = 10;
-
-        await lockBdEuCrAt(hre, 0.7);
-
-        await expect((async () => {
-            await (await perform1To1MintingForWeth(hre, testUser, collateralAmount))
-        })()).to.be.rejectedWith("Collateral ratio must be == 1");
-    });
-
     it("should redeem bdeu when CR = 1", async () => {
         const testUser = await getUser(hre);
 
@@ -168,7 +157,7 @@ describe("BDStable 1to1", () => {
         const expectedWethFromRedeem = bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12)
             .mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee
 
-        await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
+        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1);
         await bdEuPool.connect(testUser).collectRedemption(false);
 
         var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
@@ -222,7 +211,7 @@ describe("BDStable 1to1", () => {
             bdEuToRedeem.mul(1e12).div(ethInEurPrice_1e12).mul(efCr_d12).div(1e12)
             .mul(to_d12(1 - 0.003)).div(1e12)); 
 
-        await bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1);
+        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1);
         await bdEuPool.connect(testUser).collectRedemption(true);
 
         var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
@@ -251,24 +240,6 @@ describe("BDStable 1to1", () => {
         expect(bdEuDelta).to.be.closeTo(d18_ToNumber(bdEuToRedeem), 1e-6, "unexpected bdeu delta");
         expect(wethDelta).to.be.eq(expectedWethFromRedeem, "unexpected weth delta");
         expect(poolWethDelta).to.be.closeTo(expectedWethExtractedFromPool, 1e-6, "unexpected pool weth delta");
-    });
-
-    it("redeeming should throw when CR != 1", async () => {
-        const testUser = await getUser(hre);
-
-        await lockBdEuCrAt(hre, 0.7);
-        
-        const bdEuPool = await getBdEuWethPool(hre);
-        
-        const bdEu = await getBdEu(hre);
-
-        await bdEu.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user so user can redeem it
-
-        await bdEu.connect(testUser).approve(bdEuPool.address, 100);
-
-        await expect((async () => {
-            await bdEuPool.connect(testUser).redeem1t1BD(to_d18(100), 1);
-        })()).to.be.rejectedWith("Collateral ratio must be == 1");
     });
 
     it("should fail illegal 1to1 redemption", async () => {
@@ -303,7 +274,7 @@ describe("BDStable 1to1", () => {
         expectedWethForRedeem = expectedWethForRedeem.mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
         await expect(
-            bdEuPool.connect(testUser).redeem1t1BD(bdEuToRedeem, 1)
+            bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1)
         ).to.be.revertedWith('Cannot legally redeem');
     });
 
@@ -316,13 +287,13 @@ export async function perform1To1MintingForWeth(hre: HardhatRuntimeEnvironment, 
   
     await mintWeth(hre, user, to_d18(1000));
     await weth.connect(user).approve(bdEuPool.address, to_d18(collateralAmount));
-    await bdEuPool.connect(user).mint1t1BD(to_d18(collateralAmount), to_d18(1), false, {});
+    await bdEuPool.connect(user).mintFractionalBdStable(to_d18(collateralAmount), 0, to_d18(1), false);
 }
 
 export async function perform1To1MintingForEth(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, collateralAmount: number){
     const bdEuPool = await getBdEuWethPool(hre);
   
-    await bdEuPool.connect(user).mint1t1BD(to_d18(collateralAmount), to_d18(1), true, {value: to_d18(collateralAmount)});
+    await bdEuPool.connect(user).mintFractionalBdStable(to_d18(collateralAmount), 0, to_d18(1), true, {value: to_d18(collateralAmount)});
 }
 
 export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, wbtcAmount: number){
@@ -332,5 +303,5 @@ export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, 
     await mintWbtcFromEth(hre, user, to_d18(wbtcAmount*100));
     
     await wbtc.connect(user).approve(bdEuPool.address, to_d8(wbtcAmount));
-    await bdEuPool.connect(user).mint1t1BD(to_d8(wbtcAmount), to_d18(1), false, {});
+    await bdEuPool.connect(user).mintFractionalBdStable(to_d8(wbtcAmount), 0, to_d18(1), false, {});
 }

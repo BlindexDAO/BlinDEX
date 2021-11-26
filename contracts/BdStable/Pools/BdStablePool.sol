@@ -158,166 +158,16 @@ contract BdStablePool is Initializable {
         }
     }
 
-    // We separate out the 1t1, fractional and algorithmic minting functions for gas efficiency
-    function mint1t1BD(uint256 collateral_amount, uint256 BD_out_min, bool useNativeToken)
-        external
-        payable
-        notMintPaused
-    {
-        if(useNativeToken){
-            require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
-            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
-        }
-
-        updateOraclesIfNeeded();
-        uint256 collateral_amount_d18 =
-            collateral_amount * (10**missing_decimals);
-
-        BDSTABLE.refreshCollateralRatio();
-        uint256 globalCR = BDSTABLE.global_collateral_ratio_d12();
-
-        require(
-            globalCR == BdPoolLibrary.COLLATERAL_RATIO_MAX,
-            "Collateral ratio must be == 1"
-        );
-        
-        require(
-            collateral_token.balanceOf(address(this))
-                .sub(unclaimedPoolCollateral)
-                .add(collateral_amount) <= pool_ceiling,
-            "[Pool's Closed]: Ceiling reached"
-        );
-
-        uint256 bd_amount_d18 =
-            BdPoolLibrary.calcMint1t1BD(
-                getCollateralPrice_d12(),
-                collateral_amount_d18
-            ); //1 BD for each $1/€1/etc worth of collateral
-
-        bd_amount_d18 = (bd_amount_d18.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION); //remove precision at the end
-        require(BD_out_min <= bd_amount_d18, "Slippage limit reached");
-
-        if(useNativeToken){
-            NativeTokenWrapper.deposit{ value: collateral_amount }();
-        } else {
-            collateral_token.safeTransferFrom(
-                msg.sender,
-                address(this),
-                collateral_amount
-            );
-        }
-
-        BDSTABLE.pool_mint(msg.sender, bd_amount_d18);
-    }
-
-    // Redeem collateral. 100% collateral-backed
-    function redeem1t1BD(uint256 BD_amount, uint256 COLLATERAL_out_min)
-        external
-        notRedeemPaused
-    {
-        updateOraclesIfNeeded();
-        BDSTABLE.refreshCollateralRatio();
-
-        require(
-            BDSTABLE.global_collateral_ratio_d12() == BdPoolLibrary.COLLATERAL_RATIO_MAX,
-            "Collateral ratio must be == 1"
-        );
-
-        // Need to adjust for decimals of collateral
-        uint256 col_price_d12 = getCollateralPrice_d12();
-        uint256 effective_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
-        uint256 cr_d12 = effective_collateral_ratio_d12 > BdPoolLibrary.COLLATERAL_RATIO_MAX ? BdPoolLibrary.COLLATERAL_RATIO_MAX : effective_collateral_ratio_d12;
-        uint256 collateral_needed = BD_amount.mul(BdPoolLibrary.PRICE_PRECISION).mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION).div(col_price_d12);
-
-        collateral_needed = (
-            collateral_needed.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))
-        ).div(BdPoolLibrary.PRICE_PRECISION);
-
-        require(
-            collateral_needed <=
-                collateral_token.balanceOf(address(this)).sub(
-                    unclaimedPoolCollateral
-                ),
-            "Not enough collateral in pool"
-        );
-        require(
-            COLLATERAL_out_min <= collateral_needed,
-            "Slippage limit reached"
-        );
-
-        require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
-
-        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender]
-                .add(collateral_needed);
-     
-
-        unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
-        lastRedeemed[msg.sender] = block.number;
-
-        // Move all external functions to the end
-        BDSTABLE.pool_burn_from(msg.sender, BD_amount);
-    }
-
-    // 0% collateral-backed
-    function mintAlgorithmicBdStable(uint256 bdx_amount_d18, uint256 bdStable_out_min) external notMintPaused {
-        updateOraclesIfNeeded();
-        BDSTABLE.refreshCollateralRatio();
-
-        uint256 bdx_price = BDSTABLE.BDX_price_d12();
-        require(BDSTABLE.global_collateral_ratio_d12() == 0, "Collateral ratio must be 0");
-
-        (uint256 bdStable_amount_d18) = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_amount_d18);
-
-        bdStable_amount_d18 = (bdStable_amount_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
-        require(bdStable_out_min <= bdStable_amount_d18, "Slippage limit reached");
-
-        BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_amount_d18);
-        BDSTABLE.pool_mint(msg.sender, bdStable_amount_d18);
-    }
-
-    // Redeem BDSTABLE for BDX. 0% collateral-backed
-    function redeemAlgorithmicBdStable(uint256 bdStable_amount, uint256 bdx_out_min) external notRedeemPaused {
-        updateOraclesIfNeeded();
-        BDSTABLE.refreshCollateralRatio();
-
-        uint256 bdx_price = BDSTABLE.BDX_price_d12();
-        uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
-
-        require(global_collateral_ratio_d12 == 0, "Collateral ratio must be 0"); 
-        uint256 bdx_fiat_value_d18 = bdStable_amount;
-
-        bdx_fiat_value_d18 = (bdx_fiat_value_d18.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(BdPoolLibrary.PRICE_PRECISION); //apply fees
-
-        uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(bdx_price);
-        uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
-        bdx_amount = bdx_amount.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
-        
-        require(bdx_out_min < bdx_amount, "Slippage limit reached");
-
-        if(bdx_amount > 0){
-            require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
-            
-            redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
-
-            BDSTABLE.pool_claim_bdx(bdx_amount);
-        }
-        
-        lastRedeemed[msg.sender] = block.number;
-
-        // Move all external functions to the end
-        BDSTABLE.pool_burn_from(msg.sender, bdStable_amount);
-    }
-
     // Will fail if fully collateralized or fully algorithmic
     // > 0% and < 100% collateral-backed
-    function mintFractionalBdStable(uint256 collateral_amount, uint256 bdx_in_max, uint256 bdStable_out_min, bool useNativeToken)
+    function mintFractionalBdStable(uint256 collateral_amount_in_max, uint256 bdx_in_max, uint256 bdStable_out_min, bool useNativeToken)
         external
         payable
         notMintPaused
     {
         if(useNativeToken){
             require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
-            require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
+            require(msg.value == collateral_amount_in_max, "msg.value and collateral_amount_in_max do not match");
         }
 
         updateOraclesIfNeeded();
@@ -325,38 +175,54 @@ contract BdStablePool is Initializable {
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
-
-        require(global_collateral_ratio_d12 < BdPoolLibrary.COLLATERAL_RATIO_MAX && global_collateral_ratio_d12 > 0, 
-            "Collateral ratio needs to be between .000001 and .999999");
         
+        if(global_collateral_ratio_d12 == 0){
+            collateral_amount_in_max = 0;
+        } else if(global_collateral_ratio_d12 == BdPoolLibrary.COLLATERAL_RATIO_MAX){
+            bdx_in_max = 0;
+        }
+
         require(
             collateral_token.balanceOf(address(this))
                 .sub(unclaimedPoolCollateral)
-                .add(collateral_amount) <= pool_ceiling,
+                .add(collateral_amount_in_max) <= pool_ceiling,
             "Pool ceiling reached, no more BdStable can be minted with this collateral"
         );
 
-        uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
+        uint256 collateral_amount_in_max_d18 = collateral_amount_in_max * (10 ** missing_decimals);
 
-        (uint256 mint_amount, uint256 bdx_needed) = BdPoolLibrary.calcMintFractionalBD(
-            bdx_price,
-            getCollateralPrice_d12(),
-            collateral_amount_d18,
-            global_collateral_ratio_d12
-        );
+        uint256 mint_amount;
+        uint256 bdx_needed;
+        if(global_collateral_ratio_d12 == 0) {
+            mint_amount = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_in_max);
+            bdx_needed = bdx_in_max;
+        } else if(global_collateral_ratio_d12 == 1) {
+            mint_amount = BdPoolLibrary.calcMint1t1BD(getCollateralPrice_d12(), collateral_amount_in_max_d18);
+            bdx_needed = 0;
+        } else{ 
+            (mint_amount, bdx_needed) = BdPoolLibrary.calcMintFractionalBD(
+                bdx_price,
+                getCollateralPrice_d12(),
+                collateral_amount_in_max_d18,
+                global_collateral_ratio_d12
+            );
+        }
 
         mint_amount = (mint_amount.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
 
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
-
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
-        BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_needed);
+        if(bdx_needed > 0){
+            BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_needed);
+        }
 
-        if(useNativeToken){
-            NativeTokenWrapper.deposit{ value: collateral_amount }();
-        } else {
-            collateral_token.safeTransferFrom(msg.sender, address(this), collateral_amount);
+        if(collateral_amount_in_max > 0){
+            if(useNativeToken){
+                NativeTokenWrapper.deposit{ value: collateral_amount_in_max }();
+            } else {
+                collateral_token.safeTransferFrom(msg.sender, address(this), collateral_amount_in_max);
+            }
         }
 
         BDSTABLE.pool_mint(msg.sender, mint_amount);
@@ -369,11 +235,6 @@ contract BdStablePool is Initializable {
         BDSTABLE.refreshCollateralRatio();
 
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
-
-        // due to introducing effective BDX coverage ratio, we allow for fractional redemption when CR=1
-        // this doesn't make user suddenly loose value (all of the BDX porion) when efCR < 1 and CR moves form 0.9975 to 1
-        require(global_collateral_ratio_d12 > 0, "Collateral ratio needs to be: > 0");
-
         uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
 
         uint256 cr_d12 = effective_global_collateral_ratio_d12 < global_collateral_ratio_d12
@@ -398,7 +259,6 @@ contract BdStablePool is Initializable {
         require(collateral_needed <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
         require(COLLATERAL_out_min <= collateral_needed, "Slippage limit reached [collateral]");
         require(BDX_out_min <= bdx_amount, "Slippage limit reached [BDX]");
-
         require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
 
         redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);

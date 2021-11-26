@@ -19,7 +19,7 @@ async function performAlgorithmicMinting(testUser: SignerWithAddress, bdxAmount:
     const bdEuPool = await getBdEuWethPool(hre);
 
     await bdx.connect(testUser).approve(bdEuPool.address, to_d18(bdxAmount)); 
-    await bdEuPool.connect(testUser).mintAlgorithmicBdStable((to_d18(bdxAmount)), (to_d18(1)));
+    await bdEuPool.connect(testUser).mintFractionalBdStable(0, to_d18(bdxAmount), to_d18(1), false);
 }
 
 describe("BDStable algorythmic", () => {
@@ -108,7 +108,7 @@ describe("BDStable algorythmic", () => {
 
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18);
 
-        await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
+        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 0);
         await bdEuPool.connect(testUser).collectRedemption(false);
 
         const bdEuBalanceAfterRedeem_d18 = await bdEu.balanceOf(testUser.address);
@@ -165,7 +165,7 @@ describe("BDStable algorythmic", () => {
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18);
 
         await expect(
-            bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1)
+            bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 0)
         ).to.be.revertedWith('Cannot legally redeem');
     });
 
@@ -200,7 +200,7 @@ describe("BDStable algorythmic", () => {
         const bdEuToRedeem = 100;
         const bdEuToRedeem_d18 = to_d18(bdEuToRedeem);
         await bdEu.connect(testUser).approve(bdEuPool.address, bdEuToRedeem_d18); 
-        await bdEuPool.connect(testUser).redeemAlgorithmicBdStable(bdEuToRedeem_d18, 1);
+        await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem_d18, 1, 0);
         await bdEuPool.connect(testUser).collectRedemption(false);
 
         const bdEuBdxBalanceAfter_d18 = await bdx.balanceOf(bdEu.address);
