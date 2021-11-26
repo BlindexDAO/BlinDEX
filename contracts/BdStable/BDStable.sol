@@ -378,6 +378,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
     function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner{
         minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
+        emit MinimumMintRedeemDelayInBlocksSet(_minimumMintRedeemDelayInBlocks);
     }
 
     function pool_claim_bdx(uint256 amount) external onlyPools {
@@ -424,4 +425,5 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     event PriceTargetSet(uint256 _price_target_d12);
     event CollateralRatioPausedToggled(bool collateral_ratio_paused);
     event CollateralRatioLocked(uint256 lockedCR_d12);
+    event MinimumMintRedeemDelayInBlocksSet(uint256 minimumMintRedeemDelayInBlocks);
 }

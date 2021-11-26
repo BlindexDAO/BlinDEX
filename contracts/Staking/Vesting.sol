@@ -132,6 +132,8 @@ contract Vesting is OwnableUpgradeable
     {
         require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
         vestingTimeInSeconds = _vestingTimeInSeconds;
+
+        emit VestingTimeInSecondsSet(_vestingTimeInSeconds);
     }
 
     function setFundsProvider(address _fundsProvider) external onlyOwner {
@@ -140,4 +142,5 @@ contract Vesting is OwnableUpgradeable
 
     event ScheduleCreated(address user, uint256 amount);
     event RewardClaimed(address user, uint256 amount);
+    event VestingTimeInSecondsSet(uint256 vestingTimeInSeconds);
 }
