@@ -11,7 +11,6 @@ import "../Bdx/BDXShares.sol";
 import "../Oracle/IOracleBasedCryptoFiatFeed.sol";
 import "../Oracle/ICryptoPairOracle.sol";
 import "./Pools/BdStablePool.sol";
-import "../ERC20/ERC20Custom.sol";
 import "./Pools/BdPoolLibrary.sol";
 
 contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
@@ -104,7 +103,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
     /* ========== VIEWS ========== */
 
-    function getBdStablesPoolsLength() public view returns (uint256) {
+    function getBdStablesPoolsLength() external view returns (uint256) {
         return bdstable_pools_array.length;
     }
 
@@ -136,7 +135,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         return weth_fiat_price_d12.mul(BdPoolLibrary.PRICE_PRECISION).div(price_vs_weth);
     }
     
-    function updateOraclesIfNeeded() public {
+    function updateOraclesIfNeeded() external {
         if(bdxWethOracle.shouldUpdateOracle()){
             bdxWethOracle.updateOracle();
         }
@@ -146,7 +145,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         } 
     }
 
-    function shouldUpdateOracles() public view returns (bool) {
+    function shouldUpdateOracles() external view returns (bool) {
         return bdxWethOracle.shouldUpdateOracle() || bdstableWethOracle.shouldUpdateOracle(); 
     }
 
@@ -156,7 +155,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     // Returns BDX / <fiat>
-    function BDX_price_d12() public view returns (uint256) {
+    function BDX_price_d12() external view returns (uint256) {
         return oracle_price(PriceChoice.BDX);
     }
 
@@ -238,7 +237,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
     
-    function get_effective_bdx_coverage_ratio() public view returns (uint256) {
+    function get_effective_bdx_coverage_ratio() external view returns (uint256) {
         uint256 effective_collateral_ratio_d12 = effective_global_collateral_ratio_d12();
 
         uint256 cr = global_collateral_ratio_d12 > effective_collateral_ratio_d12 
@@ -276,14 +275,14 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     // Used by pools when user redeems
-    function pool_burn_from(address b_address, uint256 b_amount) public onlyPools {
+    function pool_burn_from(address b_address, uint256 b_amount) external onlyPools {
         burnFrom(b_address, b_amount);
 
         emit BdStableBurned(b_address, msg.sender, b_amount);
     }
 
     // This function is what other bd pools will call to mint new bd stable 
-    function pool_mint(address m_address, uint256 m_amount) public onlyPools {
+    function pool_mint(address m_address, uint256 m_amount) external onlyPools {
         super._mint(m_address, m_amount);
         
         lastMintByUserBlock[m_address] = block.number;
@@ -381,11 +380,11 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
     }
 
-    function pool_claim_bdx(uint256 amount) public onlyPools {
+    function pool_claim_bdx(uint256 amount) external onlyPools {
         unclaimedPoolsBDX = unclaimedPoolsBDX.add(amount);
     }
 
-    function pool_transfer_claimed_bdx(address to, uint256 amount) public onlyPools {
+    function pool_transfer_claimed_bdx(address to, uint256 amount) external onlyPools {
         unclaimedPoolsBDX = unclaimedPoolsBDX.sub(amount);
         BDX.safeTransfer(to, amount);
     }
