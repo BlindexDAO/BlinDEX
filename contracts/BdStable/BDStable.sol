@@ -320,6 +320,9 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function setBDStable_WETH_Oracle(address _bdstable_oracle_addr, address _weth_address) external onlyOwner {
+        require(_bdstable_oracle_addr != address(0), "Oracle cannot be set to the zero address");
+        require(_weth_address != address(0), "WETH cannot be set to the zero address");
+
         bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
         weth_address = _weth_address;
 
@@ -327,6 +330,9 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function setBDX_WETH_Oracle(address _bdx_oracle_addr, address _weth_address) external onlyOwner {
+        require(_bdx_oracle_addr != address(0), "Oracle cannot be set to the zero address");
+        require(_weth_address != address(0), "WETH cannot be set to the zero address");
+
         bdxWethOracle = ICryptoPairOracle(_bdx_oracle_addr);
         weth_address = _weth_address;
 
@@ -334,6 +340,8 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
     
     function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyOwner {
+        require(_eth_fiat_consumer_address != address(0), "Oracle cannot be set to the zero address");
+        
         weth_fiat_pricer = IOracleBasedCryptoFiatFeed(_eth_fiat_consumer_address);
         
         emit EthFiatOracleSet(_eth_fiat_consumer_address);
@@ -373,6 +381,8 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function setTreasury_address(address _treasury_address) external onlyOwner {
+        require(_treasury_address != address(0), "Treasury cannot be set to the zero address");
+
         treasury_address = _treasury_address;
     }
 
