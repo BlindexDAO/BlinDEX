@@ -16,16 +16,18 @@ export function load() {
         .setAction(async (args, hre) => {
             const deployer = await getDeployer(hre);
             const swaps = await getSwapsConfig(hre);
-            const stringifiedSwaps = "[" + swaps.map(swap => `{ "pairAddress": "${swap.address}", "token0Address": "${swap.token0}", "token1Address": "${swap.token1}" }`).join(',') + "]";
             const stakingRewards = await getStakingsConfig(hre, swaps);
             const stringifiedStakingRewards = "[" + stakingRewards.map(reward => `{ "pairAddress": "${reward.stakingTokenAddress}", "stakingRewardAddress": "${reward.address}" }`).join(',') + "]";
-            const pairOracles = await getPairOracles(hre, deployer);
+            const { pairs, pairOracles, pairSymbols }: { pairs: { address: string, token0: string, token1: string }[], pairOracles: { pairAddress: string, oracleAddress: string }[], pairSymbols: string[] } = await getPairsOraclesAndSymbols(hre, deployer);
+            const stringifiedSwaps = "[" + pairs.map(pair => `{ "pairAddress": "${pair.address}", "token0Address": "${pair.token0}", "token1Address": "${pair.token1}" }`).join(',') + "]";
             const stringifiedPairOracles = "[" + pairOracles.map(pairOracle => `{ "pairAddress": "${pairOracle.pairAddress}", "oracleAddress": "${pairOracle.oracleAddress}"}`).join(',') + "]";
+            const stringifiedPairSymbols = pairSymbols.join(" ");
             const blockchainConfig = `
 BDEU_ADDRESS = ${(await getBdEu(hre)).address}
 UNISWAP_FACTORY_ADDRESS = ${(await getUniswapFactory(hre)).address}
 BDX_ADDRESS = ${(await getBdx(hre)).address}
 STAKING_REWARDS_DISTRIBUTION_ADDRESS = ${(await getStakingRewardsDistribution(hre)).address}
+AVAILABLE_PAIR_SYMBOLS = ${stringifiedPairSymbols}
 AVAILABLE_PAIRS = ${stringifiedSwaps}
 STAKING_REWARDS = ${stringifiedStakingRewards}
 PAIR_ORACLES = ${stringifiedPairOracles}
@@ -69,37 +71,57 @@ PRICE_FEED_ETH_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_ETH_USD'
         });
 };
 
-async function getPairOracles(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
+async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
     const factory = await getUniswapFactory(hre);
     const pairsCount = (await factory.allPairsLength()).toNumber();
-    const pairsWhitelistPromise = (await getPairsWhitelist(hre)).map(async pair => {
+    const whitelist = await getPairsWhitelist(hre);
+    const pairsWhitelistPromise = whitelist.map(async pair => {
         return { token0Symbol: (await pair[0].symbol()), token1Symbol: (await pair[1].symbol()), token0Address: pair[0].address.toLowerCase(), token1Address: pair[1].address.toLowerCase() }
     });
+
     const pairsWhitelist = await Promise.all(pairsWhitelistPromise);
-    const pairs = await Promise.all([...Array(pairsCount).keys()].map(async i => {
+    const pairInfos = await Promise.all([...Array(pairsCount).keys()].map(async i => {
         const pairAddress = await factory.allPairs(i);
         const pair = (await hre.ethers.getContractAt('UniswapV2Pair', pairAddress)) as UniswapV2Pair;
         const token0 = (await pair.token0()).toLowerCase();
         const token1 = (await pair.token1()).toLowerCase();
         let oracleAddress: string = '';
 
-        let pairSymbol = pairsWhitelist.find(pair => (pair.token0Address == token0 && pair.token1Address == token1) || (pair.token0Address == token1 && pair.token1Address == token0));
-        if (pairSymbol != null) {
-            try {
-                oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol?.token0Symbol + "_" + pairSymbol?.token1Symbol}`, deployer)).address;
-            }
-            catch (e) {
-                oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol?.token1Symbol + "_" + pairSymbol?.token0Symbol}`, deployer)).address;
-            }
+        let pairSymbols = pairsWhitelist.find(pair => (pair.token0Address == token0 && pair.token1Address == token1) || (pair.token0Address == token1 && pair.token1Address == token0));
+        if (pairSymbols == null) {
+            throw new Error("Please update pair whitelist in getPairsWhitelist method to continue.");
+        }
+
+        let pairSymbol = '';
+        try {
+            pairSymbol = pairSymbols?.token0Symbol + "_" + pairSymbols?.token1Symbol;
+            oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
+        }
+        catch (e) {
+            pairSymbol = pairSymbols?.token1Symbol + "_" + pairSymbols?.token0Symbol;
+            oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
+            const temp = pairSymbols.token0Address;
+            pairSymbols.token0Address = pairSymbols.token1Address;
+            pairSymbols.token1Address = temp;
         }
 
         return {
-            pairAddress: pairAddress,
-            oracleAddress: oracleAddress
+            pair: { address: pairAddress, token0: pairSymbols.token0Address, token1: pairSymbols.token1Address }, pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress }, symbol: pairSymbol
         };
     }));
 
-    return pairs;
+    const approvedPairs = pairInfos.filter(pairInfo => {
+        const sortedPair = [pairInfo.pair.token0, pairInfo.pair.token1].sort();
+        for (let wlPair of whitelist) {
+            const wlPairSorted = [wlPair[0].address.toLowerCase(), wlPair[1].address.toLowerCase()].sort();
+            if (wlPairSorted[0] === sortedPair[0] && wlPairSorted[1] === sortedPair[1]) {
+                return true;
+            }
+        }
+        return false;
+    })
+
+    return { pairs: approvedPairs.map(p => p.pair), pairOracles: approvedPairs.map(p => p.pairOracle), pairSymbols: approvedPairs.map(p => p.symbol) };
 }
 
 async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
