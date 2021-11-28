@@ -13,8 +13,6 @@ import "./ICryptoPairOracle.sol";
 contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     using FixedPoint for *;
     
-    address owner_address;
-
     uint public period = 3600; // 1 hour TWAP (time-weighted average price)
     uint public consult_leniency = 120; // Used for being able to consult past the period end
     bool public allow_stale_consults = false; // If false, consult() will fail if the TWAP is stale
@@ -29,18 +27,13 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
-    constructor(address factoryAddress, address tokenA, address tokenB, address _owner_address) public {
+    constructor(address factoryAddress, address tokenA, address tokenB) public {
         IUniswapV2Factory factory = IUniswapV2Factory(factoryAddress);
 
         IUniswapV2Pair _pair = IUniswapV2Pair(factory.getPair(tokenA, tokenB));
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
-        owner_address = _owner_address;
-    }
-
-    function setOwner(address _owner_address) external onlyOwner {
-        owner_address = _owner_address;
     }
 
     function setPeriod(uint _period) external onlyOwner {
@@ -96,7 +89,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
 
         // Ensure that at least one full period has passed since the last update
-        require(timeElapsed >= period || owner_address == msg.sender, "UniswapPairOracle: PERIOD_NOT_ELAPSED");
+        require(timeElapsed >= period || owner() == _msgSender(), "UniswapPairOracle: PERIOD_NOT_ELAPSED");
 
         // Overflow is desired, casting never truncates
         // Cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
