@@ -41,13 +41,13 @@ contract BtcToEthOracleChinlink is ICryptoPairOracle {
         return uint256(price);
     }
 
-    function updateOracle() public override {}
+    function updateOracle() external override {}
 
-    function shouldUpdateOracle() public view override returns (bool) {
+    function shouldUpdateOracle() external view override returns (bool) {
         return false;
     }
 
-    function when_should_update_oracle_in_seconds() public view override returns (uint256) {
+    function when_should_update_oracle_in_seconds() external view override returns (uint256) {
         return type(uint256).max;
     }
 }

@@ -27,13 +27,15 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
         return recentPrice;
     }
 
-    function setUpdater(address newUpdater) public onlyOwner {
+    function setUpdater(address newUpdater) external onlyOwner {
+        require(newUpdater != address(0), "Updater cannot be set to the zero address");
+
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
     }
 
-    function setPrice(uint256 _price) public onlyUpdater {
+    function setPrice(uint256 _price) external onlyUpdater {
         recentPrice = _price;
         lastUpdateTimestamp = block.timestamp;
         emit PriceChanged(_price);

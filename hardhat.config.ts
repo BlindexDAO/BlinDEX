@@ -13,7 +13,7 @@ import dotenv from 'dotenv'
 import * as setupTasks from "./tasks/setup"
 import * as maintenanceTasks from "./tasks/mainternace"
 import * as developmentTasks from "./tasks/development"
-import * as feConfig from "./tasks/fe-confg"
+import * as feConfig from "./tasks/config"
 
 const path = require('path');
 const envPath = path.join(__dirname, './.env');

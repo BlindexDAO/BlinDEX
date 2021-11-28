@@ -45,10 +45,14 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
 
     function setPeriod(uint _period) external onlyOwner {
         period = _period;
+
+        emit PeriodSet(_period);
     }
 
     function setConsultLeniency(uint _consult_leniency) external onlyOwner {
         consult_leniency = _consult_leniency;
+
+        emit ConsultLatencySet(_consult_leniency);
     }
 
     function setAllowStaleConsults(bool _allow_stale_consults) external onlyOwner {
@@ -119,4 +123,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
             amountOut = price1Average.mul(amountIn).decode144();
         }
     }
+
+    event PeriodSet(uint period);
+    event ConsultLatencySet(uint consult_latency);
 }

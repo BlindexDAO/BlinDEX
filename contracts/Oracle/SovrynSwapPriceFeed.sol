@@ -72,9 +72,9 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         return oraclePrice.mul(amountIn).div(PRECISION);
     }
 
-    function updateOracle() public override {}
+    function updateOracle() external override {}
 
-    function updateOracleWithVerification(uint verificationPrice_d12) public onlyUpdater {
+    function updateOracleWithVerification(uint verificationPrice_d12) external onlyUpdater {
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
         uint256 newPrice = amountMinusFee.add(fee);
         uint256 priceDifference = verificationPrice_d12 > newPrice ? verificationPrice_d12.sub(newPrice) : newPrice.sub(verificationPrice_d12);
@@ -84,22 +84,24 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         emit PriceChanged(oraclePrice);
     }
 
-    function shouldUpdateOracle() public view override returns (bool) {
+    function shouldUpdateOracle() external view override returns (bool) {
         return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
     }
 
-    function when_should_update_oracle_in_seconds() public view override returns (uint256) {
+    function when_should_update_oracle_in_seconds() external view override returns (uint256) {
         uint256 updateTime = updateTimestamp.add(timeBeforeShouldUpdate);
         return block.timestamp < updateTime ? updateTime.sub(block.timestamp) : 0;
     }
 
-    function setUpdater(address newUpdater) public onlyOwner {
+    function setUpdater(address newUpdater) external onlyOwner {
+        require(newUpdater != address(0), "Updater cannot be set to the zero address");
+        
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
     }
 
-    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) public onlyOwner {
+    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) external onlyOwner {
         priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
     }
 

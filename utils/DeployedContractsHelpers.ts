@@ -63,12 +63,12 @@ export async function getVesting(hre: HardhatRuntimeEnvironment){
   return await hre.ethers.getContract('Vesting', deployer) as Vesting;
 }
 
-export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment){
+export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment) : Promise<BdStablePool>{
   const deployer = await getDeployer(hre);
   return await hre.ethers.getContract('BDEU_WETH_POOL', deployer) as BdStablePool;
 }
 
-export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment){
+export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment) : Promise<BdStablePool>{
   const deployer = await getDeployer(hre);
   return await hre.ethers.getContract('BDEU_WBTC_POOL', deployer) as BdStablePool;
 }

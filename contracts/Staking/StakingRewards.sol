@@ -97,7 +97,7 @@ contract StakingRewards is
 
     /* ========== VIEWS ========== */
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _staking_token_supply;
     }
 
@@ -123,7 +123,7 @@ contract StakingRewards is
     }
 
     // Total unlocked and locked liquidity tokens
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(address account) external view returns (uint256) {
         return (_unlocked_balances[account]).add(_locked_balances[account]);
     }
 
@@ -133,7 +133,7 @@ contract StakingRewards is
     }
 
     // Total locked liquidity tokens
-    function lockedBalanceOf(address account) public view returns (uint256) {
+    function lockedBalanceOf(address account) external view returns (uint256) {
         return _locked_balances[account];
     }
 
@@ -262,7 +262,7 @@ contract StakingRewards is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) public nonReentrant updateReward(msg.sender) {
+    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) external nonReentrant updateReward(msg.sender) {
         // from & to parameters serve as an optinal range, 
         // to prevent the loop from running out of gas
         // when user has too many stakes
@@ -360,7 +360,7 @@ contract StakingRewards is
         emit ExistingStakeLocked(msg.sender, amount, secs);
     }
 
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() external nonReentrant updateReward(msg.sender) {
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -397,27 +397,27 @@ contract StakingRewards is
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     // Added to support recovering LP Rewards from other systems to be distributed to holders
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyByOwner {
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyOwner {
         // Admin cannot withdraw the staking token from the contract
         require(tokenAddress != address(stakingToken));
         ERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
         emit Recovered(tokenAddress, tokenAmount);
     }
 
-    function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyByOwner {
+    function setRewardsDuration(uint256 _rewardsDurationSeconds) external onlyOwner {
         rewardsDurationSeconds = _rewardsDurationSeconds;
         emit RewardsDurationUpdated(rewardsDurationSeconds);
     }
 
-    function setIsAddressGraylisted(address _address, bool isGraylisted) external onlyByOwner {
+    function setIsAddressGraylisted(address _address, bool isGraylisted) external onlyOwner {
         greylist[_address] = isGraylisted;
     }
 
-    function toggleUnlockStakes() external onlyByOwner {
+    function toggleUnlockStakes() external onlyOwner {
         unlockedStakes = !unlockedStakes;
     }
 
-    function setOwner(address _new_owner) external onlyByOwner {
+    function setOwner(address _new_owner) external onlyOwner {
         transferOwnership(_new_owner);
     }
 
@@ -438,11 +438,6 @@ contract StakingRewards is
             rewards[account] = earned(account);
             userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
         }
-        _;
-    }
-
-    modifier onlyByOwner() {
-        require(msg.sender == owner(), "You are not the owner");
         _;
     }
 

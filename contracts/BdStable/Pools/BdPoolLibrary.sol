@@ -14,11 +14,11 @@ library BdPoolLibrary {
 
     // ================ Functions ================
 
-    function calcMint1t1BD(uint256 col_price, uint256 collateral_amount_d18) public pure returns (uint256) {
+    function calcMint1t1BD(uint256 col_price, uint256 collateral_amount_d18) external pure returns (uint256) {
         return (collateral_amount_d18.mul(col_price)).div(PRICE_PRECISION);
     }
 
-    function calcMintAlgorithmicBD(uint256 bdx_price_fiat_d12, uint256 bdx_amount_d18) public pure returns (uint256) {
+    function calcMintAlgorithmicBD(uint256 bdx_price_fiat_d12, uint256 bdx_amount_d18) external pure returns (uint256) {
         return bdx_amount_d18.mul(bdx_price_fiat_d12).div(PRICE_PRECISION);
     }
 
@@ -48,7 +48,7 @@ library BdPoolLibrary {
         uint256 global_collat_value,
         uint256 bdStable_total_supply,
         uint256 global_collateral_ratio
-    ) public pure returns (uint256, uint256) {
+    ) external pure returns (uint256, uint256) {
         uint256 collat_value_attempted = collateral_amount_d18.mul(col_price).div(PRICE_PRECISION);
         uint256 effective_collateral_ratio = global_collat_value.mul(PRICE_PRECISION).div(bdStable_total_supply); //returns it in 1e12
         uint256 recollat_possible = global_collateral_ratio.sub(effective_collateral_ratio).mul(bdStable_total_supply).div(COLLATERAL_RATIO_PRECISION);

@@ -3,15 +3,15 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../../BdStable/BDStable.sol";
 import "../../Oracle/ICryptoPairOracle.sol";
 import "./BdPoolLibrary.sol";
 import "../../Utils/IWETH.sol";
 
-contract BdStablePool is Initializable {
+contract BdStablePool is OwnableUpgradeable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -26,7 +26,6 @@ contract BdStablePool is Initializable {
     
     bool public is_collateral_wrapping_native_token;
 
-    address public owner_address;
 
     uint256 private missing_decimals; // Number of decimals needed to get to 18
     address private weth_address;
@@ -64,11 +63,6 @@ contract BdStablePool is Initializable {
 
     /* ========== MODIFIERS ========== */
 
-    modifier onlyByOwner() {
-        require(msg.sender == owner_address, "You are not the owner");
-        _;
-    }
-
     modifier notRedeemPaused() {
         require(redeemPaused == false, "Redeeming is paused");
         _;
@@ -86,18 +80,18 @@ contract BdStablePool is Initializable {
         address _bdx_contract_address,
         address _collateral_address,
         uint256 _collateral_decimals,
-        address _creator_address,
         bool _is_collateral_wrapping_native_token
     ) 
-        public
+        external
         initializer
     {
+        __Ownable_init();
+
         BDSTABLE = BDStable(_bdstable_contract_address);
         BDX = IERC20(_bdx_contract_address);
         if(_is_collateral_wrapping_native_token) {
             NativeTokenWrapper = IWETH(_collateral_address);
         }
-        owner_address = _creator_address;
         collateral_token = IERC20(_collateral_address);
         missing_decimals = uint256(18).sub(_collateral_decimals);
 
@@ -132,7 +126,7 @@ contract BdStablePool is Initializable {
     }
 
     // Returns fiat value of collateral held in this BdStable pool
-    function collatFiatBalance() public view returns (uint256) {
+    function collatFiatBalance() external view returns (uint256) {
         //Expressed in collateral token decimals
         if(collateralPricePaused == true){
             return collateral_token.balanceOf(address(this))
@@ -336,7 +330,7 @@ contract BdStablePool is Initializable {
         require(recollateralizePaused == false, "Recollateralize is paused");
 
         if(recollateralizeOnlyForOwner){
-            require(msg.sender == owner_address, "Currently only owner can recollateralize");
+            require(msg.sender == owner(), "Currently only owner can recollateralize");
         }
 
         if(useNativeToken){
@@ -398,7 +392,7 @@ contract BdStablePool is Initializable {
         require(buyBackPaused == false, "Buyback is paused");
 
         if(buybackOnlyForOwner){
-            require(msg.sender == owner_address, "Currently only owner can buyback");
+            require(msg.sender == owner(), "Currently only owner can buyback");
         }
 
         updateOraclesIfNeeded();
@@ -442,51 +436,54 @@ contract BdStablePool is Initializable {
         address _weth_address
     ) 
         external
-        onlyByOwner 
+        onlyOwner 
     {
+        require(_collateral_weth_oracle_address != address(0), "Oracle cannot be set to the zero address");
+        require(_weth_address != address(0), "WETH cannot be set to the zero address");
+
         collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
 
         emit CollateralWethOracleSet(_collateral_weth_oracle_address, _weth_address);
     }
 
-    function toggleMintingPaused() external onlyByOwner {
+    function toggleMintingPaused() external onlyOwner {
         mintPaused = !mintPaused;
 
         emit MintingPausedToggled(mintPaused);
     }
 
-    function toggleRedeemingPaused() external onlyByOwner {
+    function toggleRedeemingPaused() external onlyOwner {
         redeemPaused = !redeemPaused;
 
         emit RedeemingPausedToggled(redeemPaused);
     }
 
-    function toggleRecollateralizePaused() external onlyByOwner {
+    function toggleRecollateralizePaused() external onlyOwner {
         recollateralizePaused = !recollateralizePaused;
 
         emit RecollateralizePausedToggled(recollateralizePaused);
     }
     
-    function toggleBuybackPaused() external onlyByOwner {
+    function toggleBuybackPaused() external onlyOwner {
         buyBackPaused = !buyBackPaused;
 
         emit BuybackPausedToggled(buyBackPaused);
     }
 
-    function toggleBuybackOnlyForOwner() external onlyByOwner {
+    function toggleBuybackOnlyForOwner() external onlyOwner {
         buybackOnlyForOwner = !buybackOnlyForOwner;
 
         emit BuybackOnlyForOwnerToggled(buybackOnlyForOwner);
     }
 
-    function toggleRecollateralizeOnlyForOwner() external onlyByOwner {
+    function toggleRecollateralizeOnlyForOwner() external onlyOwner {
         recollateralizeOnlyForOwner = !recollateralizeOnlyForOwner;
 
         emit RecollateralizeOnlyForOwnerToggled(recollateralizeOnlyForOwner);
     }
 
-    function toggleCollateralPricePaused(uint256 _new_price) external onlyByOwner {
+    function toggleCollateralPricePaused(uint256 _new_price) external onlyOwner {
         // If pausing, set paused price; else if unpausing, clear pausedPrice
         if(collateralPricePaused == false){
             pausedPrice = _new_price;
@@ -509,7 +506,7 @@ contract BdStablePool is Initializable {
         uint256 new_recollat_fee
     )
         external
-        onlyByOwner 
+        onlyOwner 
     {
         pool_ceiling = new_ceiling;
         bonus_rate = new_bonus_rate;
@@ -522,13 +519,6 @@ contract BdStablePool is Initializable {
         emit PoolParametersSet(new_ceiling, new_bonus_rate, new_redemption_delay, new_mint_fee, new_redeem_fee, new_buyback_fee, new_recollat_fee);
     }
 
-    function setOwner(address _owner_address) external onlyByOwner {
-        require(_owner_address != address(0), "New owner can't be zero address");
-
-        owner_address = _owner_address;
-        emit OwnerSet(_owner_address);
-    }
-
     function safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
         require(success, "ETH transfer failed");
@@ -536,7 +526,6 @@ contract BdStablePool is Initializable {
 
     /* ========== EVENTS ========== */
 
-    event OwnerSet(address indexed newOwner);
     event PoolParametersSet(uint256 new_ceiling, uint256 new_bonus_rate, uint256 new_redemption_delay, uint256 new_mint_fee, uint256 new_redeem_fee, uint256 new_buyback_fee, uint256 new_recollat_fee);
     event MintingPausedToggled(bool toggled);
     event RedeemingPausedToggled(bool toggled);
