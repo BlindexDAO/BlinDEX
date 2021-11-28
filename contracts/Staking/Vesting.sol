@@ -123,6 +123,8 @@ contract Vesting is OwnableUpgradeable
         external
         onlyOwner
     {
+        require(_vestingScheduler != address(0), "Vesting scheduler cannot be set to the zero address");
+
         vestingScheduler = _vestingScheduler;
     }
 
@@ -137,6 +139,8 @@ contract Vesting is OwnableUpgradeable
     }
 
     function setFundsProvider(address _fundsProvider) external onlyOwner {
+        require(_fundsProvider != address(0), "Funds provider cannot be set to the zero address");
+        
         fundsProvider = _fundsProvider;
     }
 

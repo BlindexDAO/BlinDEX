@@ -578,6 +578,9 @@ contract BdStablePool is OwnableUpgradeable {
         external
         onlyOwner 
     {
+        require(_collateral_weth_oracle_address != address(0), "Oracle cannot be set to the zero address");
+        require(_weth_address != address(0), "WETH cannot be set to the zero address");
+
         collatWEthOracle = ICryptoPairOracle(_collateral_weth_oracle_address);
         weth_address = _weth_address;
 
