@@ -17,23 +17,23 @@ export function load() {
             const deployer = await getDeployer(hre);
             const swaps = await getSwapsConfig(hre);
             const stakingRewards = await getStakingsConfig(hre, swaps);
-            const stringifiedStakingRewards = "[" + stakingRewards.map(reward => `{ "pairAddress": "${reward.stakingTokenAddress}", "stakingRewardAddress": "${reward.address}" }`).join(',') + "]";
+            const stringifiedStakingRewards = "[" + stakingRewards.map(reward => `{ "pairAddress": "${reward.stakingTokenAddress.toLowerCase()}", "stakingRewardAddress": "${reward.address.toLowerCase()}" }`).join(',') + "]";
             const { pairs, pairOracles, pairSymbols }: { pairs: { address: string, token0: string, token1: string }[], pairOracles: { pairAddress: string, oracleAddress: string }[], pairSymbols: string[] } = await getPairsOraclesAndSymbols(hre, deployer);
-            const stringifiedSwaps = "[" + pairs.map(pair => `{ "pairAddress": "${pair.address}", "token0Address": "${pair.token0}", "token1Address": "${pair.token1}" }`).join(',') + "]";
-            const stringifiedPairOracles = "[" + pairOracles.map(pairOracle => `{ "pairAddress": "${pairOracle.pairAddress}", "oracleAddress": "${pairOracle.oracleAddress}"}`).join(',') + "]";
+            const stringifiedSwaps = "[" + pairs.map(pair => `{ "pairAddress": "${pair.address.toLowerCase()}", "token0Address": "${pair.token0.toLowerCase()}", "token1Address": "${pair.token1.toLowerCase()}" }`).join(',') + "]";
+            const stringifiedPairOracles = "[" + pairOracles.map(pairOracle => `{ "pairAddress": "${pairOracle.pairAddress.toLowerCase()}", "oracleAddress": "${pairOracle.oracleAddress.toLowerCase()}"}`).join(',') + "]";
             const stringifiedPairSymbols = pairSymbols.join(" ");
             const blockchainConfig = `
-BDEU_ADDRESS = ${(await getBdEu(hre)).address}
-UNISWAP_FACTORY_ADDRESS = ${(await getUniswapFactory(hre)).address}
-BDX_ADDRESS = ${(await getBdx(hre)).address}
-STAKING_REWARDS_DISTRIBUTION_ADDRESS = ${(await getStakingRewardsDistribution(hre)).address}
+BDEU_ADDRESS = ${(await getBdEu(hre)).address.toLowerCase()}
+UNISWAP_FACTORY_ADDRESS = ${(await getUniswapFactory(hre)).address.toLowerCase()}
+BDX_ADDRESS = ${(await getBdx(hre)).address.toLowerCase()}
+STAKING_REWARDS_DISTRIBUTION_ADDRESS = ${(await getStakingRewardsDistribution(hre)).address.toLowerCase()}
 AVAILABLE_PAIR_SYMBOLS = ${stringifiedPairSymbols}
 AVAILABLE_PAIRS = ${stringifiedSwaps}
 STAKING_REWARDS = ${stringifiedStakingRewards}
 PAIR_ORACLES = ${stringifiedPairOracles}
-PRICE_FEED_EUR_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address}
-PRICE_FEED_BTC_ETH_ADDRESS = ${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address}
-PRICE_FEED_ETH_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address}
+PRICE_FEED_EUR_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address.toLowerCase()}
+PRICE_FEED_BTC_ETH_ADDRESS = ${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address.toLowerCase()}
+PRICE_FEED_ETH_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address.toLowerCase()}
             `;
 
             console.log(blockchainConfig);
