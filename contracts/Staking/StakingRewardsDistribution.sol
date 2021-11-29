@@ -126,14 +126,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function releaseReward(address to, uint256 reward) external onlyStakingRewards returns(uint256 immediatelyReleasedReward) {
-        immediatelyReleasedReward = reward.mul(HUNDRED_PERCENT.sub(vestingRewardRatio_percent)).div(HUNDRED_PERCENT);
-        uint256 vestedReward = reward.sub(immediatelyReleasedReward);
-
-        rewardsToken.approve(address(vesting), vestedReward);
-        vesting.schedule(to, vestedReward);
-
-        rewardsToken.safeTransfer(to, immediatelyReleasedReward);
+    function releaseReward(address to, uint256 reward) public onlyStakingRewards returns(uint256 immediatelyReleasedReward) {
+        return releaseRewardInternal(to, reward);
     }
 
     function collectAllRewards(uint256 from, uint256 to) external {
@@ -141,9 +135,19 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             ? to
             : stakingRewardsAddresses.length;
         
+        uint256 totalReward;
         for(uint i = from; i < to; i++){
-            StakingRewards(stakingRewardsAddresses[i]).getRewardFor(msg.sender);
+            StakingRewards stakingRewards = StakingRewards(stakingRewardsAddresses[i]);
+
+            stakingRewards.updateUserReward(msg.sender);
+            uint256 poolReward = stakingRewards.rewards(msg.sender);
+            totalReward = totalReward.add(poolReward);
+
+            uint256 immediatelyReleasedReward = calculateImmediateReward(poolReward);
+            stakingRewards.onRewardCollected(msg.sender, immediatelyReleasedReward);
         }
+
+        releaseRewardInternal(msg.sender, totalReward);
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {
@@ -151,6 +155,20 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         vestingRewardRatio_percent = _vestingRewardRatio;
 
         emit VestingRewardRatioSet(_vestingRewardRatio);
+    }
+
+    function calculateImmediateReward(uint256 reward) private view returns(uint256){
+        return reward.mul(HUNDRED_PERCENT.sub(vestingRewardRatio_percent)).div(HUNDRED_PERCENT);
+    }
+
+    function releaseRewardInternal(address to, uint256 reward) private returns(uint256 immediatelyReleasedReward) {
+        immediatelyReleasedReward = calculateImmediateReward(reward);
+        uint256 vestedReward = reward.sub(immediatelyReleasedReward);
+
+        rewardsToken.approve(address(vesting), vestedReward);
+        vesting.schedule(to, vestedReward);
+
+        rewardsToken.safeTransfer(to, immediatelyReleasedReward);
     }
 
     modifier onlyStakingRewards() {

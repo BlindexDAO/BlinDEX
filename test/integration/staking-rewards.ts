@@ -486,12 +486,32 @@ describe('Claiming all rewards', () => {
     await stakingRewards_BDEU_WBTC.connect(testUser1).stake(wbtcLPBal);
 
     await simulateTimeElapseInDays(1);
+
+    await stakingRewards_BDEU_WETH.connect(testUser1).updateUserReward(testUser1.address);
+    await stakingRewards_BDEU_WBTC.connect(testUser1).updateUserReward(testUser1.address);
+
+    const wethRewards = await stakingRewards_BDEU_WETH.rewards(testUser1.address);
+    const wbtcRewards = await stakingRewards_BDEU_WBTC.rewards(testUser1.address);
+
     await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0, 100);
 
     const balanceAfter = await bdx.balanceOf(testUser1.address);
 
-    expect(balanceAfter).to.be.gt(balanceBefore);
-  })
+    expect(balanceAfter).to.be.gt(balanceBefore, "bdx balance should invrease");
+
+    const balanceDiff = balanceAfter.sub(balanceBefore);
+    
+    const vested = (await vesting.vestingSchedules(testUser1.address, 0)).totalVestedAmount_d18;
+
+    console.log("balanceDiff: " + balanceDiff);
+    expect(
+      d18_ToNumber(balanceDiff.add(vested))).to.be.closeTo(
+        d18_ToNumber(wethRewards.add(wbtcRewards)),
+        1e-1,
+        "received + vested rewards should be close to the sum of accumulated rewards");
+    expect(await stakingRewards_BDEU_WETH.rewards(testUser1.address)).to.eq(0, "weth rewards should be 0");
+    expect(await stakingRewards_BDEU_WBTC.rewards(testUser1.address)).to.eq(0, "wbtc rewards should be 0");
+  });
 });
 
 async function getUsersCurrentLpBalance() {

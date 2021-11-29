@@ -360,21 +360,23 @@ contract StakingRewards is
         emit ExistingStakeLocked(msg.sender, amount, secs);
     }
 
-    function getReward() external {
-        getRewardFor(msg.sender);
+    function getReward() external nonReentrant updateReward(msg.sender) {
+        uint256 reward = rewards[msg.sender];
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+
+            uint256 immediatelyReleasedReward = stakingRewardsDistribution.releaseReward(msg.sender, reward);
+
+            emit RewardPaid(msg.sender, immediatelyReleasedReward);
+            emit RewardVested(msg.sender, reward - immediatelyReleasedReward);
+        }
     }
 
-    function getRewardFor(address user) public nonReentrant updateReward(user) {
-        require(
-            msg.sender == address(stakingRewardsDistribution)
-            || msg.sender == user,
-            "Only staking rewards distribution or reward owner allowed");
-
+    // used by StakingRewardsDistribution, to collect rewards from all pools at once
+    function onRewardCollected(address user, uint256 immediatelyReleasedReward) external onlyStakingRewardsDistribution {
         uint256 reward = rewards[user];
         if (reward > 0) {
             rewards[user] = 0;
-
-            uint256 immediatelyReleasedReward = stakingRewardsDistribution.releaseReward(user, reward);
 
             emit RewardPaid(user, immediatelyReleasedReward);
             emit RewardVested(user, reward - immediatelyReleasedReward);
@@ -401,6 +403,23 @@ contract StakingRewards is
         lastUpdateTime = lastTimeRewardApplicable();
 
         emit RewardsPeriodRenewed(address(stakingToken));
+    }
+
+    function updateUserRewardInternal(address account) internal {
+        
+        // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
+        if (block.timestamp > periodFinish) {
+            retroCatchUp();
+        }
+        else {
+            rewardPerTokenStored_REWARD_PRECISION = rewardPerToken();
+            lastUpdateTime = lastTimeRewardApplicable();
+        }
+
+        if (account != address(0)) {
+            rewards[account] = earned(account);
+            userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
+        }
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -430,23 +449,27 @@ contract StakingRewards is
         transferOwnership(_new_owner);
     }
 
+    // used by StakingRewardsDistribution, to collect rewards from all pools at once
+    function updateUserReward(address account) external  {
+        require(
+            msg.sender == address(stakingRewardsDistribution)
+            || msg.sender == account,
+            "Only staking rewards distribution and reward owner allowed");
+
+        updateUserRewardInternal(account);
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier updateReward(address account) {
-        
-        // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
-        if (block.timestamp > periodFinish) {
-            retroCatchUp();
-        }
-        else {
-            rewardPerTokenStored_REWARD_PRECISION = rewardPerToken();
-            lastUpdateTime = lastTimeRewardApplicable();
-        }
+        updateUserRewardInternal(account);
+        _;
+    }
 
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
-        }
+    modifier onlyStakingRewardsDistribution() {
+        require(
+            msg.sender == address(stakingRewardsDistribution),
+            "Only staking rewards distribution allowed");
         _;
     }
 
