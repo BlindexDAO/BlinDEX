@@ -141,13 +141,18 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
             stakingRewards.updateUserReward(msg.sender);
             uint256 poolReward = stakingRewards.rewards(msg.sender);
-            totalReward = totalReward.add(poolReward);
 
-            uint256 immediatelyReleasedReward = calculateImmediateReward(poolReward);
-            stakingRewards.onRewardCollected(msg.sender, immediatelyReleasedReward);
+            if(poolReward > 0){
+                totalReward = totalReward.add(poolReward);
+
+                uint256 immediatelyReleasedReward = calculateImmediateReward(poolReward);
+                stakingRewards.onRewardCollected(msg.sender, immediatelyReleasedReward);
+            }
         }
 
-        releaseRewardInternal(msg.sender, totalReward);
+        if(totalReward > 0){
+            releaseRewardInternal(msg.sender, totalReward);
+        }
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {
