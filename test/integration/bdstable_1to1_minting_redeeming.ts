@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getTreasury, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc as mintWbtcFromEth, mintWeth } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 
@@ -300,7 +300,7 @@ export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, 
     const bdEuPool = await getBdEuWbtcPool(hre);
     const wbtc = await getWbtc(hre);
     
-    await mintWbtcFromEth(hre, user, to_d18(wbtcAmount*100));
+    await mintWbtc(hre, user, to_d8(wbtcAmount));
     
     await wbtc.connect(user).approve(bdEuPool.address, to_d8(wbtcAmount));
     await bdEuPool.connect(user).mintFractionalBdStable(to_d8(wbtcAmount), 0, to_d18(1), false, {});

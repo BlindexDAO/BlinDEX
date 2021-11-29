@@ -1,6 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { numberToBigNumberFixed, to_d12, to_d18 } from "./NumbersHelpers";
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, getUniswapPair, mintWbtc, getOnChainEthEurPrice, getOnChainBtcEurPrice, getUniswapPairOracle, getIERC20, getERC20, getDeployer, getTreasury, getWethConcrete, mintWeth } from "./DeployedContractsHelpers";
+import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
+import { 
+  getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, mintWbtc, getOnChainEthEurPrice,
+  getOnChainBtcEurPrice, getDeployer, getTreasury, mintWeth 
+} from "./DeployedContractsHelpers";
 import * as constants from './Constants';
 import { resetOracles, updateOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
@@ -32,7 +35,7 @@ export async function setUpFunctionalSystem(hre: HardhatRuntimeEnvironment, init
       // mint initial WETH
       await mintWeth(hre, deployer, to_d18(100));
       // mint inital WBTC
-      await mintWbtc(hre, deployer, to_d18(1000));
+      await mintWbtc(hre, deployer, to_d8(10));
     }
 
     // initial prices don't need to be very precise, in real world they will never be very precise

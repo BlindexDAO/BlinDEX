@@ -130,7 +130,7 @@ export function load() {
       const bdeu = await getBdEu(hre);
 
       await mintWeth(hre, deployer, to_d18(200));
-      await mintWbtc(hre, deployer, to_d18(100))
+      await mintWbtc(hre, deployer, to_d8(10))
 
       const testUserAddress = "0xED3622f02b1619d397502a9FFF1dfe3d0fB2988c";
 
