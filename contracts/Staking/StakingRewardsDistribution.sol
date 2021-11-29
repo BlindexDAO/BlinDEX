@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../Bdx/BDXShares.sol";
 import "./Vesting.sol";
+import "./StakingRewards.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeMath for uint256;
@@ -133,6 +134,16 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         vesting.schedule(to, vestedReward);
 
         rewardsToken.safeTransfer(to, immediatelyReleasedReward);
+    }
+
+    function collectAllRewards(uint256 from, uint256 to) external {
+        to = to < stakingRewardsAddresses.length
+            ? to
+            : stakingRewardsAddresses.length;
+        
+        for(uint i = from; i < to; i++){
+            StakingRewards(stakingRewardsAddresses[i]).getRewardFor(msg.sender);
+        }
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {

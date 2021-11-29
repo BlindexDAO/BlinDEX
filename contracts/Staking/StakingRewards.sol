@@ -360,15 +360,24 @@ contract StakingRewards is
         emit ExistingStakeLocked(msg.sender, amount, secs);
     }
 
-    function getReward() external nonReentrant updateReward(msg.sender) {
-        uint256 reward = rewards[msg.sender];
+    function getReward() external {
+        getRewardFor(msg.sender);
+    }
+
+    function getRewardFor(address user) public nonReentrant updateReward(user) {
+        require(
+            msg.sender == address(stakingRewardsDistribution)
+            || msg.sender == user,
+            "Only staking rewards distribution or reward owner allowed");
+
+        uint256 reward = rewards[user];
         if (reward > 0) {
-            rewards[msg.sender] = 0;
+            rewards[user] = 0;
 
-            uint256 immediatelyReleasedReward = stakingRewardsDistribution.releaseReward(msg.sender, reward);
+            uint256 immediatelyReleasedReward = stakingRewardsDistribution.releaseReward(user, reward);
 
-            emit RewardPaid(msg.sender, immediatelyReleasedReward);
-            emit RewardVested(msg.sender, reward - immediatelyReleasedReward);
+            emit RewardPaid(user, immediatelyReleasedReward);
+            emit RewardVested(user, reward - immediatelyReleasedReward);
         }
     }
 

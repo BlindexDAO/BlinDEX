@@ -5,8 +5,8 @@ import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { BDStable } from "../../typechain/BDStable";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
-import { to_d18, d18_ToNumber } from '../../utils/NumbersHelpers';
-import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWeth, mintWeth } from "../../utils/DeployedContractsHelpers"
+import { to_d18, d18_ToNumber, to_d8 } from '../../utils/NumbersHelpers';
+import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWbtc, getWeth, mintWbtc, mintWeth } from "../../utils/DeployedContractsHelpers"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
@@ -30,9 +30,11 @@ let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 
 let weth: IERC20;
+let wbtc: IERC20;
 let bdEu: BDStable;
 let bdx: BDXShares;
 let stakingRewards_BDEU_WETH: StakingRewards;
+let stakingRewards_BDEU_WBTC: StakingRewards;
 let stakingRewardsDistribution: StakingRewardsDistribution;
 let vesting: Vesting;
 
@@ -41,9 +43,11 @@ async function initialize() {
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
   weth = await getWeth(hre);
+  wbtc = await getWbtc(hre);
   bdEu = await getBdEu(hre);
   bdx = await getBdx(hre);
   stakingRewards_BDEU_WETH = await hre.ethers.getContract('StakingRewards_BDEU_WETH', deployer) as StakingRewards;
+  stakingRewards_BDEU_WBTC = await hre.ethers.getContract('StakingRewards_BDEU_WBTC', deployer) as StakingRewards;
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
 }
@@ -447,6 +451,46 @@ describe('Unregistering pools', () => {
 
     expect(totalWeightsAfter).to.eq(totalWeightsBefore.sub(pool2Weight));
     expect(await srd.stakingRewardsAddresses(2)).to.eq(pool4); // the last pool (4) replaced the pool no 2 (the one unregistered)
+  })
+});
+
+describe('Claiming all rewards', () => {
+
+  beforeEach(async () => {
+    await hre.deployments.fixture();
+    await initialize();
+    await setUpFunctionalSystemForTests(hre, 1);
+  })
+
+  it('should collect all rewards', async () => {
+
+    await mintWeth(hre, testUser1, to_d18(1));
+    await mintWbtc(hre, testUser1, to_d8(1));
+    await bdEu.transfer(testUser1.address, to_d18(100));
+
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10));
+    await provideLiquidity(hre, testUser1, wbtc, bdEu, to_d8(0.01), to_d18(10));
+
+    const balanceBefore = await bdx.balanceOf(testUser1.address);
+
+    const pairWeth = await getUniswapPair(hre, bdEu, weth);
+    const wethLPBal = await pairWeth.balanceOf(testUser1.address);
+    console.log("stakingRewards_BDEU_WETH LPs: " + wethLPBal);
+    await pairWeth.connect(testUser1).approve(stakingRewards_BDEU_WETH.address, wethLPBal);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stake(wethLPBal);
+
+    const pairWbtc = await getUniswapPair(hre, bdEu, wbtc);
+    const wbtcLPBal = await pairWbtc.balanceOf(testUser1.address);
+    console.log("stakingRewards_BDEU_WBTC LPs: " + wbtcLPBal);
+    await pairWbtc.connect(testUser1).approve(stakingRewards_BDEU_WBTC.address, wbtcLPBal);
+    await stakingRewards_BDEU_WBTC.connect(testUser1).stake(wbtcLPBal);
+
+    await simulateTimeElapseInDays(1);
+    await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0, 100);
+
+    const balanceAfter = await bdx.balanceOf(testUser1.address);
+
+    expect(balanceAfter).to.be.gt(balanceBefore);
   })
 });
 
