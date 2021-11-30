@@ -17,6 +17,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public TOTAL_BDX_SUPPLY;
     
     uint256 public constant HUNDRED_PERCENT = 100;
+    uint256 public constant MAX_REWARD_FEE = 1e12;
 
     // BDX minting schedule
     // They sum up to 50% of TOTAL_BDX_SUPPLY
@@ -35,9 +36,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     uint256 public EndOfYear_5;
 
     uint256 public vestingRewardRatio_percent;
+    uint256 public rewardFee_d12;
 
-    BDXShares private rewardsToken;
-    Vesting private vesting;
+    BDXShares public rewardsToken;
+    Vesting public vesting;
+    address public treasury;
 
     mapping(address => uint256) public stakingRewardsWeights;
     address[] public stakingRewardsAddresses;
@@ -46,12 +49,14 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     function initialize(
         address _rewardsToken,
         address _vesting,
+        address _treasury,
         uint256 _vestingRewardRatio_percent
     ) external initializer {
         __Ownable_init();
 
         rewardsToken = BDXShares(_rewardsToken);
         vesting = Vesting(_vesting);
+        treasury = _treasury;
         TOTAL_BDX_SUPPLY = rewardsToken.MAX_TOTAL_SUPPLY();
 
         BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
@@ -67,6 +72,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         EndOfYear_5 = block.timestamp + 5 * 365 days;
 
         vestingRewardRatio_percent = _vestingRewardRatio_percent;
+        rewardFee_d12 = 1e11; // 10%
     }
 
     // Precision 1e18 for compatibility with ERC20 token
@@ -126,16 +132,14 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function releaseReward(address to, uint256 reward) public onlyStakingRewards returns(uint256 immediatelyReleasedReward) {
-        return releaseRewardInternal(to, reward);
-    }
-
     function collectAllRewards(uint256 from, uint256 to) external {
         to = to < stakingRewardsAddresses.length
             ? to
             : stakingRewardsAddresses.length;
         
-        uint256 totalReward;
+        uint256 totalFee;
+        uint256 totalRewardToRelease;
+        uint256 totalRewardToVest;
         for(uint i = from; i < to; i++){
             StakingRewards stakingRewards = StakingRewards(stakingRewardsAddresses[i]);
 
@@ -143,15 +147,23 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             uint256 poolReward = stakingRewards.rewards(msg.sender);
 
             if(poolReward > 0){
-                totalReward = totalReward.add(poolReward);
+                uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE);
+                uint256 userReward = poolReward.sub(rewardFee);
 
-                uint256 immediatelyReleasedReward = calculateImmediateReward(poolReward);
-                stakingRewards.onRewardCollected(msg.sender, immediatelyReleasedReward);
+                uint256 immediatelyReleasedReward = calculateImmediateReward(userReward);
+                uint256 vestedReward = userReward.sub(immediatelyReleasedReward);
+
+                totalFee = totalFee.add(rewardFee);
+                totalRewardToRelease = totalRewardToRelease.add(immediatelyReleasedReward);
+                totalRewardToVest = totalRewardToVest.add(vestedReward);
+
+                stakingRewards.releaseReward(msg.sender, immediatelyReleasedReward, vestedReward);
             }
         }
 
-        if(totalReward > 0){
-            releaseRewardInternal(msg.sender, totalReward);
+        if(totalRewardToRelease > 0 || totalRewardToVest > 0){
+            releaseReward(msg.sender, totalRewardToRelease, totalRewardToVest);
+            rewardsToken.safeTransfer(treasury, totalFee);
         }
     }
 
@@ -166,14 +178,22 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         return reward.mul(HUNDRED_PERCENT.sub(vestingRewardRatio_percent)).div(HUNDRED_PERCENT);
     }
 
-    function releaseRewardInternal(address to, uint256 reward) private returns(uint256 immediatelyReleasedReward) {
-        immediatelyReleasedReward = calculateImmediateReward(reward);
-        uint256 vestedReward = reward.sub(immediatelyReleasedReward);
+    function releaseReward(address to, uint256 rewardToRelease, uint256 rewardToVest) private {
+        rewardsToken.approve(address(vesting), rewardToVest);
+        vesting.schedule(to, rewardToVest);
 
-        rewardsToken.approve(address(vesting), vestedReward);
-        vesting.schedule(to, vestedReward);
+        rewardsToken.safeTransfer(to, rewardToRelease);
+    }
 
-        rewardsToken.safeTransfer(to, immediatelyReleasedReward);
+    function setTreasury(address _treasury) external onlyOwner {
+        treasury = _treasury;
+        emit TreasuryChanged(_treasury);
+    }
+
+    function setRewardFee_d12(uint256 _rewardFee_d12) external onlyOwner {
+        require(_rewardFee_d12 <= MAX_REWARD_FEE, "Reward fee cannot exceed 100%");
+        rewardFee_d12 = _rewardFee_d12;
+        emit RewardFeeChanged(_rewardFee_d12);
     }
 
     modifier onlyStakingRewards() {
@@ -185,4 +205,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     event PoolRemoved(address indexed pool);
     event PoolRegistered(address indexed stakingRewardsAddress, uint indexed stakingRewardsWeight);
     event VestingRewardRatioSet(uint256 vestingRewardRatio_percent);
+    event TreasuryChanged(address newTreasury);
+    event RewardFeeChanged(uint256 newRewardFee_d12);
 }

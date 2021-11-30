@@ -6,7 +6,7 @@ import { BDStable } from "../../typechain/BDStable";
 import { BDXShares } from '../../typechain/BDXShares';
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber, to_d8 } from '../../utils/NumbersHelpers';
-import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getUniswapPair, getVesting, getWbtc, getWeth, mintWbtc, mintWeth } from "../../utils/DeployedContractsHelpers"
+import { getBdEu, getBdx, getDeployer, getStakingRewardsDistribution, getTreasury, getUniswapPair, getVesting, getWbtc, getWeth, mintWbtc, mintWeth } from "../../utils/DeployedContractsHelpers"
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat"
 import { BigNumber } from 'ethers';
 import { provideLiquidity } from "../helpers/swaps"
@@ -28,6 +28,7 @@ const totalRewardsSupply_d18 = to_d18(21e6 / 2);
 let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
+let treasury: SignerWithAddress;
 
 let weth: IERC20;
 let wbtc: IERC20;
@@ -40,6 +41,7 @@ let vesting: Vesting;
 
 async function initialize() {
   deployer = await getDeployer(hre);
+  treasury = await getTreasury(hre);
   testUser1 = await hre.ethers.getNamedSigner('TEST1');
   testUser2 = await hre.ethers.getNamedSigner('TEST2');
   weth = await getWeth(hre);
@@ -83,8 +85,12 @@ describe("StakingRewards", () => {
 
     let depositedLPTokenUser1_d18_global: BigNumber;
     let depositedLPTokenUser2_d18_global: BigNumber;
+    let treasuryBdxBalanceBefore: BigNumber;
 
     it("should get first reward", async () => {
+
+      treasuryBdxBalanceBefore = await bdx.balanceOf(treasury.address);
+
       // provide some initial weth for the users
       await mintWeth(hre, testUser1, to_d18(100));
       await mintWeth(hre, testUser2, to_d18(100));
@@ -111,7 +117,7 @@ describe("StakingRewards", () => {
       const days = 360;
       await simulateTimeElapseInDays(days)
 
-      await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
+      await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0,100);
 
       const secondsSinceLastReward = days * 24 * 60 * 60;
 
@@ -119,14 +125,16 @@ describe("StakingRewards", () => {
         bdxPerSecondFirstYear_d18
           .mul(secondsSinceLastReward)
           .mul(depositedLPTokenUser1_d18)
-          .div(totalDepositedLpTokens_d18));
+          .div(totalDepositedLpTokens_d18)
+          .mul(9).div(10) // 10% reward fee
+      );
 
       const bdxReward_d18 = await bdx.balanceOf(testUser1.address);
 
       const diff = bdxReward_d18.sub(expectedReward_d18);
 
-      console.log("Expected: " + expectedReward_d18);
-      console.log("Actual:   " + bdxReward_d18);
+      console.log("Expected: " + d18_ToNumber(expectedReward_d18));
+      console.log("Actual:   " + d18_ToNumber(bdxReward_d18));
       console.log("Diff:     " + d18_ToNumber(diff));
 
       expect(diff).to.gte(0);
@@ -135,24 +143,37 @@ describe("StakingRewards", () => {
 
     it("should reward at least 99% of rewards supply", async () => {
 
+      // user 2 should also collect rewards in first year 
+      await stakingRewardsDistribution.connect(testUser2).collectAllRewards(0,100);
+
       // we need to recalculate rewards every now and than
       for (let i = 1; i <= 5; i++) {
         await simulateTimeElapseInDays(365);
         await stakingRewards_BDEU_WETH.connect(deployer).renewIfApplicable();
       }
 
-      await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
-      await stakingRewards_BDEU_WETH.connect(testUser2).getReward();
+      await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0,100);
+      await stakingRewardsDistribution.connect(testUser2).collectAllRewards(0,100);
 
+      // vesting is disabled
+
+      const treasuryBdxBalanceAfter = await bdx.balanceOf(treasury.address);
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
       const rewardsSupplyPerPool = await adjustRewardsFor_BDEU_WETH_pool(totalRewardsSupply_d18);
 
-      const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
+      const totalRewards = bdxRewardUser1.add(bdxRewardUser2).add(treasuryBdxBalanceAfter).sub(treasuryBdxBalanceBefore);
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
       const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupplyPerPool).toNumber() / 1e6 * 100;
 
+      console.log("users rewards   " + d18_ToNumber(bdxRewardUser1.add(bdxRewardUser2)));
+      console.log("treasury reward " + d18_ToNumber(treasuryBdxBalanceAfter.sub(treasuryBdxBalanceBefore)));
+      console.log("treasury before " + d18_ToNumber(treasuryBdxBalanceBefore));
+      console.log("treasury after  " + d18_ToNumber(treasuryBdxBalanceAfter));
+      console.log("Total rewards in pool: " + d18_ToNumber(rewardsSupplyPerPool));
+      console.log("Total rewards:         " + d18_ToNumber(totalRewards));
+      console.log("Unrewarded   :         " + d18_ToNumber(unrewarded));
       console.log("Unrewarded %: " + unrewardedPct + "%");
 
       expect(unrewardedPct).to.gte(0);
@@ -186,7 +207,11 @@ describe("StakingRewards", () => {
       await setUpFunctionalSystemForTests(hre, 1);
     });
 
+    let treasuryBdxBalanceBefore: BigNumber;
+
     it("should get reward", async () => {
+      treasuryBdxBalanceBefore = await bdx.balanceOf(treasury.address);
+
       const user1YearsLocked = 5;
       const user1LockBonusMultiplier = 10;
 
@@ -214,7 +239,7 @@ describe("StakingRewards", () => {
       const days = 360;
       await simulateTimeElapseInDays(days)
 
-      await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
+      await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0,100);
 
       const secondsSinceLastReward = days * 24 * 60 * 60;
 
@@ -222,14 +247,16 @@ describe("StakingRewards", () => {
         bdxPerSecondFirstYear_d18
           .mul(secondsSinceLastReward)
           .mul(depositedLPTokenUser1_d18.mul(user1LockBonusMultiplier))
-          .div(depositedLPTokenUser1_d18.mul(user1LockBonusMultiplier).add(depositedLPTokenUser2_d18)));
+          .div(depositedLPTokenUser1_d18.mul(user1LockBonusMultiplier).add(depositedLPTokenUser2_d18))
+          .mul(9).div(10) // 10% reward fee
+      );
 
       const bdxReward = await bdx.balanceOf(testUser1.address);
 
       const diff = bdxReward.sub(expectedReward).abs();
 
-      console.log("Expected: " + expectedReward);
-      console.log("Actual:   " + bdxReward);
+      console.log("Expected: " + d18_ToNumber(expectedReward));
+      console.log("Actual:   " + d18_ToNumber(bdxReward));
       console.log("Diff:     " + d18_ToNumber(diff));
 
       expect(diff).to.gte(0);
@@ -237,22 +264,26 @@ describe("StakingRewards", () => {
     });
 
     it("should reward at least 99% of rewards supply", async () => {
-
       // we need to recalculate rewards every now and than
       for (let i = 1; i <= 5; i++) {
         await simulateTimeElapseInDays(365);
         await stakingRewards_BDEU_WETH.connect(deployer).renewIfApplicable();
       }
 
-      await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
-      await stakingRewards_BDEU_WETH.connect(testUser2).getReward();
+      await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0,100);
+      await stakingRewardsDistribution.connect(testUser2).collectAllRewards(0,100);
+
+      // vesting is disabled
 
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
       const rewardsSupplyPerPool = await adjustRewardsFor_BDEU_WETH_pool(totalRewardsSupply_d18);
 
-      const totalRewards = bdxRewardUser1.add(bdxRewardUser2);
+      const treasuryBdxBalanceAfter = await bdx.balanceOf(treasury.address);
+
+      const totalRewards = bdxRewardUser1.add(bdxRewardUser2).add(treasuryBdxBalanceAfter).sub(treasuryBdxBalanceBefore);
+
       const unrewarded = rewardsSupplyPerPool.sub(totalRewards);
       const unrewardedPct = unrewarded.mul(1e6).div(rewardsSupplyPerPool).toNumber() / 1e6 * 100;
 
@@ -392,7 +423,7 @@ describe('getReward interaction with vesting contract', () => {
     const days = 360;
     await simulateTimeElapseInDays(days)
 
-    await stakingRewards_BDEU_WETH.connect(testUser1).getReward();
+    await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0,100);
 
     const secondsSinceLastReward = days * 24 * 60 * 60;
 
@@ -402,7 +433,8 @@ describe('getReward interaction with vesting contract', () => {
       bdxPerSecondFirstYear_d18
         .mul(secondsSinceLastReward)
         .mul(depositedLPTokenUser1_d18)
-        .div(totalDepositedLpTokens_d18)));
+        .div(totalDepositedLpTokens_d18)))
+        .mul(9).div(10); // 10% reward fee
 
     const rewardAvailable_d18 = expectedReward_d18.mul(BigNumber.from(100).sub(vestingRewardsRatio)).div(100);
     const rewardToBeScheduledForVesting_d18 = expectedReward_d18.sub(rewardAvailable_d18);
@@ -487,8 +519,9 @@ describe('Claiming all rewards', () => {
 
     await simulateTimeElapseInDays(1);
 
-    await stakingRewards_BDEU_WETH.connect(testUser1).updateUserReward(testUser1.address);
-    await stakingRewards_BDEU_WBTC.connect(testUser1).updateUserReward(testUser1.address);
+    // unstake to update force contract interaction in order to update user rewards
+    await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(wethLPBal);
+    await stakingRewards_BDEU_WBTC.connect(testUser1).withdraw(wbtcLPBal);
 
     const wethRewards = await stakingRewards_BDEU_WETH.rewards(testUser1.address);
     const wbtcRewards = await stakingRewards_BDEU_WBTC.rewards(testUser1.address);
@@ -503,14 +536,57 @@ describe('Claiming all rewards', () => {
     
     const vested = (await vesting.vestingSchedules(testUser1.address, 0)).totalVestedAmount_d18;
 
+    const expectedTotalRewards = wethRewards.add(wbtcRewards)
+      .mul(9).div(10); // 10% reward fee
+
     console.log("balanceDiff: " + balanceDiff);
     expect(
       d18_ToNumber(balanceDiff.add(vested))).to.be.closeTo(
-        d18_ToNumber(wethRewards.add(wbtcRewards)),
+        d18_ToNumber(expectedTotalRewards),
         1e-1,
         "received + vested rewards should be close to the sum of accumulated rewards");
     expect(await stakingRewards_BDEU_WETH.rewards(testUser1.address)).to.eq(0, "weth rewards should be 0");
     expect(await stakingRewards_BDEU_WBTC.rewards(testUser1.address)).to.eq(0, "wbtc rewards should be 0");
+  });
+
+  it("should charge fee to treasury", async () => {
+    await mintWeth(hre, testUser1, to_d18(1));
+    await bdEu.transfer(testUser1.address, to_d18(100));
+
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10));
+
+    const userBalanceBefore = await bdx.balanceOf(testUser1.address);
+    const treasuryBalanceBefore = await bdx.balanceOf(treasury.address);
+
+    const pairWeth = await getUniswapPair(hre, bdEu, weth);
+    const wethLPBal = await pairWeth.balanceOf(testUser1.address);
+    console.log("stakingRewards_BDEU_WETH LPs: " + wethLPBal);
+    await pairWeth.connect(testUser1).approve(stakingRewards_BDEU_WETH.address, wethLPBal);
+    await stakingRewards_BDEU_WETH.connect(testUser1).stake(wethLPBal);
+
+    await simulateTimeElapseInDays(1);
+
+    // unstake to update force contract interaction in order to update user rewards
+    await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(wethLPBal);
+
+    const wethRewards = await stakingRewards_BDEU_WETH.rewards(testUser1.address);
+
+    await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0, 100);
+
+    const userBalanceAfter = await bdx.balanceOf(testUser1.address);
+    const treasuryBalanceAfter = await bdx.balanceOf(treasury.address);
+
+    const userBalanceDiff = userBalanceAfter.sub(userBalanceBefore);
+    const treasuryBalanceDiff = treasuryBalanceAfter.sub(treasuryBalanceBefore);
+    
+    const vested = (await vesting.vestingSchedules(testUser1.address, 0)).totalVestedAmount_d18;
+
+    const totalUserRewards = vested.add(userBalanceDiff);
+
+    expect(totalUserRewards).to.gt(0, "invalid total user rewards");
+    expect(treasuryBalanceDiff).to.gt(0, "invalid treasury balance diff");
+    expect(d18_ToNumber(totalUserRewards)).to.be.closeTo(d18_ToNumber(treasuryBalanceDiff.mul(9)), 0.1, "invalid users rewards, fee ration");
+    expect(d18_ToNumber(totalUserRewards.add(treasuryBalanceDiff))).to.be.closeTo(d18_ToNumber(wethRewards), 0.1, "invalid reward + fee sum");
   });
 });
 

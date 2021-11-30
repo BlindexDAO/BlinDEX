@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
 import { to_d18 } from '../utils/NumbersHelpers'
-import { getBdx, getVesting } from '../utils/DeployedContractsHelpers';
+import { getBdx, getTreasury, getVesting } from '../utils/DeployedContractsHelpers';
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: staking rewards distribution");
@@ -22,6 +22,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await getBdx(hre);
   const vesting = await getVesting(hre);
+  const treasury = await getTreasury(hre);
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
     "StakingRewardsDistribution", {
@@ -34,6 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           args: [
             bdx.address,
             vesting.address,
+            treasury.address,
             90
           ]
         }

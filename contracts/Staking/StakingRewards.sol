@@ -360,27 +360,11 @@ contract StakingRewards is
         emit ExistingStakeLocked(msg.sender, amount, secs);
     }
 
-    function getReward() external nonReentrant updateReward(msg.sender) {
-        uint256 reward = rewards[msg.sender];
-        if (reward > 0) {
-            rewards[msg.sender] = 0;
-
-            uint256 immediatelyReleasedReward = stakingRewardsDistribution.releaseReward(msg.sender, reward);
-
-            emit RewardPaid(msg.sender, immediatelyReleasedReward);
-            emit RewardVested(msg.sender, reward - immediatelyReleasedReward);
-        }
-    }
-
     // used by StakingRewardsDistribution, to collect rewards from all pools at once
-    function onRewardCollected(address user, uint256 immediatelyReleasedReward) external onlyStakingRewardsDistribution {
-        uint256 reward = rewards[user];
-        if (reward > 0) {
-            rewards[user] = 0;
-
-            emit RewardPaid(user, immediatelyReleasedReward);
-            emit RewardVested(user, reward - immediatelyReleasedReward);
-        }
+    function releaseReward(address user, uint256 immediatelyReleasedReward, uint256 vestedReward) external onlyStakingRewardsDistribution {
+        rewards[user] = 0;
+        emit RewardPaid(user, immediatelyReleasedReward);
+        emit RewardVested(user, vestedReward);
     }
 
     function renewIfApplicable() external {
@@ -450,12 +434,7 @@ contract StakingRewards is
     }
 
     // used by StakingRewardsDistribution, to collect rewards from all pools at once
-    function updateUserReward(address account) external  {
-        require(
-            msg.sender == address(stakingRewardsDistribution)
-            || msg.sender == account,
-            "Only staking rewards distribution and reward owner allowed");
-
+    function updateUserReward(address account) external onlyStakingRewardsDistribution {
         updateUserRewardInternal(account);
     }
 
