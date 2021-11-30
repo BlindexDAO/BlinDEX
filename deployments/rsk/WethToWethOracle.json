@@ -1,0 +1,125 @@
+{
+  "address": "0x68339F7BD0e3811eF0D1F60596ABb609E01F3473",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_wethAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenIn",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        }
+      ],
+      "name": "consult",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "shouldUpdateOracle",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updateOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "when_should_update_oracle_in_seconds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xbc621de6de501770ce22ec01447050a3185949f1119e15712d5ab49466eb13a6",
+  "receipt": {
+    "to": null,
+    "from": "0x774289Cb40c98B4f5b64a152BF7e5F94Fee38669",
+    "contractAddress": "0x68339F7BD0e3811eF0D1F60596ABb609E01F3473",
+    "transactionIndex": 0,
+    "gasUsed": "182884",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xcdaf4576c4ba3cc1e8d93aaa9eaeafacf1494561cc5cc61f0853ca73c139cbea",
+    "transactionHash": "0xbc621de6de501770ce22ec01447050a3185949f1119e15712d5ab49466eb13a6",
+    "logs": [],
+    "blockNumber": 3889493,
+    "cumulativeGasUsed": "182884",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x542fda317318ebf1d3deaf76e0b632741a7e677d"
+  ],
+  "solcInputHash": "cd8720e2909469f7fade4e9f8329e216",
+  "metadata": "{\"compiler\":{\"version\":\"0.6.12+commit.27d51765\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_wethAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"}],\"name\":\"consult\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shouldUpdateOracle\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"updateOracle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"when_should_update_oracle_in_seconds\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/Oracle/WethToWethOracle.sol\":\"WethToWethOracle\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/Oracle/ICryptoPairOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity >=0.6.6 <=0.6.12;\\n\\ninterface ICryptoPairOracle {\\n    \\n    function consult(address tokenIn, uint256 amountIn)\\n        external\\n        view\\n        returns (uint amountOut);\\n\\n    function updateOracle() external;\\n\\n    function shouldUpdateOracle() external view returns (bool);\\n\\n    function when_should_update_oracle_in_seconds() external view returns (uint256);\\n}\\n\",\"keccak256\":\"0x6626a5a930f339bbf6d5a32e47b7097bc62894519db8a5eafb0a5ccd2833c99a\",\"license\":\"MIT\"},\"contracts/Oracle/WethToWethOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity 0.6.12;\\n\\nimport \\\"./ICryptoPairOracle.sol\\\";\\n\\n// Fixed window oracle that recomputes the average price for the entire period once every period\\n// Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period\\ncontract WethToWethOracle is ICryptoPairOracle {\\n    \\n    address internal wethAddress;\\n\\n    constructor(address _wethAddress) public {\\n        wethAddress = _wethAddress;\\n    }\\n\\n    function consult(address tokenIn, uint256 amountIn) external view override returns (uint amountOut) {\\n        require(tokenIn == wethAddress, \\\"This oracle only accepts consulting WETH input\\\");\\n\\n        return amountIn;\\n    }\\n\\n    function updateOracle() external override {}\\n\\n    function shouldUpdateOracle() external view override returns (bool) {\\n        return false;\\n    }\\n\\n    function when_should_update_oracle_in_seconds() external view override returns (uint256) {\\n        return type(uint256).max;\\n    }\\n}\",\"keccak256\":\"0xb7ffd5bd6a31c61832453ce4559587180d19ab1749b02635933f2562b6548285\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516101e63803806101e68339818101604052602081101561003357600080fd5b5051600080546001600160a01b039092166001600160a01b0319909216919091179055610181806100656000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806309bf39ed146100515780630ccec97a1461006d5780633ddac95314610087578063d6f124f0146100b3575b600080fd5b6100596100bd565b604080519115158252519081900360200190f35b6100756100c2565b60408051918252519081900360200190f35b6100756004803603604081101561009d57600080fd5b506001600160a01b0381351690602001356100c8565b6100bb61011b565b005b600090565b60001990565b600080546001600160a01b038481169116146101155760405162461bcd60e51b815260040180806020018281038252602e81526020018061011e602e913960400191505060405180910390fd5b50919050565b56fe54686973206f7261636c65206f6e6c79206163636570747320636f6e73756c74696e67205745544820696e707574a2646970667358221220ab91f11e7f0904df764da7ce6b07e2a1cfe5549e170c77059f16134c42fffc0164736f6c634300060c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c806309bf39ed146100515780630ccec97a1461006d5780633ddac95314610087578063d6f124f0146100b3575b600080fd5b6100596100bd565b604080519115158252519081900360200190f35b6100756100c2565b60408051918252519081900360200190f35b6100756004803603604081101561009d57600080fd5b506001600160a01b0381351690602001356100c8565b6100bb61011b565b005b600090565b60001990565b600080546001600160a01b038481169116146101155760405162461bcd60e51b815260040180806020018281038252602e81526020018061011e602e913960400191505060405180910390fd5b50919050565b56fe54686973206f7261636c65206f6e6c79206163636570747320636f6e73756c74696e67205745544820696e707574a2646970667358221220ab91f11e7f0904df764da7ce6b07e2a1cfe5549e170c77059f16134c42fffc0164736f6c634300060c0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 10154,
+        "contract": "contracts/Oracle/WethToWethOracle.sol:WethToWethOracle",
+        "label": "wethAddress",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      }
+    }
+  }
+}
