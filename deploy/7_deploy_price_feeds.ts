@@ -38,7 +38,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         constants.wETH_address[hre.network.name], // it's actually wrBTC (on RSK)
         constants.RSK_XUSD_ADDRESS,
         1e12,
-        bot,
+        bot.address,
         60 * 10, //10min
         60 * 20 //20min
       ]
@@ -51,7 +51,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         constants.RSK_SOVRYN_ETHs_wrBTC_SWAP_ADDRESS,
         constants.wETH_address[hre.network.name],
-        constants.wBTC_address[hre.network.name]
+        constants.wBTC_address[hre.network.name],
+        1e12,
+        bot.address,
+        60 * 10, //10min
+        60 * 20 //20min
       ] // price is reverted on RSK, it's actually ETH/USD
     });
     console.log("deployed BtcToEthOracle to: " + btc_eth_oracle.address);
