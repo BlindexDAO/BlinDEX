@@ -44,22 +44,30 @@ export async function setUpFunctionalSystem(
   }
 
   // initial prices don't need to be very precise, in real world they will never be very precise
-  const verbose = true; // todo ag from parameters
   let initialWethBdEuPrice = 4093; //todo ag from paremetes
   let initialWbtcBdEuPrice = 50353; //todo ag from paremetes
-  const initialBdxBdEuPrice = 100; //todo ag from paremetes
+  let initialBdxBdEuPrice = 100; //todo ag from paremetes
 
-  let wethDecimals = 18;
-  let wbtcDecimals = 8;
+  let wethDecimals;
+  let wbtcDecimals;
+  let verbose;
 
   if (hre.network.name == "rsk") {
     wethDecimals = 18;
     wbtcDecimals = 18;
+    verbose = true;
 
     // swap btc eth price
     const oldInitialWethBdEuPrice = initialWethBdEuPrice;
     initialWethBdEuPrice = initialWbtcBdEuPrice;
     initialWbtcBdEuPrice = oldInitialWethBdEuPrice;
+  } else {
+    wethDecimals = 18;
+    wbtcDecimals = 8;
+    verbose = false;
+
+    initialWethBdEuPrice = (await getOnChainEthEurPrice(hre)).price;
+    initialWbtcBdEuPrice = (await getOnChainBtcEurPrice(hre)).price;
   }
 
   verboseLog(verbose, "privide liquidity bdeu/weth");

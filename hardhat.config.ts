@@ -107,17 +107,20 @@ const config: HardhatUserConfig = {
     BOT: {
       default: 2
     },
-    TEST1: {
+    DEV_TREASURY: {
       default: 3
     },
-    TEST2: {
+    TEST1: {
       default: 4
     },
-    TEST_VESTING_SCHEDULER: {
+    TEST2: {
       default: 5
     },
-    TEST_VESTING_REWARDS_PROVIDER: {
+    TEST_VESTING_SCHEDULER: {
       default: 6
+    },
+    TEST_VESTING_REWARDS_PROVIDER: {
+      default: 7
     }
   }
 };
