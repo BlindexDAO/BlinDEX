@@ -135,17 +135,22 @@ export async function provideLiquidity(
   tokenA: IERC20,
   tokenB: IERC20,
   amountA: BigNumber,
-  amountB: BigNumber
+  amountB: BigNumber,
+  verbose: boolean
 ){
   const router = await getUniswapRouter(hre);
 
-  // add liquidity to the uniswap pool (weth-bdeu)
-  // receive LP tokens
-  await tokenA.connect(user).approve(router.address, amountA);
-  await tokenB.connect(user).approve(router.address, amountB);
+  await(await tokenA.connect(user).approve(router.address, amountA)).wait();
+  await(await tokenB.connect(user).approve(router.address, amountB)).wait();
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");  
 
+  if(verbose){
+    console.log("balanceA: " + await tokenA.balanceOf(user.address));
+    console.log("amountA : " + amountA);
+    console.log("balanceB: " + await tokenB.balanceOf(user.address));
+    console.log("amountB : " + amountB);
+  }
   // router routes to the proper pair
   await (await router.connect(user).addLiquidity(
     tokenA.address, 

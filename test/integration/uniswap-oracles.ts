@@ -39,14 +39,14 @@ describe("Uniswap Oracles", () => {
         await mintWeth(hre, user, to_d18(20));
         await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
 
-        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80));
-        await resetOracle(hre, bdeu, weth);
+        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
+        await resetOracle(hre, "BDEU", "WETH");
 
         await simulateTimeElapseInSeconds(oneHour);
         await swapWethFor(hre, "BDEU", 5);
         await simulateTimeElapseInSeconds(2*oneHour);
 
-        await updateOracle(hre, bdeu, weth);
+        await updateOracle(hre, "BDEU", "WETH");
 
         const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEU");
 
@@ -68,8 +68,8 @@ describe("Uniswap Oracles", () => {
         
         await mintWeth(hre, user, to_d18(20));
         await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
-        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80));
-        await resetOracle(hre, bdeu, weth);
+        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
+        await resetOracle(hre, "BDEU", "WETH");
 
         await swapWethFor(hre, "BDEU", 5);
 

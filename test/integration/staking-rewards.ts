@@ -99,8 +99,8 @@ describe("StakingRewards", () => {
       await bdEu.transfer(testUser1.address, to_d18(100));
       await bdEu.transfer(testUser2.address, to_d18(100));
 
-      await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
-      await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20));
+      await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
+      await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20), false);
 
       const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
       depositedLPTokenUser1_d18_global = depositedLPTokenUser1_d18;
@@ -223,8 +223,8 @@ describe("StakingRewards", () => {
       await bdEu.transfer(testUser1.address, to_d18(100));
       await bdEu.transfer(testUser2.address, to_d18(100));
 
-      await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
-      await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20));
+      await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
+      await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20), false);
 
       const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
 
@@ -326,7 +326,7 @@ describe('Staking - withdrawLocked', () => {
     // deployer gives some bdeu to users so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
 
-    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
     const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
 
@@ -366,7 +366,7 @@ describe('locking an unlocked stake', () => {
     // deployer gives some bdeu to the uses so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
 
-    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
     const { depositedLPTokenUser1_d18 } = await getUsersCurrentLpBalance();
 
@@ -410,7 +410,7 @@ describe('getReward interaction with vesting contract', () => {
     // deployer gives some bdeu to users so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
 
-    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5));
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
     const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18 } = await getUsersCurrentLpBalance();
 
@@ -500,8 +500,8 @@ describe('Claiming all rewards', () => {
     await mintWbtc(hre, testUser1, to_d8(1));
     await bdEu.transfer(testUser1.address, to_d18(100));
 
-    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10));
-    await provideLiquidity(hre, testUser1, wbtc, bdEu, to_d8(0.01), to_d18(10));
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);
+    await provideLiquidity(hre, testUser1, wbtc, bdEu, to_d8(0.01), to_d18(10), false);
 
     const balanceBefore = await bdx.balanceOf(testUser1.address);
 
@@ -553,7 +553,7 @@ describe('Claiming all rewards', () => {
     await mintWeth(hre, testUser1, to_d18(1));
     await bdEu.transfer(testUser1.address, to_d18(100));
 
-    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10));
+    await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);
 
     const userBalanceBefore = await bdx.balanceOf(testUser1.address);
     const treasuryBalanceBefore = await bdx.balanceOf(treasury.address);

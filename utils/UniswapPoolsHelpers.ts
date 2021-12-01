@@ -9,7 +9,7 @@ export async function updateOracles(hre: HardhatRuntimeEnvironment) {
     const pools = await getPools(hre);
 
     for (let pool of pools) {
-        await updateOracle(hre, pool[0].token, pool[1].token)
+        await updateOracle(hre, pool[0].name, pool[1].name)
         console.log(`updated ${pool[0].name} / ${pool[1].name}`);
     }
 
@@ -22,7 +22,7 @@ export async function resetOracles(hre: HardhatRuntimeEnvironment) {
     const pools = await getPools(hre);
 
     for (let pool of pools) {
-        await resetOracle(hre, pool[0].token, pool[1].token)
+        await resetOracle(hre, pool[0].name, pool[1].name);
         console.log(`reset ${pool[0].name} / ${pool[1].name}`);
     }
 
@@ -31,14 +31,9 @@ export async function resetOracles(hre: HardhatRuntimeEnvironment) {
 
 export async function updateOracle(
     hre: HardhatRuntimeEnvironment,
-    tokenA: IERC20,
-    tokenB: IERC20) {
-    const token0 = await getERC20(hre, tokenA.address);
-    const token1 = await getERC20(hre, tokenB.address);
-
-    const symbol0 = await token0.symbol();
-    const symbol1 = await token1.symbol();
-
+    symbol0: string,
+    symbol1: string,
+) {
     const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
 
     await (await oracle.updateOracle()).wait();
@@ -46,14 +41,9 @@ export async function updateOracle(
 
 export async function resetOracle(
     hre: HardhatRuntimeEnvironment,
-    tokenA: IERC20,
-    tokenB: IERC20) {
-    const token0 = await getERC20(hre, tokenA.address);
-    const token1 = await getERC20(hre, tokenB.address);
-
-    const symbol0 = await token0.symbol();
-    const symbol1 = await token1.symbol();
-
+    symbol0: string,
+    symbol1: string,
+) {
     const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
 
     await (await oracle.reset()).wait();
