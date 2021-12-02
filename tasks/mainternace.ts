@@ -1,24 +1,35 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBot, getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle, getWeth } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, updateOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { IPriceFeed } from "../typechain/IPriceFeed";
-import { ICryptoPairOracle } from "../typechain/ICryptoPairOracle";
-import * as constants from '../utils/Constants'
-import { SovrynSwapPriceFeed__factory } from '../typechain/factories/SovrynSwapPriceFeed__factory';
-import { Signer, BigNumber } from 'ethers';
-import { SignerWithAddress } from 'hardhat-deploy-ethers/dist/src/signers';
-import { ISovrynLiquidityPoolV1Converter__factory } from '../typechain/factories/ISovrynLiquidityPoolV1Converter__factory';
-import { RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS } from "../utils/Constants";
+import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
+import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export function load() {
 
   task("update:oracles")
     .setAction(async (args, hre) => {
-      await updateOracles(hre);
+      console.log("starting uniswap pairs oracles updates");
+      await updateUniswapPairsOracles(hre);
+
+      console.log("starting sovryn swap price oracles updates");
+      const bot = await getBot(hre);
+      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+      await (await oracleEthUsd.updateOracleWithVerification(to_d12(4694.94))).wait(); //todo ag from parameters
+      console.log("updated ETH / USD");
+
+      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
+      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.08227))).wait();//todo ag from parameters
+      console.log("updated BTC / ETH");
+
+      console.log("starting fiat to fiat oracels updates");
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+      await (await oracleEurUsd.setPrice(to_d12(1.1321))).wait(); //todo ag from parameters
+      console.log("updated EUR / USD");
     });
 
   task("setPoolConsultLeniency")
@@ -59,20 +70,20 @@ export function load() {
         throw "invalid cr value"
       }
 
-      const deployer = getDeployer(hre);
+      const deployer = await getDeployer(hre);
 
       const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
-      await (await stable.connect((await deployer).address).lockCollateralRatioAt(to_d12(val))).wait();
+      await (await stable.connect(deployer).lockCollateralRatioAt(to_d12(val))).wait();
     });
 
   task("set:toggle-pause-cr")
     .addPositionalParam("stableAddress", "stable address")
     .setAction(async ({ stableAddress }, hre) => {
 
-      const deployer = getDeployer(hre);
+      const deployer = await getDeployer(hre);
 
       const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
-      await (await stable.connect((await deployer).address).toggleCollateralRatioPaused()).wait();
+      await (await stable.connect(deployer).toggleCollateralRatioPaused()).wait();
     });
 
   task("set:rsk-eur-usd")
@@ -90,6 +101,18 @@ export function load() {
       await (await feed.connect(bot).setPrice(to_d12(newPrice))).wait();
     });
 
+  task("run:mint-some-bdeu")
+    .addPositionalParam("allowBdx", "can we pay bdx on top o collateral to mint")
+    .setAction(async (args, hre) => {
+      const pool = await getBdEuWethPool(hre);
+      const weth = await getWeth(hre);
+      const bdx = await getBdx(hre);
+
+      const btcIn = to_d18(0.00001);
+      await(await weth.approve(pool.address, to_d18(0.001))).wait();
+      await(await bdx.approve(pool.address, to_d18(100))).wait();
+      await(await pool.mintFractionalBdStable(btcIn, to_d18(1), to_d18(0.001), false)).wait();
+    });
   // -------------------------- readonly
 
   task("show:oracles-validFor")
@@ -134,22 +157,87 @@ export function load() {
 
   task("show:bdeu-ef-bdx-cov")
     .setAction(async (args, hre) => {
-      const bdeu = await getBdEu(hre);
-      const efBdxCov = await bdeu.get_effective_bdx_coverage_ratio();
-      console.log("BEDU efBDXCov: " + d12_ToNumber(efBdxCov));
+      await show_efBDXCov(hre);
     });
 
   task("show:rsk-eur-usd")
     .setAction(async (args, hre) => {
-      const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as FiatToFiatPseudoOracleFeed;
-      const price = d12_ToNumber(await feed.price());
-      console.log("EUR/USD: " + price);
+      await show_eurUsd(hre);
     });
 
   task("show:rsk-eth-usd")
     .setAction(async (args, hre) => {
-      const feed = await hre.ethers.getContract("PriceFeed_ETH_USD") as IPriceFeed;
-      const price = d12_ToNumber(await feed.price());
-      console.log("ETH/USD (RSK: BTC/USD): " + price);
+      await show_ethUsd(hre);
     });
+
+  task("show:eth-usd")
+    .setAction(async (args, hre) => {
+      await show_ethEur(hre);
+    });
+  
+  task("show:full-diagnostics")
+    .setAction(async (args, hre) => {
+      await show_ethEur(hre);
+      await show_ethUsd(hre);
+      await show_btcEth(hre);
+      await show_eurUsd(hre);
+
+      await show_uniswapOraclesPrices(hre);
+
+      await show_efCR(hre);
+      await show_CR(hre);
+      await show_efBDXCov(hre);
+    });
+
+  async function show_ethEur(hre: HardhatRuntimeEnvironment){
+    const feed = await hre.ethers.getContract("OracleBasedCryptoFiatFeed_ETH_EUR") as IOracleBasedCryptoFiatFeed;
+    const price = d12_ToNumber(await feed.getPrice_1e12());
+    console.log("ETH/EUR (RSK: BTC/EUR): " + price);
+  }
+
+  async function show_ethUsd(hre: HardhatRuntimeEnvironment){
+    const feed = await hre.ethers.getContract("PriceFeed_ETH_USD") as SovrynSwapPriceFeed;
+    const price = d12_ToNumber(await feed.price());
+    console.log("ETH/USD (RSK: BTC/USD): " + price);
+  }
+  
+  async function show_btcEth(hre: HardhatRuntimeEnvironment){
+    const feed = await hre.ethers.getContract("BtcToEthOracle") as SovrynSwapPriceFeed;
+    const price = d12_ToNumber(await feed.price());
+    console.log("BTC/ETH (RSK: ETH/BTC): " + price);
+  }
+
+  async function show_eurUsd(hre: HardhatRuntimeEnvironment){
+    const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as FiatToFiatPseudoOracleFeed;
+    const price = d12_ToNumber(await feed.price());
+    const lastUpdateTimestamp = await (await feed.lastUpdateTimestamp()).toNumber();
+    console.log("EUR/USD: " + price + " last updated: " + new Date(lastUpdateTimestamp * 1000));
+  }
+
+  async function show_efBDXCov(hre: HardhatRuntimeEnvironment){
+    const bdeu = await getBdEu(hre);
+    const efBdxCov = await bdeu.get_effective_bdx_coverage_ratio();
+    console.log("BEDU efBDXCov: " + d12_ToNumber(efBdxCov));
+  }
+
+  async function show_efCR(hre: HardhatRuntimeEnvironment){
+    const bdeu = await getBdEu(hre);
+    const efCR = await bdeu.effective_global_collateral_ratio_d12();
+    console.log("BEDU efCR: " + d12_ToNumber(efCR));
+  }
+
+  async function show_CR(hre: HardhatRuntimeEnvironment){
+    const bdeu = await getBdEu(hre);
+    const efCR = await bdeu.global_collateral_ratio_d12();
+    console.log("BEDU CR: " + d12_ToNumber(efCR));
+  }
+  
+  async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment){
+    const pools = await getPools(hre);
+    for (let pool of pools) {
+      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+      const validFor = await oracle.when_should_update_oracle_in_seconds();
+      console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
+    }
+  }
 }
