@@ -5,7 +5,7 @@ import {
   getOnChainBtcEurPrice, getDeployer, getTreasury, mintWeth
 } from "./DeployedContractsHelpers";
 import * as constants from './Constants';
-import { resetOracles, updateOracles } from "./UniswapPoolsHelpers";
+import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
@@ -44,9 +44,9 @@ export async function setUpFunctionalSystem(
   }
 
   // initial prices don't need to be very precise, in real world they will never be very precise
-  let initialWethBdEuPrice = 4093; //todo ag from paremetes
-  let initialWbtcBdEuPrice = 50353; //todo ag from paremetes
-  let initialBdxBdEuPrice = 100; //todo ag from paremetes
+  let initialWethBdEuPrice = 4093; //todo ag from parameter s
+  let initialWbtcBdEuPrice = 50353; //todo ag from parameters
+  let initialBdxBdEuPrice = 100; //todo ag from parameters
 
   let wethDecimals;
   let wbtcDecimals;
@@ -102,9 +102,9 @@ export async function setUpFunctionalSystem(
 
   verboseLog(verbose, "privide liquidity - done");
 
-  await resetOracles(hre);
+  await resetUniswapPairsOracles(hre);
   verboseLog(verbose, "oracles reset");
-  await updateOracles(hre);
+  await updateUniswapPairsOracles(hre);
   verboseLog(verbose, "oracles updated");
 
   if (initialBdEuColltFraction > 0) {

@@ -1,9 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IERC20 } from "../typechain/IERC20";
-import { IWETH } from "../typechain/IWETH";
 import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20 } from "./DeployedContractsHelpers";
 
-export async function updateOracles(hre: HardhatRuntimeEnvironment) {
+export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
     console.log("starting updating oracles");
 
     const pools = await getPools(hre);
@@ -16,7 +15,7 @@ export async function updateOracles(hre: HardhatRuntimeEnvironment) {
     console.log("finished updating oracles")
 }
 
-export async function resetOracles(hre: HardhatRuntimeEnvironment) {
+export async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
     console.log("starting reseting oracles");
 
     const pools = await getPools(hre);
