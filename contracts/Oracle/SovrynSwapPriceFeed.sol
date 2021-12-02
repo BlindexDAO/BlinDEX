@@ -18,12 +18,12 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     ISovrynLiquidityPoolV1Converter public sovrynConverter;
     address public tokenSource;
     address public tokenTarget;
-    uint256 private priceDisparityTolerance_d12;
+    uint256 public priceDisparityTolerance_d12;
     address public updater;
-    uint256 private timeBeforeShouldUpdate;
-    uint256 private timeBeforeMustUpdate;
-    uint256 private updateTimestamp;
-    uint256 private oraclePrice;
+    uint256 public timeBeforeShouldUpdate;
+    uint256 public timeBeforeMustUpdate;
+    uint256 public updateTimestamp;
+    uint256 public oraclePrice;
 
     constructor(address _sovrynConverterAddress,
         address _tokenSource,
