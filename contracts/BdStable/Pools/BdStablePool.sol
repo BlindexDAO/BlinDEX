@@ -165,8 +165,6 @@ contract BdStablePool is OwnableUpgradeable {
         }
 
         updateOraclesIfNeeded();
-        BDSTABLE.refreshCollateralRatio();
-
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
         
@@ -207,6 +205,8 @@ contract BdStablePool is OwnableUpgradeable {
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
+        BDSTABLE.refreshCollateralRatio();
+
         if(bdx_needed > 0){
             BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_needed);
         }
@@ -226,8 +226,6 @@ contract BdStablePool is OwnableUpgradeable {
     // Redeem BDSTABLE for collateral and BDX. > 0% and < 100% collateral-backed
     function redeemFractionalBdStable(uint256 BdStable_amount, uint256 BDX_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
         updateOraclesIfNeeded();
-        BDSTABLE.refreshCollateralRatio();
-
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
         uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
 
@@ -258,6 +256,8 @@ contract BdStablePool is OwnableUpgradeable {
         redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);
 
         unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
+
+        BDSTABLE.refreshCollateralRatio();
 
         if(bdx_amount > 0){
             require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
@@ -339,8 +339,6 @@ contract BdStablePool is OwnableUpgradeable {
         }
 
         updateOraclesIfNeeded();
-        BDSTABLE.refreshCollateralRatio();
-
         uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 bdStable_total_supply = BDSTABLE.totalSupply();
@@ -362,6 +360,8 @@ contract BdStablePool is OwnableUpgradeable {
         bdx_paid_back = bdx_paid_back.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
+
+        BDSTABLE.refreshCollateralRatio();
 
         if(useNativeToken){
             // no need to check collateral_units_precision, it's <= then collateral_amount
@@ -422,6 +422,7 @@ contract BdStablePool is OwnableUpgradeable {
             // Give the sender their desired collateral
             collateral_token.safeTransfer(msg.sender, collateral_precision);
         }
+
         emit BoughtBack(BDX_amount, collateral_precision);
     }
 
