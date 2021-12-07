@@ -10,6 +10,8 @@ contract WethToWethOracle is ICryptoPairOracle {
     address internal wethAddress;
 
     constructor(address _wethAddress) public {
+        require(_wethAddress != address(0), "Weth address cannot be 0");
+
         wethAddress = _wethAddress;
     }
 

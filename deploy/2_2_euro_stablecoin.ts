@@ -24,7 +24,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           args: [
             'BlindexEuro',
             'BDEU',
-            'EURO',
             treasury.address,
             bdx.address,
             constants.initalBdStableToOwner_d18[hre.network.name]

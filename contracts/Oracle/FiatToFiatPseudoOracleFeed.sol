@@ -11,7 +11,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     using SafeMath for uint256;
     
     uint8 private constant DECIMALS = 12;
-    uint256 private constant PREICE_PRECISION = 1e12;
+    uint256 private constant PRICE_PRECISION = 1e12;
     uint256 private constant SECONDS_IN_DAY = 60*60*24;
     
     uint256 private recentPrice;
@@ -21,6 +21,8 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     address private updater;
 
     constructor(address _updater, uint256 _recentPrice) public {
+        require(_updater != address(0), "Updater address cannot be 0");
+
         updater = _updater;
         recentPrice = _recentPrice;
         lastUpdateTimestamp = block.timestamp;
@@ -48,7 +50,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
                 ? _price.sub(recentPrice)
                 : recentPrice.sub(_price);
 
-            uint256 dayChange_d12 = PREICE_PRECISION
+            uint256 dayChange_d12 = PRICE_PRECISION
                 .mul(diff)
                 .mul(SECONDS_IN_DAY)
                 .div(recentPrice)

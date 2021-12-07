@@ -22,7 +22,6 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
     uint256 public unclaimedPoolsBDX;
 
-    string public fiat;
     address public treasury_address; // used by pools
     IERC20 private BDX;
 
@@ -75,7 +74,6 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     function initialize (
         string memory _name,
         string memory _symbol,
-        string memory _fiat,
         address _treasury_address,
         address _bdx_address,
         uint256 _initalBdStableToOwner_d18
@@ -83,10 +81,14 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         external 
         initializer
     {
+        require(bytes(_name).length > 0, "Name cannot be empty");
+        require(bytes(_symbol).length > 0, "Symbol cannot be empty");
+        require(_treasury_address != address(0), "Treasury address cannot be 0");
+        require(_bdx_address != address(0), "BDX address cannot be 0");
+        
         __ERC20_init(_name, _symbol);
         __Ownable_init();
 
-        fiat = _fiat;
         treasury_address = _treasury_address;
         BDX = IERC20(_bdx_address);
 

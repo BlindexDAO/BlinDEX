@@ -23,6 +23,9 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable  {
         external
         initializer
     {
+        require(bytes(_name).length > 0, "Name cannot be empty");
+        require(bytes(_symbol).length > 0, "Symbol cannot be empty");
+
         __ERC20_init(_name, _symbol);
         __Ownable_init();
     }

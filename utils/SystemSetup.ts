@@ -70,37 +70,37 @@ export async function setUpFunctionalSystem(
     initialWbtcBdEuPrice = (await getOnChainBtcEurPrice(hre)).price;
   }
 
-  verboseLog(verbose, "privide liquidity bdeu/weth");
+  verboseLog(verbose, "provide liquidity bdeu/weth");
   await provideLiquidity(hre, deployer, bdEu, weth,
     to_d18(eurValueForLiquidity),
     numberToBigNumberFixed(eurValueForLiquidity, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
 
-  verboseLog(verbose, "privide liquidity bdeu/wbtc");
+  verboseLog(verbose, "provide liquidity bdeu/wbtc");
   await provideLiquidity(hre, deployer, bdEu, wbtc,
     to_d18(eurValueForLiquidity),
     numberToBigNumberFixed(eurValueForLiquidity, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
 
-  verboseLog(verbose, "privide liquidity bdx/weth");
+  verboseLog(verbose, "provide liquidity bdx/weth");
   await provideLiquidity(hre, deployer, bdx, weth,
     to_d18(eurValueForLiquidity / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidity, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
 
-  verboseLog(verbose, "privide liquidity bdx/wbtc");
+  verboseLog(verbose, "provide liquidity bdx/wbtc");
   await provideLiquidity(hre, deployer, bdx, wbtc,
     to_d18(eurValueForLiquidity / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidity, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
 
-  verboseLog(verbose, "privide liquidity bdx/bdeu");
+  verboseLog(verbose, "provide liquidity bdx/bdeu");
   await provideLiquidity(hre, deployer, bdx, bdEu,
     to_d18(eurValueForLiquidity / initialBdxBdEuPrice),
     to_d18(eurValueForLiquidity),
     verbose);
 
-  verboseLog(verbose, "privide liquidity - done");
+  verboseLog(verbose, "provide liquidity - done");
 
   await resetUniswapPairsOracles(hre);
   verboseLog(verbose, "oracles reset");
