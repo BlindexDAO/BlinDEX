@@ -79,6 +79,9 @@ contract StakingRewards is
         external
         initializer
     {
+        require(_stakingToken != address(0), "Staking address cannot be 0");
+        require(_stakingRewardsDistribution != address(0), "StakingRewardsDistribution address cannot be 0");
+
         __Ownable_init();
         __Pausable_init();
 

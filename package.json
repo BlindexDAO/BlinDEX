@@ -40,15 +40,13 @@
     "ts-generator": "^0.1.1",
     "ts-node": "^9.1.1",
     "typechain": "^6.0.3",
-    "typescript": "^4.2.2"
-  },
-  "dependencies": {
+    "typescript": "^4.2.2",
     "@ethersproject/providers": "^5.5.0",
     "@nomiclabs/ethereumjs-vm": "4.2.2",
-    "@openzeppelin/contracts": "^3.4.2",
-    "@openzeppelin/contracts-upgradeable": "^3.4.2",
-    "@uniswap/lib": "^4.0.1-alpha",
-    "@uniswap/v2-core": "^1.0.1",
+    "@openzeppelin/contracts": "3.4.2",
+    "@openzeppelin/contracts-upgradeable": "3.4.2",
+    "@uniswap/lib": "4.0.1-alpha",
+    "@uniswap/v2-core": "1.0.1",
     "@uniswap/v2-periphery": "1.1.0-beta.0",
     "hardhat-dependency-compiler": "^1.1.2"
   }

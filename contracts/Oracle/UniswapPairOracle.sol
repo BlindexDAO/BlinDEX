@@ -28,6 +28,10 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     FixedPoint.uq112x112 public price1Average;
 
     constructor(address factoryAddress, address tokenA, address tokenB) public {
+        require(factoryAddress != address(0), "Factory address cannot be 0");
+        require(tokenA != address(0), "TokenA address cannot be 0");
+        require(tokenB != address(0), "TokenB address cannot be 0");
+
         IUniswapV2Factory factory = IUniswapV2Factory(factoryAddress);
 
         IUniswapV2Pair _pair = IUniswapV2Pair(factory.getPair(tokenA, tokenB));
@@ -45,11 +49,13 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     function setConsultLeniency(uint _consult_leniency) external onlyOwner {
         consult_leniency = _consult_leniency;
 
-        emit ConsultLatencySet(_consult_leniency);
+        emit ConsultLeniencySet(_consult_leniency);
     }
 
     function setAllowStaleConsults(bool _allow_stale_consults) external onlyOwner {
         allow_stale_consults = _allow_stale_consults;
+
+        emit AllowStaleConsultsSet(_allow_stale_consults);
     }
 
     function reset() external onlyOwner {
@@ -118,5 +124,6 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     }
 
     event PeriodSet(uint period);
-    event ConsultLatencySet(uint consult_latency);
+    event ConsultLeniencySet(uint consult_latency);
+    event AllowStaleConsultsSet(bool allow_stale_consults);
 }

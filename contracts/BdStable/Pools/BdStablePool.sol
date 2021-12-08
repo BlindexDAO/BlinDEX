@@ -85,6 +85,10 @@ contract BdStablePool is OwnableUpgradeable {
         external
         initializer
     {
+        require(_bdstable_contract_address != address(0), "BdStable address cannot be 0");
+        require(_bdx_contract_address != address(0), "BDX address cannot be 0");
+        require(_collateral_address != address(0), "Collateral address cannot be 0");
+
         __Ownable_init();
 
         BDSTABLE = BDStable(_bdstable_contract_address);
@@ -427,7 +431,10 @@ contract BdStablePool is OwnableUpgradeable {
     }
 
     receive() external payable {
-        assert(msg.sender == address(NativeTokenWrapper)); // only accept ETH via fallback from the WETH contract
+        require(
+            msg.sender == address(NativeTokenWrapper), 
+            "Only native token wrapper allowed to send native token"
+        );
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */

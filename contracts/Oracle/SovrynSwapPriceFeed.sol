@@ -32,6 +32,12 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         address _updater,
         uint256 _timeBeforeShouldUpdate,
         uint256 _timeBeforeMustUpdate) public {
+
+        require(_sovrynConverterAddress != address(0), "SovrynConverter address cannot be 0");
+        require(_tokenSource != address(0), "TokenSource address cannot be 0");
+        require(_tokenTarget != address(0), "TokenTarget address cannot be 0");
+        require(_updater != address(0), "Updater address cannot be 0");
+
         sovrynConverter = ISovrynLiquidityPoolV1Converter(_sovrynConverterAddress);
         tokenSource = _tokenSource;
         tokenTarget = _tokenTarget;

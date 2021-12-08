@@ -8,6 +8,8 @@ contract AggregatorV3PriceFeed is IPriceFeed {
     AggregatorV3Interface private feed;
 
     constructor(address _feedAddress) public {
+        require(_feedAddress != address(0), "Feed address cannot be 0");
+        
         feed = AggregatorV3Interface(_feedAddress);
     }
 
