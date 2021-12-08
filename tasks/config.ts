@@ -23,19 +23,20 @@ export function load() {
             const stringifiedPairOracles = "[" + pairOracles.map(pairOracle => `{ "pairAddress": "${pairOracle.pairAddress.toLowerCase()}", "oracleAddress": "${pairOracle.oracleAddress.toLowerCase()}"}`).join(',') + "]";
             const stringifiedPairSymbols = pairSymbols.join(" ");
             const blockchainConfig = `
-BDEU_ADDRESS = ${(await getBdEu(hre)).address.toLowerCase()}
-UNISWAP_FACTORY_ADDRESS = ${(await getUniswapFactory(hre)).address.toLowerCase()}
-BDX_ADDRESS = ${(await getBdx(hre)).address.toLowerCase()}
-STAKING_REWARDS_DISTRIBUTION_ADDRESS = ${(await getStakingRewardsDistribution(hre)).address.toLowerCase()}
-AVAILABLE_PAIR_SYMBOLS = ${stringifiedPairSymbols}
-AVAILABLE_PAIRS = ${stringifiedSwaps}
-STAKING_REWARDS = ${stringifiedStakingRewards}
-PAIR_ORACLES = ${stringifiedPairOracles}
-PRICE_FEED_EUR_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address.toLowerCase()}
-PRICE_FEED_BTC_ETH_ADDRESS = ${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address.toLowerCase()}
-PRICE_FEED_ETH_USD_ADDRESS = ${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address.toLowerCase()}
+private static MF_BDEU_ADDRESS: string = '${(await getBdEu(hre)).address.toLowerCase()}';
+private static MF_UNISWAP_FACTORY_ADDRESS: string = '${(await getUniswapFactory(hre)).address.toLowerCase()}';
+private static MF_BDX_ADDRESS: string = '${(await getBdx(hre)).address.toLowerCase()}';
+private static MF_STAKING_REWARDS_DISTRIBUTION_ADDRESS: string = '${(await getStakingRewardsDistribution(hre)).address.toLowerCase()}';
+private static MF_AVAILABLE_PAIR_SYMBOLS: string = '${stringifiedPairSymbols}';
+private static MF_AVAILABLE_PAIRS: string = '${stringifiedSwaps}';
+private static MF_STAKING_REWARDS: string = '${stringifiedStakingRewards}';
+private static MF_PAIR_ORACLES: string = '${stringifiedPairOracles}';
+private static MF_PRICE_FEED_EUR_USD_ADDRESS: string = '${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address.toLowerCase()}';
+private static MF_PRICE_FEED_BTC_ETH_ADDRESS: string = '${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address.toLowerCase()}';
+private static MF_PRICE_FEED_ETH_USD_ADDRESS: string = '${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address.toLowerCase()}';
             `;
 
+            console.log("Please change MF_ to RSK_ before pasting if need.")
             console.log(blockchainConfig);
         });
 
