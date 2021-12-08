@@ -24,6 +24,7 @@ contract Timelock {
     mapping (bytes32 => bool) public queuedTransactions;
 
     constructor(address admin_, uint delay_) public {
+        require(admin_ != address(0), "Admin address cannot be 0");
         require(delay_ >= MINIMUM_DELAY, "Timelock::constructor: Delay must exceed minimum delay.");
         require(delay_ <= MAXIMUM_DELAY, "Timelock::setDelay: Delay must not exceed maximum delay.");
 

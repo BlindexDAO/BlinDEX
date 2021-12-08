@@ -38,6 +38,9 @@ contract Vesting is OwnableUpgradeable
         external
         initializer
     {
+        require(_vestedTokenAddress != address(0), "Vesting address cannot be 0");
+        require(_vestingScheduler != address(0), "VestingScheduler address cannot be 0");
+        require(_fundsProvider != address(0), "FundsProvider address cannot be 0");
         require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
 
         __Ownable_init();

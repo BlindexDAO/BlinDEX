@@ -12,6 +12,9 @@ contract BtcToEthOracleChinlink is ICryptoPairOracle {
     address internal wethAddress;
     
     constructor(address _btcEthFeedAddress, address _wethAddress) public {
+        require(_btcEthFeedAddress != address(0), "BtcEthFeed address cannot be 0");
+        require(_wethAddress != address(0), "Weth address cannot be 0");
+
         feed = AggregatorV3Interface(_btcEthFeedAddress);
         wethAddress = _wethAddress;
     }

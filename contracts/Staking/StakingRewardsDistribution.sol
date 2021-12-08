@@ -52,6 +52,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         address _treasury,
         uint256 _vestingRewardRatio_percent
     ) external initializer {
+        require(_rewardsToken != address(0), "Rewards address cannot be 0");
+        require(_vesting != address(0), "Vesting address cannot be 0");
+        require(_treasury != address(0), "Treasury address cannot be 0");
+        require(_vestingRewardRatio_percent <= 100, "VestingRewardRatio_percent must be <= 100");
+
         __Ownable_init();
 
         rewardsToken = BDXShares(_rewardsToken);
@@ -168,7 +173,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function setVestingRewardRatio(uint256 _vestingRewardRatio) external onlyOwner {
-        require(_vestingRewardRatio <= 100, "vestingRewardRatio should be expressed as percent");
+        require(_vestingRewardRatio <= 100, "VestingRewardRatio_percent must be <= 100");
         vestingRewardRatio_percent = _vestingRewardRatio;
 
         emit VestingRewardRatioSet(_vestingRewardRatio);
