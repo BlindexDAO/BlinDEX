@@ -75,18 +75,6 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         return (timeElapsed >= period);
     }
 
-    function when_should_update_oracle_in_seconds() override external view returns (uint256){
-        uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
-
-        if(timeElapsed >= period){
-            return 0;
-        }
-        else{
-            return period - timeElapsed;
-        }
-    }
-
     function updateOracle() override external {
         require(blockTimestampLast > 0, "Oracle not ready");
 

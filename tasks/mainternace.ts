@@ -19,16 +19,16 @@ export function load() {
       console.log("starting sovryn swap price oracles updates");
       const bot = await getBot(hre);
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
-      await (await oracleEthUsd.updateOracleWithVerification(to_d12(4694.94))).wait(); //todo ag from parameters
+      await (await oracleEthUsd.updateOracleWithVerification(to_d12(4273.34))).wait(); //todo ag from parameters
       console.log("updated ETH / USD");
 
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.08227))).wait();//todo ag from parameters
+      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.0873))).wait();//todo ag from parameters
       console.log("updated BTC / ETH");
 
       console.log("starting fiat to fiat oracels updates");
       const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.setPrice(to_d12(1.1321))).wait(); //todo ag from parameters
+      await (await oracleEurUsd.setPrice(to_d12(1.13))).wait(); //todo ag from parameters
       console.log("updated EUR / USD");
     });
 
@@ -113,16 +113,12 @@ export function load() {
       await(await bdx.approve(pool.address, to_d18(100))).wait();
       await(await pool.mintFractionalBdStable(btcIn, to_d18(1), to_d18(0.001), false)).wait();
     });
+
   // -------------------------- readonly
 
-  task("show:oracles-validFor")
+  task("show:oracles-prices")
     .setAction(async (args, hre) => {
-      const pools = await getPools(hre);
-      for (let pool of pools) {
-        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-        const validFor = await oracle.when_should_update_oracle_in_seconds();
-        console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
-      }
+      await show_uniswapOraclesPrices(hre);
     });
 
   task("show:pools")
@@ -236,8 +232,8 @@ export function load() {
     const pools = await getPools(hre);
     for (let pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-      const validFor = await oracle.when_should_update_oracle_in_seconds();
-      console.log(`oracle ${pool[0].name} / ${pool[1].name} valid for: ${validFor}s`);
+      const updatedAgo = (new Date().getTime() / 1000) - (await oracle.blockTimestampLast());
+      console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${updatedAgo}s ago`);
     }
   }
 }
