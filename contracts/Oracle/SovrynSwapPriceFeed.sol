@@ -80,6 +80,17 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function updateOracle() external override {}
 
+    function shouldUpdateOracle() external view override returns (bool) {
+        return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
+    }
+
+    function when_should_update_oracle_in_seconds() external view override returns (uint256) {
+        uint256 updateTime = updateTimestamp.add(timeBeforeShouldUpdate);
+        return block.timestamp < updateTime ? updateTime.sub(block.timestamp) : 0;
+    }
+
+    // Own methods
+
     function updateOracleWithVerification(uint verificationPrice_d12) external onlyUpdater {
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
         uint256 newPrice = amountMinusFee.add(fee);
@@ -88,15 +99,6 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         oraclePrice = newPrice;
         updateTimestamp = block.timestamp;
         emit PriceChanged(oraclePrice);
-    }
-
-    function shouldUpdateOracle() external view override returns (bool) {
-        return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
-    }
-
-    function when_should_update_oracle_in_seconds() external view override returns (uint256) {
-        uint256 updateTime = updateTimestamp.add(timeBeforeShouldUpdate);
-        return block.timestamp < updateTime ? updateTime.sub(block.timestamp) : 0;
     }
 
     function setUpdater(address newUpdater) external onlyOwner {
