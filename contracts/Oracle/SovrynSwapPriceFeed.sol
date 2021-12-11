@@ -48,18 +48,6 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         timeBeforeMustUpdate = _timeBeforeMustUpdate;
     }
 
-    // Setters
-
-    function setTimeBeforeShouldUpdate(uint256 _timeBeforeShouldUpdate) public onlyOwner {
-        require(_timeBeforeShouldUpdate <= timeBeforeMustUpdate, "TimeBeforeShouldUpdate must be <= timeBeforeMustUpdate");
-        timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
-    }
-
-    function setTimeBeforeMustUpdate(uint256 _timeBeforeMustUpdate) public onlyOwner {
-        require(_timeBeforeMustUpdate >= 60, "TimeBeforeMustUpdate must be at least 60 seconds");
-        timeBeforeMustUpdate = _timeBeforeMustUpdate;
-    }
-
     // IPriceFeed
 
     function decimals() external view override returns (uint8) {
@@ -104,16 +92,28 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         emit PriceChanged(oraclePrice);
     }
 
+    // Setters
+
+    function setTimeBeforeShouldUpdate(uint256 _timeBeforeShouldUpdate) public onlyOwner {
+        require(_timeBeforeShouldUpdate <= timeBeforeMustUpdate, "TimeBeforeShouldUpdate must be <= timeBeforeMustUpdate");
+        timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
+    }
+
+    function setTimeBeforeMustUpdate(uint256 _timeBeforeMustUpdate) public onlyOwner {
+        require(_timeBeforeMustUpdate >= 60, "TimeBeforeMustUpdate must be at least 60 seconds");
+        timeBeforeMustUpdate = _timeBeforeMustUpdate;
+    }
+
+    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) external onlyOwner {
+        priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
+    }
+
     function setUpdater(address newUpdater) external onlyOwner {
         require(newUpdater != address(0), "Updater cannot be set to the zero address");
         
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
-    }
-
-    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) external onlyOwner {
-        priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
     }
 
     modifier onlyUpdater()
