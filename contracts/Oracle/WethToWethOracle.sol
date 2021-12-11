@@ -22,7 +22,7 @@ contract WethToWethOracle is ICryptoPairOracle {
     }
 
     function updateOracle() external override {
-        revert("this oracle is doesn't need updates");
+        revert("This oracle doesn't need updates");
     }
 
     function shouldUpdateOracle() external view override returns (bool) {
