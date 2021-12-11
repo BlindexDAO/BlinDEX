@@ -12,7 +12,6 @@ import "../Utils/Sovryn/ISovrynLiquidityPoolV1Converter.sol";
 contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     using SafeMath for uint256;
 
-    uint8 private constant DECIMALS = 12;
     uint256 private constant PRECISION = 1e12;
 
     ISovrynLiquidityPoolV1Converter public sovrynConverter;
@@ -60,7 +59,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     // IPriceFeed
 
     function decimals() external view override returns (uint8) {
-        return DECIMALS;
+        return 12;
     }
 
     function price() external view override returns (uint256) {
