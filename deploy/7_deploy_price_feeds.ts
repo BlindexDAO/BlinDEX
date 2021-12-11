@@ -39,8 +39,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         constants.RSK_XUSD_ADDRESS,
         1e12,
         bot.address,
-        60 * 15, // 15 min
-        60 * 60  // 60 min
+        60 * 60, // 60 min
+        60 * 75  // 75 min
       ]
     });
     console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);
@@ -54,8 +54,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         constants.wBTC_address[hre.network.name],
         1e12,
         bot.address,
-        60 * 15, // 15 min
-        60 * 60  // 60 min
+        60 * 60, // 60 min
+        60 * 75  // 75 min
       ] // price is reverted on RSK, it's actually ETH/USD
     });
     console.log("deployed BtcToEthOracle to: " + btc_eth_oracle.address);

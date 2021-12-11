@@ -14,7 +14,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     using FixedPoint for *;
     
     uint public period = 3600; // 1 hour TWAP (time-weighted average price)
-    uint public consult_leniency = 120; // Used for being able to consult past the period end
+    uint public consult_leniency = 60*15; // Used for being able to consult past the period end
     bool public allow_stale_consults = false; // If false, consult() will fail if the TWAP is stale
 
     IUniswapV2Pair public immutable pair;
