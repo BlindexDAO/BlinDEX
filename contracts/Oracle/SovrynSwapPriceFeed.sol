@@ -36,6 +36,8 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         require(_tokenSource != address(0), "TokenSource address cannot be 0");
         require(_tokenTarget != address(0), "TokenTarget address cannot be 0");
         require(_updater != address(0), "Updater address cannot be 0");
+        require(_timeBeforeMustUpdate >= 60, "TimeBeforeMustUpdate must be at least 60 seconds");
+        require(_timeBeforeShouldUpdate <= _timeBeforeMustUpdate, "TimeBeforeShouldUpdate must be <= timeBeforeMustUpdate");
 
         sovrynConverter = ISovrynLiquidityPoolV1Converter(_sovrynConverterAddress);
         tokenSource = _tokenSource;
@@ -49,10 +51,12 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     // Setters
 
     function setTimeBeforeShouldUpdate(uint256 _timeBeforeShouldUpdate) public onlyOwner {
+        require(_timeBeforeShouldUpdate <= timeBeforeMustUpdate, "TimeBeforeShouldUpdate must be <= timeBeforeMustUpdate");
         timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
     }
 
     function setTimeBeforeMustUpdate(uint256 _timeBeforeMustUpdate) public onlyOwner {
+        require(_timeBeforeMustUpdate >= 60, "TimeBeforeMustUpdate must be at least 60 seconds");
         timeBeforeMustUpdate = _timeBeforeMustUpdate;
     }
 
