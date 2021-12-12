@@ -106,6 +106,10 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
             pairSymbols.token1Address = temp;
         }
 
+        if (hre.network.name.toLowerCase() == "rsk") {
+            pairSymbol = pairSymbol.replace("ETH", "RBTC").replace("WBTC", "ETHs");
+        }
+
         return {
             pair: { address: pairAddress, token0: pairSymbols.token0Address, token1: pairSymbols.token1Address }, pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress }, symbol: pairSymbol
         };
@@ -132,11 +136,11 @@ async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
     const bdx = await getBdx(hre);
 
     const whitelist = [
-        [{symbol: "WETH", address: weth.address}, {symbol: "BDEU", address: bdEu.address}],
-        [{symbol: "WBTC", address: wbtc.address}, {symbol: "BDEU", address: bdEu.address}],
-        [{symbol: "WETH", address: weth.address}, {symbol: "BDX", address: bdx.address}],
-        [{symbol: "WBTC", address: wbtc.address}, {symbol: "BDX", address: bdx.address}],
-        [{symbol: "BDX", address: bdx.address}, {symbol: "BDEU", address: bdEu.address}]
+        [{ symbol: "WETH", address: weth.address }, { symbol: "BDEU", address: bdEu.address }],
+        [{ symbol: "WBTC", address: wbtc.address }, { symbol: "BDEU", address: bdEu.address }],
+        [{ symbol: "WETH", address: weth.address }, { symbol: "BDX", address: bdx.address }],
+        [{ symbol: "WBTC", address: wbtc.address }, { symbol: "BDX", address: bdx.address }],
+        [{ symbol: "BDX", address: bdx.address }, { symbol: "BDEU", address: bdEu.address }]
     ]
 
     return whitelist;
