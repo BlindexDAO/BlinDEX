@@ -22,7 +22,6 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
     uint256 public unclaimedPoolsBDX;
 
-    address public treasury_address; // used by pools
     IERC20 private BDX;
 
     ICryptoPairOracle private bdstableWethOracle;
@@ -74,7 +73,6 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     function initialize (
         string memory _name,
         string memory _symbol,
-        address _treasury_address,
         address _bdx_address,
         uint256 _initalBdStableToOwner_d18
     ) 
@@ -83,13 +81,11 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     {
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_symbol).length > 0, "Symbol cannot be empty");
-        require(_treasury_address != address(0), "Treasury address cannot be 0");
         require(_bdx_address != address(0), "BDX address cannot be 0");
         
         __ERC20_init(_name, _symbol);
         __Ownable_init();
 
-        treasury_address = _treasury_address;
         BDX = IERC20(_bdx_address);
 
         bdStable_step_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
@@ -380,12 +376,6 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         collateral_ratio_paused = true;
 
         emit CollateralRatioLocked(wantedCR_d12);
-    }
-
-    function setTreasury_address(address _treasury_address) external onlyOwner {
-        require(_treasury_address != address(0), "Treasury cannot be set to the zero address");
-
-        treasury_address = _treasury_address;
     }
 
     function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner{
