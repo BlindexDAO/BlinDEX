@@ -4,10 +4,16 @@ pragma solidity 0.6.12;
 import "../Oracle/SovrynSwapPriceFeed.sol";
 import "../Oracle/FiatToFiatPseudoOracleFeed.sol";
 import "../Oracle/UniswapPairOracle.sol";
-import "../BDStable/BDStable.sol";
+import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Updater is Ownable {
+    address public updater;
+
+    constructor(address _updater) public {
+        updater = _updater;
+    }
+
     function update(
         address[] memory _sovrynOracles,
         uint256[] memory _sovrynPrices,
@@ -16,14 +22,13 @@ contract Updater is Ownable {
         address[] memory _uniswapOracles,
         address[] memory _BDStables
     ) external onlyUpdater {
-
         require(
             _sovrynOracles.length == _sovrynPrices.length,
-            "Each sovryn oracle address needs its price"
+            "Each sovryn oracle address needs its corresponding price"
         );
         require(
             _fiatOracles.length == _fiatPrices.length,
-            "Each fiat oracle address needs its price"
+            "Each fiat oracle address needs its corresponding price"
         );
 
         for (uint256 i = 0; i < _sovrynOracles.length; i++) {
@@ -48,7 +53,7 @@ contract Updater is Ownable {
                 priceFeed.updateOracle();
             }
         }
-        
+
         for (uint256 i = 0; i < _BDStables.length; i++) {
             BDStable priceFeed = BDStable(_BDStables[i]);
             priceFeed.refreshCollateralRatio();
@@ -70,4 +75,9 @@ contract Updater is Ownable {
         require(msg.sender == updater, "You're not updater");
         _;
     }
+
+    event UpdaterChanged(
+        address indexed oldUpdater,
+        address indexed newUpdater
+    );
 }
