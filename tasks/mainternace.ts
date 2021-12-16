@@ -9,7 +9,6 @@ import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatF
 import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Updater } from "../typechain/Updater";
-import { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 
 export function load() {
 
@@ -35,13 +34,17 @@ export function load() {
     });
 
   task("update:all")
-    .setAction(async (args, hre) => {
+    .addParam("ethusd", "price feed ethusd price to_d12")
+    .addParam("btceth", "price feed btceth price to_d12")
+    .addParam("eurusd", "price feed eurusd price to_d12")
+    .setAction(async ({ ethusd, btceth, eurusd }, hre) => {
       console.log("starting the updater");
 
       const networkName = hre.network.name;
       const bot = await getBot(hre);
       const updater = await hre.ethers.getContract('Updater', bot) as Updater;
 
+      const bdeu = await getBdEu(hre) as BDStable;
       let uniOracles = [];
       const pools = await getPools(hre);
       for (let pool of pools) {
@@ -49,19 +52,25 @@ export function load() {
         uniOracles.push(oracle.address);
       }
 
-      if (networkName == 'rsk') {   //todo uzupełnić wszystkie tablice
-        console.log("rsk");
-        await (await updater.update([], [],
-          [], [],
+      if (networkName == 'rsk') {
+        const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+        const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
+        const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+
+        await (await updater.update(
+          [oracleEthUsd.address, oracleBtcEth.address], [to_d12(ethusd), to_d12(btceth)],
+          [oracleEurUsd.address], [to_d12(eurusd)],
           uniOracles,
-          [])).wait();
+          [bdeu.address]))
+          .wait();
       }
-      else {                        //todo uzupełnić ostatnią tablicę
-        console.log('else')
-        await (await updater.update([], [],
+      else {
+        await (await updater.update(
+          [], [],
           [], [],
           uniOracles,
-          [])).wait();
+          [bdeu.address]))
+          .wait();
       }
 
       console.log("updater has updated");
@@ -74,21 +83,16 @@ export function load() {
 
       const networkName = hre.network.name;
       const bot = await getBot(hre);
-      const updater = await hre.ethers.getContract('Updater', bot) as Updater;
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
       const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
-      //const uniswapOracle = await hre.ethers.getContract('UniswapPairOracle', bot) as UniswapPairOracle;        //nie mają setUpdater()
-      //const bdStable = await hre.ethers.getContract('BDStable', bot) as BDStable;
 
       if (networkName == 'rsk') {
-        updater.setUpdater(newUpdater);
-        oracleEthUsd.setUpdater(newUpdater);
-        oracleBtcEth.setUpdater(newUpdater);
-        oracleEurUsd.setUpdater(newUpdater);
+        await (await oracleEthUsd.setUpdater(newUpdater)).wait();
+        await (await oracleBtcEth.setUpdater(newUpdater)).wait();
+        await (await oracleEurUsd.setUpdater(newUpdater)).wait();
       }
       else {
-        updater.setUpdater(newUpdater);
       }
 
       console.log("updaters set");

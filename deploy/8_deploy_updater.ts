@@ -11,28 +11,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bot = await getBot(hre);
 
     let updater: DeployResult;
-
-    if (networkName == "rsk") {
-        updater = await hre.deployments.deploy('Updater', {
-            from: deployer.address,
-            contract: "Updater",
-            args: [
-                bot.address
-            ]
-        });
-        console.log("deployed Updater to: " + updater.address);
-    }
-    else {
-        updater = await hre.deployments.deploy('Updater', {
-            from: deployer.address,
-            contract: "Updater",
-            args: [
-                bot.address
-            ]
-        });
-        console.log("deployed Updater to: " + updater.address);
-    }
-
+    updater = await hre.deployments.deploy('Updater', {
+        from: deployer.address,
+        contract: "Updater",
+        args: [
+            bot.address
+        ]
+    });
+    console.log("deployed Updater to: " + updater.address);
     console.log("finished deployment: Updater");
 
     // One time migration
