@@ -59,6 +59,7 @@ export function load() {
     });
 
   task("update:all:rsk")
+    //on RSK btc and eth are replacing each other | btcusd param -> PriceFeed_ETH_USD | ethbtc param -> BtcToEthOracle
     .addParam("btcusd", "btcusd price to_d12")
     .addParam("ethbtc", "ethbtc price to_d12")
     .addParam("eurusd", "eurusd price to_d12")
