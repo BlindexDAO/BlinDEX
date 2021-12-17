@@ -81,7 +81,7 @@ export function load() {
       const bdeu = await getBdEu(hre) as BDStable;
 
       await (await updater.update(
-        [oracleEthUsd.address, oracleBtcEth.address], [to_d12(btcusd), to_d12(ethbtc)],
+        [oracleEthUsd.address, oracleBtcEth.address], [to_d12(btcusd), to_d12(ethbtc)], //on RSK btc and eth are replacing each other
         [oracleEurUsd.address], [to_d12(eurusd)],
         uniOracles,
         [bdeu.address]))
