@@ -40,13 +40,13 @@ export function load() {
       const bot = await getBot(hre);
       const updater = await hre.ethers.getContract('Updater', bot) as Updater;
 
-      const bdeu = await getBdEu(hre) as BDStable;
       let uniOracles = [];
       const pools = await getPools(hre);
       for (let pool of pools) {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         uniOracles.push(oracle.address);
       }
+      const bdeu = await getBdEu(hre) as BDStable;
 
       await (await updater.update(
         [], [],
@@ -69,17 +69,16 @@ export function load() {
       const bot = await getBot(hre);
       const updater = await hre.ethers.getContract('Updater', bot) as Updater;
 
-      const bdeu = await getBdEu(hre) as BDStable;
+      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
       let uniOracles = [];
       const pools = await getPools(hre);
       for (let pool of pools) {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         uniOracles.push(oracle.address);
       }
-
-      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
-      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+      const bdeu = await getBdEu(hre) as BDStable;
 
       await (await updater.update(
         [oracleEthUsd.address, oracleBtcEth.address], [to_d12(btcusd), to_d12(ethbtc)],
