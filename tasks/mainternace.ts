@@ -33,14 +33,10 @@ export function load() {
       console.log("updated EUR / USD");
     });
 
-  task("update:all")
-    .addParam("ethusd", "price feed ethusd price to_d12")
-    .addParam("btceth", "price feed btceth price to_d12")
-    .addParam("eurusd", "price feed eurusd price to_d12")
-    .setAction(async ({ ethusd, btceth, eurusd }, hre) => {
+  task("update:all:local")
+    .setAction(async (args, hre) => {
       console.log("starting the updater");
 
-      const networkName = hre.network.name;
       const bot = await getBot(hre);
       const updater = await hre.ethers.getContract('Updater', bot) as Updater;
 
@@ -52,26 +48,44 @@ export function load() {
         uniOracles.push(oracle.address);
       }
 
-      if (networkName == 'rsk') {
-        const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
-        const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-        const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+      await (await updater.update(
+        [], [],
+        [], [],
+        uniOracles,
+        [bdeu.address]))
+        .wait();
 
-        await (await updater.update(
-          [oracleEthUsd.address, oracleBtcEth.address], [to_d12(ethusd), to_d12(btceth)],
-          [oracleEurUsd.address], [to_d12(eurusd)],
-          uniOracles,
-          [bdeu.address]))
-          .wait();
+      console.log("updater has updated");
+    });
+
+  task("update:all:rsk")
+    .addParam("btcusd", "btcusd price to_d12")
+    .addParam("ethbtc", "ethbtc price to_d12")
+    .addParam("eurusd", "eurusd price to_d12")
+    .setAction(async ({ btcusd, ethbtc, eurusd }, hre) => {
+      console.log("starting the updater");
+
+      const bot = await getBot(hre);
+      const updater = await hre.ethers.getContract('Updater', bot) as Updater;
+
+      const bdeu = await getBdEu(hre) as BDStable;
+      let uniOracles = [];
+      const pools = await getPools(hre);
+      for (let pool of pools) {
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        uniOracles.push(oracle.address);
       }
-      else {
-        await (await updater.update(
-          [], [],
-          [], [],
-          uniOracles,
-          [bdeu.address]))
-          .wait();
-      }
+
+      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+
+      await (await updater.update(
+        [oracleEthUsd.address, oracleBtcEth.address], [to_d12(btcusd), to_d12(ethbtc)],
+        [oracleEurUsd.address], [to_d12(eurusd)],
+        uniOracles,
+        [bdeu.address]))
+        .wait();
 
       console.log("updater has updated");
     });
@@ -91,8 +105,6 @@ export function load() {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
         await (await oracleBtcEth.setUpdater(newUpdater)).wait();
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
-      }
-      else {
       }
 
       console.log("updaters set");
