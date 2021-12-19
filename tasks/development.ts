@@ -255,14 +255,6 @@ export function load() {
       console.log(`BTC/USD: ${amountMinusFee}, fee: ${fee}, amount with fee: ${amountMinusFee.add(fee)}`);
     });
 
-  task("show:rsk-btc-usd-seconds")
-    .setAction(async (args, hre) => {
-      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
-      const feed = SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
-      const secondsToUpdate = await feed.when_should_update_oracle_in_seconds();
-      console.log("remaining seconds: " + secondsToUpdate);
-    });
-
   task("show:rsk-btc-usd-should-update")
     .setAction(async (args, hre) => {
       const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';

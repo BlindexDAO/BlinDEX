@@ -14,7 +14,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     using FixedPoint for *;
     
     uint public period = 3600; // 1 hour TWAP (time-weighted average price)
-    uint public consult_leniency = 120; // Used for being able to consult past the period end
+    uint public consult_leniency = 60*15; // Used for being able to consult past the period end
     bool public allow_stale_consults = false; // If false, consult() will fail if the TWAP is stale
 
     IUniswapV2Pair public immutable pair;
@@ -73,18 +73,6 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
         return (timeElapsed >= period);
-    }
-
-    function when_should_update_oracle_in_seconds() override external view returns (uint256){
-        uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
-
-        if(timeElapsed >= period){
-            return 0;
-        }
-        else{
-            return period - timeElapsed;
-        }
     }
 
     function updateOracle() override external {
