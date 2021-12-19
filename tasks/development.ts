@@ -10,7 +10,7 @@ import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import { SovrynSwapPriceFeed__factory } from "../typechain/factories/SovrynSwapPriceFeed__factory";
 import { ISovrynLiquidityPoolV1Converter__factory } from "../typechain/factories/ISovrynLiquidityPoolV1Converter__factory";
-import { RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, RSK_XUSD_ADDRESS, wETH_address, RSK_SOVRYN_NETWORK } from "../utils/Constants";
+import { RSK_XUSD_ADDRESS, wETH_address, RSK_SOVRYN_NETWORK } from "../utils/Constants";
 
 const fs = require('fs');
 
@@ -227,39 +227,5 @@ export function load() {
 
       await run(ethsAddress, wrbtcAddress, "eth", "btc");
       await run(rusdtAddress, wrbtcAddress, "usd", "btc");
-    });
-
-  task("show:rsk-btc-usd")
-    .setAction(async (args, hre) => {
-      const feed = SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await getDeployer(hre));
-      const btcFor1usd = d18_ToNumber(await feed.consult(wETH_address[hre.network.name], to_d18(1)));
-      console.log("BTC/usd: " + btcFor1usd);
-    });
-
-  task("update:rsk-btc-usd")
-    .setAction(async (args, hre) => {
-      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
-      const feed = SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
-      const tx = await feed.updateOracleWithVerification(BigNumber.from('56845406814023944'));
-      const result = await tx.wait(1);
-      console.log(result.blockHash);
-    });
-
-  task("show:rsk-btc-usd-sovryn")
-    .setAction(async (args, hre) => {
-      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
-      const feed = ISovrynLiquidityPoolV1Converter__factory.connect(RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, await hre.ethers.getSigner(updater))
-      const tokenSource = '0x542fda317318ebf1d3deaf76e0b632741a7e677d';
-      const targetToken = RSK_XUSD_ADDRESS;
-      const [amountMinusFee, fee] = (await feed.targetAmountAndFee(tokenSource, targetToken, 1e12));
-      console.log(`BTC/USD: ${amountMinusFee}, fee: ${fee}, amount with fee: ${amountMinusFee.add(fee)}`);
-    });
-
-  task("show:rsk-btc-usd-should-update")
-    .setAction(async (args, hre) => {
-      const updater = '0x9c385013670f34256450aba0ba7bd1b36ef02326';
-      const feed = SovrynSwapPriceFeed__factory.connect('0xAc78F96c68dBe1f1c93fdB0EFAc61355670e0285', await hre.ethers.getSigner(updater))
-      const shouldUpdate = await feed.shouldUpdateOracle();
-      console.log("should update: " + shouldUpdate);
     });
 }

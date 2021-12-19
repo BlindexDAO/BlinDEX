@@ -89,9 +89,6 @@ export const initalBdStable_bdx_d18 = <any>{
 // original uniswap addresss on ETH
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
-export const RSK_SOVRYN_ETHs_wrBTC_SWAP_ADDRESS = "0xcef26b429e272960d8fa2ea190b06df5dd8f68e2";
-export const RSK_SOVRYN_rUSDT_wrBTC_SWAP_ADDRESS = "0x448c2474b255576554eed36c24430ccfac131ce3";
-export const RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS = "0x029448377a56c15928ec783baf6ca736ed99a57f";
 export const RSK_RUSDT_ADDRESS = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
 export const RSK_WRBTC_ADDRESS = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
 export const RSK_ETHS_ADDRESS = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";

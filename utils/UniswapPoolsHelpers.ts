@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IERC20 } from "../typechain/IERC20";
-import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20 } from "./DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20, getBot } from "./DeployedContractsHelpers";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
     console.log("starting updating oracles");
@@ -35,8 +35,9 @@ export async function updateOracle(
     symbol1: string,
 ) {
     const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
+    const bot = await getBot(hre);
 
-    await (await oracle.updateOracle()).wait();
+    await (await oracle.connect(bot).updateOracle()).wait();
 }
 
 export async function resetOracle(
