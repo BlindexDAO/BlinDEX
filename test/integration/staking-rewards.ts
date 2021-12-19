@@ -359,10 +359,10 @@ describe('locking an unlocked stake', () => {
     await initialize();
   });
 
-  it('shuld lock an unlocked stake', async () => {
+  it('should lock an unlocked stake', async () => {
     // provide some initial weth for the users
     await mintWeth(hre, testUser1, to_d18(100));
-
+    
     // deployer gives some bdeu to the uses so they can stake
     await bdEu.transfer(testUser1.address, to_d18(100));
 
@@ -497,7 +497,7 @@ describe('Claiming all rewards', () => {
   it('should collect all rewards', async () => {
 
     await mintWeth(hre, testUser1, to_d18(1));
-    await mintWbtc(hre, testUser1, to_d8(1));
+    await mintWbtc(hre, testUser1, to_d8(1), 100);
     await bdEu.transfer(testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);

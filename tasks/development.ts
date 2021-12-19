@@ -10,7 +10,7 @@ import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import { SovrynSwapPriceFeed__factory } from "../typechain/factories/SovrynSwapPriceFeed__factory";
 import { ISovrynLiquidityPoolV1Converter__factory } from "../typechain/factories/ISovrynLiquidityPoolV1Converter__factory";
-import { RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, RSK_XUSD_ADDRESS, wETH_address } from "../utils/Constants";
+import { RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS, RSK_XUSD_ADDRESS, wETH_address, RSK_SOVRYN_NETWORK } from "../utils/Constants";
 
 const fs = require('fs');
 
@@ -130,7 +130,7 @@ export function load() {
       const bdeu = await getBdEu(hre);
 
       await mintWeth(hre, deployer, to_d18(200));
-      await mintWbtc(hre, deployer, to_d8(10))
+      await mintWbtc(hre, deployer, to_d8(10), 100)
 
       const testUserAddress = "0xED3622f02b1619d397502a9FFF1dfe3d0fB2988c";
 
@@ -192,7 +192,7 @@ export function load() {
   task("show:sovryn-swap-prices")
     .setAction(async (args, hre) => {
       async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
-        const swapNetwork = await hre.ethers.getContractAt("ISovrynSwapNetwork", "0x98ace08d2b759a265ae326f010496bcd63c15afc") as ISovrynSwapNetwork;
+        const swapNetwork = await hre.ethers.getContractAt("ISovrynSwapNetwork", RSK_SOVRYN_NETWORK) as ISovrynSwapNetwork;
 
         // format:  token1 - acnchor_A - token2
         const conversionPath = await swapNetwork.conversionPath(token1, token2);
