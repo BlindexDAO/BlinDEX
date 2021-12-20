@@ -176,7 +176,8 @@ export function load() {
     });
   
   task("show:full-diagnostics")
-    .addOptionalPositionalParam("showPrices", "if ture, shows all prices", "false")
+    .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
+
     .setAction(async ({showPrices}, hre) => {
       await show_ethEur(hre);
       await show_ethUsd(hre);
