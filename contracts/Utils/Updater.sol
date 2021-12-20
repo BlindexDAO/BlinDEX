@@ -35,7 +35,7 @@ contract Updater is Ownable {
             SovrynSwapPriceFeed priceFeed = SovrynSwapPriceFeed(
                 _sovrynOracles[i]
             );
-            if (priceFeed.shouldUpdateOracle()) {
+            if (priceFeed.shouldUpdateOracleWithVerification()) {
                 priceFeed.updateOracleWithVerification(_sovrynPrices[i]);
             }
         }
