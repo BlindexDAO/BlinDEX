@@ -26,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy('PriceFeed_EUR_USD', {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
-      args: [(await hre.getNamedAccounts()).BOT, to_d12(1.13)]
+      args: [bot.address, to_d12(1.13)]
     });
     console.log("deployed PriceFeed_EUR_USD to: " + priceFeed_EUR_USD_Deployment.address);
 
@@ -34,13 +34,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        constants.RSK_SOVRYN_xUSD_wrBTC_SWAP_ADDRESS,
+        constants.RSK_SOVRYN_NETWORK,
         constants.wETH_address[hre.network.name], // it's actually wrBTC (on RSK)
         constants.RSK_XUSD_ADDRESS,
         1e12,
         bot.address,
-        60 * 15, // 15 min
-        60 * 60  // 60 min
+        60 * 60, // 60 min
+        60 * 75  // 75 min
       ]
     });
     console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);
@@ -49,13 +49,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        constants.RSK_SOVRYN_ETHs_wrBTC_SWAP_ADDRESS,
+        constants.RSK_SOVRYN_NETWORK,
         constants.wETH_address[hre.network.name],
         constants.wBTC_address[hre.network.name],
         1e12,
         bot.address,
-        60 * 15, // 15 min
-        60 * 60  // 60 min
+        60 * 60, // 60 min
+        60 * 75  // 75 min
       ] // price is reverted on RSK, it's actually ETH/USD
     });
     console.log("deployed BtcToEthOracle to: " + btc_eth_oracle.address);

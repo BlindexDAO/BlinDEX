@@ -144,7 +144,8 @@ describe("BuyBack", () => {
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
-        const moreThanMaxBdxToBuyBack_d18 = maxBdxToBuyBack_d18.add(1);
+        const bdxExcess = 10; // this is a very small amout (1e-17 BDX). We cannot use 1 because of roundings and low initial price of BDX (1 BDX < 1 EUR)
+        const moreThanMaxBdxToBuyBack_d18 = maxBdxToBuyBack_d18.add(bdxExcess);
 
         bdx.transfer(testUser.address, moreThanMaxBdxToBuyBack_d18);
         
@@ -187,9 +188,10 @@ async function calculateMaxBdxToBuyBack_d18(cr: number){
     const maxBdxToBuyBack_d18 = bdEuCollateralValue.sub(currentRequiredCollateralValue)
         .mul(1e12).div(bdxInEurPrice_d12);
 
-    console.log("maxBdxToBuyBack_d18: " + maxBdxToBuyBack_d18);
-    console.log("bdxInEurPrice_d12: " + bdxInEurPrice_d12);
-    console.log("colat: " + await bdEu.globalCollateralValue());
+    console.log("bdxInEurPrice_d12:              " + bdxInEurPrice_d12);
+    console.log("bdeu collateral value:          " + bdEuCollateralValue);
+    console.log("currentRequiredCollateralValue: " + currentRequiredCollateralValue);
+    console.log("maxBdxToBuyBack_d18:            " + maxBdxToBuyBack_d18);
 
     return maxBdxToBuyBack_d18;
 }

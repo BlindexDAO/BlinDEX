@@ -6,16 +6,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IPriceFeed.sol";
 import "./ICryptoPairOracle.sol";
 import "../Utils/Sovryn/ISovrynLiquidityPoolV1Converter.sol";
+import "../Utils/Sovryn/ISovrynAnchor.sol";
+import "../Utils/Sovryn/ISovrynSwapNetwork.sol";
 
 // We need feeds with fiats prices. For now on RSK chain there are no such feeds.
 // We populate our own feeds
 contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     using SafeMath for uint256;
 
-    uint8 private constant DECIMALS = 12;
     uint256 private constant PRECISION = 1e12;
 
-    ISovrynLiquidityPoolV1Converter public sovrynConverter;
+    ISovrynSwapNetwork public sovrynNetwork;
     address public tokenSource;
     address public tokenTarget;
     uint256 public priceDisparityTolerance_d12;
@@ -25,7 +26,8 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     uint256 public updateTimestamp;
     uint256 public oraclePrice;
 
-    constructor(address _sovrynConverterAddress,
+    constructor(
+        address _sovrynNetworkAddress,
         address _tokenSource,
         address _tokenTarget,
         uint256 _priceDisparityTolerance_d12,
@@ -33,12 +35,14 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         uint256 _timeBeforeShouldUpdate,
         uint256 _timeBeforeMustUpdate) public {
 
-        require(_sovrynConverterAddress != address(0), "SovrynConverter address cannot be 0");
+        require(_sovrynNetworkAddress != address(0), "SovrynNetwork address cannot be 0");
         require(_tokenSource != address(0), "TokenSource address cannot be 0");
         require(_tokenTarget != address(0), "TokenTarget address cannot be 0");
         require(_updater != address(0), "Updater address cannot be 0");
+        require(_timeBeforeMustUpdate >= 60, "TimeBeforeMustUpdate must be at least 60 seconds");
+        require(_timeBeforeShouldUpdate <= _timeBeforeMustUpdate, "TimeBeforeShouldUpdate must be <= timeBeforeMustUpdate");
 
-        sovrynConverter = ISovrynLiquidityPoolV1Converter(_sovrynConverterAddress);
+        sovrynNetwork = ISovrynSwapNetwork(_sovrynNetworkAddress);
         tokenSource = _tokenSource;
         tokenTarget = _tokenTarget;
         priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
@@ -47,20 +51,10 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         timeBeforeMustUpdate = _timeBeforeMustUpdate;
     }
 
-    // Setters
-
-    function setTimeBeforeShouldUpdate(uint256 _timeBeforeShouldUpdate) public onlyOwner {
-        timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
-    }
-
-    function setTimeBeforeMustUpdate(uint256 _timeBeforeMustUpdate) public onlyOwner {
-        timeBeforeMustUpdate = _timeBeforeMustUpdate;
-    }
-
     // IPriceFeed
 
     function decimals() external view override returns (uint8) {
-        return DECIMALS;
+        return 12;
     }
 
     function price() external view override returns (uint256) {
@@ -78,9 +72,27 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         return oraclePrice.mul(amountIn).div(PRECISION);
     }
 
-    function updateOracle() external override {}
+    function updateOracle() external override {
+        revert("use updateOracleWithVerification() instead");
+    }
+
+    function shouldUpdateOracle() external view override returns (bool) {
+        return false;
+    }
+
+    // Own methods
+
+    function shouldUpdateOracleWithVerification() external view returns (bool) {
+        return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
+    }
 
     function updateOracleWithVerification(uint verificationPrice_d12) external onlyUpdater {
+        address[] memory conversionPath = sovrynNetwork.conversionPath(tokenSource, tokenTarget);
+
+        require(conversionPath.length == 3, "conversion path must be direct");
+        ISovrynAnchor anchor = ISovrynAnchor(conversionPath[1]);
+        ISovrynLiquidityPoolV1Converter sovrynConverter = ISovrynLiquidityPoolV1Converter(anchor.owner());
+
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
         uint256 newPrice = amountMinusFee.add(fee);
         uint256 priceDifference = verificationPrice_d12 > newPrice ? verificationPrice_d12.sub(newPrice) : newPrice.sub(verificationPrice_d12);
@@ -90,13 +102,20 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         emit PriceChanged(oraclePrice);
     }
 
-    function shouldUpdateOracle() external view override returns (bool) {
-        return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
+    // Setters
+
+    function setTimeBeforeShouldUpdate(uint256 _timeBeforeShouldUpdate) public onlyOwner {
+        require(_timeBeforeShouldUpdate <= timeBeforeMustUpdate, "TimeBeforeShouldUpdate must be <= timeBeforeMustUpdate");
+        timeBeforeShouldUpdate = _timeBeforeShouldUpdate;
     }
 
-    function when_should_update_oracle_in_seconds() external view override returns (uint256) {
-        uint256 updateTime = updateTimestamp.add(timeBeforeShouldUpdate);
-        return block.timestamp < updateTime ? updateTime.sub(block.timestamp) : 0;
+    function setTimeBeforeMustUpdate(uint256 _timeBeforeMustUpdate) public onlyOwner {
+        require(_timeBeforeMustUpdate >= 60, "TimeBeforeMustUpdate must be at least 60 seconds");
+        timeBeforeMustUpdate = _timeBeforeMustUpdate;
+    }
+
+    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) external onlyOwner {
+        priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
     }
 
     function setUpdater(address newUpdater) external onlyOwner {
@@ -105,10 +124,6 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
-    }
-
-    function setPriceDisparityTolerance_d12(uint256 _priceDisparityTolerance_d12) external onlyOwner {
-        priceDisparityTolerance_d12 = _priceDisparityTolerance_d12;
     }
 
     modifier onlyUpdater()

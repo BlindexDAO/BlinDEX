@@ -108,12 +108,12 @@ export async function getERC20(hre: HardhatRuntimeEnvironment, address: string){
   return await hre.ethers.getContractAt("ERC20", address, deployer) as ERC20;
 }
 
-export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber){
+export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number){
   const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, user)
   const networkName = hre.network.name;
 
   await(await uniRouter.swapETHForExactTokens(amount_d8, [constants.wETH_address[networkName], constants.wBTC_address[networkName]], user.address,  Date.now() + 3600, {
-    value: amount_d8.mul(1e10).mul(100), // mul*1e10 - align precision // mul(100) excessively small eth price, we'll get the rest back
+    value: amount_d8.mul(1e10).mul(maxBtcEthPrice), // mul*1e10 : align precision // second mul(maxBtcEthPrice) : excessive amount of eth, we'll get the rest back
   })).wait();
 }
 

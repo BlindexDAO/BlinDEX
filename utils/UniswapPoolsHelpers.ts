@@ -1,6 +1,7 @@
+import { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IERC20 } from "../typechain/IERC20";
-import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20 } from "./DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20, getBot } from "./DeployedContractsHelpers";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
     console.log("starting updating oracles");
@@ -34,8 +35,9 @@ export async function updateOracle(
     symbol1: string,
 ) {
     const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
+    const bot = await getBot(hre);
 
-    await (await oracle.updateOracle()).wait();
+    await (await oracle.connect(bot).updateOracle()).wait();
 }
 
 export async function resetOracle(
@@ -64,3 +66,28 @@ export async function getPools(hre: HardhatRuntimeEnvironment) : Promise<{name: 
     ]
 }
 
+export function tokensDecimals(hre: HardhatRuntimeEnvironment, tokenName: string) : number {
+    if(tokenName == "BDX"){
+        return 18;
+    } 
+    else if (tokenName == "BDEU"){
+        return 18;
+    }
+    else if (tokenName == "WETH"){
+        if(hre.network.name == "rsk"){
+            return 18; // WBTC on RSK
+        } else {
+            return 18;
+        }
+    }
+    else if (tokenName == "WBTC"){
+        if(hre.network.name == "rsk"){
+            return 18; // ETHs on RSK
+        } else {
+            return 8;
+        }
+    }
+    else{
+        throw `unknown token '${tokenName}'`;
+    }
+}
