@@ -35,8 +35,10 @@ export function load() {
       await (await oracleEurUsd.setPrice(to_d12(1.13))).wait(); //todo ag from parameters
       console.log("updated EUR / USD");
 
+      console.log("starting refresh collateral ratio");
       const bdEu = await getBdEu(hre);
       await (await bdEu.connect(bot).refreshCollateralRatio()).wait();
+      console.log("refreshed collateral ratio");
     });
 
   task("setPoolConsultLeniency")
