@@ -1,0 +1,38 @@
+name: Continuous Integration
+# This action works with pull requests and pushes
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Make sure the actual branch is checked out when running on pull requests
+          ref: ${{ github.head_ref }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: npm
+      - name: Install Node modules
+        run: npm ci
+      - name: Solidity Lint
+        run: npm run solhint --y
+      - name: Prettify code
+        run: npm run format
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Prettified code and generated docs!
+          branch: ${{ github.head_ref }}
+          commit_options: "--no-verify"
+      # - name: Test contracts
+      #   run: npm run test:contracts
+      # - name: Test Integrations
+      #   run: npm run test:integrations
