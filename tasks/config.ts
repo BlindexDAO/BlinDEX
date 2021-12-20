@@ -34,6 +34,7 @@ private static MF_PAIR_ORACLES: string = '${stringifiedPairOracles}';
 private static MF_PRICE_FEED_EUR_USD_ADDRESS: string = '${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address.toLowerCase()}';
 private static MF_PRICE_FEED_BTC_ETH_ADDRESS: string = '${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address.toLowerCase()}';
 private static MF_PRICE_FEED_ETH_USD_ADDRESS: string = '${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address.toLowerCase()}';
+private static MF_UPDATER_ADDRESS: string = '${(await hre.ethers.getContract('Updater', deployer)).address.toLowerCase()}';
             `;
 
             console.log("Please change MF_ to RSK_ before pasting if need.")
