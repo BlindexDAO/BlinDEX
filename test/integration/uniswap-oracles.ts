@@ -2,15 +2,10 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import * as constants from '../../utils/Constants'
-import { 
-    provideLiquidity,
-    updateWethPair,
-    swapWethFor,
-    getPrices
-} from "../helpers/swaps"
-import { to_d18 } from "../../utils/NumbersHelpers"
-import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
+import * as constants from "../../utils/Constants";
+import { provideLiquidity, updateWethPair, swapWethFor, getPrices } from "../helpers/swaps";
+import { to_d18 } from "../../utils/NumbersHelpers";
+import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { getBdEu, getUser, getWeth, getBdx, getUniswapPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
@@ -21,61 +16,60 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("Uniswap Oracles", () => {
+  beforeEach(async () => {
+    await hre.deployments.fixture();
+    // do NOT set up the system before these tests.
+    // this test tests oracles in isolation
+  });
 
-    beforeEach(async () => {
-        await hre.deployments.fixture();
-        // do NOT set up the system before these tests.
-        // this test tests oracles in isolation
-    });
+  const oneHour = 60 * 60;
 
-    const oneHour = 60*60;
+  it("should be able to update price after swap", async () => {
+    const bdeu = await getBdEu(hre);
+    const weth = await getWeth(hre);
 
-    it("should be able to update price after swap", async () => {
-        const bdeu = await getBdEu(hre);
-        const weth = await getWeth(hre);
+    const user = await getUser(hre);
 
-        const user = await getUser(hre);
-        
-        await mintWeth(hre, user, to_d18(20));
-        await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
+    await mintWeth(hre, user, to_d18(20));
+    await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
 
-        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
-        await resetOracle(hre, "BDEU", "WETH");
+    await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
+    await resetOracle(hre, "BDEU", "WETH");
 
-        await simulateTimeElapseInSeconds(oneHour);
-        await swapWethFor(hre, "BDEU", 5);
-        await simulateTimeElapseInSeconds(2*oneHour);
+    await simulateTimeElapseInSeconds(oneHour);
+    await swapWethFor(hre, "BDEU", 5);
+    await simulateTimeElapseInSeconds(2 * oneHour);
 
-        await updateOracle(hre, "BDEU", "WETH");
+    await updateOracle(hre, "BDEU", "WETH");
 
-        const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEU");
+    const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEU");
 
-        const wethBdBeforeSwap = 80/20;
-        const wethBdSwapPrice = 80/(20+5)
-        const wethBdAfterSwap = (80-5*wethBdSwapPrice)/(20+5);
-        const wethBdTwap = (1*wethBdBeforeSwap + 2*wethBdAfterSwap) / (1+2);
-        const bdWethTwap = (1*(1/wethBdBeforeSwap) + 2*(1/wethBdAfterSwap)) / (1+2);
+    const wethBdBeforeSwap = 80 / 20;
+    const wethBdSwapPrice = 80 / (20 + 5);
+    const wethBdAfterSwap = (80 - 5 * wethBdSwapPrice) / (20 + 5);
+    const wethBdTwap = (1 * wethBdBeforeSwap + 2 * wethBdAfterSwap) / (1 + 2);
+    const bdWethTwap = (1 * (1 / wethBdBeforeSwap) + 2 * (1 / wethBdAfterSwap)) / (1 + 2);
 
-        expect(wethInBdStablePriceDecimal1).to.be.closeTo(wethBdTwap, 1e-2);
-        expect(bdStableInWethPriceDecimal1).to.be.closeTo(bdWethTwap, 1e-2);
-    });
+    expect(wethInBdStablePriceDecimal1).to.be.closeTo(wethBdTwap, 1e-2);
+    expect(bdStableInWethPriceDecimal1).to.be.closeTo(bdWethTwap, 1e-2);
+  });
 
-    it("should not update price before one hour elapses", async () => {
-        const bdeu = await getBdEu(hre);
-        const weth = await getWeth(hre);
+  it("should not update price before one hour elapses", async () => {
+    const bdeu = await getBdEu(hre);
+    const weth = await getWeth(hre);
 
-        const user = await getUser(hre);
-        
-        await mintWeth(hre, user, to_d18(20));
-        await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
-        await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
-        await resetOracle(hre, "BDEU", "WETH");
+    const user = await getUser(hre);
 
-        await swapWethFor(hre, "BDEU", 5);
+    await mintWeth(hre, user, to_d18(20));
+    await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
+    await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
+    await resetOracle(hre, "BDEU", "WETH");
 
-        let oracle = await getUniswapPairOracle(hre, "BDEU", "WETH");
-        oracle = oracle.connect(user); // this restriction doesn't apply to the owner
+    await swapWethFor(hre, "BDEU", 5);
 
-        await expectToFail(() => oracle.updateOracle(), 'UniswapPairOracle: PERIOD_NOT_ELAPSED');
-    });
-})
+    let oracle = await getUniswapPairOracle(hre, "BDEU", "WETH");
+    oracle = oracle.connect(user); // this restriction doesn't apply to the owner
+
+    await expectToFail(() => oracle.updateOracle(), "UniswapPairOracle: PERIOD_NOT_ELAPSED");
+  });
+});

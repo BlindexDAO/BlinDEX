@@ -2,7 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber } from "../../utils/NumbersHelpers"
+import { d12_ToNumber } from "../../utils/NumbersHelpers";
 import { getBdEuWbtcPool, getBdEuWethPool } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 
@@ -12,36 +12,33 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("Collateral price", () => {
+  beforeEach(async () => {
+    await hre.deployments.fixture();
+  });
 
-    beforeEach(async () => {
-        await hre.deployments.fixture();
-    });
+  it("should get price for weth", async () => {
+    await setUpFunctionalSystemForTests(hre, 1);
 
-    it("should get price for weth", async () => {
+    const wethPool = await getBdEuWethPool(hre);
 
-        await setUpFunctionalSystemForTests(hre, 1);
+    const expectedWethPrice = 3600; //ETH-EUR for 2021-10-25
+    const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
+    const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
 
-        const wethPool = await getBdEuWethPool(hre);
+    console.log("wethInEurPrice: " + wethInEurPrice);
+    expect(wethInEurPrice).to.be.closeTo(expectedWethPrice, expectedWethPrice * precision);
+  });
 
-        const expectedWethPrice = 3600; //ETH-EUR for 2021-10-25
-        const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
-        const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
+  it("should get price for wbtc", async () => {
+    await setUpFunctionalSystemForTests(hre, 1);
 
-        console.log("wethInEurPrice: " + wethInEurPrice);
-        expect(wethInEurPrice).to.be.closeTo(expectedWethPrice, expectedWethPrice * precision);
-    });
+    const wbtcPool = await getBdEuWbtcPool(hre);
 
-    it("should get price for wbtc", async () => {
+    const expectedWbtcPrice = 54000; // BTC-EUR for 2021-10-25
+    const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
+    const wbtcInEurPrice = d12_ToNumber(await wbtcPool.getCollateralPrice_d12());
 
-        await setUpFunctionalSystemForTests(hre, 1);
-
-        const wbtcPool = await getBdEuWbtcPool(hre);
-
-        const expectedWbtcPrice = 54000; // BTC-EUR for 2021-10-25
-        const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
-        const wbtcInEurPrice = d12_ToNumber(await wbtcPool.getCollateralPrice_d12());
-
-        console.log("wbtcInEurPrice: " + wbtcInEurPrice);
-        expect(wbtcInEurPrice).to.be.closeTo(expectedWbtcPrice, expectedWbtcPrice * precision);
-    });
-})
+    console.log("wbtcInEurPrice: " + wbtcInEurPrice);
+    expect(wbtcInEurPrice).to.be.closeTo(expectedWbtcPrice, expectedWbtcPrice * precision);
+  });
+});
