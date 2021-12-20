@@ -32,7 +32,3 @@ jobs:
           commit_message: Prettified code and generated docs!
           branch: ${{ github.head_ref }}
           commit_options: "--no-verify"
-      # - name: Test contracts
-      #   run: npm run test:contracts
-      # - name: Test Integrations
-      #   run: npm run test:integrations
