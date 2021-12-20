@@ -2,7 +2,6 @@
   "name": "hardhat-project",
   "scripts": {
     "prepare": "husky install",
-    "format": "prettier --write . --loglevel silent",
     "test:integrations": "hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
     "test:contracts": "hardhat --network mainnetFork test:dir ./test/contracts/",
     "node": "hardhat node --no-deploy",

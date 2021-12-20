@@ -24,8 +24,6 @@ jobs:
         run: npm ci
       - name: Solidity Lint
         run: npm run solhint --y
-      - name: Prettify code
-        run: npm run format
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
