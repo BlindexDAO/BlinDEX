@@ -99,7 +99,7 @@ export function load() {
       console.log("updater has updated");
     });
 
-  task("setUpdaters")
+  task("set:updaters")
     .addPositionalParam("newUpdater", "new updater address")
     .setAction(async ({ newUpdater }, hre) => {
       console.log("starting the setUpdaters");
@@ -119,7 +119,7 @@ export function load() {
       console.log("updaters set");
     });
 
-  task("setPoolConsultLeniency")
+  task("set:oracles-ConsultLeniency")
     .addPositionalParam("newVal", "new value")
     .setAction(async ({ newVal }, hre) => {
       const pools = await getPools(hre);
@@ -136,7 +136,7 @@ export function load() {
       console.log("all done");
     });
 
-  task("set:AllowStaleConsults")
+  task("set:oracles-AllowStaleConsults")
     .addPositionalParam("enable", "1 = enable, 0 = disable")
     .setAction(async ({ enable }, hre) => {
       const pools = await getPools(hre);
@@ -148,7 +148,7 @@ export function load() {
       }
     });
 
-  task("set:lock-cr-at")
+  task("set:lockCollateralRatioAt")
     .addPositionalParam("stableAddress", "stable address")
     .addPositionalParam("val", "value")
     .setAction(async ({ stableAddress, val }, hre) => {
@@ -163,7 +163,7 @@ export function load() {
       await (await stable.connect(deployer).lockCollateralRatioAt(to_d12(val))).wait();
     });
 
-  task("set:toggle-pause-cr")
+  task("set:stable-toggleCollateralRatioPaused")
     .addPositionalParam("stableAddress", "stable address")
     .setAction(async ({ stableAddress }, hre) => {
 
