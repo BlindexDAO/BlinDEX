@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.6 <=0.6.12;
+pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
@@ -12,22 +12,26 @@ import "./ICryptoPairOracle.sol";
 // Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
 contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     using FixedPoint for *;
-    
-    uint public period = 3600; // 1 hour TWAP (time-weighted average price)
-    uint public consult_leniency = 60*15; // Used for being able to consult past the period end
+
+    uint256 public period = 3600; // 1 hour TWAP (time-weighted average price)
+    uint256 public consult_leniency = 60 * 15; // Used for being able to consult past the period end
     bool public allow_stale_consults = false; // If false, consult() will fail if the TWAP is stale
 
     IUniswapV2Pair public immutable pair;
     address public immutable token0;
     address public immutable token1;
 
-    uint    public price0CumulativeLast;
-    uint    public price1CumulativeLast;
-    uint32  public blockTimestampLast;
+    uint256 public price0CumulativeLast;
+    uint256 public price1CumulativeLast;
+    uint32 public blockTimestampLast;
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
-    constructor(address factoryAddress, address tokenA, address tokenB) public {
+    constructor(
+        address factoryAddress,
+        address tokenA,
+        address tokenB
+    ) public {
         require(factoryAddress != address(0), "Factory address cannot be 0");
         require(tokenA != address(0), "TokenA address cannot be 0");
         require(tokenB != address(0), "TokenB address cannot be 0");
@@ -40,13 +44,13 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         token1 = _pair.token1();
     }
 
-    function setPeriod(uint _period) external onlyOwner {
+    function setPeriod(uint256 _period) external onlyOwner {
         period = _period;
 
         emit PeriodSet(_period);
     }
 
-    function setConsultLeniency(uint _consult_leniency) external onlyOwner {
+    function setConsultLeniency(uint256 _consult_leniency) external onlyOwner {
         consult_leniency = _consult_leniency;
 
         emit ConsultLeniencySet(_consult_leniency);
@@ -69,17 +73,16 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     }
 
     // Check if updateOracle() can be called instead of wasting gas calling it
-    function shouldUpdateOracle() override public view returns (bool) {
+    function shouldUpdateOracle() public view override returns (bool) {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
         return (timeElapsed >= period);
     }
 
-    function updateOracle() override external {
+    function updateOracle() external override {
         require(blockTimestampLast > 0, "Oracle not ready");
 
-        (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
-            UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
+        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
 
         // Ensure that at least one full period has passed since the last update
@@ -96,7 +99,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     }
 
     // Note this will always return 0 before update has been called successfully for the first time.
-    function consult(address token, uint amountIn) override external view returns (uint amountOut) {
+    function consult(address token, uint256 amountIn) external view override returns (uint256 amountOut) {
         uint32 blockTimestamp = UniswapV2OracleLibrary.currentBlockTimestamp();
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // Overflow is desired
 
@@ -111,7 +114,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         }
     }
 
-    event PeriodSet(uint period);
-    event ConsultLeniencySet(uint consult_latency);
+    event PeriodSet(uint256 period);
+    event ConsultLeniencySet(uint256 consult_latency);
     event AllowStaleConsultsSet(bool allow_stale_consults);
 }
