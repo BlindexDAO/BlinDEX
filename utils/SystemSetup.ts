@@ -1,10 +1,20 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
 import {
-  getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, mintWbtc, getOnChainEthEurPrice,
-  getOnChainBtcEurPrice, getDeployer, getTreasury, mintWeth
+  getBdEu,
+  getBdx,
+  getWeth,
+  getWbtc,
+  getBdEuWethPool,
+  getBdEuWbtcPool,
+  mintWbtc,
+  getOnChainEthEurPrice,
+  getOnChainBtcEurPrice,
+  getDeployer,
+  getTreasury,
+  mintWeth,
 } from "./DeployedContractsHelpers";
-import * as constants from './Constants';
+import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 
@@ -71,34 +81,51 @@ export async function setUpFunctionalSystem(
   }
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
-  await provideLiquidity(hre, deployer, bdEu, weth,
+  await provideLiquidity(
+    hre,
+    deployer,
+    bdEu,
+    weth,
     to_d18(eurValueForLiquidity),
     numberToBigNumberFixed(eurValueForLiquidity, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
-    verbose);
+    verbose
+  );
 
   verboseLog(verbose, "provide liquidity bdeu/wbtc");
-  await provideLiquidity(hre, deployer, bdEu, wbtc,
+  await provideLiquidity(
+    hre,
+    deployer,
+    bdEu,
+    wbtc,
     to_d18(eurValueForLiquidity),
     numberToBigNumberFixed(eurValueForLiquidity, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
-    verbose);
+    verbose
+  );
 
   verboseLog(verbose, "provide liquidity bdx/weth");
-  await provideLiquidity(hre, deployer, bdx, weth,
+  await provideLiquidity(
+    hre,
+    deployer,
+    bdx,
+    weth,
     to_d18(eurValueForLiquidity / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidity, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
-    verbose);
+    verbose
+  );
 
   verboseLog(verbose, "provide liquidity bdx/wbtc");
-  await provideLiquidity(hre, deployer, bdx, wbtc,
+  await provideLiquidity(
+    hre,
+    deployer,
+    bdx,
+    wbtc,
     to_d18(eurValueForLiquidity / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidity, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
-    verbose);
+    verbose
+  );
 
   verboseLog(verbose, "provide liquidity bdx/bdeu");
-  await provideLiquidity(hre, deployer, bdx, bdEu,
-    to_d18(eurValueForLiquidity / initialBdxBdEuPrice),
-    to_d18(eurValueForLiquidity),
-    verbose);
+  await provideLiquidity(hre, deployer, bdx, bdEu, to_d18(eurValueForLiquidity / initialBdxBdEuPrice), to_d18(eurValueForLiquidity), verbose);
 
   verboseLog(verbose, "provide liquidity - done");
 
@@ -113,9 +140,20 @@ export async function setUpFunctionalSystem(
     const initialBdEuColltFraction_d12 = to_d12(initialBdEuColltFraction);
 
     const collateralWeth = constants.initalBdStableToOwner_d18[hre.network.name]
-      .mul(7).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12); // 70% in weth
+      .mul(7)
+      .mul(initialBdEuColltFraction_d12)
+      .div(10)
+      .mul(1e12)
+      .div(to_d12(initialWethBdEuPrice))
+      .div(1e12); // 70% in weth
     const collateralWbtc = constants.initalBdStableToOwner_d18[hre.network.name]
-      .mul(3).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12); // 30% in wbtc
+      .mul(3)
+      .mul(initialBdEuColltFraction_d12)
+      .div(10)
+      .mul(1e12)
+      .div(to_d12(initialWbtcBdEuPrice))
+      .div(1e10)
+      .div(1e12); // 30% in wbtc
 
     // recallateralize by just sending the tokens in order not to extract undeserved BDX
     await (await weth.connect(deployer).transfer(bdEuWethPool.address, collateralWeth)).wait();

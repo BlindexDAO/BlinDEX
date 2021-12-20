@@ -1,12 +1,21 @@
 {
-    "compilerOptions": {
-      "target": "ES2020",
-      "module": "CommonJS",
-      "strict": true,
-      "esModuleInterop": true,
-      "resolveJsonModule": true,
-      "outDir": "dist"
-    },
-    "include": ["./test", "./deploy", "./olddeploy", "./tasks", "utils/NumbersHelpers.ts", "utils/6_deploy_price_feeds.ts", "utils/SystemSetup.ts", "utils/common.ts"],
-    "files": ["./hardhat.config.ts"]
-  }
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "outDir": "dist"
+  },
+  "include": [
+    "./test",
+    "./deploy",
+    "./olddeploy",
+    "./tasks",
+    "utils/NumbersHelpers.ts",
+    "utils/6_deploy_price_feeds.ts",
+    "utils/SystemSetup.ts",
+    "utils/common.ts"
+  ],
+  "files": ["./hardhat.config.ts"]
+}

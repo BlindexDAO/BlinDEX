@@ -24,14 +24,15 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     uint256 public updateTimestamp;
     uint256 public oraclePrice;
 
-    constructor(address _sovrynConverterAddress,
+    constructor(
+        address _sovrynConverterAddress,
         address _tokenSource,
         address _tokenTarget,
         uint256 _priceDisparityTolerance_d12,
         address _updater,
         uint256 _timeBeforeShouldUpdate,
-        uint256 _timeBeforeMustUpdate) public {
-
+        uint256 _timeBeforeMustUpdate
+    ) public {
         require(_sovrynConverterAddress != address(0), "SovrynConverter address cannot be 0");
         require(_tokenSource != address(0), "TokenSource address cannot be 0");
         require(_tokenTarget != address(0), "TokenTarget address cannot be 0");
@@ -62,7 +63,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     // ICryptoPairOracle
 
-    function consult(address tokenIn, uint256 amountIn) external view override returns (uint256) {     
+    function consult(address tokenIn, uint256 amountIn) external view override returns (uint256) {
         require(tokenIn == tokenSource, "This oracle only accepts consulting source token input");
         require(oraclePrice != 0, "Oracle not yet initiated");
         require(block.timestamp < updateTimestamp.add(timeBeforeMustUpdate), "Price is stale. Update oracle");
@@ -83,7 +84,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
     }
 
-    function updateOracleWithVerification(uint verificationPrice_d12) external onlyUpdater {
+    function updateOracleWithVerification(uint256 verificationPrice_d12) external onlyUpdater {
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
         uint256 newPrice = amountMinusFee.add(fee);
         uint256 priceDifference = verificationPrice_d12 > newPrice ? verificationPrice_d12.sub(newPrice) : newPrice.sub(verificationPrice_d12);
@@ -111,14 +112,13 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function setUpdater(address newUpdater) external onlyOwner {
         require(newUpdater != address(0), "Updater cannot be set to the zero address");
-        
+
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
     }
 
-    modifier onlyUpdater()
-    {
+    modifier onlyUpdater() {
         require(msg.sender == updater, "You're not updater");
         _;
     }

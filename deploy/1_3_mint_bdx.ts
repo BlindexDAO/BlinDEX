@@ -1,30 +1,26 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployFunction } from 'hardhat-deploy/types';
-import { BDXShares } from '../typechain/BDXShares';
-import { to_d18 } from '../utils/NumbersHelpers';
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { DeployFunction } from "hardhat-deploy/types";
+import { BDXShares } from "../typechain/BDXShares";
+import { to_d18 } from "../utils/NumbersHelpers";
 import { ethers } from "hardhat";
-import { getBdx, getDeployer, getTreasury } from '../utils/DeployedContractsHelpers';
+import { getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    console.log("starting deployment: mint bdx");
+  console.log("starting deployment: mint bdx");
 
-    const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
-    const bdx = await getBdx(hre);
+  const deployer = await getDeployer(hre);
+  const treasury = await getTreasury(hre);
+  const bdx = await getBdx(hre);
 
-    // mint all of the BDX up front to the treasury
-    await (await bdx.connect(deployer).mint(
-        ethers.constants.AddressZero,
-        treasury.address,
-        to_d18(21).mul(1e6)
-    )).wait();
+  // mint all of the BDX up front to the treasury
+  await (await bdx.connect(deployer).mint(ethers.constants.AddressZero, treasury.address, to_d18(21).mul(1e6))).wait();
 
-    console.log("finished deployment: mint bdx");
+  console.log("finished deployment: mint bdx");
 
-    // One time migration
-    return true;
+  // One time migration
+  return true;
 };
-func.id = __filename
-func.tags = ['BdxMint'];
-func.dependencies = ['BDX'];
+func.id = __filename;
+func.tags = ["BdxMint"];
+func.dependencies = ["BDX"];
 export default func;

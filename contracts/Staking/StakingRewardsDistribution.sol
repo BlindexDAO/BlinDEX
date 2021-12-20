@@ -15,7 +15,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     using SafeERC20Upgradeable for BDXShares;
 
     uint256 public TOTAL_BDX_SUPPLY;
-    
+
     uint256 public constant HUNDRED_PERCENT = 100;
     uint256 public constant MAX_REWARD_FEE = 1e12;
 
@@ -84,30 +84,33 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     function getRewardRatePerSecond(address _stakingRewardsAddress) external view returns (uint256) {
         uint256 yearSchedule = 0;
 
-        if(block.timestamp < EndOfYear_1){
+        if (block.timestamp < EndOfYear_1) {
             yearSchedule = BDX_MINTING_SCHEDULE_YEAR_1;
-        } else if(block.timestamp < EndOfYear_2){
+        } else if (block.timestamp < EndOfYear_2) {
             yearSchedule = BDX_MINTING_SCHEDULE_YEAR_2;
-        } else if(block.timestamp < EndOfYear_3){
+        } else if (block.timestamp < EndOfYear_3) {
             yearSchedule = BDX_MINTING_SCHEDULE_YEAR_3;
-        } else if(block.timestamp < EndOfYear_4){
+        } else if (block.timestamp < EndOfYear_4) {
             yearSchedule = BDX_MINTING_SCHEDULE_YEAR_4;
-        } else if(block.timestamp < EndOfYear_5){
+        } else if (block.timestamp < EndOfYear_5) {
             yearSchedule = BDX_MINTING_SCHEDULE_YEAR_5;
         } else {
             yearSchedule = 0;
         }
 
-        uint256 bdxPerSecond = yearSchedule.mul(stakingRewardsWeights[_stakingRewardsAddress]).div(365*24*60*60).div(stakingRewardsWeightsTotal);
+        uint256 bdxPerSecond = yearSchedule.mul(stakingRewardsWeights[_stakingRewardsAddress]).div(365 * 24 * 60 * 60).div(
+            stakingRewardsWeightsTotal
+        );
 
         return bdxPerSecond;
     }
 
-    function registerPools(address[] calldata _stakingRewardsAddresses, uint[] calldata _stakingRewardsWeights) external onlyOwner {
+    function registerPools(address[] calldata _stakingRewardsAddresses, uint256[] calldata _stakingRewardsWeights) external onlyOwner {
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
-        for(uint i = 0; i < _stakingRewardsAddresses.length; i++){
-            if(stakingRewardsWeights[_stakingRewardsAddresses[i]] == 0) { // to avoid duplicates
+        for (uint256 i = 0; i < _stakingRewardsAddresses.length; i++) {
+            if (stakingRewardsWeights[_stakingRewardsAddresses[i]] == 0) {
+                // to avoid duplicates
                 stakingRewardsAddresses.push(_stakingRewardsAddresses[i]);
             }
 
@@ -118,17 +121,19 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function unregisterPool(address pool, uint256 from, uint256 to) external onlyOwner {
-        to = to < stakingRewardsAddresses.length
-            ? to
-            : stakingRewardsAddresses.length;
+    function unregisterPool(
+        address pool,
+        uint256 from,
+        uint256 to
+    ) external onlyOwner {
+        to = to < stakingRewardsAddresses.length ? to : stakingRewardsAddresses.length;
 
         stakingRewardsWeightsTotal -= stakingRewardsWeights[pool];
         stakingRewardsWeights[pool] = 0;
 
-        for(uint256 i = from; i < to; i++){
-            if(stakingRewardsAddresses[i] == pool){
-                stakingRewardsAddresses[i] = stakingRewardsAddresses[stakingRewardsAddresses.length-1];
+        for (uint256 i = from; i < to; i++) {
+            if (stakingRewardsAddresses[i] == pool) {
+                stakingRewardsAddresses[i] = stakingRewardsAddresses[stakingRewardsAddresses.length - 1];
                 stakingRewardsAddresses.pop();
 
                 emit PoolRemoved(pool);
@@ -138,20 +143,18 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function collectAllRewards(uint256 from, uint256 to) external {
-        to = to < stakingRewardsAddresses.length
-            ? to
-            : stakingRewardsAddresses.length;
-        
+        to = to < stakingRewardsAddresses.length ? to : stakingRewardsAddresses.length;
+
         uint256 totalFee;
         uint256 totalRewardToRelease;
         uint256 totalRewardToVest;
-        for(uint i = from; i < to; i++){
+        for (uint256 i = from; i < to; i++) {
             StakingRewards stakingRewards = StakingRewards(stakingRewardsAddresses[i]);
 
             stakingRewards.updateUserReward(msg.sender);
             uint256 poolReward = stakingRewards.rewards(msg.sender);
 
-            if(poolReward > 0){
+            if (poolReward > 0) {
                 uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE);
                 uint256 userReward = poolReward.sub(rewardFee);
 
@@ -166,7 +169,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             }
         }
 
-        if(totalRewardToRelease > 0 || totalRewardToVest > 0){
+        if (totalRewardToRelease > 0 || totalRewardToVest > 0) {
             releaseReward(msg.sender, totalRewardToRelease, totalRewardToVest);
             rewardsToken.safeTransfer(treasury, totalFee);
         }
@@ -179,11 +182,15 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit VestingRewardRatioSet(_vestingRewardRatio);
     }
 
-    function calculateImmediateReward(uint256 reward) private view returns(uint256){
+    function calculateImmediateReward(uint256 reward) private view returns (uint256) {
         return reward.mul(HUNDRED_PERCENT.sub(vestingRewardRatio_percent)).div(HUNDRED_PERCENT);
     }
 
-    function releaseReward(address to, uint256 rewardToRelease, uint256 rewardToVest) private {
+    function releaseReward(
+        address to,
+        uint256 rewardToRelease,
+        uint256 rewardToVest
+    ) private {
         rewardsToken.approve(address(vesting), rewardToVest);
         vesting.schedule(to, rewardToVest);
 
@@ -208,7 +215,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
 
     // ---------- EVENTS ----------
     event PoolRemoved(address indexed pool);
-    event PoolRegistered(address indexed stakingRewardsAddress, uint indexed stakingRewardsWeight);
+    event PoolRegistered(address indexed stakingRewardsAddress, uint256 indexed stakingRewardsWeight);
     event VestingRewardRatioSet(uint256 vestingRewardRatio_percent);
     event TreasuryChanged(address newTreasury);
     event RewardFeeChanged(uint256 newRewardFee_d12);

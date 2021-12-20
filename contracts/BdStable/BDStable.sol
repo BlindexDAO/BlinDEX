@@ -17,7 +17,10 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
-    enum PriceChoice { BDSTABLE, BDX }
+    enum PriceChoice {
+        BDSTABLE,
+        BDX
+    }
 
     uint8 private constant MAX_NUMBER_OF_POOLS = 32;
     uint256 public unclaimedPoolsBDX;
@@ -30,14 +33,14 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     IOracleBasedCryptoFiatFeed private weth_fiat_pricer;
 
     uint256 public global_collateral_ratio_d12; // 12 decimals of precision
-    
+
     address public weth_address;
 
     // The addresses in this array are added by the oracle and these contracts are able to mint bdStable
     address payable[] public bdstable_pools_array;
 
     // Mapping is also used for faster verification
-    mapping(address => bool) public bdstable_pools; 
+    mapping(address => bool) public bdstable_pools;
 
     uint256 public bdStable_step_d12; // Amount to change the collateralization ratio by upon refreshCollateralRatio()
     uint256 public refresh_cooldown; // Seconds to wait before being able to run refreshCollateralRatio() again
@@ -56,33 +59,27 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     /* ========== MODIFIERS ========== */
 
     modifier onlyPools() {
-       require(bdstable_pools[msg.sender] == true, "Only bd pools can call this function");
+        require(bdstable_pools[msg.sender] == true, "Only bd pools can call this function");
         _;
-    } 
+    }
 
     modifier onlyOwnerOrPool() {
-        require(
-            msg.sender == owner()
-            || bdstable_pools[msg.sender] == true, 
-            "You are not the owner or a pool");
+        require(msg.sender == owner() || bdstable_pools[msg.sender] == true, "You are not the owner or a pool");
         _;
     }
 
     /* ========== CONSTRUCTOR ========== */
 
-    function initialize (
+    function initialize(
         string memory _name,
         string memory _symbol,
         address _bdx_address,
         uint256 _initalBdStableToOwner_d18
-    ) 
-        external 
-        initializer
-    {
+    ) external initializer {
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_symbol).length > 0, "Symbol cannot be empty");
         require(_bdx_address != address(0), "BDX address cannot be 0");
-        
+
         __ERC20_init(_name, _symbol);
         __Ownable_init();
 
@@ -94,7 +91,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         price_band_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
 
-        if(_initalBdStableToOwner_d18 > 0) {
+        if (_initalBdStableToOwner_d18 > 0) {
             _mint(owner(), _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps
         }
     }
@@ -106,12 +103,12 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     // collateral value in fiat corresponding to the stable
-    // Iterate through all bd pools and calculate all value of collateral in all pools globally 
+    // Iterate through all bd pools and calculate all value of collateral in all pools globally
     function globalCollateralValue() public view returns (uint256) {
-        uint256 total_collateral_value_d18 = 0; 
+        uint256 total_collateral_value_d18 = 0;
 
         // bdstable_pools_array.length is limited by addPool function
-        for (uint i = 0; i < bdstable_pools_array.length; i++){ 
+        for (uint256 i = 0; i < bdstable_pools_array.length; i++) {
             total_collateral_value_d18 = total_collateral_value_d18.add(BdStablePool(bdstable_pools_array[i]).collatFiatBalance());
         }
         return total_collateral_value_d18;
@@ -124,27 +121,25 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
         if (choice == PriceChoice.BDSTABLE) {
             price_vs_weth = uint256(bdstableWethOracle.consult(weth_address, BdPoolLibrary.PRICE_PRECISION)); // How much BDSTABLE if you put in BdPoolLibrary.PRICE_PRECISION WETH
-        }
-        else if (choice == PriceChoice.BDX) {
+        } else if (choice == PriceChoice.BDX) {
             price_vs_weth = uint256(bdxWethOracle.consult(weth_address, BdPoolLibrary.PRICE_PRECISION)); // How much BDX if you put in BdPoolLibrary.PRICE_PRECISION WETH
-        }
-        else revert("INVALID PRICE CHOICE. Needs to be either 0 (BDSTABLE) or 1 (BDX)");
+        } else revert("INVALID PRICE CHOICE. Needs to be either 0 (BDSTABLE) or 1 (BDX)");
 
         return weth_fiat_price_d12.mul(BdPoolLibrary.PRICE_PRECISION).div(price_vs_weth);
     }
-    
+
     function updateOraclesIfNeeded() external {
-        if(bdxWethOracle.shouldUpdateOracle()){
+        if (bdxWethOracle.shouldUpdateOracle()) {
             bdxWethOracle.updateOracle();
         }
 
-        if(bdstableWethOracle.shouldUpdateOracle()){
+        if (bdstableWethOracle.shouldUpdateOracle()) {
             bdstableWethOracle.updateOracle();
-        } 
+        }
     }
 
     function shouldUpdateOracles() external view returns (bool) {
-        return bdxWethOracle.shouldUpdateOracle() || bdstableWethOracle.shouldUpdateOracle(); 
+        return bdxWethOracle.shouldUpdateOracle() || bdstableWethOracle.shouldUpdateOracle();
     }
 
     // Returns BDSTABLE / <fiat>
@@ -167,7 +162,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     function weth_fiat_price() public view returns (uint256) {
         return uint256(weth_fiat_pricer.getPrice_1e12());
     }
-    
+
     function canLegallyRedeem(address who) external view returns (bool) {
         return block.number.sub(lastMintByUserBlock[who]) >= minimumMintRedeemDelayInBlocks;
     }
@@ -178,9 +173,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         uint256 global_collat_value = globalCollateralValue();
 
         // Calculates collateral needed to back each 1 BdStable with $1 of collateral at current collat ratio
-        uint256 required_collat_fiat_value_d18 = total_supply
-            .mul(global_collateral_ratio_d12)
-            .div(BdPoolLibrary.COLLATERAL_RATIO_MAX); 
+        uint256 required_collat_fiat_value_d18 = total_supply.mul(global_collateral_ratio_d12).div(BdPoolLibrary.COLLATERAL_RATIO_MAX);
 
         if (global_collat_value > required_collat_fiat_value_d18) {
             return global_collat_value.sub(required_collat_fiat_value_d18);
@@ -194,36 +187,37 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     function when_should_refresh_collateral_ratio_in_seconds() public view returns (uint256) {
         uint256 secondsSinceLastRefresh = block.timestamp - refreshCollateralRatio_last_call_time;
 
-        return secondsSinceLastRefresh > refresh_cooldown 
-            ? 0 
-            : (refresh_cooldown - secondsSinceLastRefresh);
+        return secondsSinceLastRefresh > refresh_cooldown ? 0 : (refresh_cooldown - secondsSinceLastRefresh);
     }
 
     function refreshCollateralRatio() external {
-        if(collateral_ratio_paused == true){
+        if (collateral_ratio_paused == true) {
             return;
         }
 
-        if(when_should_refresh_collateral_ratio_in_seconds() > 0){
+        if (when_should_refresh_collateral_ratio_in_seconds() > 0) {
             return;
         }
 
-        if(bdstableWethOracle.shouldUpdateOracle()){
+        if (bdstableWethOracle.shouldUpdateOracle()) {
             bdstableWethOracle.updateOracle();
         }
 
         uint256 bdstable_price_cur = bdstable_price_d12();
 
-        // Step increments are 0.25% (upon genesis, changable) 
+        // Step increments are 0.25% (upon genesis, changable)
 
-        if (bdstable_price_cur > price_target_d12.add(price_band_d12)) { //decrease collateral ratio
-            if(global_collateral_ratio_d12 <= bdStable_step_d12){ //if within a step of 0, go to 0
+        if (bdstable_price_cur > price_target_d12.add(price_band_d12)) {
+            //decrease collateral ratio
+            if (global_collateral_ratio_d12 <= bdStable_step_d12) {
+                //if within a step of 0, go to 0
                 global_collateral_ratio_d12 = 0;
             } else {
                 global_collateral_ratio_d12 = global_collateral_ratio_d12.sub(bdStable_step_d12);
             }
-        } else if (bdstable_price_cur < price_target_d12.sub(price_band_d12)) { //increase collateral ratio
-            if(global_collateral_ratio_d12.add(bdStable_step_d12) >= BdPoolLibrary.COLLATERAL_RATIO_MAX){
+        } else if (bdstable_price_cur < price_target_d12.sub(price_band_d12)) {
+            //increase collateral ratio
+            if (global_collateral_ratio_d12.add(bdStable_step_d12) >= BdPoolLibrary.COLLATERAL_RATIO_MAX) {
                 global_collateral_ratio_d12 = BdPoolLibrary.COLLATERAL_RATIO_MAX; // cap collateral ratio at 1.000000
             } else {
                 global_collateral_ratio_d12 = global_collateral_ratio_d12.add(bdStable_step_d12);
@@ -234,38 +228,28 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
         emit CollateralRatioRefreshed(global_collateral_ratio_d12);
     }
-    
+
     function get_effective_bdx_coverage_ratio() external view returns (uint256) {
         uint256 effective_collateral_ratio_d12 = effective_global_collateral_ratio_d12();
 
-        uint256 cr = global_collateral_ratio_d12 > effective_collateral_ratio_d12 
-            ? effective_collateral_ratio_d12 
-            : global_collateral_ratio_d12;
+        uint256 cr = global_collateral_ratio_d12 > effective_collateral_ratio_d12 ? effective_collateral_ratio_d12 : global_collateral_ratio_d12;
 
-        uint256 expectedBdxValue_d18 = 
-            BdPoolLibrary.COLLATERAL_RATIO_MAX.sub(cr)
-            .mul(totalSupply())
-            .div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+        uint256 expectedBdxValue_d18 = BdPoolLibrary.COLLATERAL_RATIO_MAX.sub(cr).mul(totalSupply()).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
-        if(expectedBdxValue_d18 == 0){
+        if (expectedBdxValue_d18 == 0) {
             return BdPoolLibrary.COLLATERAL_RATIO_MAX; // in we need no BDX, the coverage is 100%
-        } 
+        }
 
         uint256 bdxPrice_d12 = oracle_price(PriceChoice.BDX);
 
-        if(bdxPrice_d12 == 0){
+        if (bdxPrice_d12 == 0) {
             return 0; // in we need BDX but BDX price is 0, the coverage is 0%
-        } 
+        }
 
-        uint256 expectedBdx_d18 = expectedBdxValue_d18
-            .mul(BdPoolLibrary.PRICE_PRECISION)
-            .div(bdxPrice_d12);
+        uint256 expectedBdx_d18 = expectedBdxValue_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(bdxPrice_d12);
 
         uint256 bdxSupply_d18 = BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX);
-        uint256 effectiveBdxCR_d12 = BdPoolLibrary
-            .PRICE_PRECISION
-            .mul(bdxSupply_d18)
-            .div(expectedBdx_d18);
+        uint256 effectiveBdxCR_d12 = BdPoolLibrary.PRICE_PRECISION.mul(bdxSupply_d18).div(expectedBdx_d18);
 
         return effectiveBdxCR_d12 > BdPoolLibrary.COLLATERAL_RATIO_MAX ? BdPoolLibrary.COLLATERAL_RATIO_MAX : effectiveBdxCR_d12;
     }
@@ -279,36 +263,36 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         emit BdStableBurned(b_address, msg.sender, b_amount);
     }
 
-    // This function is what other bd pools will call to mint new bd stable 
+    // This function is what other bd pools will call to mint new bd stable
     function pool_mint(address m_address, uint256 m_amount) external onlyPools {
         super._mint(m_address, m_amount);
-        
+
         lastMintByUserBlock[m_address] = block.number;
 
         emit BdStableMinted(msg.sender, m_address, m_amount);
     }
 
-    // Adds collateral addresses supported, such as tether and busd, must be ERC20 
+    // Adds collateral addresses supported, such as tether and busd, must be ERC20
     function addPool(address pool_address) external onlyOwner {
         require(bdstable_pools[pool_address] == false, "pool already exists");
         require(bdstable_pools_array.length < MAX_NUMBER_OF_POOLS, "pools limit reached");
 
-        bdstable_pools[pool_address] = true; 
+        bdstable_pools[pool_address] = true;
         bdstable_pools_array.push(payable(pool_address));
 
         emit PoolAdded(pool_address);
     }
 
-    // Remove a pool 
+    // Remove a pool
     function removePool(address pool_address) external onlyOwner {
         require(bdstable_pools[pool_address] == true, "address doesn't exist already");
-        
+
         delete bdstable_pools[pool_address];
 
         // bdstable_pools_array.length is limited by addPool function
-        for (uint i = 0; i < bdstable_pools_array.length; i++){ 
+        for (uint256 i = 0; i < bdstable_pools_array.length; i++) {
             if (bdstable_pools_array[i] == pool_address) {
-                bdstable_pools_array[i] = bdstable_pools_array[bdstable_pools_array.length -1];
+                bdstable_pools_array[i] = bdstable_pools_array[bdstable_pools_array.length - 1];
                 bdstable_pools_array.pop();
                 break;
             }
@@ -321,7 +305,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         require(_bdstable_oracle_addr != address(0), "Oracle cannot be set to the zero address");
         require(_weth_address != address(0), "WETH cannot be set to the zero address");
 
-        bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr); 
+        bdstableWethOracle = ICryptoPairOracle(_bdstable_oracle_addr);
         weth_address = _weth_address;
 
         emit BDStableWETHOracleSet(_bdstable_oracle_addr, _weth_address);
@@ -336,12 +320,12 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
         emit BDXWETHOracleSet(_bdx_oracle_addr, _weth_address);
     }
-    
+
     function setETH_fiat_Oracle(address _eth_fiat_consumer_address) external onlyOwner {
         require(_eth_fiat_consumer_address != address(0), "Oracle cannot be set to the zero address");
-        
+
         weth_fiat_pricer = IOracleBasedCryptoFiatFeed(_eth_fiat_consumer_address);
-        
+
         emit EthFiatOracleSet(_eth_fiat_consumer_address);
     }
 
@@ -378,7 +362,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         emit CollateralRatioLocked(wantedCR_d12);
     }
 
-    function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner{
+    function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner {
         minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
         emit MinimumMintRedeemDelayInBlocksSet(_minimumMintRedeemDelayInBlocks);
     }
@@ -393,10 +377,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     function transfer_bdx(address to, uint256 BDX_amount) external onlyOwnerOrPool {
-        require(
-            BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX) >= BDX_amount,
-            "Not enough BDX"
-        );
+        require(BDX.balanceOf(address(this)).sub(unclaimedPoolsBDX) >= BDX_amount, "Not enough BDX");
 
         BDX.safeTransfer(to, BDX_amount);
     }
@@ -413,7 +394,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     /* ========== EVENTS ========== */
-    
+
     event CollateralRatioRefreshed(uint256 global_collateral_ratio);
     event BdStableBurned(address indexed from, address indexed to, uint256 amount);
     event BdStableMinted(address indexed from, address indexed to, uint256 amount);
