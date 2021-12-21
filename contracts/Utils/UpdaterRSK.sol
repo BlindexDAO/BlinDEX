@@ -72,7 +72,7 @@ contract UpdaterRSK is Ownable {
     }
 
     modifier onlyUpdater() {
-        require(msg.sender == updater, "You're not updater");
+        require(msg.sender == updater, "You're not the updater");
         _;
     }
 
