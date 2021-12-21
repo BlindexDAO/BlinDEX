@@ -64,7 +64,7 @@ export function load() {
         [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
         };
 
-        console.log("Please make sure to run harhat with the appropiate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n");
+        console.log("Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n");
         console.log(cleanStringify(blockchainConfig));
     });
 
