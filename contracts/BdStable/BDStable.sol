@@ -23,6 +23,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     uint256 public unclaimedPoolsBDX;
 
     IERC20 private BDX;
+    address public treasury;
 
     ICryptoPairOracle private bdstableWethOracle;
     ICryptoPairOracle private bdxWethOracle;
@@ -73,8 +74,9 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     function initialize (
         string memory _name,
         string memory _symbol,
+        address _treasury,
         address _bdx_address,
-        uint256 _initalBdStableToOwner_d18
+        uint256 _initalBdStableToTreasury_d18
     ) 
         external 
         initializer
@@ -86,6 +88,8 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         __ERC20_init(_name, _symbol);
         __Ownable_init();
 
+        treasury = _treasury;
+
         BDX = IERC20(_bdx_address);
 
         bdStable_step_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
@@ -94,8 +98,8 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         price_band_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
 
-        if(_initalBdStableToOwner_d18 > 0) {
-            _mint(owner(), _initalBdStableToOwner_d18); // so owner can provide liqidity to swaps and we could get prices from the swaps
+        if(_initalBdStableToTreasury_d18 > 0) {
+            _mint(_treasury, _initalBdStableToTreasury_d18); // so treasury can provide liqidity to swaps and we could get prices from the swaps
         }
     }
 

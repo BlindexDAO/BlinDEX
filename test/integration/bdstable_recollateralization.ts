@@ -44,7 +44,8 @@ describe("Recollateralization", () => {
         const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
         const bdEuCollatrValue_d18 = await bdEu.globalCollateralValue();
-        const maxPossibleRecollateralInEur_d18 = (constants.initalBdStableToOwner_d18[hre.network.name].sub(bdEuCollatrValue_d18))
+
+        const maxPossibleRecollateralInEur_d18 = (constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.sub(bdEuCollatrValue_d18))
             .mul(1e12).div(wethInEurPrice_d12);
 
         // recollateralization

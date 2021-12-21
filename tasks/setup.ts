@@ -1,9 +1,7 @@
 import { task } from "hardhat/config";
 import { getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
-import { d18_ToNumber, to_d18, to_d8 } from "../utils/NumbersHelpers";
-import { setUpFunctionalSystem, setUpFunctionalSystemSmall } from "../utils/SystemSetup";
-import * as constants from "../utils/Constants";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { to_d18, to_d8 } from "../utils/NumbersHelpers";
+import { setupProductionReadySystem, setUpFunctionalSystemSmall } from "../utils/SystemSetup";
 
 export function load() {
   task("initialize")
@@ -36,7 +34,7 @@ export function load() {
       await setUpFunctionalSystemSmall(hre);
     });
 
-  task("initialize:min:local")
+  task("initialize:local:min")
     .setAction(async (args, hre) => {
       const deployer = await getDeployer(hre);
 
@@ -48,8 +46,4 @@ export function load() {
 
       await setUpFunctionalSystemSmall(hre);
     });
-
-  async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment){
-    await setUpFunctionalSystem(hre, 1, d18_ToNumber(constants.initalBdStableToOwner_d18[hre.network.name]), false);
-  }
 }

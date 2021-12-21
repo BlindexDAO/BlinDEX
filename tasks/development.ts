@@ -8,9 +8,7 @@ import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import { SovrynSwapPriceFeed__factory } from "../typechain/factories/SovrynSwapPriceFeed__factory";
-import { ISovrynLiquidityPoolV1Converter__factory } from "../typechain/factories/ISovrynLiquidityPoolV1Converter__factory";
-import { RSK_XUSD_ADDRESS, wETH_address, RSK_SOVRYN_NETWORK } from "../utils/Constants";
+import { RSK_SOVRYN_NETWORK } from "../utils/Constants";
 
 const fs = require('fs');
 

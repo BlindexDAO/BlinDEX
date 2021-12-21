@@ -26,6 +26,7 @@ export function load() {
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
 
       await (await oracleEthUsd.updateOracleWithVerification(to_d12(46814.40))).wait(); //todo ag from parameters
+
       console.log("updated ETH / USD (RSK BTC / USD)");
 
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
@@ -266,7 +267,7 @@ export function load() {
     });
 
   task("show:full-diagnostics")
-    .addOptionalPositionalParam("showPrices", "if ture, shows all prices", "false")
+    .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
     .setAction(async ({showPrices}, hre) => {
       await show_ethEur(hre);
       await show_ethUsd(hre);
@@ -335,7 +336,6 @@ export function load() {
   }
   
   async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean){
-
     const pools = await getPools(hre);
 
     const factory = await getUniswapFactory(hre);

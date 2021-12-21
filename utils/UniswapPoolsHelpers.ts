@@ -1,4 +1,3 @@
-import { ethers } from "hardhat";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IERC20 } from "../typechain/IERC20";
@@ -70,20 +69,9 @@ export async function getPools(hre: HardhatRuntimeEnvironment) : Promise<{name: 
 }
 
 export function tokensDecimals(hre: HardhatRuntimeEnvironment, tokenName: string) : number {
-    if(tokenName == "BDX"){
-        return 18;
-    } 
-    else if (tokenName == "BDEU"){
-        return 18;
-    }
-    else if (tokenName == "WETH"){
-        if(hre.network.name == "rsk"){
-            return 18; // WBTC on RSK
-        } else {
-            return 18;
-        }
-    }
-    else if (tokenName == "WBTC"){
+    if (["BDX", "BDEU", "WETH"].includes(tokenName)) {
+        return 18
+    } else if (tokenName == "WBTC"){
         if(hre.network.name == "rsk"){
             return 18; // ETHs on RSK
         } else {
