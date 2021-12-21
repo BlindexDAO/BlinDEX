@@ -80,4 +80,8 @@ export const RSK_RUSDT_ADDRESS = "0xef213441a85df4d7acbdae0cf78004e1e486bb96";
 export const RSK_WRBTC_ADDRESS = "0x542fda317318ebf1d3deaf76e0b632741a7e677d";
 export const RSK_ETHS_ADDRESS = "0x1d931bf8656d795e50ef6d639562c5bd8ac2b78f";
 export const RSK_XUSD_ADDRESS = "0xb5999795be0ebb5bab23144aa5fd6a02d080299f";
+
 export const RSK_SOVRYN_NETWORK = "0x98ace08d2b759a265ae326f010496bcd63c15afc";
+
+export const rskLockingContractAddress = '' // TODO: Fill locking contract address after deployment
+export const bdxLockAmount = to_d18(3150000)
