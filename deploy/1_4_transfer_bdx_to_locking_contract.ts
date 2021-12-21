@@ -9,9 +9,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const treasury = await getTreasury(hre);
     const bdx = await getBdx(hre);
 
-    // todo uncomment when constants.rskLockingContractAddress is known 
-    // const tx = await bdx.connect(treasury).transfer(constants.rskLockingContractAddress, constants.bdxLockAmount)
-    // await tx.wait();
+    // TODO: Un comment when we'll add the locking contract address to constants.rskLockingContractAddress
+    //const tx = await bdx.connect(treasury).transfer(constants.rskLockingContractAddress, constants.bdxLockAmount)
+    //await tx.wait();
     
     console.log("finished: transfer BDX to locking contract");
     return true;
