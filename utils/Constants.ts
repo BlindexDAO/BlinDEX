@@ -1,8 +1,5 @@
 import { to_d18 } from "./NumbersHelpers";
 
-export const INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY = 35e3;
-export const INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE = 1e5;
-
 export const wETH_address = <any>{
     localhost: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     mainnetFork: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
@@ -70,21 +67,8 @@ export const NATIVE_TOKEN_NAME = <any>{
 
 export const numberOfLPs = 11;
 
-export const initalBdStableToOwner_d18 = <any>{
-    localhost: to_d18(INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY),
-    mainnetFork: to_d18(INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY),
-    rinkeby: to_d18(INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY),
-    kovan: to_d18(INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY),
-    rsk: to_d18(INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY),
-};
-
-export const initalBdStable_bdx_d18 = <any>{
-    localhost: to_d18(INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE),
-    mainnetFork: to_d18(INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE),
-    rinkeby: to_d18(INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE),
-    kovan: to_d18(INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE),
-    rsk: to_d18(INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE),
-};
+export const INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY = to_d18(30e3);
+export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 // original uniswap addresss on ETH
 export const uniswapRouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
