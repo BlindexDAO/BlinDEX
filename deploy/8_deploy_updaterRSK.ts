@@ -4,28 +4,28 @@ import { getBot, getDeployer, getWethPair, getWethPairOracle } from '../utils/De
 import { DeployResult } from 'hardhat-deploy/dist/types';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    console.log("starting deployment: Updater");
+    console.log("starting deployment: UpdaterRSK");
 
     const networkName = hre.network.name;
     const deployer = await getDeployer(hre);
     const bot = await getBot(hre);
 
     let updater: DeployResult;
-    updater = await hre.deployments.deploy('Updater', {
+    updater = await hre.deployments.deploy('UpdaterRSK', {
         from: deployer.address,
-        contract: "Updater",
+        contract: "UpdaterRSK",
         args: [
             bot.address
         ]
     });
-    console.log("deployed Updater to: " + updater.address);
-    console.log("finished deployment: Updater");
+    console.log("deployed UpdaterRSK to: " + updater.address);
+    console.log("finished deployment: UpdaterRSK");
 
     // One time migration
     return true;
 };
 
 func.id = __filename
-func.tags = ['Updater'];
-func.dependencies = ['SovrynSwapPriceFeed', 'FiatToFiatPseudoOracleFeed', 'UniswapPairOracle', 'BDStable'];
+func.tags = ['UpdaterRSK'];
+func.dependencies = ['PriceFeeds','LiquidityPools','BDEU'];
 export default func;

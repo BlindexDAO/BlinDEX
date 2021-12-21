@@ -10,7 +10,7 @@ import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
 import { IPriceFeed } from "../typechain/IPriceFeed";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { Updater } from "../typechain/Updater";
+import { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 
 export function load() {
@@ -49,7 +49,7 @@ export function load() {
       console.log("starting the updater");
 
       const bot = await getBot(hre);
-      const updater = await hre.ethers.getContract('Updater', bot) as Updater;
+      const updater = await hre.ethers.getContract('Updater', bot) as UpdaterRSK;
 
       let uniOracles = [];
       const pools = await getPools(hre);
@@ -78,7 +78,7 @@ export function load() {
       console.log("starting the updater");
 
       const bot = await getBot(hre);
-      const updater = await hre.ethers.getContract('Updater', bot) as Updater;
+      const updater = await hre.ethers.getContract('Updater', bot) as UpdaterRSK;
 
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;

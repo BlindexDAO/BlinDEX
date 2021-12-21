@@ -7,7 +7,7 @@ import "../Oracle/UniswapPairOracle.sol";
 import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Updater is Ownable {
+contract UpdaterRSK is Ownable {
     address public updater;
 
     constructor(address _updater) public {
