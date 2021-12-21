@@ -26,13 +26,15 @@ jobs:
         run: npm run solhint --y
       - name: Compile
         run: npm run compile
-      - name: Run Hardhat Mainfork Netwrok
+      - name: Tests
         env:
           MAINNET_URL: ${{ secrets.MAINNET_URL }}
           MNEMONIC_PHRASE: ${{ secrets.MNEMONIC_PHRASE }}
           USER_DEPLOYER_PRIVATE_KEY: ${{ secrets.USER_DEPLOYER_PRIVATE_KEY }}
           USER_TREASURY_PRIVATE_KEY: ${{ secrets.USER_TREASURY_PRIVATE_KEY }}
           USER_BOT_PRIVATE_KEY: ${{ secrets.USER_BOT_PRIVATE_KEY }}
-        run: nohup npm run node
-      - name: Tests
-        run: npm run deploy:fork:reset && npm run test:integrations
+        run: |
+          npm run node &
+          sleep 7
+          npm run deploy:fork:reset
+          npm run test:integrations
