@@ -10,6 +10,12 @@ import { BdStablePool } from '../typechain/BdStablePool';
 import { DeployResult } from 'hardhat-deploy/dist/types';
 import { to_d12 } from '../utils/NumbersHelpers';
 
+export const ContractsNames : {priceFeedEurUsdName: string, priceFeedETHUsdName: string, BtcToEthOracle: string} = {
+  priceFeedEurUsdName: "PriceFeed_EUR_USD",
+  priceFeedETHUsdName: "PriceFeed_ETH_USD",
+  BtcToEthOracle: "BtcToEthOracle"
+};
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: price feeds");
 
@@ -23,14 +29,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   let btc_eth_oracle: DeployResult;
 
   if(networkName == "rsk") {
-    priceFeed_EUR_USD_Deployment = await hre.deployments.deploy('PriceFeed_EUR_USD', {
+    priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedEurUsdName, {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
       args: [(await hre.getNamedAccounts()).BOT, to_d12(1.13)]
     });
-    console.log("deployed PriceFeed_EUR_USD to: " + priceFeed_EUR_USD_Deployment.address);
+    console.log(`deployed ${ContractsNames.priceFeedEurUsdName} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
-    priceFeed_ETH_USD_Deployment = await hre.deployments.deploy('PriceFeed_ETH_USD', { 
+    priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedETHUsdName, { 
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
@@ -43,9 +49,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         60 * 75  // 75 min
       ]
     });
-    console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);
+    console.log(`deployed ${ContractsNames.priceFeedETHUsdName} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
-    btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
+    btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
@@ -58,31 +64,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         60 * 75  // 75 min
       ] // price is reverted on RSK, it's actually ETH/USD
     });
-    console.log("deployed BtcToEthOracle to: " + btc_eth_oracle.address);
+    console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
 
   } else {
-    priceFeed_EUR_USD_Deployment = await hre.deployments.deploy('PriceFeed_EUR_USD', {
+    priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedEurUsdName, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
       args: [constants.EUR_USD_FEED_ADDRESS[networkName]]
     });
-    console.log("deployed PriceFeed_EUR_USD to: " + priceFeed_EUR_USD_Deployment.address);
+    console.log(`deployed ${ContractsNames.priceFeedEurUsdName} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
-    priceFeed_ETH_USD_Deployment = await hre.deployments.deploy('PriceFeed_ETH_USD', {
+    priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedETHUsdName, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
       args: [constants.ETH_USD_FEED_ADDRESS[networkName]]
     });
-    console.log("deployed PriceFeed_ETH_USD to: " + priceFeed_ETH_USD_Deployment.address);
+    console.log(`deployed ${ContractsNames.priceFeedETHUsdName} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
     // if deployed on ETH, probably we should replace with a better implementaion (price from uniswap3?)
     // chainlink has big lag
-    btc_eth_oracle = await hre.deployments.deploy('BtcToEthOracle', {
+    btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
       args: [constants.BTC_ETH_FEED_ADDRESS[networkName], constants.wETH_address[networkName]]
     });
-    console.log("deployed BtcToEthOracle to: " + btc_eth_oracle.address);
+    console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
   }
 
   await hre.deployments.deploy('OracleBasedCryptoFiatFeed_ETH_EUR', {

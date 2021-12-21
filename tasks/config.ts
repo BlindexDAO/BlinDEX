@@ -9,36 +9,64 @@ import { BdStablePool } from "../typechain/BdStablePool";
 import { StakingRewards } from "../typechain/StakingRewards";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+
+function cleanStringify(objectToClean: object): string {
+  return JSON.stringify(objectToClean).replace(/"([^"]+)":/g, "$1:");
+}
 
 export function load() {
-
-    task("show:be-config")
-        .setAction(async (args, hre) => {
-            const deployer = await getDeployer(hre);
-            const swaps = await getSwapsConfig(hre);
-            const stakingRewards = await getStakingsConfig(hre, swaps);
-            const stringifiedStakingRewards = "[" + stakingRewards.map(reward => `{ "pairAddress": "${reward.stakingTokenAddress.toLowerCase()}", "stakingRewardAddress": "${reward.address.toLowerCase()}" }`).join(',') + "]";
-            const { pairs, pairOracles, pairSymbols }: { pairs: { address: string, token0: string, token1: string }[], pairOracles: { pairAddress: string, oracleAddress: string }[], pairSymbols: string[] } = await getPairsOraclesAndSymbols(hre, deployer);
-            const stringifiedSwaps = "[" + pairs.map(pair => `{ "pairAddress": "${pair.address.toLowerCase()}", "token0Address": "${pair.token0.toLowerCase()}", "token1Address": "${pair.token1.toLowerCase()}" }`).join(',') + "]";
-            const stringifiedPairOracles = "[" + pairOracles.map(pairOracle => `{ "pairAddress": "${pairOracle.pairAddress.toLowerCase()}", "oracleAddress": "${pairOracle.oracleAddress.toLowerCase()}"}`).join(',') + "]";
-            const stringifiedPairSymbols = pairSymbols.join(" ");
-            const blockchainConfig = `
-private static MF_BDEU_ADDRESS: string = '${(await getBdEu(hre)).address.toLowerCase()}';
-private static MF_UNISWAP_FACTORY_ADDRESS: string = '${(await getUniswapFactory(hre)).address.toLowerCase()}';
-private static MF_BDX_ADDRESS: string = '${(await getBdx(hre)).address.toLowerCase()}';
-private static MF_STAKING_REWARDS_DISTRIBUTION_ADDRESS: string = '${(await getStakingRewardsDistribution(hre)).address.toLowerCase()}';
-private static MF_AVAILABLE_PAIR_SYMBOLS: string = '${stringifiedPairSymbols}';
-private static MF_AVAILABLE_PAIRS: string = '${stringifiedSwaps}';
-private static MF_STAKING_REWARDS: string = '${stringifiedStakingRewards}';
-private static MF_PAIR_ORACLES: string = '${stringifiedPairOracles}';
-private static MF_PRICE_FEED_EUR_USD_ADDRESS: string = '${(await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address.toLowerCase()}';
-private static MF_PRICE_FEED_BTC_ETH_ADDRESS: string = '${(await hre.ethers.getContract('BtcToEthOracle', deployer)).address.toLowerCase()}';
-private static MF_PRICE_FEED_ETH_USD_ADDRESS: string = '${(await hre.ethers.getContract('PriceFeed_ETH_USD', deployer)).address.toLowerCase()}';
-            `;
-
-            console.log("Please change MF_ to RSK_ before pasting if need.")
-            console.log(blockchainConfig);
+    task("show:be-config").setAction(async (args, hre) => {
+        const deployer = await getDeployer(hre);
+        const swaps = await getSwapsConfig(hre);
+        const stakingRewards = (await getStakingsConfig(hre, swaps)).map((reward) => {
+        return { pairAddress: reward.stakingTokenAddress.toLowerCase(), stakingRewardAddress: reward.address.toLowerCase() };
         });
+
+        const {
+        pairs,
+        pairOracles,
+        pairSymbols,
+        }: {
+        pairs: { address: string; token0: string; token1: string }[];
+        pairOracles: { pairAddress: string; oracleAddress: string }[];
+        pairSymbols: string[];
+        } = await getPairsOraclesAndSymbols(hre, deployer);
+
+        const swapPairs = [
+        pairs.map((pair) => {
+            return {
+            pairAddress: pair.address.toLowerCase(),
+            token0Address: pair.token0.toLowerCase(),
+            token1Address: pair.token1.toLowerCase(),
+            };
+        }),
+        ];
+
+        const mappedPairOracles = pairOracles.map((pairOracle) => {
+        return { pairAddress: pairOracle.pairAddress.toLowerCase(), oracleAddress: pairOracle.oracleAddress.toLowerCase() };
+        });
+        const networkName = hre.network.name.toUpperCase();
+
+        const blockchainConfig = {
+        [`${networkName}_BDEU_ADDRESS`]: (await getBdEu(hre)).address.toLowerCase(),
+        [`${networkName}_UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
+        [`${networkName}_BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
+        [`${networkName}_STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
+        [`${networkName}_AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
+        [`${networkName}_AVAILABLE_PAIRS`]: swapPairs,
+        [`${networkName}_STAKING_REWARDS`]: stakingRewards,
+        [`${networkName}_PAIR_ORACLES`]: mappedPairOracles,
+        [`${networkName}_PRICE_FEED_EUR_USD_ADDRESS`]: (
+            await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)
+        ).address.toLowerCase(),
+        [`${networkName}_PRICE_FEED_BTC_ETH_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
+        [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
+        };
+
+        console.log("Please make sure to run harhat with the appropiate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n");
+        console.log(cleanStringify(blockchainConfig));
+    });
 
     task("show:fe-config")
         .setAction(async (args, hre) => {
@@ -66,9 +94,7 @@ private static MF_PRICE_FEED_ETH_USD_ADDRESS: string = '${(await hre.ethers.getC
                 BTC_TO_ETH_ORACLE: (await hre.ethers.getContract('BtcToEthOracle', deployer)).address,
             }
 
-            const unquotedBlockchainConfig = JSON.stringify(blockchainConfig).replace(/"([^"]+)":/g, '$1:');
-
-            console.log(unquotedBlockchainConfig);
+            console.log(cleanStringify(blockchainConfig));
         });
 };
 
