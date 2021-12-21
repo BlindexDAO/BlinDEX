@@ -2,8 +2,7 @@
   "name": "hardhat-project",
   "scripts": {
     "prepare": "husky install",
-    "test:integrations": "hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
-    "test:contracts": "hardhat --network mainnetFork test:dir ./test/contracts/",
+    "test": "hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
     "node": "hardhat node --no-deploy",
     "deploy:fork": "hardhat --network mainnetFork deploy",
     "deploy:fork:reset": "npm run deploy:fork -- --reset",
