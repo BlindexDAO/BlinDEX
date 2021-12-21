@@ -24,8 +24,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           args: [
             'BlindexEuro',
             'BDEU',
+            treasury.address,
             bdx.address,
-            constants.INITIAL_BDSTABLE_TO_OWNER
+            constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY
           ]
         }
       }
@@ -97,7 +98,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeu_wbtc_BdStablePool = await hre.ethers.getContract('BDEU_WBTC_POOL') as BdStablePool;
   console.log("BDEU WBTC Pool deployed to:", bdeu_wbtc_BdStablePool.address);
 
-  await (await bdx.connect(treasury).transfer(bdEu.address, constants.INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE)).wait();
+  await (await bdx.connect(treasury).transfer(bdEu.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE)).wait();
   console.log("BDEU provided with BDX");
 
   await (await bdEu.addPool(bdeu_weth_BdStablePool.address)).wait()

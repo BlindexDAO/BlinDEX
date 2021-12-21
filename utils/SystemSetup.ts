@@ -17,7 +17,7 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
 }
 
 export async function setUpFunctionalSystemSmall(hre: HardhatRuntimeEnvironment) {
-  const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_TO_OWNER); // it makes total liquidity value ~$1-2, useful for test deployment on real network
+  const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY); // it makes total liquidity value ~$1-2, useful for test deployment on real network
   await setUpFunctionalSystem(hre, 1e-6, scale, false);
 }
 
@@ -38,10 +38,7 @@ export async function setUpFunctionalSystem(
   const bdEuWethPool = await getBdEuWethPool(hre);
   const bdEuWbtcPool = await getBdEuWbtcPool(hre);
 
-  // transfer all of the initially bdeu minted for the deployer to the treasury
-  const bdEuBalance = await bdEu.balanceOf(deployer.address);
-
-  await (await bdEu.transfer(treasury.address, bdEuBalance)).wait();
+  const tresuryBdEuBalance = await bdEu.balanceOf(treasury.address);
 
   if (forIntegrationTests) {
     // mint initial WETH
@@ -58,7 +55,7 @@ export async function setUpFunctionalSystem(
     await bdx.connect(treasury).transfer(deployer.address, to_d18(1e5));
 
     // deployer needs some bdeu in tests
-    await bdEu.connect(treasury).transfer(deployer.address, bdEuBalance.div(10));
+    await bdEu.connect(treasury).transfer(deployer.address, tresuryBdEuBalance.div(10));
   }
 
   // initial prices don't need to be very precise, in real world they will never be very precise
@@ -134,9 +131,9 @@ export async function setUpFunctionalSystem(
 
     const initialBdEuColltFraction_d12 = to_d12(initialBdEuColltFraction);
 
-    const collateralWeth = constants.INITIAL_BDSTABLE_TO_OWNER.mul(to_d12(scale)).div(1e12)
+    const collateralWeth = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
       .mul(7).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12); // 70% in weth
-    const collateralWbtc = constants.INITIAL_BDSTABLE_TO_OWNER.mul(to_d12(scale)).div(1e12)
+    const collateralWbtc = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
       .mul(3).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12); // 30% in wbtc
 
     // recallateralize by just sending the tokens in order not to extract undeserved BDX
