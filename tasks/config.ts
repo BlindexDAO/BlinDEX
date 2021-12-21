@@ -10,10 +10,7 @@ import { StakingRewards } from "../typechain/StakingRewards";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
-
-function cleanStringify(objectToClean: object): string {
-  return JSON.stringify(objectToClean).replace(/"([^"]+)":/g, "$1:");
-}
+import { cleanStringify } from "../utils/StringHelpers";
 
 export function load() {
     task("show:be-config").setAction(async (args, hre) => {

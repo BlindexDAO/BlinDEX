@@ -10,7 +10,7 @@ import { BdStablePool } from '../typechain/BdStablePool';
 import { DeployResult } from 'hardhat-deploy/dist/types';
 import { to_d12 } from '../utils/NumbersHelpers';
 
-export const ContractsNames : {priceFeedEurUsdName: string, priceFeedETHUsdName: string, BtcToEthOracle: string} = {
+export const ContractsNames = {
   priceFeedEurUsdName: "PriceFeed_EUR_USD",
   priceFeedETHUsdName: "PriceFeed_ETH_USD",
   BtcToEthOracle: "BtcToEthOracle"
