@@ -27,4 +27,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 func.id = __filename
 func.tags = ['Updater'];
+func.dependencies = ['SovrynSwapPriceFeed', 'FiatToFiatPseudoOracleFeed', 'UniswapPairOracle', 'BDStable'];
 export default func;

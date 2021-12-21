@@ -11,7 +11,7 @@ import { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
 import { IPriceFeed } from "../typechain/IPriceFeed";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Updater } from "../typechain/Updater";
-import { BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 
 export function load() {
 
@@ -127,7 +127,7 @@ export function load() {
       console.log("updaters set");
     });
 
-  task("set:oracles-ConsultLeniency")
+  task("set:oracles:ConsultLeniency")
     .addPositionalParam("newVal", "new value")
     .setAction(async ({ newVal }, hre) => {
       const pools = await getPools(hre);
