@@ -6,6 +6,7 @@
     "test:contracts": "hardhat --network mainnetFork test:dir ./test/contracts/",
     "node": "hardhat node --no-deploy",
     "deploy:fork": "hardhat --network mainnetFork deploy",
+    "deploy:fork:reset": "npm run deploy:fork -- --reset",
     "deploy:rinkeby": "hardhat --network rinkeby deploy",
     "deploy:kovan": "hardhat --network kovan deploy",
     "deploy:rsk": "hardhat --network rsk deploy",
