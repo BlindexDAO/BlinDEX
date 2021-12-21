@@ -1,25 +1,32 @@
 import { task } from "hardhat/config";
-import { getDeployer, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
-import { setUpFunctionalSystem, setUpFunctionalSystemSmall } from "../utils/SystemSetup";
+import { setupProductionReadySystem, setUpFunctionalSystemSmall } from "../utils/SystemSetup";
 
 export function load() {
   task("initialize")
     .setAction(async (args, hre) => {
-      await setUpFunctionalSystem(hre, 1, 1000, false);
+      await setupProductionReadySystem(hre);
     });
 
   task("initialize:local")
     .setAction(async (args, hre) => {
       const deployer = await getDeployer(hre);
+      const treasury = await getTreasury(hre);
 
       // mint initial WETH
       await mintWeth(hre, deployer, to_d18(100));
 
       // mint inital WBTC
-      await mintWbtc(hre, deployer, to_d8(100));
+      await mintWbtc(hre, deployer, to_d8(10), 1000);
 
-      await setUpFunctionalSystem(hre, 1, 1000, false);
+      // mint initial WETH
+      await mintWeth(hre, treasury, to_d18(100));
+
+      // mint inital WBTC
+      await mintWbtc(hre, treasury, to_d8(10), 1000);
+
+      await setupProductionReadySystem(hre);
     });
 
   task("initialize:min")
@@ -27,7 +34,7 @@ export function load() {
       await setUpFunctionalSystemSmall(hre);
     });
 
-  task("initialize:min:local")
+  task("initialize:local:min")
     .setAction(async (args, hre) => {
       const deployer = await getDeployer(hre);
 
@@ -35,8 +42,9 @@ export function load() {
       await mintWeth(hre, deployer, to_d18(1));
 
       // mint inital WBTC
-      await mintWbtc(hre, deployer, to_d8(0.1));
+      await mintWbtc(hre, deployer, to_d8(0.1), 100);
 
       await setUpFunctionalSystemSmall(hre);
     });
 }
+

@@ -1,13 +1,16 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapPair, getUniswapPairOracle, getWeth } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapFactory, getUniswapPair, getUniswapPairOracle, getUniswapRouter, getWeth } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18 } from "../utils/NumbersHelpers";
+import { getPools, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
 import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
+import { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
+import { IPriceFeed } from "../typechain/IPriceFeed";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { BigNumber } from "@ethersproject/bignumber";
 
 export function load() {
 
@@ -19,17 +22,24 @@ export function load() {
       console.log("starting sovryn swap price oracles updates");
       const bot = await getBot(hre);
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
-      await (await oracleEthUsd.updateOracleWithVerification(to_d12(4273.34))).wait(); //todo ag from parameters
-      console.log("updated ETH / USD");
+
+      await (await oracleEthUsd.updateOracleWithVerification(to_d12(47814.40))).wait(); //todo ag from parameters
+
+      console.log("updated ETH / USD (RSK BTC / USD)");
 
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.0873))).wait();//todo ag from parameters
-      console.log("updated BTC / ETH");
+      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.082477))).wait();//todo ag from parameters
+      console.log("updated BTC / ETH (RSK ETH / BTC)");
 
       console.log("starting fiat to fiat oracels updates");
       const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.setPrice(to_d12(1.13))).wait(); //todo ag from parameters
       console.log("updated EUR / USD");
+
+      console.log("starting refresh collateral ratio");
+      const bdEu = await getBdEu(hre);
+      await (await bdEu.connect(bot).refreshCollateralRatio()).wait();
+      console.log("refreshed collateral ratio");
     });
 
   task("setPoolConsultLeniency")
@@ -118,7 +128,7 @@ export function load() {
 
   task("show:oracles-prices")
     .setAction(async (args, hre) => {
-      await show_uniswapOraclesPrices(hre);
+      await show_uniswapOraclesPrices(hre, true);
     });
 
   task("show:pools")
@@ -172,13 +182,15 @@ export function load() {
     });
   
   task("show:full-diagnostics")
-    .setAction(async (args, hre) => {
+    .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
+
+    .setAction(async ({showPrices}, hre) => {
       await show_ethEur(hre);
       await show_ethUsd(hre);
       await show_btcEth(hre);
       await show_eurUsd(hre);
 
-      await show_uniswapOraclesPrices(hre);
+      await show_uniswapOraclesPrices(hre, showPrices == "true" ? true : false);
 
       await show_efCR(hre);
       await show_CR(hre);
@@ -192,21 +204,31 @@ export function load() {
   }
 
   async function show_ethUsd(hre: HardhatRuntimeEnvironment){
-    const feed = await hre.ethers.getContract("PriceFeed_ETH_USD") as SovrynSwapPriceFeed;
-    const price = d12_ToNumber(await feed.price());
+    const feed = await hre.ethers.getContract("PriceFeed_ETH_USD") as IPriceFeed;
+    const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     console.log("ETH/USD (RSK: BTC/USD): " + price);
   }
   
   async function show_btcEth(hre: HardhatRuntimeEnvironment){
-    const feed = await hre.ethers.getContract("BtcToEthOracle") as SovrynSwapPriceFeed;
-    const price = d12_ToNumber(await feed.price());
+    let price;
+    if(hre.network.name == "rsk"){
+      const feed = await hre.ethers.getContract("BtcToEthOracle") as IPriceFeed;
+      price = bigNumberToDecimal(await feed.price(), await feed.decimals());
+    } else {
+      const feed = await hre.ethers.getContract("BtcToEthOracle") as BtcToEthOracleChinlink;
+      price = d12_ToNumber(await feed.getPrice_1e12());
+    }
     console.log("BTC/ETH (RSK: ETH/BTC): " + price);
   }
 
   async function show_eurUsd(hre: HardhatRuntimeEnvironment){
-    const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as FiatToFiatPseudoOracleFeed;
-    const price = d12_ToNumber(await feed.price());
-    const lastUpdateTimestamp = await (await feed.lastUpdateTimestamp()).toNumber();
+    const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as IPriceFeed;
+    const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
+    let lastUpdateTimestamp = 0;
+    if(hre.network.name == "rsk"){
+      const feedConcrete = feed as FiatToFiatPseudoOracleFeed;
+      lastUpdateTimestamp = await (await feedConcrete.lastUpdateTimestamp()).toNumber();
+    }
     console.log("EUR/USD: " + price + " last updated: " + new Date(lastUpdateTimestamp * 1000));
   }
 
@@ -228,12 +250,48 @@ export function load() {
     console.log("BEDU CR: " + d12_ToNumber(efCR));
   }
   
-  async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment){
+  async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean){
     const pools = await getPools(hre);
+
+    const factory = await getUniswapFactory(hre);
+
     for (let pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       const updatedAgo = (new Date().getTime() / 1000) - (await oracle.blockTimestampLast());
-      console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${updatedAgo}s ago`);
+      
+      const pair = await getUniswapPair(hre, pool[0].token, pool[1].token)
+      const reserves = await pair.getReserves();
+
+      if(showPrices){
+        const token0Address = pool[0].token.address;
+        const token0Name = pool[0].name;
+        const token1Name = pool[1].name;
+
+        const token0Decimals = tokensDecimals(hre, token0Name);
+        const token1Decimals = tokensDecimals(hre, token1Name);
+
+        const amountIn = to_d18(1e6);
+        let amountOut: BigNumber;
+
+        if(token0Decimals < token1Decimals) {
+          const missingDecimals = BigNumber.from(token1Decimals - token0Decimals);
+          amountOut = await oracle.consult(token0Address, amountIn.div(BigNumber.from(10).pow(missingDecimals)));
+        } else if(token0Decimals > token1Decimals) {
+          const missingDecimals = BigNumber.from(token0Decimals - token1Decimals);
+          amountOut = await oracle.consult(token0Address, amountIn.mul(BigNumber.from(10).pow(missingDecimals)));
+        } else{
+          amountOut = await oracle.consult(token0Address, amountIn);
+        }
+
+        const price = d12_ToNumber(to_d12(1).mul(amountOut).div(amountIn));
+
+        console.log(`oracle ${pool[0].name} / ${pool[1].name} price: ${price}, updated: ${Math.round(updatedAgo)}s ago`);
+        console.log(`       ${pool[1].name} / ${pool[0].name} price: ${1/price}`);
+      } else {
+        console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${Math.round(updatedAgo)}s ago`);
+      }
+
+      console.log(`       liquidity: ${reserves[0].toString()}  |  ${reserves[1].toString()}`)
     }
   }
 }

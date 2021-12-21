@@ -11,7 +11,7 @@ import {
 } from "../helpers/swaps"
 import { to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { getBdEu, getUser, getWeth, getBdx, getUniswapPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getUser, getWeth, getBdx, getUniswapPairOracle, mintWeth, getTreasury } from "../../utils/DeployedContractsHelpers";
 import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
 
@@ -35,9 +35,10 @@ describe("Uniswap Oracles", () => {
         const weth = await getWeth(hre);
 
         const user = await getUser(hre);
+        const treasury = await getTreasury(hre);
         
         await mintWeth(hre, user, to_d18(20));
-        await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
+        await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
 
         await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
         await resetOracle(hre, "BDEU", "WETH");
@@ -65,9 +66,10 @@ describe("Uniswap Oracles", () => {
         const weth = await getWeth(hre);
 
         const user = await getUser(hre);
+        const treasury = await getTreasury(hre);
         
         await mintWeth(hre, user, to_d18(20));
-        await bdeu.transfer(user.address, to_d18(80)); // deployer gives user some bdeu so user can provide liquidity
+        await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
         await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
         await resetOracle(hre, "BDEU", "WETH");
 
