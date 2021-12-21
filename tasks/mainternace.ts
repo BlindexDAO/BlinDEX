@@ -24,6 +24,7 @@ export function load() {
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
 
       await (await oracleEthUsd.updateOracleWithVerification(to_d12(47814.40))).wait(); //todo ag from parameters
+
       console.log("updated ETH / USD (RSK BTC / USD)");
 
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
@@ -34,6 +35,11 @@ export function load() {
       const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.setPrice(to_d12(1.13))).wait(); //todo ag from parameters
       console.log("updated EUR / USD");
+
+      console.log("starting refresh collateral ratio");
+      const bdEu = await getBdEu(hre);
+      await (await bdEu.connect(bot).refreshCollateralRatio()).wait();
+      console.log("refreshed collateral ratio");
     });
 
   task("setPoolConsultLeniency")
@@ -207,7 +213,7 @@ export function load() {
     let price;
     if(hre.network.name == "rsk"){
       const feed = await hre.ethers.getContract("BtcToEthOracle") as IPriceFeed;
-      const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
+      price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     } else {
       const feed = await hre.ethers.getContract("BtcToEthOracle") as BtcToEthOracleChinlink;
       price = d12_ToNumber(await feed.getPrice_1e12());

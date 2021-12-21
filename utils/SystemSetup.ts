@@ -124,7 +124,7 @@ export async function setUpFunctionalSystem(
 
   await resetUniswapPairsOracles(hre);
   verboseLog(verbose, "oracles reset");
-  await updateUniswapPairsOracles(hre);
+  await updateUniswapPairsOracles(hre, deployer);
   verboseLog(verbose, "oracles updated");
 
   if (initialBdEuColltFraction > 0) {
