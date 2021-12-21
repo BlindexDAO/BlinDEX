@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { BigNumber } from 'ethers';
-import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
@@ -8,9 +8,7 @@ import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import { SovrynSwapPriceFeed__factory } from "../typechain/factories/SovrynSwapPriceFeed__factory";
-import { ISovrynLiquidityPoolV1Converter__factory } from "../typechain/factories/ISovrynLiquidityPoolV1Converter__factory";
-import { RSK_XUSD_ADDRESS, wETH_address, RSK_SOVRYN_NETWORK } from "../utils/Constants";
+import { RSK_SOVRYN_NETWORK } from "../utils/Constants";
 
 const fs = require('fs');
 

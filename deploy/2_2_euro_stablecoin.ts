@@ -99,6 +99,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("BDEU WBTC Pool deployed to:", bdeu_wbtc_BdStablePool.address);
 
   await (await bdx.connect(treasury).transfer(bdEu.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE)).wait();
+
   console.log("BDEU provided with BDX");
 
   await (await bdEu.addPool(bdeu_weth_BdStablePool.address)).wait()

@@ -18,6 +18,7 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
 
 export async function setUpFunctionalSystemSmall(hre: HardhatRuntimeEnvironment) {
   const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY); // it makes total liquidity value ~$1-2, useful for test deployment on real network
+
   await setUpFunctionalSystem(hre, 1e-6, scale, false);
 }
 
