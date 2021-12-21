@@ -1,8 +1,5 @@
 import { to_d18 } from "./NumbersHelpers";
 
-export const INITIAL_NUMBER_OF_BDEU_IN_LIQUIDITY = 35e3;
-export const INITIAL_NUMBER_OF_BDX_FOR_BDSTABLE = 1e5;
-
 export const wETH_address = <any>{
     localhost: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     mainnetFork: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',

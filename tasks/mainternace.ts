@@ -25,7 +25,7 @@ export function load() {
       console.log("starting sovryn swap price oracles updates");
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
 
-      await (await oracleEthUsd.updateOracleWithVerification(to_d12(46814.40))).wait(); //todo ag from parameters
+      await (await oracleEthUsd.updateOracleWithVerification(to_d12(47814.40))).wait(); //todo ag from parameters
 
       console.log("updated ETH / USD (RSK BTC / USD)");
 
