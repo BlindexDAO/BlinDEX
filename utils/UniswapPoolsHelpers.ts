@@ -64,3 +64,17 @@ export async function getPools(hre: HardhatRuntimeEnvironment) : Promise<{name: 
     ]
 }
 
+export function tokensDecimals(hre: HardhatRuntimeEnvironment, tokenName: string) : number {
+    if (["BDX", "BDEU", "WETH"].includes(tokenName)) {
+        return 18
+    } else if (tokenName == "WBTC"){
+        if(hre.network.name == "rsk"){
+            return 18; // ETHs on RSK
+        } else {
+            return 8;
+        }
+    }
+    else{
+        throw `unknown token '${tokenName}'`;
+    }
+}

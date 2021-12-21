@@ -54,7 +54,7 @@ describe("BDStable fractional", () => {
         const cr = 0.7;
         await lockBdEuCrAt(hre, cr);
 
-        await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
+        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
         await mintWeth(hre, testUser, to_d18(100));
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
@@ -71,6 +71,7 @@ describe("BDStable fractional", () => {
         const bdxAmountForMintigBdEu_d18 = wethAmountForMintigBdEu_d18.mul(to_d8(1-cr)).div(to_d8(cr)).mul(bdxPriceInWeth_d12).div(1e12); // the remaining 30% of value
 
         const excessiveBdxAmountForMintigBdEu_d18 = bdxAmountForMintigBdEu_d18.mul(3); // the excess should be ignored
+
         await performFractionalMinting(testUser, wethAmountForMintigBdEu_d18, excessiveBdxAmountForMintigBdEu_d18);        
         
         // asserts
@@ -117,7 +118,7 @@ describe("BDStable fractional", () => {
         const cr = 0.7;
         await lockBdEuCrAt(hre, cr);
 
-        await bdx.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can mint
+        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
         await mintWeth(hre, testUser, to_d18(100));
 
         const poolWethBalanceBeforeMinting_d18 = await weth.balanceOf(bdEuPool.address);
@@ -322,7 +323,7 @@ describe("BDStable fractional", () => {
         await mintWeth(hre, testUser, to_d18(100));
 
         // setup bdEu so it's illegal to redeem for testUser
-        await performFractionalMinting(testUser, to_d18(0.1), to_d18(100));   
+        await performFractionalMinting(testUser, to_d18(0.001), to_d18(100));   
         await bdEu.setMinimumSwapsDelayInBlocks(100);
         // setup finished
 
