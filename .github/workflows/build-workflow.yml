@@ -24,6 +24,8 @@ jobs:
         run: npm ci
       - name: Solidity Lint
         run: npm run solhint --y
+      - name: Compile
+        run: npm run compile
       - name: Run Hardhat Mainfork Netwrok
         run: nohup npm run node
       - name: Tests
