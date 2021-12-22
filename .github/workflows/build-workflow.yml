@@ -1,0 +1,38 @@
+name: Continuous Integration
+# This action works with pull requests and pushes
+on:
+  pull_request:
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          # Make sure the actual branch is checked out when running on pull requests
+          ref: ${{ github.head_ref }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: npm
+      - name: Install Node modules
+        run: npm ci
+      - name: Solidity Lint
+        run: npm run solhint --y
+      - name: Compile
+        run: npm run compile
+      - name: Tests
+        env:
+          MAINNET_URL: ${{ secrets.MAINNET_URL }}
+          MNEMONIC_PHRASE: ${{ secrets.MNEMONIC_PHRASE }}
+          USER_DEPLOYER_PRIVATE_KEY: ${{ secrets.USER_DEPLOYER_PRIVATE_KEY }}
+          USER_TREASURY_PRIVATE_KEY: ${{ secrets.USER_TREASURY_PRIVATE_KEY }}
+          USER_BOT_PRIVATE_KEY: ${{ secrets.USER_BOT_PRIVATE_KEY }}
+        run: |
+          npm run node &
+          sleep 7
+          npm run deploy:fork:reset
+          npm test
