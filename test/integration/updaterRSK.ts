@@ -55,6 +55,19 @@ describe.only("UpdaterRSK", () => {
             expect(await orac.shouldUpdateOracle()).to.be.eq(false);
         }
         expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.gt(0);
+
+        //second update() in a row
+        await (await updater.update(
+            [], [],
+            [], [],
+            uniOracles.map(x => x.address),
+            [bdeu.address]))
+            .wait();
+
+        for (let orac of uniOracles) {
+            expect(await orac.shouldUpdateOracle()).to.be.eq(false);
+        }
+        expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.gt(0);
     });
 
     it("should set the updater correctly at deployment", async () => {
@@ -95,7 +108,7 @@ describe.only("UpdaterRSK", () => {
         await expectToFail(() => updater.connect(user).update([], [], [], [], [], []), "You're not the updater");
     });
 
-    it("should fail if update() provided with wrong parameters", async () => {
+    it("should fail if update() provided with wrong arguments", async () => {
         const bot = await getBot(hre);
         const updater = await hre.ethers.getContract('UpdaterRSK', bot) as UpdaterRSK;
 
