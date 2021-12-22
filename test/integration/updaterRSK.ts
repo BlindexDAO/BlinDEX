@@ -2,20 +2,20 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { mineBlock, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
+import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
 import { UpdaterRSK } from "../../typechain/UpdaterRSK";
-import { getBdEu, getBot, getDeployer, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBot, getUser, getDeployer, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
 import { getPools } from "../../utils/UniswapPoolsHelpers";
 import { BDStable } from "../../typechain/BDStable";
 import { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
+import { expectToFail } from '../helpers/common';
 
 chai.use(cap);
-
 chai.use(solidity);
 const { expect } = chai;
 
-describe("UpdaterRSK", () => {
+describe.only("UpdaterRSK", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
@@ -40,7 +40,6 @@ describe("UpdaterRSK", () => {
 
         // test validation
         for (let orac of uniOracles) {
-            console.log(await orac.blockTimestampLast());
             expect(await orac.shouldUpdateOracle()).to.be.eq(true);
         }
         expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.eq(0);
@@ -57,4 +56,51 @@ describe("UpdaterRSK", () => {
         }
         expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.gt(0);
     });
+
+    it("should set the updater correctly at deployment", async () => {
+        const bot = await getBot(hre);
+        const updater = await hre.ethers.getContract('UpdaterRSK', bot) as UpdaterRSK;
+
+        expect(await updater.updater()).to.be.eq(bot.address);
+    });
+
+    it("should set the updater correctly with setUpdater()", async () => {
+        const deployer = await getDeployer(hre);
+        const user = await getUser(hre);
+        const bot = await getBot(hre);
+        const updater = await hre.ethers.getContract('UpdaterRSK', bot) as UpdaterRSK;
+
+        await updater.connect(deployer).setUpdater(user.address);
+
+        expect(await updater.updater()).to.be.eq(user.address);
+    });
+
+    it("should emit the UpdaterChanged event", async () => {
+        const deployer = await getDeployer(hre);
+        const user = await getUser(hre);
+        const bot = await getBot(hre);
+        const updater = await hre.ethers.getContract('UpdaterRSK', bot) as UpdaterRSK;
+
+        const tx = await updater.connect(deployer).setUpdater(user.address);
+        expect(tx)
+            .to.emit(updater, "UpdaterChanged")
+            .withArgs(bot.address, user.address);
+    });
+
+    it("should fail if not updater calls update()", async () => {
+        const user = await getUser(hre);
+        const bot = await getBot(hre);
+        const updater = await hre.ethers.getContract('UpdaterRSK', bot) as UpdaterRSK;
+
+        await expectToFail(() => updater.connect(user).update([], [], [], [], [], []), "You're not the updater");
+    });
+
+    it("should fail if update() provided with wrong parameters", async () => {
+        const bot = await getBot(hre);
+        const updater = await hre.ethers.getContract('UpdaterRSK', bot) as UpdaterRSK;
+
+        await expectToFail(() => updater.update([], [1], [], [], [], []), "Each sovryn oracle address needs its corresponding price");
+        await expectToFail(() => updater.update([], [], [], [1, 1], [], []), "Each fiat oracle address needs its corresponding price");
+    });
+
 })
