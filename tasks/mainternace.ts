@@ -144,7 +144,7 @@ export function load() {
       console.log("all done");
     });
 
-  task("set:oracles-AllowStaleConsults")
+  task("set:oracles:AllowStaleConsults")
     .addPositionalParam("enable", "1 = enable, 0 = disable")
     .setAction(async ({ enable }, hre) => {
       const pools = await getPools(hre);
