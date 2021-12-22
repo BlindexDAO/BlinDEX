@@ -11,7 +11,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
-import { UpdaterRSK } from "../typechain/UpdaterRSK";
 
 export function load() {
     task("show:be-config").setAction(async (args, hre) => {
