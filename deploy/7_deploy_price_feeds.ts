@@ -13,7 +13,8 @@ import { to_d12 } from '../utils/NumbersHelpers';
 export const ContractsNames = {
   priceFeedEurUsdName: "PriceFeed_EUR_USD",
   priceFeedETHUsdName: "PriceFeed_ETH_USD",
-  BtcToEthOracle: "BtcToEthOracle"
+  BtcToEthOracle: "BtcToEthOracle",
+  oracleEthEurName: "OracleBasedCryptoFiatFeed_ETH_EUR"
 };
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -24,11 +25,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bot = await getBot(hre);
   const bdeu = await hre.ethers.getContract("BDEU") as BDStable;
 
-  let priceFeed_EUR_USD_Deployment : DeployResult;
-  let priceFeed_ETH_USD_Deployment : DeployResult;
+  let priceFeed_EUR_USD_Deployment: DeployResult;
+  let priceFeed_ETH_USD_Deployment: DeployResult;
   let btc_eth_oracle: DeployResult;
 
-  if(networkName == "rsk") {
+  if (networkName == "rsk") {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedEurUsdName, {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
@@ -36,7 +37,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`deployed ${ContractsNames.priceFeedEurUsdName} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
-    priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedETHUsdName, { 
+    priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedETHUsdName, {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
@@ -91,23 +92,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
   }
 
-  await hre.deployments.deploy('OracleBasedCryptoFiatFeed_ETH_EUR', {
+  await hre.deployments.deploy(ContractsNames.oracleEthEurName, {
     from: deployer.address,
     contract: "OracleBasedCryptoFiatFeed",
     args: [priceFeed_EUR_USD_Deployment.address, priceFeed_ETH_USD_Deployment.address]
   });
 
-  const oracleBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract("OracleBasedCryptoFiatFeed_ETH_EUR") as OracleBasedCryptoFiatFeed;
-  console.log("OracleBasedCryptoFiatFeed_ETH_EUR deployed to:", oracleBasedCryptoFiatFeed_ETH_EUR.address);
-  
+  const oracleBasedCryptoFiatFeed_ETH_EUR = await hre.ethers.getContract(ContractsNames.oracleEthEurName) as OracleBasedCryptoFiatFeed;
+  console.log(`${ContractsNames.oracleEthEurName} deployed to:`, oracleBasedCryptoFiatFeed_ETH_EUR.address);
+
   await (await bdeu.setETH_fiat_Oracle(oracleBasedCryptoFiatFeed_ETH_EUR.address)).wait();
   console.log(`Added WETH EUR oracle to BDEU`)
 
-  const bdxWethOracle = await getWethPairOracle(hre,"BDX");
+  const bdxWethOracle = await getWethPairOracle(hre, "BDX");
   await (await bdeu.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDX ETH Uniswap oracle`);
 
-  const bdeuWethOracle = await getWethPairOracle(hre,"BDEU");
+  const bdeuWethOracle = await getWethPairOracle(hre, "BDEU");
   await (await bdeu.setBDStable_WETH_Oracle(bdeuWethOracle.address, constants.wETH_address[networkName])).wait();
   console.log(`Added BDEU ETH Uniswap oracle`);
 

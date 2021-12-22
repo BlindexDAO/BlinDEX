@@ -56,7 +56,7 @@ export function load() {
             [`${networkName}_PRICE_FEED_EUR_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
             [`${networkName}_PRICE_FEED_BTC_ETH_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
             [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
-            [`${networkName}_PRICE_FEED_ETH_EUR_ADDRESS`]: (await hre.ethers.getContract('OracleBasedCryptoFiatFeed_ETH_EUR', deployer)).address.toLowerCase()
+            [`${networkName}_PRICE_FEED_ETH_EUR_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
         };
 
         console.log("Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n");
@@ -85,8 +85,8 @@ export function load() {
                 STAKING_REWARDS_DISTRIBUTION: stakingRewardsDistribution.address,
                 VESTING: (await getVesting(hre)).address,
                 BD_STABLES: [bdEu.address],
-                PRICE_FEED_EUR_USD: (await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address,
-                BTC_TO_ETH_ORACLE: (await hre.ethers.getContract('BtcToEthOracle', deployer)).address,
+                PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
+                BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address,
             }
 
             console.log(cleanStringify(blockchainConfig));
