@@ -12,17 +12,18 @@ export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment)
   await setUpFunctionalSystem(hre, 1, 1, false);
 }
 
-export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
-  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);
-}
-
 export async function setUpFunctionalSystemSmall(hre: HardhatRuntimeEnvironment) {
   const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY); // it makes total liquidity value ~$1-2, useful for test deployment on real network
 
   await setUpFunctionalSystem(hre, 1e-6, scale, false);
 }
 
-export async function setUpFunctionalSystem(
+export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
+  //ceny
+  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);//tutaj hardcodowane ceny
+}
+
+export async function setUpFunctionalSystem(  //dodać parametry bez defaultowych wartosci
   hre: HardhatRuntimeEnvironment,
   initialBdEuColltFraction: number,
   scale: number,

@@ -4,12 +4,12 @@ import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { setupProductionReadySystem, setUpFunctionalSystemSmall } from "../utils/SystemSetup";
 
 export function load() {
-  task("initialize")
+  task("initialize")  //zawsze wymaga podania
     .setAction(async (args, hre) => {
       await setupProductionReadySystem(hre);
     });
 
-  task("initialize:local")
+  task("initialize:local")  //opcjonalnie
     .setAction(async (args, hre) => {
       const deployer = await getDeployer(hre);
       const treasury = await getTreasury(hre);
@@ -29,12 +29,12 @@ export function load() {
       await setupProductionReadySystem(hre);
     });
 
-  task("initialize:min")
+  task("initialize:min")  //zawsze wymaga
     .setAction(async (args, hre) => {
       await setUpFunctionalSystemSmall(hre);
     });
 
-  task("initialize:local:min")
+  task("initialize:local:min")  //opcjonalnie
     .setAction(async (args, hre) => {
       const deployer = await getDeployer(hre);
 
