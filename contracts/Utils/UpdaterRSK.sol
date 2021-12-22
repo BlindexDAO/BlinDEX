@@ -10,6 +10,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract UpdaterRSK is Ownable {
     address public updater;
 
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
     constructor(address _updater) public {
         updater = _updater;
     }
@@ -21,7 +26,7 @@ contract UpdaterRSK is Ownable {
         uint256[] memory _fiatPrices,
         address[] memory _uniswapOracles,
         address[] memory _BDStables
-    ) external onlyUpdater {
+    ) external onlyUpdater nonReentrant {
         require(
             _sovrynOracles.length == _sovrynPrices.length,
             "Each sovryn oracle address needs its corresponding price"
@@ -74,6 +79,20 @@ contract UpdaterRSK is Ownable {
     modifier onlyUpdater() {
         require(msg.sender == updater, "You're not the updater");
         _;
+    }
+
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _status = _ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _status = _NOT_ENTERED;
     }
 
     event UpdaterChanged(
