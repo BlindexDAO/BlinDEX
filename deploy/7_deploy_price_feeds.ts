@@ -1,11 +1,9 @@
-import { BDXShares } from '../typechain/BDXShares';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { OracleBasedCryptoFiatFeed } from '../typechain/OracleBasedCryptoFiatFeed';
 import * as constants from '../utils/Constants'
-import { getBot, getDeployer, getWethPair, getWethPairOracle } from '../utils/DeployedContractsHelpers'
+import { getBot, getDeployer, getWethPairOracle } from '../utils/DeployedContractsHelpers'
 import { BDStable } from '../typechain/BDStable';
-import { ICryptoPairOracle } from '../typechain/ICryptoPairOracle';
 import { BdStablePool } from '../typechain/BdStablePool';
 import { DeployResult } from 'hardhat-deploy/dist/types';
 import { to_d12 } from '../utils/NumbersHelpers';
