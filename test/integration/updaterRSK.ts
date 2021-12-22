@@ -40,7 +40,6 @@ describe("UpdaterRSK", () => {
 
         // test validation
         for (let orac of uniOracles) {
-            console.log(await orac.blockTimestampLast());
             expect(await orac.shouldUpdateOracle()).to.be.eq(true);
         }
         expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.eq(0);
