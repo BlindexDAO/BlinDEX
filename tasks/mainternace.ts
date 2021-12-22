@@ -15,7 +15,10 @@ import { BigNumber } from "@ethersproject/bignumber";
 export function load() {
 
   task("update:oracles")
-    .setAction(async (args, hre) => {
+  .addPositionalParam("btcusd", "BTCUSD price")
+  .addPositionalParam("ethbtc", "ETHBTC price")
+  .addPositionalParam("eurusd", "EURUSD price")
+    .setAction(async ({btcusd, ethbtc, eurusd}, hre) => {
       console.log("starting uniswap pairs oracles updates");
       await updateUniswapPairsOracles(hre);
 
@@ -23,17 +26,17 @@ export function load() {
       const bot = await getBot(hre);
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
 
-      await (await oracleEthUsd.updateOracleWithVerification(to_d12(47814.40))).wait(); //todo ag from parameters
+      await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
 
       console.log("updated ETH / USD (RSK BTC / USD)");
 
       const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.082477))).wait();//todo ag from parameters
+      await (await oracleBtcEth.updateOracleWithVerification(to_d12(ethbtc))).wait();
       console.log("updated BTC / ETH (RSK ETH / BTC)");
 
       console.log("starting fiat to fiat oracels updates");
       const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.setPrice(to_d12(1.13))).wait(); //todo ag from parameters
+      await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
       console.log("updated EUR / USD");
 
       console.log("starting refresh collateral ratio");
