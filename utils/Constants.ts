@@ -67,7 +67,7 @@ export const NATIVE_TOKEN_NAME = <any>{
 
 export const numberOfLPs = 11;
 
-export const INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY = to_d18(30e3);
+export const INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY = to_d18(10e3);
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 // original uniswap addresss on ETH
