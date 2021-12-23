@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapFactory, getUniswapPair, getUniswapPairOracle, getUniswapRouter, getWeth } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, resetUniswapPairsOracles, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
@@ -47,6 +47,11 @@ export function load() {
       await (await bdEu.connect(bot).refreshCollateralRatio()).wait();
       console.log("refreshed collateral ratio");
     });
+
+  task("reset:uniswap-oracles")
+    .setAction(async (args, hre) => {
+      await resetUniswapPairsOracles(hre);
+    })
 
   task("update:all-with-bot:local")
     .setAction(async (args, hre) => {
