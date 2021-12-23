@@ -1,11 +1,9 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { BDXShares } from '../typechain/BDXShares';
 import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
 import * as constants from '../utils/Constants'
 import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
-import { Vesting } from '../typechain/Vesting';
-import { getBdEu, getBdx } from '../utils/DeployedContractsHelpers';
+import { getBdEu, getBdx, getDeployer } from '../utils/DeployedContractsHelpers';
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -17,8 +15,7 @@ async function setupStakingContract(
 ) {
   console.log("starting deployment: euro staking");
 
-  const deploerAddersss = (await hre.getNamedAccounts()).DEPLOYER;
-  const deployer = await hre.ethers.getSigner(deploerAddersss);
+  const deployer = await getDeployer(hre);
   const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
 
@@ -27,7 +24,7 @@ async function setupStakingContract(
 
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
     stakingRewardsContractName, {
-    from: deploerAddersss,
+    from: deployer.address,
     proxy: {
       proxyContract: 'OptimizedTransparentProxy',
       execute: {
@@ -60,19 +57,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Setting up staking contracts");
 
   await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
-  console.log("Set up statking: BDX/WETH");
+  console.log("Set up staking: BDX/WETH");
 
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
-  console.log("Set up statking: BDX/WBTC");
+  console.log("Set up staking: BDX/WBTC");
 
   await setupStakingContract(hre, bdx.address, bdeu.address, "BDX", "BDEU", true);
-  console.log("Set up statking: BDX/BDEU");
+  console.log("Set up staking: BDX/BDEU");
 
   await setupStakingContract(hre, bdeu.address, constants.wETH_address[networkName], "BDEU", "WETH", false);
-  console.log("Set up statking: BDEU/WETH");
+  console.log("Set up staking: BDEU/WETH");
 
   await setupStakingContract(hre, bdeu.address, constants.wBTC_address[networkName], "BDEU", "WBTC", false);
-  console.log("Set up statking: BDEU/WBTC");
+  console.log("Set up staking: BDEU/WBTC");
 
   console.log("finished deployment: euro stable staking");
 

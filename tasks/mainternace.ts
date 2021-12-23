@@ -16,6 +16,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 export function load() {
 
   task("update:oracles")
+<<<<<<< HEAD
     .setAction(async (args, hre) => {
       const bot = await getBot(hre);
 
@@ -24,19 +25,32 @@ export function load() {
 
       console.log("starting sovryn swap price oracles updates");
       const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+=======
+    .addParam("btcusd", "BTCUSD price")
+    .addParam("ethbtc", "ETHBTC price")
+    .addParam("eurusd", "EURUSD price")
+    .setAction(async ({ btcusd, ethbtc, eurusd }, hre) => {
+      const bot = await getBot(hre);
+>>>>>>> origin/master
 
-      await (await oracleEthUsd.updateOracleWithVerification(to_d12(47814.40))).wait(); //todo ag from parameters
+      if (hre.network.name == "rsk") {
+        console.log("starting sovryn swap price oracles updates");
+        const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+        await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
+        console.log("updated ETH / USD (RSK BTC / USD)");
 
-      console.log("updated ETH / USD (RSK BTC / USD)");
+        const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
+        await (await oracleBtcEth.updateOracleWithVerification(to_d12(ethbtc))).wait();
+        console.log("updated BTC / ETH (RSK ETH / BTC)");
 
-      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-      await (await oracleBtcEth.updateOracleWithVerification(to_d12(0.082477))).wait();//todo ag from parameters
-      console.log("updated BTC / ETH (RSK ETH / BTC)");
+        console.log("starting fiat to fiat oracles updates");
+        const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+        await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
+        console.log("updated EUR / USD");
+      }
 
-      console.log("starting fiat to fiat oracels updates");
-      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.setPrice(to_d12(1.13))).wait(); //todo ag from parameters
-      console.log("updated EUR / USD");
+      console.log("starting uniswap pairs oracles updates");
+      await updateUniswapPairsOracles(hre);
 
       console.log("starting refresh collateral ratio");
       const bdEu = await getBdEu(hre);
@@ -268,7 +282,7 @@ export function load() {
 
   task("show:full-diagnostics")
     .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
-    .setAction(async ({showPrices}, hre) => {
+    .setAction(async ({ showPrices }, hre) => {
       await show_ethEur(hre);
       await show_ethUsd(hre);
       await show_btcEth(hre);
@@ -287,15 +301,15 @@ export function load() {
     console.log("ETH/EUR (RSK: BTC/EUR): " + price);
   }
 
-  async function show_ethUsd(hre: HardhatRuntimeEnvironment){
+  async function show_ethUsd(hre: HardhatRuntimeEnvironment) {
     const feed = await hre.ethers.getContract("PriceFeed_ETH_USD") as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     console.log("ETH/USD (RSK: BTC/USD): " + price);
   }
-  
-  async function show_btcEth(hre: HardhatRuntimeEnvironment){
+
+  async function show_btcEth(hre: HardhatRuntimeEnvironment) {
     let price;
-    if(hre.network.name == "rsk"){
+    if (hre.network.name == "rsk") {
       const feed = await hre.ethers.getContract("BtcToEthOracle") as IPriceFeed;
       price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     } else {
@@ -305,11 +319,11 @@ export function load() {
     console.log("BTC/ETH (RSK: ETH/BTC): " + price);
   }
 
-  async function show_eurUsd(hre: HardhatRuntimeEnvironment){
+  async function show_eurUsd(hre: HardhatRuntimeEnvironment) {
     const feed = await hre.ethers.getContract("PriceFeed_EUR_USD") as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     let lastUpdateTimestamp = 0;
-    if(hre.network.name == "rsk"){
+    if (hre.network.name == "rsk") {
       const feedConcrete = feed as FiatToFiatPseudoOracleFeed;
       lastUpdateTimestamp = await (await feedConcrete.lastUpdateTimestamp()).toNumber();
     }
@@ -334,8 +348,8 @@ export function load() {
     const efCR = await bdeu.global_collateral_ratio_d12();
     console.log("BEDU CR: " + d12_ToNumber(efCR));
   }
-  
-  async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean){
+
+  async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean) {
     const pools = await getPools(hre);
 
     const factory = await getUniswapFactory(hre);
@@ -343,11 +357,11 @@ export function load() {
     for (let pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       const updatedAgo = (new Date().getTime() / 1000) - (await oracle.blockTimestampLast());
-      
+
       const pair = await getUniswapPair(hre, pool[0].token, pool[1].token)
       const reserves = await pair.getReserves();
 
-      if(showPrices){
+      if (showPrices) {
         const token0Address = pool[0].token.address;
         const token0Name = pool[0].name;
         const token1Name = pool[1].name;
@@ -358,20 +372,20 @@ export function load() {
         const amountIn = to_d18(1e6);
         let amountOut: BigNumber;
 
-        if(token0Decimals < token1Decimals) {
+        if (token0Decimals < token1Decimals) {
           const missingDecimals = BigNumber.from(token1Decimals - token0Decimals);
           amountOut = await oracle.consult(token0Address, amountIn.div(BigNumber.from(10).pow(missingDecimals)));
-        } else if(token0Decimals > token1Decimals) {
+        } else if (token0Decimals > token1Decimals) {
           const missingDecimals = BigNumber.from(token0Decimals - token1Decimals);
           amountOut = await oracle.consult(token0Address, amountIn.mul(BigNumber.from(10).pow(missingDecimals)));
-        } else{
+        } else {
           amountOut = await oracle.consult(token0Address, amountIn);
         }
 
         const price = d12_ToNumber(to_d12(1).mul(amountOut).div(amountIn));
 
         console.log(`oracle ${pool[0].name} / ${pool[1].name} price: ${price}, updated: ${Math.round(updatedAgo)}s ago`);
-        console.log(`       ${pool[1].name} / ${pool[0].name} price: ${1/price}`);
+        console.log(`       ${pool[1].name} / ${pool[0].name} price: ${1 / price}`);
       } else {
         console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${Math.round(updatedAgo)}s ago`);
       }
