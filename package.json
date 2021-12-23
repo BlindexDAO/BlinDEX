@@ -16,7 +16,7 @@
     "npm-package": "hardhat --network mainnetFork npm-package",
     "compile": "hardhat compile --config hardhat.compile.config.ts",
     "solhint": "npx solhint 'contracts/**/*.sol'",
-    "format": "prettier --write . --loglevel silent"
+    "format": "npx prettier --write . --loglevel silent"
   },
   "devDependencies": {
     "@ethersproject/providers": "^5.5.0",
