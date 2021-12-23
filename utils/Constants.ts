@@ -80,5 +80,5 @@ export const RSK_XUSD_ADDRESS = "0xb5999795be0ebb5bab23144aa5fd6a02d080299f";
 
 export const RSK_SOVRYN_NETWORK = "0x98ace08d2b759a265ae326f010496bcd63c15afc";
 
-export const rskLockingContractAddress = '' // TODO: Fill locking contract address after deployment
+export const rskLockingContractAddress = '0xD3eDDBFfaEd62f9386733C745EFa43689e9cbC7c'
 export const bdxLockAmount = to_d18(3150000)
