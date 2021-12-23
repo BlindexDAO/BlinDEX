@@ -29,4 +29,3 @@ export function load() {
       await setupProductionReadySystem(hre);
     });
 }
-
