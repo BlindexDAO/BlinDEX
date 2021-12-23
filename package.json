@@ -56,6 +56,6 @@
     "typescript": "^4.2.2"
   },
   "lint-staged": {
-    "*.{js,ts,css,md,json,yml,yaml,sol}": "npm run solhint --y"
+    "*.{js,ts,css,md,json,yml,yaml,sol}": "prettier --write"
   }
 }
