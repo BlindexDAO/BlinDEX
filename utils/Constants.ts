@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import { to_d18 } from "./NumbersHelpers";
 
 export const wETH_address = <any>{
@@ -67,8 +68,22 @@ export const NATIVE_TOKEN_NAME = <any>{
 
 export const numberOfLPs = 11;
 
-export const INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY = to_d18(10e3);
-export const BDEU_UNISWAP_COLLATERAL_RATIO_FROM_INITIAL_MINTING = 0.05;
+export const initialBdstableMintingAmount = (networkName : string = "mainnetFork") : BigNumber => {
+    switch (networkName) {
+        case "rsk": {
+            return to_d18(10e3);
+        }
+        case "mainnetFork": {
+            return to_d18(30e3);
+        }
+        default: {
+            return to_d18(10e3);
+        }
+    }
+}
+
+export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
+export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 // original uniswap addresss on ETH

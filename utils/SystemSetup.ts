@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
+import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
 import {
   getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, mintWbtc, getOnChainEthEurPrice,
   getOnChainBtcEurPrice, getDeployer, getTreasury, mintWeth
@@ -9,20 +9,18 @@ import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPo
 import { provideLiquidity } from "../test/helpers/swaps";
 
 export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment){
-  await setUpFunctionalSystem(hre, 1, 1, false, constants.BDEU_UNISWAP_COLLATERAL_RATIO_FROM_INITIAL_MINTING);
+  await setUpFunctionalSystem(hre, 1, 1, false);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
-  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true, constants.BDEU_UNISWAP_COLLATERAL_RATIO_FROM_INITIAL_MINTING);
+  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);
 }
 
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBdEuColltFraction: number,
   scale: number,
-  forIntegrationTests: boolean,
-  bdeuUniswapCollateralRatioFromInitialMinting: number
-) {
+  forIntegrationTests: boolean) {
   const deployer = await getDeployer(hre);
   const treasury = await getTreasury(hre);
 
@@ -83,15 +81,16 @@ export async function setUpFunctionalSystem(
   let bdeuPoolsSoFar = 0;
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
-  const eurValueForLiquidityForPoolSide_bdEu_weth = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE.mul(bdeuUniswapCollateralRatioFromInitialMinting).mul(scale).toNumber();
+
+  const eurValueForLiquidityForPoolSide_bdEu_weth = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdEu, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_weth),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
     bdeuPoolsSoFar++;
-
+  
   verboseLog(verbose, "provide liquidity bdeu/wbtc");
-  const eurValueForLiquidityForPoolSide_bdEu_wbtc = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE.mul(bdeuUniswapCollateralRatioFromInitialMinting).mul(scale).toNumber();
+  const eurValueForLiquidityForPoolSide_bdEu_wbtc = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdEu, wbtc,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_wbtc),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
@@ -99,23 +98,22 @@ export async function setUpFunctionalSystem(
     bdeuPoolsSoFar++;
 
   verboseLog(verbose, "provide liquidity bdx/weth");
-  const eurValueForLiquidityForPoolSide_bdx_weth = 9e3 * scale;
+  const eurValueForLiquidityForPoolSide_bdx_weth = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdx, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdx_weth / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdx_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
 
   verboseLog(verbose, "provide liquidity bdx/wbtc");
-  const eurValueForLiquidityForPoolSide_bdx_wbtc = 9e3 * scale;
+  const eurValueForLiquidityForPoolSide_bdx_wbtc = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdx, wbtc,
     to_d18(eurValueForLiquidityForPoolSide_bdx_wbtc / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdx_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
 
   verboseLog(verbose, "provide liquidity bdx/bdeu");
-  const eurValueForLiquidityForPoolSide_bdx_bdEu = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE
-  .mul(1 - bdeuPoolsSoFar * bdeuUniswapCollateralRatioFromInitialMinting)
-  .mul(scale).toNumber();
+
+  const eurValueForLiquidityForPoolSide_bdx_bdEu = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdx, bdEu,
     to_d18(eurValueForLiquidityForPoolSide_bdx_bdEu / initialBdxBdEuPrice),
     to_d18(eurValueForLiquidityForPoolSide_bdx_bdEu),
@@ -134,11 +132,12 @@ export async function setUpFunctionalSystem(
     // We'll NOT use the recallateralize funciton in this case so we won't lock BDX in the deployer address for no reason
 
     const initialBdEuColltFraction_d12 = to_d12(initialBdEuColltFraction);
+    const initialBdstableMinting = constants.initialBdstableMintingAmount(hre.network.name);
     const WETH_RATIO = 5; // Represents 50%
     const WRBTC_RATIO = 5; // Represents 50%
-    const collateralWeth = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
+    const collateralWeth = initialBdstableMinting.mul(to_d12(scale)).div(1e12)
       .mul(WETH_RATIO).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12);
-    const collateralWbtc = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
+    const collateralWbtc = initialBdstableMinting.mul(to_d12(scale)).div(1e12)
       .mul(WRBTC_RATIO).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12);
 
     // recallateralize by just sending the tokens in order not to extract undeserved BDX
