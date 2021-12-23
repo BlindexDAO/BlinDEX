@@ -14,6 +14,7 @@ import * as setupTasks from "./tasks/setup"
 import * as maintenanceTasks from "./tasks/mainternace"
 import * as developmentTasks from "./tasks/development"
 import * as feConfig from "./tasks/config"
+import "hardhat-gas-reporter";
 
 const path = require('path');
 const envPath = path.join(__dirname, './.env');
@@ -95,6 +96,10 @@ const config: HardhatUserConfig = {
     }, {
       artifacts: 'node_modules/@uniswap/v2-periphery/build'
     }]
+  },
+  gasReporter: {
+    currency: "USD",
+    coinmarketcap: process.env.CMC_TOKEN,
   },
   namedAccounts: {
 

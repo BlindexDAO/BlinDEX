@@ -22,7 +22,9 @@ describe("Locking collateral ratio", () => {
         // decrease CR so fractional minting works
         const bdEu = await getBdEu(hre);
         await swapWethAsDeployer(hre, "BDEU", 1, 1e-12);
+
         await simulateTimeElapseInSeconds(60*60*24);
+
         await bdEu.refreshCollateralRatio();
     });
 
