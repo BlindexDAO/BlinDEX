@@ -78,8 +78,6 @@ export async function setUpFunctionalSystem(
     initialWbtcBdEuPrice = (await getOnChainBtcEurPrice(hre)).price;
   }
 
-  let bdeuPoolsSoFar = 0;
-
   verboseLog(verbose, "provide liquidity bdeu/weth");
 
   const eurValueForLiquidityForPoolSide_bdEu_weth = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
@@ -87,7 +85,6 @@ export async function setUpFunctionalSystem(
     to_d18(eurValueForLiquidityForPoolSide_bdEu_weth),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
-    bdeuPoolsSoFar++;
   
   verboseLog(verbose, "provide liquidity bdeu/wbtc");
   const eurValueForLiquidityForPoolSide_bdEu_wbtc = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
@@ -95,7 +92,6 @@ export async function setUpFunctionalSystem(
     to_d18(eurValueForLiquidityForPoolSide_bdEu_wbtc),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
-    bdeuPoolsSoFar++;
 
   verboseLog(verbose, "provide liquidity bdx/weth");
   const eurValueForLiquidityForPoolSide_bdx_weth = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
