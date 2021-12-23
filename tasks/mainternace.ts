@@ -50,13 +50,12 @@ export function load() {
   task("update:eurusd:rsk")
     .addPositionalParam("eurusd", "EURUSD price")
     .setAction(async ({ eurusd }, hre) => {
-      const networkName = hre.network.name;
-      if (networkName.toLowerCase() != 'rsk') {
+      if (hre.network.name != 'rsk') {
         throw new Error("RSK only task");
       }
-      const bot = await getBot(hre);
-      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
+      const deployer = await getDeployer(hre);
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
+      await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
       console.log("updated EUR / USD");
     })
 
@@ -137,7 +136,7 @@ export function load() {
         console.log("updated oracleBtcEth");
 
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleEurUsd");        
+        console.log("updated oracleEurUsd");
       }
 
       console.log("updaters set");
