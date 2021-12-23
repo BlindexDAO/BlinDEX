@@ -86,7 +86,7 @@ describe("BuyBack", () => {
         const bdEuWethPool = await getBdEuWethPool(hre);
         const weth = await getWeth(hre);
 
-        const maxBdxToBuyBack_d18 = (await calculateWethPoolMaxBdxToBuyBack_d18(cr));
+        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
         // The deployer sends BDX to the user so the user could buyback
         await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
@@ -120,7 +120,7 @@ describe("BuyBack", () => {
         const weth = await getWeth(hre);
         const bdEu = await getBdEu(hre);
 
-        const maxBdxToBuyBack_d18 = await calculateWethPoolMaxBdxToBuyBack_d18(cr);
+        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
         // The deployer sends BDX to the user so the user could buyback
         await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
@@ -156,7 +156,7 @@ describe("BuyBack", () => {
 
         // We're sending true for the useGlobalCollateralValue since we want to make sure we'll exceed the aviable excess
         // That is derived from both the weth pool and the wbtc pool
-        const maxBdxToBuyBack_d18 = await calculateWethPoolMaxBdxToBuyBack_d18(cr, true);
+        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr, true);
 
         const bdxExcess = 10; // this is a very small amout (1e-17 BDX). We cannot use 1 because of roundings and low initial price of BDX (1 BDX < 1 EUR)
         const moreThanMaxBdxToBuyBack_d18 = maxBdxToBuyBack_d18.add(bdxExcess);
@@ -189,7 +189,7 @@ describe("BuyBack", () => {
     });
 })
 
-async function calculateWethPoolMaxBdxToBuyBack_d18(cr: number, useGlobalCollateralValue: boolean = false){
+async function calculateMaxBdxToBuyBack_d18(cr: number, useGlobalCollateralValue: boolean = false){
   const bdEu = await getBdEu(hre);
   const bdEuWethPool = await getBdEuWethPool(hre);
   const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
