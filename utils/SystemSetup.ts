@@ -44,9 +44,6 @@ export async function setUpFunctionalSystem(
     await mintWeth(hre, treasury, to_d18(100));
     // mint inital WBTC
     await mintWbtc(hre, treasury, to_d8(10), 100);
-
-    // deployer needs some bdeu in tests
-    await bdEu.connect(treasury).transfer(deployer.address, tresuryBdEuBalance.div(10));
   }
 
   // initial prices don't need to be very precise, in real world they will never be very precise
