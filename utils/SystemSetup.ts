@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
+import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
 import {
   getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, mintWbtc, getOnChainEthEurPrice,
   getOnChainBtcEurPrice, getDeployer, getTreasury, mintWeth
@@ -16,18 +16,11 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
   await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);
 }
 
-export async function setUpFunctionalSystemSmall(hre: HardhatRuntimeEnvironment) {
-  const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY); // it makes total liquidity value ~$1-2, useful for test deployment on real network
-
-  await setUpFunctionalSystem(hre, 1e-6, scale, false);
-}
-
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBdEuColltFraction: number,
   scale: number,
-  forIntegrationTests: boolean
-) {
+  forIntegrationTests: boolean) {
   const deployer = await getDeployer(hre);
   const treasury = await getTreasury(hre);
 
@@ -52,7 +45,7 @@ export async function setUpFunctionalSystem(
     // mint inital WBTC
     await mintWbtc(hre, treasury, to_d8(10), 100);
 
-    // deployer needs some bdx in tests
+    // deployer needs some bdx in tests. The value itself doesn't really matter, as long as it's smaller than the total amount of BDX the treasury has
     await bdx.connect(treasury).transfer(deployer.address, to_d18(1e5));
 
     // deployer needs some bdeu in tests
@@ -87,35 +80,36 @@ export async function setUpFunctionalSystem(
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
 
-  const eurValueForLiquidityForPoolSide_bdEu_weth = 500 * scale;
+  const eurValueForLiquidityForPoolSide_bdEu_weth = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdEu, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_weth),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
-
+  
   verboseLog(verbose, "provide liquidity bdeu/wbtc");
-  const eurValueForLiquidityForPoolSide_bdEu_wbtc = 500 * scale;
+  const eurValueForLiquidityForPoolSide_bdEu_wbtc = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdEu, wbtc,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_wbtc),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
 
   verboseLog(verbose, "provide liquidity bdx/weth");
-  const eurValueForLiquidityForPoolSide_bdx_weth = 9e3 * scale;
+  const eurValueForLiquidityForPoolSide_bdx_weth = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdx, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdx_weth / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdx_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
 
   verboseLog(verbose, "provide liquidity bdx/wbtc");
-  const eurValueForLiquidityForPoolSide_bdx_wbtc = 9e3 * scale;
+  const eurValueForLiquidityForPoolSide_bdx_wbtc = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdx, wbtc,
     to_d18(eurValueForLiquidityForPoolSide_bdx_wbtc / initialBdxBdEuPrice),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdx_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
 
   verboseLog(verbose, "provide liquidity bdx/bdeu");
-  const eurValueForLiquidityForPoolSide_bdx_bdEu = 9e3 * scale;
+
+  const eurValueForLiquidityForPoolSide_bdx_bdEu = constants.INITIAL_BDX_UNISWAP_EUR_AMOUNT * scale;
   await provideLiquidity(hre, treasury, bdx, bdEu,
     to_d18(eurValueForLiquidityForPoolSide_bdx_bdEu / initialBdxBdEuPrice),
     to_d18(eurValueForLiquidityForPoolSide_bdx_bdEu),
@@ -129,18 +123,22 @@ export async function setUpFunctionalSystem(
   verboseLog(verbose, "oracles updated");
 
   if (initialBdEuColltFraction > 0) {
-    // recollateralize missing value for initial BdStable for the owner
+    // Since we minted BDstable and sent it to the treasury, we're now missing collateral to cover for these minted tokens.
+    // We'll overcome this by transffering collateral to the BDstable pools
+    // We'll NOT use the recallateralize funciton in this case so we won't lock BDX in the deployer address for no reason
 
     const initialBdEuColltFraction_d12 = to_d12(initialBdEuColltFraction);
-
-    const collateralWeth = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
-      .mul(7).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12); // 70% in weth
-    const collateralWbtc = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
-      .mul(3).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12); // 30% in wbtc
+    const initialBdstableMinting = constants.initialBdstableMintingAmount(hre.network.name);
+    const WETH_RATIO = 5; // Represents 50%
+    const WRBTC_RATIO = 5; // Represents 50%
+    const collateralWeth = initialBdstableMinting.mul(to_d12(scale)).div(1e12)
+      .mul(WETH_RATIO).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12);
+    const collateralWbtc = initialBdstableMinting.mul(to_d12(scale)).div(1e12)
+      .mul(WRBTC_RATIO).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12);
 
     // recallateralize by just sending the tokens in order not to extract undeserved BDX
-    await (await weth.connect(deployer).transfer(bdEuWethPool.address, collateralWeth)).wait();
-    await (await wbtc.connect(deployer).transfer(bdEuWbtcPool.address, collateralWbtc)).wait();
+    await (await weth.connect(treasury).transfer(bdEuWethPool.address, collateralWeth)).wait();
+    await (await wbtc.connect(treasury).transfer(bdEuWbtcPool.address, collateralWbtc)).wait();
 
     await bdEu.refreshCollateralRatio();
   }

@@ -26,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             'BDEU',
             treasury.address,
             bdx.address,
-            constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY
+            constants.initialBdstableMintingAmount(hre.network.name)
           ]
         }
       }

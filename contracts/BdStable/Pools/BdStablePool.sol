@@ -414,7 +414,7 @@ contract BdStablePool is OwnableUpgradeable {
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
         
-        // Take bdx form sender
+        // Take bdx from sender
         BDX.safeTransferFrom(msg.sender, address(BDSTABLE), BDX_amount);
         
         if(useNativeToken){
