@@ -80,12 +80,15 @@ export async function setUpFunctionalSystem(
     initialWbtcBdEuPrice = (await getOnChainBtcEurPrice(hre)).price;
   }
 
+  let bdeuPoolsSoFar = 0;
+
   verboseLog(verbose, "provide liquidity bdeu/weth");
   const eurValueForLiquidityForPoolSide_bdEu_weth = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE.mul(bdeuUniswapCollateralRatioFromInitialMinting).mul(scale).toNumber();
   await provideLiquidity(hre, treasury, bdEu, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_weth),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
+    bdeuPoolsSoFar++;
 
   verboseLog(verbose, "provide liquidity bdeu/wbtc");
   const eurValueForLiquidityForPoolSide_bdEu_wbtc = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE.mul(bdeuUniswapCollateralRatioFromInitialMinting).mul(scale).toNumber();
@@ -93,6 +96,7 @@ export async function setUpFunctionalSystem(
     to_d18(eurValueForLiquidityForPoolSide_bdEu_wbtc),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
     verbose);
+    bdeuPoolsSoFar++;
 
   verboseLog(verbose, "provide liquidity bdx/weth");
   const eurValueForLiquidityForPoolSide_bdx_weth = 9e3 * scale;
@@ -109,7 +113,9 @@ export async function setUpFunctionalSystem(
     verbose);
 
   verboseLog(verbose, "provide liquidity bdx/bdeu");
-  const eurValueForLiquidityForPoolSide_bdx_bdEu = 9e3 * scale;
+  const eurValueForLiquidityForPoolSide_bdx_bdEu = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE
+  .mul(1 - bdeuPoolsSoFar * bdeuUniswapCollateralRatioFromInitialMinting)
+  .mul(scale).toNumber();
   await provideLiquidity(hre, treasury, bdx, bdEu,
     to_d18(eurValueForLiquidityForPoolSide_bdx_bdEu / initialBdxBdEuPrice),
     to_d18(eurValueForLiquidityForPoolSide_bdx_bdEu),
@@ -123,18 +129,21 @@ export async function setUpFunctionalSystem(
   verboseLog(verbose, "oracles updated");
 
   if (initialBdEuColltFraction > 0) {
-    // recollateralize missing value for initial BdStable for the owner
+    // Since we minted BDstable and sent it to the treasury, we're now missing collateral to cover for these minted tokens.
+    // We'll overcome this by transffering collateral to the BDstable pools
+    // We'll NOT use the recallateralize funciton in this case so we won't lock BDX in the deployer address for no reason
 
     const initialBdEuColltFraction_d12 = to_d12(initialBdEuColltFraction);
-
+    const WETH_RATIO = 5; // Represents 50%
+    const WRBTC_RATIO = 5; // Represents 50%
     const collateralWeth = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
-      .mul(7).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12); // 70% in weth
+      .mul(WETH_RATIO).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWethBdEuPrice)).div(1e12);
     const collateralWbtc = constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY.mul(to_d12(scale)).div(1e12)
-      .mul(3).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12); // 30% in wbtc
+      .mul(WRBTC_RATIO).mul(initialBdEuColltFraction_d12).div(10).mul(1e12).div(to_d12(initialWbtcBdEuPrice)).div(1e10).div(1e12);
 
     // recallateralize by just sending the tokens in order not to extract undeserved BDX
-    await (await weth.connect(deployer).transfer(bdEuWethPool.address, collateralWeth)).wait();
-    await (await wbtc.connect(deployer).transfer(bdEuWbtcPool.address, collateralWbtc)).wait();
+    await (await weth.connect(treasury).transfer(bdEuWethPool.address, collateralWeth)).wait();
+    await (await wbtc.connect(treasury).transfer(bdEuWbtcPool.address, collateralWbtc)).wait();
 
     await bdEu.refreshCollateralRatio();
   }
