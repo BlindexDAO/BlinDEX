@@ -16,22 +16,11 @@ import { BigNumber } from "@ethersproject/bignumber";
 export function load() {
 
   task("update:oracles")
-<<<<<<< HEAD
-    .setAction(async (args, hre) => {
-      const bot = await getBot(hre);
-
-      console.log("starting uniswap pairs oracles updates");
-      await updateUniswapPairsOracles(hre, bot);
-
-      console.log("starting sovryn swap price oracles updates");
-      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
-=======
     .addParam("btcusd", "BTCUSD price")
     .addParam("ethbtc", "ETHBTC price")
     .addParam("eurusd", "EURUSD price")
     .setAction(async ({ btcusd, ethbtc, eurusd }, hre) => {
       const bot = await getBot(hre);
->>>>>>> origin/master
 
       if (hre.network.name == "rsk") {
         console.log("starting sovryn swap price oracles updates");
@@ -273,11 +262,6 @@ export function load() {
   task("show:rsk-eth-usd")
     .setAction(async (args, hre) => {
       await show_ethUsd(hre);
-    });
-
-  task("show:rsk-eur-usd")
-    .setAction(async (args, hre) => {
-      await show_eurUsd(hre);
     });
 
   task("show:full-diagnostics")
