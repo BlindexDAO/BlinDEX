@@ -15,7 +15,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 
 export function load() {
 
-  task("update:oracles")
+  task("update:all")
     .addParam("btcusd", "BTCUSD price")
     .addParam("ethbtc", "ETHBTC price")
     .addParam("eurusd", "EURUSD price")
@@ -39,7 +39,7 @@ export function load() {
       }
 
       console.log("starting uniswap pairs oracles updates");
-      await updateUniswapPairsOracles(hre);
+      await updateUniswapPairsOracles(hre, bot);
 
       console.log("starting refresh collateral ratio");
       const bdEu = await getBdEu(hre);
@@ -47,7 +47,7 @@ export function load() {
       console.log("refreshed collateral ratio");
     });
 
-  task("update:all:local")
+  task("update:all-with-bot:local")
     .setAction(async (args, hre) => {
       console.log("starting the updater");
 
@@ -72,7 +72,7 @@ export function load() {
       console.log("updater has updated");
     });
 
-  task("update:all:rsk")
+  task("update:all-with-bot:rsk")
     //on RSK btc and eth are replacing each other | btcusd param -> PriceFeed_ETH_USD | ethbtc param -> BtcToEthOracle
     .addParam("btcusd", "btcusd price to_d12")
     .addParam("ethbtc", "ethbtc price to_d12")
