@@ -17,49 +17,47 @@ export function load() {
         const deployer = await getDeployer(hre);
         const swaps = await getSwapsConfig(hre);
         const stakingRewards = (await getStakingsConfig(hre, swaps)).map((reward) => {
-        return { pairAddress: reward.stakingTokenAddress.toLowerCase(), stakingRewardAddress: reward.address.toLowerCase() };
+            return { pairAddress: reward.stakingTokenAddress.toLowerCase(), stakingRewardAddress: reward.address.toLowerCase() };
         });
 
         const {
-        pairs,
-        pairOracles,
-        pairSymbols,
+            pairs,
+            pairOracles,
+            pairSymbols,
         }: {
-        pairs: { address: string; token0: string; token1: string }[];
-        pairOracles: { pairAddress: string; oracleAddress: string }[];
-        pairSymbols: string[];
+            pairs: { address: string; token0: string; token1: string }[];
+            pairOracles: { pairAddress: string; oracleAddress: string }[];
+            pairSymbols: string[];
         } = await getPairsOraclesAndSymbols(hre, deployer);
 
-        const swapPairs = [
-        pairs.map((pair) => {
-            return {
-            pairAddress: pair.address.toLowerCase(),
-            token0Address: pair.token0.toLowerCase(),
-            token1Address: pair.token1.toLowerCase(),
-            };
-        }),
-        ];
+        const swapPairs =
+            pairs.map((pair) => {
+                return {
+                    pairAddress: pair.address.toLowerCase(),
+                    token0Address: pair.token0.toLowerCase(),
+                    token1Address: pair.token1.toLowerCase(),
+                };
+            });
 
         const mappedPairOracles = pairOracles.map((pairOracle) => {
-        return { pairAddress: pairOracle.pairAddress.toLowerCase(), oracleAddress: pairOracle.oracleAddress.toLowerCase() };
+            return { pairAddress: pairOracle.pairAddress.toLowerCase(), oracleAddress: pairOracle.oracleAddress.toLowerCase() };
         });
         const networkName = hre.network.name.toUpperCase();
 
         const blockchainConfig = {
-        [`${networkName}_BDEU_ADDRESS`]: (await getBdEu(hre)).address.toLowerCase(),
-        [`${networkName}_UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
-        [`${networkName}_BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
-        [`${networkName}_STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
-        [`${networkName}_AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
-        [`${networkName}_AVAILABLE_PAIRS`]: swapPairs,
-        [`${networkName}_STAKING_REWARDS`]: stakingRewards,
-        [`${networkName}_PAIR_ORACLES`]: mappedPairOracles,
-        [`${networkName}_PRICE_FEED_EUR_USD_ADDRESS`]: (
-            await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)
-        ).address.toLowerCase(),
-        [`${networkName}_PRICE_FEED_BTC_ETH_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
-        [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
-        [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract('UpdaterRSK', deployer)).address.toLowerCase()
+            [`${networkName}_BDEU_ADDRESS`]: (await getBdEu(hre)).address.toLowerCase(),
+            [`${networkName}_UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
+            [`${networkName}_BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
+            [`${networkName}_STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
+            [`${networkName}_AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
+            [`${networkName}_AVAILABLE_PAIRS`]: swapPairs,
+            [`${networkName}_STAKING_REWARDS`]: stakingRewards,
+            [`${networkName}_PAIR_ORACLES`]: mappedPairOracles,
+            [`${networkName}_PRICE_FEED_EUR_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
+            [`${networkName}_PRICE_FEED_BTC_ETH_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
+            [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
+            [`${networkName}_PRICE_FEED_ETH_EUR_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase(),
+            [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract('UpdaterRSK', deployer)).address.toLowerCase()
         };
 
         console.log("Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n");
@@ -88,8 +86,8 @@ export function load() {
                 STAKING_REWARDS_DISTRIBUTION: stakingRewardsDistribution.address,
                 VESTING: (await getVesting(hre)).address,
                 BD_STABLES: [bdEu.address],
-                PRICE_FEED_EUR_USD: (await hre.ethers.getContract('PriceFeed_EUR_USD', deployer)).address,
-                BTC_TO_ETH_ORACLE: (await hre.ethers.getContract('BtcToEthOracle', deployer)).address,
+                PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
+                BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address,
             }
 
             console.log(cleanStringify(blockchainConfig));
