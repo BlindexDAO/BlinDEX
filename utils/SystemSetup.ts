@@ -45,8 +45,8 @@ export async function setUpFunctionalSystem(
     // mint inital WBTC
     await mintWbtc(hre, treasury, to_d8(10), 100);
 
-    // deployer needs some bdx in tests
-    await bdx.connect(treasury).transfer(deployer.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE);
+    // deployer needs some bdx in tests. The value itself doesn't really matter, as long as it's smaller than the total amount of BDX the treasury has
+    await bdx.connect(treasury).transfer(deployer.address, to_d18(1e5));
 
     // deployer needs some bdeu in tests
     await bdEu.connect(treasury).transfer(deployer.address, tresuryBdEuBalance.div(10));

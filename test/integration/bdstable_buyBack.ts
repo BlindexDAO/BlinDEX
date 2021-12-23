@@ -2,12 +2,10 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
-import { to_d18 as to_d18, d18_ToNumber, bigNumberToDecimal } from "../../utils/NumbersHelpers"
-import { getBdEu, getBdx, getWeth, getWbtc, getBdEuWbtcPool, getBdEuWethPool, getDeployer, getUser } from "../../utils/DeployedContractsHelpers";
+import { to_d12, to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import exp from "constants";
 
 chai.use(cap);
 
@@ -15,12 +13,12 @@ chai.use(solidity);
 const { expect } = chai;
 
 describe("BuyBack", () => {
-
     beforeEach(async () => {
         await hre.deployments.fixture();
-        
         const bdEuWethPool = await getBdEuWethPool(hre);
-        await bdEuWethPool.toggleBuybackOnlyForOwner(); // now every user can buyback
+
+        // Allowing every user to buyback for our testings
+        await bdEuWethPool.toggleBuybackOnlyForOwner();
     });
 
     it("should buy back", async () => {        
@@ -80,19 +78,33 @@ describe("BuyBack", () => {
         const cr = 0.3;
 
         await setUpFunctionalSystemForTests(hre, collateralizedFraction);
-
-        await lockBdEuCrAt(hre, cr); // CR
+        await lockBdEuCrAt(hre, cr);
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);
+        const bdEu = await getBdEu(hre);
         const bdEuWethPool = await getBdEuWethPool(hre);
+        const weth = await getWeth(hre);
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
-        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18); // deployer sends BDX to user so user can buyback
+        // The deployer sends BDX to the user so the user could buyback
+        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
         
-        await bdx.connect(testUser).approve(bdEuWethPool.address, maxBdxToBuyBack_d18); 
+        const userBdxBalanceBefore = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceBefore = await bdx.balanceOf(bdEu.address);
+        const poolWethBalanceBefore = await weth.balanceOf(bdEu.address);
+        
+        await bdx.connect(testUser).approve(bdEuWethPool.address, maxBdxToBuyBack_d18);
         await bdEuWethPool.connect(testUser).buyBackBDX(maxBdxToBuyBack_d18, 1, false, {});
+
+        const userBdxBalanceAfter = await bdx.balanceOf(testUser.address);
+        const bdEuBdxBalanceAfter = await bdx.balanceOf(bdEu.address);
+        const poolWethBalanceAfter = await weth.balanceOf(bdEuWethPool.address);
+
+        expect(userBdxBalanceBefore.sub(userBdxBalanceAfter))
+            .to.be.eq(bdEuBdxBalanceAfter.sub(bdEuBdxBalanceBefore), "invalid bdx changes");
+        expect(poolWethBalanceAfter).to.be.gt(poolWethBalanceBefore);
     });
 
     it("should buy back max possible value with native token", async () => {        
@@ -100,8 +112,7 @@ describe("BuyBack", () => {
         const cr = 0.3;
 
         await setUpFunctionalSystemForTests(hre, collateralizedFraction);
-
-        await lockBdEuCrAt(hre, cr); // CR
+        await lockBdEuCrAt(hre, cr);
 
         const testUser = await getUser(hre);
         const bdx = await getBdx(hre);
@@ -111,7 +122,8 @@ describe("BuyBack", () => {
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
-        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18); // deployer sends BDX to user so user can buyback
+        // The deployer sends BDX to the user so the user could buyback
+        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
         
         const userBdxBalanceBefore = await bdx.balanceOf(testUser.address);
         const bdEuBdxBalanceBefore = await bdx.balanceOf(bdEu.address);
@@ -176,22 +188,22 @@ describe("BuyBack", () => {
 })
 
 async function calculateMaxBdxToBuyBack_d18(cr: number){
-    const bdEu = await getBdEu(hre);
+  const bdEu = await getBdEu(hre);
 
-    const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
+  const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
 
-    const bdEuCollateralValue = await bdEu.globalCollateralValue();
+  const bdEuCollateralValue = await bdEu.globalCollateralValue();
 
-    const bdEuTotalSupply = await bdEu.totalSupply();
-    const currentRequiredCollateralValue = bdEuTotalSupply.mul(to_d12(cr)).div(1e12);
+  const bdEuTotalSupply = await bdEu.totalSupply();
+  const currentRequiredCollateralValue = bdEuTotalSupply.mul(to_d12(cr)).div(1e12);
 
-    const maxBdxToBuyBack_d18 = bdEuCollateralValue.sub(currentRequiredCollateralValue)
-        .mul(1e12).div(bdxInEurPrice_d12);
+  const maxBdxToBuyBack_d18 = bdEuCollateralValue.sub(currentRequiredCollateralValue)
+  .mul(1e12).div(bdxInEurPrice_d12);
 
-    console.log("bdxInEurPrice_d12:              " + bdxInEurPrice_d12);
-    console.log("bdeu collateral value:          " + bdEuCollateralValue);
-    console.log("currentRequiredCollateralValue: " + currentRequiredCollateralValue);
-    console.log("maxBdxToBuyBack_d18:            " + maxBdxToBuyBack_d18);
+  console.log("bdxInEurPrice_d12:              " + bdxInEurPrice_d12);
+  console.log("bdeu collateral value:          " + bdEuCollateralValue);
+  console.log("currentRequiredCollateralValue: " + currentRequiredCollateralValue);
+  console.log("maxBdxToBuyBack_d18:            " + maxBdxToBuyBack_d18);
 
-    return maxBdxToBuyBack_d18;
+  return maxBdxToBuyBack_d18;
 }
