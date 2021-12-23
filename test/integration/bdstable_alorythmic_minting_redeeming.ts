@@ -8,6 +8,7 @@ import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
+import { provideBdx } from "../helpers/common";
 
 chai.use(cap);
 
@@ -36,7 +37,7 @@ describe("BDStable algorythmic", () => {
         const weth = await getWeth(hre);
         const bdEu = await getBdEu(hre);
 
-        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdx to user, so user can mint
+        await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdx to user, so user can mint
         const bdxBalanceBeforeMinting = await bdx.balanceOf(testUser.address);
 
         await lockBdEuCrAt(hre, 0);
@@ -149,7 +150,7 @@ describe("BDStable algorythmic", () => {
         await lockBdEuCrAt(hre, 0);
 
         const bdxAmount = 10;
-        await bdx.transfer(testUser.address, to_d18(bdxAmount*100)); // deployer gives some bdx to user, so user can mint
+        await provideBdx(hre, testUser.address, to_d18(bdxAmount*100)); // treasury gives some bdx to user, so user can mint
 
         // setup bdEu so it's illegal to redeem for testUser
         await performAlgorithmicMinting(testUser, bdxAmount);

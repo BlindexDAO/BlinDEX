@@ -9,6 +9,7 @@ import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getDeployer, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
+import { provideBdx } from "../helpers/common";
 
 chai.use(cap);
 
@@ -54,7 +55,7 @@ describe("BDStable fractional", () => {
         const cr = 0.7;
         await lockBdEuCrAt(hre, cr);
 
-        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+        await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
         await mintWeth(hre, testUser, to_d18(100));
 
         const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
@@ -118,7 +119,7 @@ describe("BDStable fractional", () => {
         const cr = 0.7;
         await lockBdEuCrAt(hre, cr);
 
-        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+        await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
         await mintWeth(hre, testUser, to_d18(100));
 
         const poolWethBalanceBeforeMinting_d18 = await weth.balanceOf(bdEuPool.address);
@@ -319,7 +320,7 @@ describe("BDStable fractional", () => {
         await lockBdEuCrAt(hre, cr);   
 
         // calculate how much is needed to mint
-        await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+        await provideBdx(hre,testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
         await mintWeth(hre, testUser, to_d18(100));
 
         // setup bdEu so it's illegal to redeem for testUser
