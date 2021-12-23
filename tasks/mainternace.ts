@@ -58,7 +58,13 @@ export function load() {
       const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
       console.log("updated EUR / USD");
-    })
+    });
+
+  task("update:uniswap-oracles-as-deployer")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
+      await updateUniswapPairsOracles(hre, deployer);
+    });
 
   task("update:all-with-bot:local")
     .setAction(async (args, hre) => {
