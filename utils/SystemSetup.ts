@@ -16,12 +16,6 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
   await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);
 }
 
-export async function setUpFunctionalSystemSmall(hre: HardhatRuntimeEnvironment) {
-  const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY); // it makes total liquidity value ~$1-2, useful for test deployment on real network
-
-  await setUpFunctionalSystem(hre, 1e-6, scale, false);
-}
-
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBdEuColltFraction: number,
@@ -53,7 +47,7 @@ export async function setUpFunctionalSystem(
     await mintWbtc(hre, treasury, to_d8(10), 100);
 
     // deployer needs some bdx in tests
-    await bdx.connect(treasury).transfer(deployer.address, to_d18(1e5));
+    await bdx.connect(treasury).transfer(deployer.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE);
 
     // deployer needs some bdeu in tests
     await bdEu.connect(treasury).transfer(deployer.address, tresuryBdEuBalance.div(10));
