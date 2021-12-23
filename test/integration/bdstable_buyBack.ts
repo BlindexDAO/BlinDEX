@@ -86,7 +86,7 @@ describe("BuyBack", () => {
         const bdEuWethPool = await getBdEuWethPool(hre);
         const weth = await getWeth(hre);
 
-        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
+        const maxBdxToBuyBack_d18 = (await calculateWethPoolMaxBdxToBuyBack_d18(cr));
 
         // The deployer sends BDX to the user so the user could buyback
         await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
@@ -120,7 +120,7 @@ describe("BuyBack", () => {
         const weth = await getWeth(hre);
         const bdEu = await getBdEu(hre);
 
-        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
+        const maxBdxToBuyBack_d18 = await calculateWethPoolMaxBdxToBuyBack_d18(cr);
 
         // The deployer sends BDX to the user so the user could buyback
         await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
@@ -154,7 +154,7 @@ describe("BuyBack", () => {
         const bdx = await getBdx(hre);
         const bdEuWethPool = await getBdEuWethPool(hre);
 
-        const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
+        const maxBdxToBuyBack_d18 = await calculateWethPoolMaxBdxToBuyBack_d18(cr);
 
         const bdxExcess = 10; // this is a very small amout (1e-17 BDX). We cannot use 1 because of roundings and low initial price of BDX (1 BDX < 1 EUR)
         const moreThanMaxBdxToBuyBack_d18 = maxBdxToBuyBack_d18.add(bdxExcess);
@@ -187,12 +187,15 @@ describe("BuyBack", () => {
     });
 })
 
-async function calculateMaxBdxToBuyBack_d18(cr: number){
+async function calculateWethPoolMaxBdxToBuyBack_d18(cr: number){
   const bdEu = await getBdEu(hre);
-
+  const bdEuWethPool = await getBdEuWethPool(hre);
   const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
 
-  const bdEuCollateralValue = await bdEu.globalCollateralValue();
+  // We need to check the collateral in the speicifc bdstable pool since in our tests
+  // we're trying to send bacl the collateral specifically from this pool.
+  // If we won't do this, the test might fail due to lack of WETh to send back to the buyback sender
+  const bdEuCollateralValue = await bdEuWethPool.collatFiatBalance();
 
   const bdEuTotalSupply = await bdEu.totalSupply();
   const currentRequiredCollateralValue = bdEuTotalSupply.mul(to_d12(cr)).div(1e12);
