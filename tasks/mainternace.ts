@@ -48,6 +48,12 @@ export function load() {
       console.log("refreshed collateral ratio");
     });
 
+  task("update:uniswap-oracles-as-deployer")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
+      await updateUniswapPairsOracles(hre, deployer);
+    })
+
   task("update:all-with-bot:local")
     .setAction(async (args, hre) => {
       console.log("starting the updater");
@@ -125,7 +131,7 @@ export function load() {
         console.log("updated oracleBtcEth");
 
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleEurUsd");        
+        console.log("updated oracleEurUsd");
       }
 
       console.log("updaters set");
