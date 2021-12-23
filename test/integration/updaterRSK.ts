@@ -15,7 +15,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("UpdaterRSK", () => {
+describe("UpdaterRSK", () => {
 
     beforeEach(async () => {
         await hre.deployments.fixture();
