@@ -47,4 +47,3 @@ export function load() {
       await setUpFunctionalSystemSmall(hre);
     });
 }
-

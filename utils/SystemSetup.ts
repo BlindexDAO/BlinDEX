@@ -86,6 +86,7 @@ export async function setUpFunctionalSystem(
   }
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
+
   const eurValueForLiquidityForPoolSide_bdEu_weth = 500 * scale;
   await provideLiquidity(hre, treasury, bdEu, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_weth),
