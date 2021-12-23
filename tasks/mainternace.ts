@@ -48,10 +48,28 @@ export function load() {
       console.log("refreshed collateral ratio");
     });
 
+  task("update:eurusd:rsk")
+    .addPositionalParam("eurusd", "EURUSD price")
+    .setAction(async ({ eurusd }, hre) => {
+      if (hre.network.name != 'rsk') {
+        throw new Error("RSK only task");
+      }
+      const deployer = await getDeployer(hre);
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
+      await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
+      console.log("updated EUR / USD");
+    });
+
   task("reset:uniswap-oracles")
     .setAction(async (args, hre) => {
       await resetUniswapPairsOracles(hre);
-    })
+    });
+
+  task("update:uniswap-oracles-as-deployer")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
+      await updateUniswapPairsOracles(hre, deployer);
+    });
 
   task("update:all-with-bot:local")
     .setAction(async (args, hre) => {
@@ -130,7 +148,7 @@ export function load() {
         console.log("updated oracleBtcEth");
 
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleEurUsd");        
+        console.log("updated oracleEurUsd");
       }
 
       console.log("updaters set");
