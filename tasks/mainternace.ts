@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapFactory, getUniswapPair, getUniswapPairOracle, getUniswapRouter, getWeth } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, resetUniswapPairsOracles, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
@@ -46,6 +46,29 @@ export function load() {
       const bdEu = await getBdEu(hre);
       await (await bdEu.connect(bot).refreshCollateralRatio()).wait();
       console.log("refreshed collateral ratio");
+    });
+
+  task("update:eurusd:rsk")
+    .addPositionalParam("eurusd", "EURUSD price")
+    .setAction(async ({ eurusd }, hre) => {
+      if (hre.network.name != 'rsk') {
+        throw new Error("RSK only task");
+      }
+      const deployer = await getDeployer(hre);
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
+      await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
+      console.log("updated EUR / USD");
+    });
+
+  task("reset:uniswap-oracles")
+    .setAction(async (args, hre) => {
+      await resetUniswapPairsOracles(hre);
+    });
+
+  task("update:uniswap-oracles-as-deployer")
+    .setAction(async (args, hre) => {
+      const deployer = await getDeployer(hre);
+      await updateUniswapPairsOracles(hre, deployer);
     });
 
   task("update:all-with-bot:local")
@@ -125,7 +148,7 @@ export function load() {
         console.log("updated oracleBtcEth");
 
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleEurUsd");        
+        console.log("updated oracleEurUsd");
       }
 
       console.log("updaters set");
