@@ -9,18 +9,19 @@ import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPo
 import { provideLiquidity } from "../test/helpers/swaps";
 
 export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment){
-  await setUpFunctionalSystem(hre, 1, 1, false);
+  await setUpFunctionalSystem(hre, 1, 1, false, constants.BDEU_UNISWAP_COLLATERAL_RATIO_FROM_INITIAL_MINTING);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
-  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);
+  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true, constants.BDEU_UNISWAP_COLLATERAL_RATIO_FROM_INITIAL_MINTING);
 }
 
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBdEuColltFraction: number,
   scale: number,
-  forIntegrationTests: boolean
+  forIntegrationTests: boolean,
+  bdeuUniswapCollateralRatioFromInitialMinting: number
 ) {
   const deployer = await getDeployer(hre);
   const treasury = await getTreasury(hre);
@@ -80,14 +81,14 @@ export async function setUpFunctionalSystem(
   }
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
-  const eurValueForLiquidityForPoolSide_bdEu_weth = 500 * scale;
+  const eurValueForLiquidityForPoolSide_bdEu_weth = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE.mul(bdeuUniswapCollateralRatioFromInitialMinting).mul(scale).toNumber();
   await provideLiquidity(hre, treasury, bdEu, weth,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_weth),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_weth, wethDecimals).mul(1e12).div(to_d12(initialWethBdEuPrice)),
     verbose);
 
   verboseLog(verbose, "provide liquidity bdeu/wbtc");
-  const eurValueForLiquidityForPoolSide_bdEu_wbtc = 500 * scale;
+  const eurValueForLiquidityForPoolSide_bdEu_wbtc = constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE.mul(bdeuUniswapCollateralRatioFromInitialMinting).mul(scale).toNumber();
   await provideLiquidity(hre, treasury, bdEu, wbtc,
     to_d18(eurValueForLiquidityForPoolSide_bdEu_wbtc),
     numberToBigNumberFixed(eurValueForLiquidityForPoolSide_bdEu_wbtc, wbtcDecimals).mul(1e12).div(to_d12(initialWbtcBdEuPrice)),
