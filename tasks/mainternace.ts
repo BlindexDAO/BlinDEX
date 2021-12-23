@@ -47,6 +47,19 @@ export function load() {
       console.log("refreshed collateral ratio");
     });
 
+  task("update:eurusd:rsk")
+    .addPositionalParam("eurusd", "EURUSD price")
+    .setAction(async ({ eurusd }, hre) => {
+      const networkName = hre.network.name;
+      if (networkName.toLowerCase() != 'rsk') {
+        throw new Error("RSK only task");
+      }
+      const bot = await getBot(hre);
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+      await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
+      console.log("updated EUR / USD");
+    })
+
   task("update:all-with-bot:local")
     .setAction(async (args, hre) => {
       console.log("starting the updater");
