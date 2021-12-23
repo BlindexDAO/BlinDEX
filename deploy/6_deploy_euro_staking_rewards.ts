@@ -1,9 +1,9 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployFunction } from 'hardhat-deploy/types';
-import { UniswapV2Factory } from '../typechain/UniswapV2Factory';
-import * as constants from '../utils/Constants'
-import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
-import { getBdEu, getBdx, getDeployer } from '../utils/DeployedContractsHelpers';
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { DeployFunction } from "hardhat-deploy/types";
+import { UniswapV2Factory } from "../typechain/UniswapV2Factory";
+import * as constants from "../utils/Constants";
+import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import { getBdEu, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -16,30 +16,25 @@ async function setupStakingContract(
   console.log("starting deployment: euro staking");
 
   const deployer = await getDeployer(hre);
-  const uniswapFactoryContract = await hre.ethers.getContract("UniswapV2Factory") as UniswapV2Factory;
+  const uniswapFactoryContract = (await hre.ethers.getContract("UniswapV2Factory")) as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
 
   const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
-  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
+  const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
 
-  const stakingRewards_ProxyDeployment = await hre.deployments.deploy(
-    stakingRewardsContractName, {
+  const stakingRewards_ProxyDeployment = await hre.deployments.deploy(stakingRewardsContractName, {
     from: deployer.address,
     proxy: {
-      proxyContract: 'OptimizedTransparentProxy',
+      proxyContract: "OptimizedTransparentProxy",
       execute: {
         init: {
           methodName: "initialize",
-          args: [
-            pairAddress,
-            stakingRewardsDistribution.address,
-            isTrueBdPool
-          ]
-        }
-      }
+          args: [pairAddress, stakingRewardsDistribution.address, isTrueBdPool],
+        },
+      },
     },
     contract: "StakingRewards",
-    args: []
+    args: [],
   });
 
   console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
@@ -76,7 +71,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // One time migration
   return true;
 };
-func.id = __filename
-func.tags = ['StakingRewards'];
-func.dependencies = ['LiquidityPools', 'StakingRewardsDistribution', 'Vesting'];
+func.id = __filename;
+func.tags = ["StakingRewards"];
+func.dependencies = ["LiquidityPools", "StakingRewardsDistribution", "Vesting"];
 export default func;

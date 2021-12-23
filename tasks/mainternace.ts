@@ -1,5 +1,17 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapFactory, getUniswapPair, getUniswapPairOracle, getUniswapRouter, getWeth } from "../utils/DeployedContractsHelpers";
+import {
+  getBdEu,
+  getBdEuWethPool,
+  getBdx,
+  getBot,
+  getDeployer,
+  getTreasury,
+  getUniswapFactory,
+  getUniswapPair,
+  getUniswapPairOracle,
+  getUniswapRouter,
+  getWeth,
+} from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18 } from "../utils/NumbersHelpers";
 import { getPools, resetUniswapPairsOracles, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
@@ -15,7 +27,6 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 
 export function load() {
-
   task("update:all")
     .addParam("btcusd", "BTCUSD price")
     .addParam("ethbtc", "ETHBTC price")
@@ -25,16 +36,16 @@ export function load() {
 
       if (hre.network.name == "rsk") {
         console.log("starting sovryn swap price oracles updates");
-        const oracleEthUsd = await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, bot) as SovrynSwapPriceFeed;
+        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, bot)) as SovrynSwapPriceFeed;
         await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
         console.log("updated ETH / USD (RSK BTC / USD)");
 
-        const oracleBtcEth = await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, bot) as SovrynSwapPriceFeed;
+        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, bot)) as SovrynSwapPriceFeed;
         await (await oracleBtcEth.updateOracleWithVerification(to_d12(ethbtc))).wait();
         console.log("updated BTC / ETH (RSK ETH / BTC)");
 
         console.log("starting fiat to fiat oracles updates");
-        const oracleEurUsd = await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, bot) as FiatToFiatPseudoOracleFeed;
+        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, bot)) as FiatToFiatPseudoOracleFeed;
         await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
         console.log("updated EUR / USD");
       }
@@ -51,50 +62,42 @@ export function load() {
   task("update:eurusd:rsk")
     .addPositionalParam("eurusd", "EURUSD price")
     .setAction(async ({ eurusd }, hre) => {
-      if (hre.network.name != 'rsk') {
+      if (hre.network.name != "rsk") {
         throw new Error("RSK only task");
       }
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
+      const oracleEurUsd = (await hre.ethers.getContract("PriceFeed_EUR_USD", deployer)) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
       console.log("updated EUR / USD");
     });
 
-  task("reset:uniswap-oracles")
-    .setAction(async (args, hre) => {
-      await resetUniswapPairsOracles(hre);
-    });
+  task("reset:uniswap-oracles").setAction(async (args, hre) => {
+    await resetUniswapPairsOracles(hre);
+  });
 
-  task("update:uniswap-oracles-as-deployer")
-    .setAction(async (args, hre) => {
-      const deployer = await getDeployer(hre);
-      await updateUniswapPairsOracles(hre, deployer);
-    });
+  task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
+    const deployer = await getDeployer(hre);
+    await updateUniswapPairsOracles(hre, deployer);
+  });
 
-  task("update:all-with-bot:local")
-    .setAction(async (args, hre) => {
-      console.log("starting the updater");
+  task("update:all-with-bot:local").setAction(async (args, hre) => {
+    console.log("starting the updater");
 
-      const bot = await getBot(hre);
-      const updater = await hre.ethers.getContract('Updater', bot) as UpdaterRSK;
+    const bot = await getBot(hre);
+    const updater = (await hre.ethers.getContract("Updater", bot)) as UpdaterRSK;
 
-      let uniOracles = [];
-      const pools = await getPools(hre);
-      for (let pool of pools) {
-        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-        uniOracles.push(oracle.address);
-      }
-      const bdeu = await getBdEu(hre) as BDStable;
+    let uniOracles = [];
+    const pools = await getPools(hre);
+    for (let pool of pools) {
+      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+      uniOracles.push(oracle.address);
+    }
+    const bdeu = (await getBdEu(hre)) as BDStable;
 
-      await (await updater.update(
-        [], [],
-        [], [],
-        uniOracles,
-        [bdeu.address]))
-        .wait();
+    await (await updater.update([], [], [], [], uniOracles, [bdeu.address])).wait();
 
-      console.log("updater has updated");
-    });
+    console.log("updater has updated");
+  });
 
   task("update:all-with-bot:rsk")
     //on RSK btc and eth are replacing each other | btcusd param -> PriceFeed_ETH_USD | ethbtc param -> BtcToEthOracle
@@ -105,11 +108,11 @@ export function load() {
       console.log("starting the updater");
 
       const bot = await getBot(hre);
-      const updater = await hre.ethers.getContract('Updater', bot) as UpdaterRSK;
+      const updater = (await hre.ethers.getContract("Updater", bot)) as UpdaterRSK;
 
-      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
-      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
-      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+      const oracleEthUsd = (await hre.ethers.getContract("PriceFeed_ETH_USD", bot)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract("BtcToEthOracle", bot)) as SovrynSwapPriceFeed;
+      const oracleEurUsd = (await hre.ethers.getContract("PriceFeed_EUR_USD", bot)) as FiatToFiatPseudoOracleFeed;
 
       let uniOracles = [];
       const pools = await getPools(hre);
@@ -119,12 +122,16 @@ export function load() {
       }
       const bdeu = await getBdEu(hre);
 
-      await (await updater.update(
-        [oracleEthUsd.address, oracleBtcEth.address], [to_d12(btcusd), to_d12(ethbtc)], //on RSK btc and eth are replacing each other
-        [oracleEurUsd.address], [to_d12(eurusd)],
-        uniOracles,
-        [bdeu.address]
-      )).wait();
+      await (
+        await updater.update(
+          [oracleEthUsd.address, oracleBtcEth.address],
+          [to_d12(btcusd), to_d12(ethbtc)], //on RSK btc and eth are replacing each other
+          [oracleEurUsd.address],
+          [to_d12(eurusd)],
+          uniOracles,
+          [bdeu.address]
+        )
+      ).wait();
 
       console.log("updater has updated");
     });
@@ -136,11 +143,11 @@ export function load() {
 
       const networkName = hre.network.name;
       const deployer = await getDeployer(hre);
-      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', deployer) as SovrynSwapPriceFeed;
-      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', deployer) as SovrynSwapPriceFeed;
-      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
+      const oracleEthUsd = (await hre.ethers.getContract("PriceFeed_ETH_USD", deployer)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract("BtcToEthOracle", deployer)) as SovrynSwapPriceFeed;
+      const oracleEurUsd = (await hre.ethers.getContract("PriceFeed_EUR_USD", deployer)) as FiatToFiatPseudoOracleFeed;
 
-      if (networkName == 'rsk') {
+      if (networkName == "rsk") {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
         console.log("updated oracleEthUsd");
 
@@ -187,31 +194,29 @@ export function load() {
     .addPositionalParam("stableAddress", "stable address")
     .addPositionalParam("val", "value")
     .setAction(async ({ stableAddress, val }, hre) => {
-
       if (val < 0 || val > 1) {
-        throw "invalid cr value"
+        throw "invalid cr value";
       }
 
       const deployer = await getDeployer(hre);
 
-      const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
+      const stable = (await hre.ethers.getContractAt("BDStable", stableAddress)) as BDStable;
       await (await stable.connect(deployer).lockCollateralRatioAt(to_d12(val))).wait();
     });
 
   task("set:stable-toggleCollateralRatioPaused")
     .addPositionalParam("stableAddress", "stable address")
     .setAction(async ({ stableAddress }, hre) => {
-
       const deployer = await getDeployer(hre);
 
-      const stable = await hre.ethers.getContractAt("BDStable", stableAddress) as BDStable;
+      const stable = (await hre.ethers.getContractAt("BDStable", stableAddress)) as BDStable;
       await (await stable.connect(deployer).toggleCollateralRatioPaused()).wait();
     });
 
   task("set:rsk-eur-usd")
     .addPositionalParam("newPrice", "new price")
     .setAction(async ({ newPrice }, hre) => {
-      const bot = await hre.ethers.getNamedSigner('BOT');
+      const bot = await hre.ethers.getNamedSigner("BOT");
 
       if (newPrice < 0.5 || newPrice > 2) {
         throw "invalid price";
@@ -219,7 +224,7 @@ export function load() {
 
       console.log("Setting EUR/USD: " + newPrice);
 
-      const feed = await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName) as FiatToFiatPseudoOracleFeed;
+      const feed = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName)) as FiatToFiatPseudoOracleFeed;
       await (await feed.connect(bot).setPrice(to_d12(newPrice))).wait();
     });
 
@@ -238,55 +243,49 @@ export function load() {
 
   // -------------------------- readonly
 
-  task("show:oracles-prices")
-    .setAction(async (args, hre) => {
-      await show_uniswapOraclesPrices(hre, true);
-    });
+  task("show:oracles-prices").setAction(async (args, hre) => {
+    await show_uniswapOraclesPrices(hre, true);
+  });
 
-  task("show:pools")
-    .setAction(async (args, hre) => {
-      const pools = await getPools(hre);
+  task("show:pools").setAction(async (args, hre) => {
+    const pools = await getPools(hre);
 
-      for (let pool of pools) {
-        const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-        console.log(`${pool[0].name} / ${pool[1].name} : ${pair.address}`);
-        console.log(`\t${pool[0].token.address} / ${pool[1].token.address}`);
-      }
-    });
+    for (let pool of pools) {
+      const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
+      console.log(`${pool[0].name} / ${pool[1].name} : ${pair.address}`);
+      console.log(`\t${pool[0].token.address} / ${pool[1].token.address}`);
+    }
+  });
 
   task("show:pool-reserves")
     .addPositionalParam("pairAddress", "pair address")
     .setAction(async ({ pairAddress }, hre) => {
-      const pair = await hre.ethers.getContractAt("UniswapV2Pair", pairAddress) as UniswapV2Pair;
+      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
       const reserves = await pair.getReserves();
-      console.log(`Reserves: ${d18_ToNumber(reserves[0])} ${d18_ToNumber(reserves[1])}`)
+      console.log(`Reserves: ${d18_ToNumber(reserves[0])} ${d18_ToNumber(reserves[1])}`);
     });
 
-  task("show:users")
-    .setAction(async (args, hre) => {
-      const deployer = await getDeployer(hre);
-      const treasury = await getTreasury(hre);
-      const bot = await getBot(hre);
+  task("show:users").setAction(async (args, hre) => {
+    const deployer = await getDeployer(hre);
+    const treasury = await getTreasury(hre);
+    const bot = await getBot(hre);
 
-      console.log("deployer: " + deployer.address);
-      console.log("treasury: " + treasury.address);
-      console.log("bot     : " + bot.address);
-    });
+    console.log("deployer: " + deployer.address);
+    console.log("treasury: " + treasury.address);
+    console.log("bot     : " + bot.address);
+  });
 
-  task("show:bdeu-ef-bdx-cov")
-    .setAction(async (args, hre) => {
-      await show_efBDXCov(hre);
-    });
+  task("show:bdeu-ef-bdx-cov").setAction(async (args, hre) => {
+    await show_efBDXCov(hre);
+  });
 
-  task("show:rsk-eur-usd")
-    .setAction(async (args, hre) => {
-      await show_eurUsd(hre);
-    });
+  task("show:rsk-eur-usd").setAction(async (args, hre) => {
+    await show_eurUsd(hre);
+  });
 
-  task("show:rsk-eth-usd")
-    .setAction(async (args, hre) => {
-      await show_ethUsd(hre);
-    });
+  task("show:rsk-eth-usd").setAction(async (args, hre) => {
+    await show_ethUsd(hre);
+  });
 
   task("show:full-diagnostics")
     .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
@@ -304,13 +303,13 @@ export function load() {
     });
 
   async function show_ethEur(hre: HardhatRuntimeEnvironment) {
-    const feed = await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName) as IOracleBasedCryptoFiatFeed;
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
     console.log("ETH/EUR (RSK: BTC/EUR): " + price);
   }
 
   async function show_ethUsd(hre: HardhatRuntimeEnvironment) {
-    const feed = await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName) as IPriceFeed;
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName)) as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     console.log("ETH/USD (RSK: BTC/USD): " + price);
   }
@@ -318,17 +317,17 @@ export function load() {
   async function show_btcEth(hre: HardhatRuntimeEnvironment) {
     let price;
     if (hre.network.name == "rsk") {
-      const feed = await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle) as IPriceFeed;
+      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as IPriceFeed;
       price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     } else {
-      const feed = await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle) as BtcToEthOracleChinlink;
+      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as BtcToEthOracleChinlink;
       price = d12_ToNumber(await feed.getPrice_1e12());
     }
     console.log("BTC/ETH (RSK: ETH/BTC): " + price);
   }
 
   async function show_eurUsd(hre: HardhatRuntimeEnvironment) {
-    const feed = await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName) as IPriceFeed;
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName)) as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     let lastUpdateTimestamp = 0;
     if (hre.network.name == "rsk") {
@@ -364,9 +363,9 @@ export function load() {
 
     for (let pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-      const updatedAgo = (new Date().getTime() / 1000) - (await oracle.blockTimestampLast());
+      const updatedAgo = new Date().getTime() / 1000 - (await oracle.blockTimestampLast());
 
-      const pair = await getUniswapPair(hre, pool[0].token, pool[1].token)
+      const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
       const reserves = await pair.getReserves();
 
       if (showPrices) {
@@ -398,7 +397,7 @@ export function load() {
         console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${Math.round(updatedAgo)}s ago`);
       }
 
-      console.log(`       liquidity: ${reserves[0].toString()}  |  ${reserves[1].toString()}`)
+      console.log(`       liquidity: ${reserves[0].toString()}  |  ${reserves[1].toString()}`);
     }
   }
 }

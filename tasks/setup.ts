@@ -4,28 +4,26 @@ import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { setupProductionReadySystem } from "../utils/SystemSetup";
 
 export function load() {
-  task("initialize")
-    .setAction(async (args, hre) => {
-      await setupProductionReadySystem(hre);
-    });
+  task("initialize").setAction(async (args, hre) => {
+    await setupProductionReadySystem(hre);
+  });
 
-  task("initialize:local")
-    .setAction(async (args, hre) => {
-      const deployer = await getDeployer(hre);
-      const treasury = await getTreasury(hre);
+  task("initialize:local").setAction(async (args, hre) => {
+    const deployer = await getDeployer(hre);
+    const treasury = await getTreasury(hre);
 
-      // mint initial WETH
-      await mintWeth(hre, deployer, to_d18(100));
+    // mint initial WETH
+    await mintWeth(hre, deployer, to_d18(100));
 
-      // mint inital WBTC
-      await mintWbtc(hre, deployer, to_d8(10), 1000);
+    // mint inital WBTC
+    await mintWbtc(hre, deployer, to_d8(10), 1000);
 
-      // mint initial WETH
-      await mintWeth(hre, treasury, to_d18(100));
+    // mint initial WETH
+    await mintWeth(hre, treasury, to_d18(100));
 
-      // mint inital WBTC
-      await mintWbtc(hre, treasury, to_d8(10), 1000);
+    // mint inital WBTC
+    await mintWbtc(hre, treasury, to_d8(10), 1000);
 
-      await setupProductionReadySystem(hre);
-    });
+    await setupProductionReadySystem(hre);
+  });
 }

@@ -9,11 +9,11 @@ import "./IPriceFeed.sol";
 // We populate our own feeds
 contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     using SafeMath for uint256;
-    
+
     uint8 private constant DECIMALS = 12;
     uint256 private constant PRICE_PRECISION = 1e12;
-    uint256 private constant SECONDS_IN_DAY = 60*60*24;
-    
+    uint256 private constant SECONDS_IN_DAY = 60 * 60 * 24;
+
     uint256 private recentPrice;
     uint256 public lastUpdateTimestamp;
     uint256 public maxDayChange_d12 = 1e10; // 1%
@@ -45,20 +45,14 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     }
 
     function setPrice(uint256 _price) external onlyUpdaterOrOwner {
-        if(_msgSender() != owner()){
-            uint256 diff = _price > recentPrice
-                ? _price.sub(recentPrice)
-                : recentPrice.sub(_price);
+        if (_msgSender() != owner()) {
+            uint256 diff = _price > recentPrice ? _price.sub(recentPrice) : recentPrice.sub(_price);
 
-            uint256 dayChange_d12 = PRICE_PRECISION
-                .mul(diff)
-                .mul(SECONDS_IN_DAY)
-                .div(recentPrice)
-                .div(block.timestamp.sub(lastUpdateTimestamp));
+            uint256 dayChange_d12 = PRICE_PRECISION.mul(diff).mul(SECONDS_IN_DAY).div(recentPrice).div(block.timestamp.sub(lastUpdateTimestamp));
 
             require(dayChange_d12 <= maxDayChange_d12, "Price change too big");
         }
-        
+
         recentPrice = _price;
         lastUpdateTimestamp = block.timestamp;
         emit PriceChanged(_price);
@@ -69,8 +63,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
         emit MaxDayChangeChanged(_maxDayChange_d12);
     }
 
-    modifier onlyUpdaterOrOwner()
-    {
+    modifier onlyUpdaterOrOwner() {
         require(_msgSender() == updater || _msgSender() == owner(), "You're not updater");
         _;
     }

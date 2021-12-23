@@ -15,10 +15,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./StakingRewardsDistribution.sol";
 
-contract StakingRewards is 
-    PausableUpgradeable,
-    OwnableUpgradeable
-{
+contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
     using SafeERC20 for ERC20;
     using SafeMath for uint256;
 
@@ -71,14 +68,11 @@ contract StakingRewards is
 
     /* ========== CONSTRUCTOR ========== */
 
-    function initialize (
+    function initialize(
         address _stakingToken,
         address _stakingRewardsDistribution,
         bool _isTrueBdPool
-    ) 
-        external
-        initializer
-    {
+    ) external initializer {
         require(_stakingToken != address(0), "Staking address cannot be 0");
         require(_stakingRewardsDistribution != address(0), "StakingRewardsDistribution address cannot be 0");
 
@@ -109,18 +103,17 @@ contract StakingRewards is
     }
 
     function lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(uint256 yearsNo) public pure returns (uint256) {
-        if(yearsNo == 10){
+        if (yearsNo == 10) {
             return 50000000;
-        } else if(yearsNo == 5){
+        } else if (yearsNo == 5) {
             return 10000000;
-        } else if(yearsNo == 3){
+        } else if (yearsNo == 3) {
             return 3000000;
-        } else if(yearsNo == 2){
+        } else if (yearsNo == 2) {
             return 2333000;
-        } else if(yearsNo == 1){
+        } else if (yearsNo == 1) {
             return 1667000;
-        }
-        else{
+        } else {
             revert("Not supported staking duration");
         }
     }
@@ -161,30 +154,28 @@ contract StakingRewards is
     function rewardPerToken() public view returns (uint256) {
         if (_staking_token_supply == 0) {
             return rewardPerTokenStored_REWARD_PRECISION;
-        }
-        else {
-            return rewardPerTokenStored_REWARD_PRECISION
-                .add(lastTimeRewardApplicable()
-                    .sub(lastUpdateTime)
-                    .mul(stakingRewardsDistribution.getRewardRatePerSecond(address(this)))
-                    .mul(REWARD_PRECISION)
-                    .div(_staking_token_boosted_supply));
+        } else {
+            return
+                rewardPerTokenStored_REWARD_PRECISION.add(
+                    lastTimeRewardApplicable()
+                        .sub(lastUpdateTime)
+                        .mul(stakingRewardsDistribution.getRewardRatePerSecond(address(this)))
+                        .mul(REWARD_PRECISION)
+                        .div(_staking_token_boosted_supply)
+                );
         }
     }
 
     function earned(address account) public view returns (uint256) {
-        return _boosted_balances[account]
-            .mul(
-                rewardPerToken()
-                .sub(userRewardPerTokenPaid_REWARD_PRECISION[account]))
-            .div(REWARD_PRECISION)
-            .add(rewards[account]);
+        return
+            _boosted_balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid_REWARD_PRECISION[account])).div(REWARD_PRECISION).add(
+                rewards[account]
+            );
     }
 
     // Precision 1e18 for compatibility with ERC20 token
     function getRewardForDuration() external view returns (uint256) {
-        return stakingRewardsDistribution.getRewardRatePerSecond(address(this))
-            .mul(rewardsDurationSeconds);
+        return stakingRewardsDistribution.getRewardRatePerSecond(address(this)).mul(rewardsDurationSeconds);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -209,13 +200,9 @@ contract StakingRewards is
 
     function stakeLocked(uint256 amount, uint256 yearsNo) external nonReentrant whenNotPaused updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
-        if(yearsNo == 10){
-            require(
-                isTrueBdPool,
-                "You can only stake locked liquidity 10 years for true BD pools"
-            );
-        }
-        else{
+        if (yearsNo == 10) {
+            require(isTrueBdPool, "You can only stake locked liquidity 10 years for true BD pools");
+        } else {
             require(
                 yearsNo == 1 || yearsNo == 2 || yearsNo == 3 || yearsNo == 5 || yearsNo == 10,
                 "You can only stake locked liquidity for 1, 2, 3, 5 or 10 years"
@@ -227,13 +214,15 @@ contract StakingRewards is
 
         uint256 multiplier = lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(yearsNo);
         uint256 boostedAmount = amount.mul(multiplier).div(LOCK_MULTIPLIER_PRECISION);
-        lockedStakes[msg.sender].push(LockedStake(
-            keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
-            block.timestamp,
-            amount,
-            block.timestamp.add(secs),
-            multiplier
-        ));
+        lockedStakes[msg.sender].push(
+            LockedStake(
+                keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
+                block.timestamp,
+                amount,
+                block.timestamp.add(secs),
+                multiplier
+            )
+        );
 
         // Staking token supply and boosted supply
         _staking_token_supply = _staking_token_supply.add(amount);
@@ -265,22 +254,24 @@ contract StakingRewards is
         emit Withdrawn(msg.sender, amount);
     }
 
-    function withdrawLocked(bytes32 kek_id, uint256 from, uint256 to) external nonReentrant updateReward(msg.sender) {
-        // from & to parameters serve as an optinal range, 
+    function withdrawLocked(
+        bytes32 kek_id,
+        uint256 from,
+        uint256 to
+    ) external nonReentrant updateReward(msg.sender) {
+        // from & to parameters serve as an optinal range,
         // to prevent the loop from running out of gas
         // when user has too many stakes
 
-        to = to < lockedStakes[msg.sender].length 
-            ? to 
-            : lockedStakes[msg.sender].length;
-        
+        to = to < lockedStakes[msg.sender].length ? to : lockedStakes[msg.sender].length;
+
         LockedStake memory thisStake;
 
-        for (uint i = from; i < to; i++){ 
-            if (kek_id == lockedStakes[msg.sender][i].kek_id){
+        for (uint256 i = from; i < to; i++) {
+            if (kek_id == lockedStakes[msg.sender][i].kek_id) {
                 thisStake = lockedStakes[msg.sender][i];
 
-                lockedStakes[msg.sender][i] = lockedStakes[msg.sender][lockedStakes[msg.sender].length-1];
+                lockedStakes[msg.sender][i] = lockedStakes[msg.sender][lockedStakes[msg.sender].length - 1];
                 lockedStakes[msg.sender].pop();
                 break;
             }
@@ -291,7 +282,7 @@ contract StakingRewards is
         uint256 theAmount = thisStake.amount;
         uint256 boostedAmount = theAmount.mul(thisStake.multiplier_LOCK_MULTIPLIER_PRECISION).div(LOCK_MULTIPLIER_PRECISION);
 
-        if (theAmount > 0){
+        if (theAmount > 0) {
             // Staking token balance and boosted balance
             _locked_balances[msg.sender] = _locked_balances[msg.sender].sub(theAmount);
             _boosted_balances[msg.sender] = _boosted_balances[msg.sender].sub(boostedAmount);
@@ -309,13 +300,9 @@ contract StakingRewards is
 
     function lockExistingStake(uint256 amount, uint256 yearsNo) external nonReentrant whenNotPaused updateReward(msg.sender) {
         require(amount > 0, "amount must be > 0");
-        if(yearsNo == 10){
-            require(
-                isTrueBdPool,
-                "You can only stake locked liquidity 10 years for true BD pools"
-            );
-        }
-        else{
+        if (yearsNo == 10) {
+            require(isTrueBdPool, "You can only stake locked liquidity 10 years for true BD pools");
+        } else {
             require(
                 yearsNo == 1 || yearsNo == 2 || yearsNo == 3 || yearsNo == 5 || yearsNo == 10,
                 "You can only stake locked liquidity for 1, 2, 3, 5 or 10 years"
@@ -344,13 +331,15 @@ contract StakingRewards is
 
         uint256 multiplier = lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(yearsNo);
         uint256 boostedAmount = amount.mul(multiplier).div(LOCK_MULTIPLIER_PRECISION);
-        lockedStakes[msg.sender].push(LockedStake(
-            keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
-            block.timestamp,
-            amount,
-            block.timestamp.add(secs),
-            multiplier
-        ));
+        lockedStakes[msg.sender].push(
+            LockedStake(
+                keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
+                block.timestamp,
+                amount,
+                block.timestamp.add(secs),
+                multiplier
+            )
+        );
 
         // Staking token supply and boosted supply
         _staking_token_supply = _staking_token_supply.add(amount);
@@ -364,7 +353,11 @@ contract StakingRewards is
     }
 
     // used by StakingRewardsDistribution, to collect rewards from all pools at once
-    function releaseReward(address user, uint256 immediatelyReleasedReward, uint256 vestedReward) external onlyStakingRewardsDistribution {
+    function releaseReward(
+        address user,
+        uint256 immediatelyReleasedReward,
+        uint256 vestedReward
+    ) external onlyStakingRewardsDistribution {
         rewards[user] = 0;
         emit RewardPaid(user, immediatelyReleasedReward);
         emit RewardVested(user, vestedReward);
@@ -393,12 +386,10 @@ contract StakingRewards is
     }
 
     function updateUserRewardInternal(address account) internal {
-        
         // Need to retro-adjust some things if the period hasn't been renewed, then start a new one
         if (block.timestamp > periodFinish) {
             retroCatchUp();
-        }
-        else {
+        } else {
             rewardPerTokenStored_REWARD_PRECISION = rewardPerToken();
             lastUpdateTime = lastTimeRewardApplicable();
         }
@@ -449,9 +440,7 @@ contract StakingRewards is
     }
 
     modifier onlyStakingRewardsDistribution() {
-        require(
-            msg.sender == address(stakingRewardsDistribution),
-            "Only staking rewards distribution allowed");
+        require(msg.sender == address(stakingRewardsDistribution), "Only staking rewards distribution allowed");
         _;
     }
 

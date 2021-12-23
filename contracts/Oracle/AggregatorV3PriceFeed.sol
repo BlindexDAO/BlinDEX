@@ -9,7 +9,7 @@ contract AggregatorV3PriceFeed is IPriceFeed {
 
     constructor(address _feedAddress) public {
         require(_feedAddress != address(0), "Feed address cannot be 0");
-        
+
         feed = AggregatorV3Interface(_feedAddress);
     }
 
@@ -18,13 +18,7 @@ contract AggregatorV3PriceFeed is IPriceFeed {
     }
 
     function price() external view override returns (uint256) {
-        (
-            , 
-            int256 priceVal,
-            ,
-            ,
-            
-        ) = feed.latestRoundData();
+        (, int256 priceVal, , , ) = feed.latestRoundData();
         return uint256(priceVal);
     }
 }

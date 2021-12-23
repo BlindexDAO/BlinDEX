@@ -19,13 +19,12 @@ contract BdStablePool is OwnableUpgradeable {
 
     IERC20 private BDX;
     IWETH private NativeTokenWrapper;
-    
+
     IERC20 public collateral_token;
     BDStable public BDSTABLE;
     ICryptoPairOracle public collatWEthOracle;
-    
-    bool public is_collateral_wrapping_native_token;
 
+    bool public is_collateral_wrapping_native_token;
 
     uint256 private missing_decimals; // Number of decimals needed to get to 18
     address private weth_address;
@@ -81,10 +80,7 @@ contract BdStablePool is OwnableUpgradeable {
         address _collateral_address,
         uint256 _collateral_decimals,
         bool _is_collateral_wrapping_native_token
-    ) 
-        external
-        initializer
-    {
+    ) external initializer {
         require(_bdstable_contract_address != address(0), "BdStable address cannot be 0");
         require(_bdx_contract_address != address(0), "BDX address cannot be 0");
         require(_collateral_address != address(0), "Collateral address cannot be 0");
@@ -93,7 +89,7 @@ contract BdStablePool is OwnableUpgradeable {
 
         BDSTABLE = BDStable(_bdstable_contract_address);
         BDX = IERC20(_bdx_contract_address);
-        if(_is_collateral_wrapping_native_token) {
+        if (_is_collateral_wrapping_native_token) {
             NativeTokenWrapper = IWETH(_collateral_address);
         }
         collateral_token = IERC20(_collateral_address);
@@ -113,17 +109,13 @@ contract BdStablePool is OwnableUpgradeable {
 
     /* ========== VIEWS ========== */
 
-     // Returns the price of the pool collateral in fiat
+    // Returns the price of the pool collateral in fiat
     function getCollateralPrice_d12() public view returns (uint256) {
-        if(collateralPricePaused == true){
+        if (collateralPricePaused == true) {
             return pausedPrice;
         } else {
             uint256 eth_fiat_price_d12 = BDSTABLE.weth_fiat_price();
-            uint256 collat_eth_price =
-                collatWEthOracle.consult(
-                    weth_address,
-                    BdPoolLibrary.PRICE_PRECISION
-                );
+            uint256 collat_eth_price = collatWEthOracle.consult(weth_address, BdPoolLibrary.PRICE_PRECISION);
 
             return eth_fiat_price_d12.mul(BdPoolLibrary.PRICE_PRECISION).div(collat_eth_price);
         }
@@ -132,18 +124,16 @@ contract BdStablePool is OwnableUpgradeable {
     // Returns fiat value of collateral held in this BdStable pool
     function collatFiatBalance() external view returns (uint256) {
         //Expressed in collateral token decimals
-        if(collateralPricePaused == true){
-            return collateral_token.balanceOf(address(this))
-                .sub(unclaimedPoolCollateral)
-                .mul(10 ** missing_decimals)
-                .mul(pausedPrice)
-                .div(BdPoolLibrary.PRICE_PRECISION);
+        if (collateralPricePaused == true) {
+            return
+                collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral).mul(10**missing_decimals).mul(pausedPrice).div(
+                    BdPoolLibrary.PRICE_PRECISION
+                );
         } else {
-            return collateral_token.balanceOf(address(this))
-                .sub(unclaimedPoolCollateral)
-                .mul(10 ** missing_decimals)
-                .mul(getCollateralPrice_d12())
-                .div(BdPoolLibrary.PRICE_PRECISION);
+            return
+                collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral).mul(10**missing_decimals).mul(getCollateralPrice_d12()).div(
+                    BdPoolLibrary.PRICE_PRECISION
+                );
         }
     }
 
@@ -151,19 +141,20 @@ contract BdStablePool is OwnableUpgradeable {
 
     function updateOraclesIfNeeded() public {
         BDSTABLE.updateOraclesIfNeeded();
-        if(collatWEthOracle.shouldUpdateOracle()){
+        if (collatWEthOracle.shouldUpdateOracle()) {
             collatWEthOracle.updateOracle();
         }
     }
 
     // Will fail if fully collateralized or fully algorithmic
     // > 0% and < 100% collateral-backed
-    function mintFractionalBdStable(uint256 collateral_amount_in_max, uint256 bdx_in_max, uint256 bdStable_out_min, bool useNativeToken)
-        external
-        payable
-        notMintPaused
-    {
-        if(useNativeToken){
+    function mintFractionalBdStable(
+        uint256 collateral_amount_in_max,
+        uint256 bdx_in_max,
+        uint256 bdStable_out_min,
+        bool useNativeToken
+    ) external payable notMintPaused {
+        if (useNativeToken) {
             require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
             require(msg.value == collateral_amount_in_max, "msg.value and collateral_amount_in_max do not match");
         }
@@ -171,31 +162,29 @@ contract BdStablePool is OwnableUpgradeable {
         updateOraclesIfNeeded();
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
-        
-        if(global_collateral_ratio_d12 == 0){
+
+        if (global_collateral_ratio_d12 == 0) {
             collateral_amount_in_max = 0;
-        } else if(global_collateral_ratio_d12 == BdPoolLibrary.COLLATERAL_RATIO_MAX){
+        } else if (global_collateral_ratio_d12 == BdPoolLibrary.COLLATERAL_RATIO_MAX) {
             bdx_in_max = 0;
         }
 
         require(
-            collateral_token.balanceOf(address(this))
-                .sub(unclaimedPoolCollateral)
-                .add(collateral_amount_in_max) <= pool_ceiling,
+            collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral).add(collateral_amount_in_max) <= pool_ceiling,
             "Pool ceiling reached, no more BdStable can be minted with this collateral"
         );
 
-        uint256 collateral_amount_in_max_d18 = collateral_amount_in_max * (10 ** missing_decimals);
+        uint256 collateral_amount_in_max_d18 = collateral_amount_in_max * (10**missing_decimals);
 
         uint256 mint_amount;
         uint256 bdx_needed;
-        if(global_collateral_ratio_d12 == 0) {
+        if (global_collateral_ratio_d12 == 0) {
             mint_amount = BdPoolLibrary.calcMintAlgorithmicBD(bdx_price, bdx_in_max);
             bdx_needed = bdx_in_max;
-        } else if(global_collateral_ratio_d12 == 1) {
+        } else if (global_collateral_ratio_d12 == 1) {
             mint_amount = BdPoolLibrary.calcMint1t1BD(getCollateralPrice_d12(), collateral_amount_in_max_d18);
             bdx_needed = 0;
-        } else{ 
+        } else {
             (mint_amount, bdx_needed) = BdPoolLibrary.calcMintFractionalBD(
                 bdx_price,
                 getCollateralPrice_d12(),
@@ -204,20 +193,20 @@ contract BdStablePool is OwnableUpgradeable {
             );
         }
 
-        mint_amount = (mint_amount.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
+        mint_amount = (mint_amount.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
 
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
 
         BDSTABLE.refreshCollateralRatio();
 
-        if(bdx_needed > 0){
+        if (bdx_needed > 0) {
             BDX.safeTransferFrom(msg.sender, address(BDSTABLE), bdx_needed);
         }
 
-        if(collateral_amount_in_max > 0){
-            if(useNativeToken){
-                NativeTokenWrapper.deposit{ value: collateral_amount_in_max }();
+        if (collateral_amount_in_max > 0) {
+            if (useNativeToken) {
+                NativeTokenWrapper.deposit{value: collateral_amount_in_max}();
             } else {
                 collateral_token.safeTransferFrom(msg.sender, address(this), collateral_amount_in_max);
             }
@@ -228,7 +217,11 @@ contract BdStablePool is OwnableUpgradeable {
 
     // Will fail if fully collateralized or algorithmic
     // Redeem BDSTABLE for collateral and BDX. > 0% and < 100% collateral-backed
-    function redeemFractionalBdStable(uint256 BdStable_amount, uint256 BDX_out_min, uint256 COLLATERAL_out_min) external notRedeemPaused {
+    function redeemFractionalBdStable(
+        uint256 BdStable_amount,
+        uint256 BDX_out_min,
+        uint256 COLLATERAL_out_min
+    ) external notRedeemPaused {
         updateOraclesIfNeeded();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
         uint256 effective_global_collateral_ratio_d12 = BDSTABLE.effective_global_collateral_ratio_d12();
@@ -237,18 +230,18 @@ contract BdStablePool is OwnableUpgradeable {
             ? effective_global_collateral_ratio_d12
             : global_collateral_ratio_d12;
 
-        uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(BdPoolLibrary.PRICE_PRECISION);
+        uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(
+            BdPoolLibrary.PRICE_PRECISION
+        );
 
-        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(
-                BdStable_amount_post_fee.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION)
-            );
+        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION));
 
         uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
         uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
         bdx_amount = bdx_amount.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
         // Need to adjust for decimals of collateral
-        uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10 ** missing_decimals);
+        uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10**missing_decimals);
         uint256 collateral_fiat_value = BdStable_amount_precision.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION);
         uint256 collateral_needed = collateral_fiat_value.mul(BdPoolLibrary.PRICE_PRECISION).div(getCollateralPrice_d12());
 
@@ -263,16 +256,16 @@ contract BdStablePool is OwnableUpgradeable {
 
         BDSTABLE.refreshCollateralRatio();
 
-        if(bdx_amount > 0){
+        if (bdx_amount > 0) {
             require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
-            
+
             redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
 
             BDSTABLE.pool_claim_bdx(bdx_amount);
         }
 
         lastRedeemed[msg.sender] = block.number;
-        
+
         // Move all external functions to the end
         BDSTABLE.pool_burn_from(msg.sender, BdStable_amount);
     }
@@ -280,9 +273,7 @@ contract BdStablePool is OwnableUpgradeable {
     // After a redemption happens, transfer the newly minted BDX and owed collateral from this pool
     // contract to the user. Redemption is split into two functions to prevent flash loans from being able
     // to take out BdStable/collateral from the system, use an AMM to trade the new price, and then mint back into the system.
-    function collectRedemption(bool useNativeToken)
-        external
-    {
+    function collectRedemption(bool useNativeToken) external {
         require(
             (lastRedeemed[msg.sender].add(redemption_delay)) <= block.number,
             "Must wait for redemption_delay blocks before collecting redemption"
@@ -303,9 +294,7 @@ contract BdStablePool is OwnableUpgradeable {
         if (redeemCollateralBalances[msg.sender] > 0) {
             CollateralAmount = redeemCollateralBalances[msg.sender];
             redeemCollateralBalances[msg.sender] = 0;
-            unclaimedPoolCollateral = unclaimedPoolCollateral.sub(
-                CollateralAmount
-            );
+            unclaimedPoolCollateral = unclaimedPoolCollateral.sub(CollateralAmount);
 
             sendCollateral = true;
         }
@@ -314,7 +303,7 @@ contract BdStablePool is OwnableUpgradeable {
             BDSTABLE.pool_transfer_claimed_bdx(msg.sender, BDXAmount);
         }
         if (sendCollateral == true) {
-            if(useNativeToken){
+            if (useNativeToken) {
                 NativeTokenWrapper.withdraw(CollateralAmount);
                 safeTransferETH(msg.sender, CollateralAmount);
             } else {
@@ -327,23 +316,24 @@ contract BdStablePool is OwnableUpgradeable {
     // Thus, if the target collateral ratio is higher than the actual value of collateral, minters get BDX for adding collateral
     // This function simply rewards anyone that sends collateral to a pool with the same amount of BDX + the bonus rate
     // Anyone can call this function to recollateralize the protocol and take the extra BDX value from the bonus rate as an arb opportunity
-    function recollateralizeBdStable(uint256 collateral_amount, uint256 BDX_out_min, bool useNativeToken)
-        external
-        payable
-    {
+    function recollateralizeBdStable(
+        uint256 collateral_amount,
+        uint256 BDX_out_min,
+        bool useNativeToken
+    ) external payable {
         require(recollateralizePaused == false, "Recollateralize is paused");
 
-        if(recollateralizeOnlyForOwner){
+        if (recollateralizeOnlyForOwner) {
             require(msg.sender == owner(), "Currently only owner can recollateralize");
         }
 
-        if(useNativeToken){
+        if (useNativeToken) {
             require(is_collateral_wrapping_native_token, "Pool doesn't support native token");
             require(msg.value == collateral_amount, "msg.value and collateral_amount do not match");
         }
 
         updateOraclesIfNeeded();
-        uint256 collateral_amount_d18 = collateral_amount * (10 ** missing_decimals);
+        uint256 collateral_amount_d18 = collateral_amount * (10**missing_decimals);
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
         uint256 bdStable_total_supply = BDSTABLE.totalSupply();
         uint256 global_collateral_ratio_d12 = BDSTABLE.global_collateral_ratio_d12();
@@ -355,11 +345,11 @@ contract BdStablePool is OwnableUpgradeable {
             global_collat_value,
             bdStable_total_supply,
             global_collateral_ratio_d12
-        ); 
+        );
 
-        uint256 collateral_units_precision = collateral_units.div(10 ** missing_decimals);
+        uint256 collateral_units_precision = collateral_units.div(10**missing_decimals);
 
-        uint256 bdx_paid_back = amount_to_recollat.mul(uint(BdPoolLibrary.PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
+        uint256 bdx_paid_back = amount_to_recollat.mul(uint256(BdPoolLibrary.PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
         uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
         bdx_paid_back = bdx_paid_back.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
 
@@ -367,21 +357,20 @@ contract BdStablePool is OwnableUpgradeable {
 
         BDSTABLE.refreshCollateralRatio();
 
-        if(useNativeToken){
+        if (useNativeToken) {
             // no need to check collateral_units_precision, it's <= then collateral_amount
 
-            NativeTokenWrapper.deposit{ value: collateral_units_precision }();
+            NativeTokenWrapper.deposit{value: collateral_units_precision}();
 
             // refund remaining native token, if any left
             if (msg.value > collateral_units_precision) {
                 safeTransferETH(msg.sender, msg.value.sub(collateral_units_precision));
             }
-
         } else {
             collateral_token.safeTransferFrom(msg.sender, address(this), collateral_units_precision);
         }
 
-        if(bdx_paid_back > 0){
+        if (bdx_paid_back > 0) {
             BDSTABLE.transfer_bdx(msg.sender, bdx_paid_back);
         }
 
@@ -390,39 +379,38 @@ contract BdStablePool is OwnableUpgradeable {
 
     // Function can be called by an BDX holder to have the protocol buy back BDX with excess collateral value from a desired collateral pool
     // This can also happen if the collateral ratio > 1
-    function buyBackBDX(uint256 BDX_amount, uint256 COLLATERAL_out_min, bool useNativeToken)
-        external
-    {
+    function buyBackBDX(
+        uint256 BDX_amount,
+        uint256 COLLATERAL_out_min,
+        bool useNativeToken
+    ) external {
         require(buyBackPaused == false, "Buyback is paused");
 
-        if(buybackOnlyForOwner){
+        if (buybackOnlyForOwner) {
             require(msg.sender == owner(), "Currently only owner can buyback");
         }
 
         updateOraclesIfNeeded();
-        
-        uint256 bdx_price = BDSTABLE.BDX_price_d12();
-    
-        (uint256 collateral_equivalent_d18) = BdPoolLibrary.calcBuyBackBDX(
-            BDSTABLE.availableExcessCollatDV(),
-            bdx_price,
-            getCollateralPrice_d12(),
-            BDX_amount
-        ).mul(uint(BdPoolLibrary.PRICE_PRECISION).sub(buyback_fee)).div(BdPoolLibrary.PRICE_PRECISION);
 
-        uint256 collateral_precision = collateral_equivalent_d18.div(10 ** missing_decimals);
+        uint256 bdx_price = BDSTABLE.BDX_price_d12();
+
+        uint256 collateral_equivalent_d18 = BdPoolLibrary
+            .calcBuyBackBDX(BDSTABLE.availableExcessCollatDV(), bdx_price, getCollateralPrice_d12(), BDX_amount)
+            .mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(buyback_fee))
+            .div(BdPoolLibrary.PRICE_PRECISION);
+
+        uint256 collateral_precision = collateral_equivalent_d18.div(10**missing_decimals);
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
-        
+
         // Take bdx from sender
         BDX.safeTransferFrom(msg.sender, address(BDSTABLE), BDX_amount);
-        
-        if(useNativeToken){
+
+        if (useNativeToken) {
             // Give the sender their desired collateral
             NativeTokenWrapper.withdraw(collateral_precision);
             safeTransferETH(msg.sender, collateral_precision);
-        }
-        else {
+        } else {
             // Give the sender their desired collateral
             collateral_token.safeTransfer(msg.sender, collateral_precision);
         }
@@ -431,21 +419,12 @@ contract BdStablePool is OwnableUpgradeable {
     }
 
     receive() external payable {
-        require(
-            msg.sender == address(NativeTokenWrapper), 
-            "Only native token wrapper allowed to send native token"
-        );
+        require(msg.sender == address(NativeTokenWrapper), "Only native token wrapper allowed to send native token");
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setCollatWETHOracle(
-        address _collateral_weth_oracle_address,
-        address _weth_address
-    ) 
-        external
-        onlyOwner 
-    {
+    function setCollatWETHOracle(address _collateral_weth_oracle_address, address _weth_address) external onlyOwner {
         require(_collateral_weth_oracle_address != address(0), "Oracle cannot be set to the zero address");
         require(_weth_address != address(0), "WETH cannot be set to the zero address");
 
@@ -472,7 +451,7 @@ contract BdStablePool is OwnableUpgradeable {
 
         emit RecollateralizePausedToggled(recollateralizePaused);
     }
-    
+
     function toggleBuybackPaused() external onlyOwner {
         buyBackPaused = !buyBackPaused;
 
@@ -493,7 +472,7 @@ contract BdStablePool is OwnableUpgradeable {
 
     function toggleCollateralPricePaused(uint256 _new_price) external onlyOwner {
         // If pausing, set paused price; else if unpausing, clear pausedPrice
-        if(collateralPricePaused == false){
+        if (collateralPricePaused == false) {
             pausedPrice = _new_price;
         } else {
             pausedPrice = 0;
@@ -505,17 +484,14 @@ contract BdStablePool is OwnableUpgradeable {
 
     // Combined into one function due to 24KiB contract memory limit
     function setPoolParameters(
-        uint256 new_ceiling, 
-        uint256 new_bonus_rate, 
-        uint256 new_redemption_delay, 
+        uint256 new_ceiling,
+        uint256 new_bonus_rate,
+        uint256 new_redemption_delay,
         uint256 new_mint_fee,
-        uint256 new_redeem_fee, 
+        uint256 new_redeem_fee,
         uint256 new_buyback_fee,
         uint256 new_recollat_fee
-    )
-        external
-        onlyOwner 
-    {
+    ) external onlyOwner {
         pool_ceiling = new_ceiling;
         bonus_rate = new_bonus_rate;
         redemption_delay = new_redemption_delay;
@@ -534,7 +510,15 @@ contract BdStablePool is OwnableUpgradeable {
 
     /* ========== EVENTS ========== */
 
-    event PoolParametersSet(uint256 new_ceiling, uint256 new_bonus_rate, uint256 new_redemption_delay, uint256 new_mint_fee, uint256 new_redeem_fee, uint256 new_buyback_fee, uint256 new_recollat_fee);
+    event PoolParametersSet(
+        uint256 new_ceiling,
+        uint256 new_bonus_rate,
+        uint256 new_redemption_delay,
+        uint256 new_mint_fee,
+        uint256 new_redeem_fee,
+        uint256 new_buyback_fee,
+        uint256 new_recollat_fee
+    );
     event MintingPausedToggled(bool toggled);
     event RedeemingPausedToggled(bool toggled);
     event RecollateralizePausedToggled(bool toggled);
