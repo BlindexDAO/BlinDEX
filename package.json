@@ -15,7 +15,8 @@
     "update:oracles:rsk": "hardhat --network rsk update:oracles",
     "npm-package": "hardhat --network mainnetFork npm-package",
     "compile": "hardhat compile --config hardhat.compile.config.ts",
-    "solhint": "npx solhint 'contracts/**/*.sol'"
+    "solhint": "npx solhint 'contracts/**/*.sol'",
+    "format": "prettier --write . --loglevel silent"
   },
   "devDependencies": {
     "@ethersproject/providers": "^5.5.0",
