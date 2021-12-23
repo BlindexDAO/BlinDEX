@@ -59,6 +59,7 @@ export function load() {
         ).address.toLowerCase(),
         [`${networkName}_PRICE_FEED_BTC_ETH_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
         [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
+        [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract('UpdaterRSK', deployer)).address.toLowerCase()
         };
 
         console.log("Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n");

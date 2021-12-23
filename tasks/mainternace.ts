@@ -10,11 +10,12 @@ import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
 import { IPriceFeed } from "../typechain/IPriceFeed";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 
 export function load() {
 
-  task("update:oracles")
+  task("update:all")
     .addParam("btcusd", "BTCUSD price")
     .addParam("ethbtc", "ETHBTC price")
     .addParam("eurusd", "EURUSD price")
@@ -38,7 +39,7 @@ export function load() {
       }
 
       console.log("starting uniswap pairs oracles updates");
-      await updateUniswapPairsOracles(hre);
+      await updateUniswapPairsOracles(hre, bot);
 
       console.log("starting refresh collateral ratio");
       const bdEu = await getBdEu(hre);
@@ -46,7 +47,90 @@ export function load() {
       console.log("refreshed collateral ratio");
     });
 
-  task("setPoolConsultLeniency")
+  task("update:all-with-bot:local")
+    .setAction(async (args, hre) => {
+      console.log("starting the updater");
+
+      const bot = await getBot(hre);
+      const updater = await hre.ethers.getContract('Updater', bot) as UpdaterRSK;
+
+      let uniOracles = [];
+      const pools = await getPools(hre);
+      for (let pool of pools) {
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        uniOracles.push(oracle.address);
+      }
+      const bdeu = await getBdEu(hre) as BDStable;
+
+      await (await updater.update(
+        [], [],
+        [], [],
+        uniOracles,
+        [bdeu.address]))
+        .wait();
+
+      console.log("updater has updated");
+    });
+
+  task("update:all-with-bot:rsk")
+    //on RSK btc and eth are replacing each other | btcusd param -> PriceFeed_ETH_USD | ethbtc param -> BtcToEthOracle
+    .addParam("btcusd", "btcusd price to_d12")
+    .addParam("ethbtc", "ethbtc price to_d12")
+    .addParam("eurusd", "eurusd price to_d12")
+    .setAction(async ({ btcusd, ethbtc, eurusd }, hre) => {
+      console.log("starting the updater");
+
+      const bot = await getBot(hre);
+      const updater = await hre.ethers.getContract('Updater', bot) as UpdaterRSK;
+
+      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', bot) as SovrynSwapPriceFeed;
+      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', bot) as SovrynSwapPriceFeed;
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', bot) as FiatToFiatPseudoOracleFeed;
+
+      let uniOracles = [];
+      const pools = await getPools(hre);
+      for (let pool of pools) {
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        uniOracles.push(oracle.address);
+      }
+      const bdeu = await getBdEu(hre);
+
+      await (await updater.update(
+        [oracleEthUsd.address, oracleBtcEth.address], [to_d12(btcusd), to_d12(ethbtc)], //on RSK btc and eth are replacing each other
+        [oracleEurUsd.address], [to_d12(eurusd)],
+        uniOracles,
+        [bdeu.address]
+      )).wait();
+
+      console.log("updater has updated");
+    });
+
+  task("set:updater")
+    .addPositionalParam("newUpdater", "new updater address")
+    .setAction(async ({ newUpdater }, hre) => {
+      console.log("starting the setUpdaters");
+
+      const networkName = hre.network.name;
+      const deployer = await getDeployer(hre);
+      const oracleEthUsd = await hre.ethers.getContract('PriceFeed_ETH_USD', deployer) as SovrynSwapPriceFeed;
+      const oracleBtcEth = await hre.ethers.getContract('BtcToEthOracle', deployer) as SovrynSwapPriceFeed;
+      const oracleEurUsd = await hre.ethers.getContract('PriceFeed_EUR_USD', deployer) as FiatToFiatPseudoOracleFeed;
+
+      if (networkName == 'rsk') {
+        await (await oracleEthUsd.setUpdater(newUpdater)).wait();
+        console.log("updated oracleEthUsd");
+
+        await (await oracleBtcEth.setUpdater(newUpdater)).wait();
+        console.log("updated oracleBtcEth");
+
+        await (await oracleEurUsd.setUpdater(newUpdater)).wait();
+        console.log("updated oracleEurUsd");        
+      }
+
+      console.log("updaters set");
+    });
+
+  task("set:oracles:ConsultLeniency")
     .addPositionalParam("newVal", "new value")
     .setAction(async ({ newVal }, hre) => {
       const pools = await getPools(hre);
@@ -63,7 +147,7 @@ export function load() {
       console.log("all done");
     });
 
-  task("set:AllowStaleConsults")
+  task("set:oracles:AllowStaleConsults")
     .addPositionalParam("enable", "1 = enable, 0 = disable")
     .setAction(async ({ enable }, hre) => {
       const pools = await getPools(hre);
@@ -75,7 +159,7 @@ export function load() {
       }
     });
 
-  task("set:lock-cr-at")
+  task("set:lockCollateralRatioAt")
     .addPositionalParam("stableAddress", "stable address")
     .addPositionalParam("val", "value")
     .setAction(async ({ stableAddress, val }, hre) => {
@@ -90,7 +174,7 @@ export function load() {
       await (await stable.connect(deployer).lockCollateralRatioAt(to_d12(val))).wait();
     });
 
-  task("set:toggle-pause-cr")
+  task("set:stable-toggleCollateralRatioPaused")
     .addPositionalParam("stableAddress", "stable address")
     .setAction(async ({ stableAddress }, hre) => {
 
@@ -180,14 +264,8 @@ export function load() {
       await show_ethUsd(hre);
     });
 
-  task("show:eth-usd")
-    .setAction(async (args, hre) => {
-      await show_ethEur(hre);
-    });
-
   task("show:full-diagnostics")
     .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
-
     .setAction(async ({ showPrices }, hre) => {
       await show_ethEur(hre);
       await show_ethUsd(hre);
@@ -233,6 +311,7 @@ export function load() {
       const feedConcrete = feed as FiatToFiatPseudoOracleFeed;
       lastUpdateTimestamp = await (await feedConcrete.lastUpdateTimestamp()).toNumber();
     }
+
     console.log("EUR/USD: " + price + " last updated: " + new Date(lastUpdateTimestamp * 1000));
   }
 
