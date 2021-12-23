@@ -14,11 +14,11 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200,
-          },
-        },
-      },
-    ],
+            runs: 200
+          }
+        }
+      }
+    ]
   },
   typechain: {
     outDir: "typechain",
@@ -29,19 +29,19 @@ const config: HardhatUserConfig = {
       "./node_modules/@uniswap/v2-core/build/UniswapV2Factory.json",
       "./node_modules/@uniswap/v2-core/build/UniswapV2Factory__factory.json",
       "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02.json",
-      "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02__factors.json",
-    ],
+      "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02__factors.json"
+    ]
   },
   external: {
     contracts: [
       {
-        artifacts: "node_modules/@uniswap/v2-core/build",
+        artifacts: "node_modules/@uniswap/v2-core/build"
       },
       {
-        artifacts: "node_modules/@uniswap/v2-periphery/build",
-      },
-    ],
-  },
+        artifacts: "node_modules/@uniswap/v2-periphery/build"
+      }
+    ]
+  }
 };
 
 export default config;

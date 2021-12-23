@@ -29,12 +29,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [bdx.address, vesting.address, devTreasury.address, 90],
-        },
-      },
+          args: [bdx.address, vesting.address, devTreasury.address, 90]
+        }
+      }
     },
     contract: "StakingRewardsDistribution",
-    args: [],
+    args: []
   });
 
   console.log("Deployed StakingRewardsDistribution: " + stakingRewardsDistribution_ProxyDeployment.address);

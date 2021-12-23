@@ -29,12 +29,12 @@ async function setupStakingContract(
       execute: {
         init: {
           methodName: "initialize",
-          args: [pairAddress, stakingRewardsDistribution.address, isTrueBdPool],
-        },
-      },
+          args: [pairAddress, stakingRewardsDistribution.address, isTrueBdPool]
+        }
+      }
     },
     contract: "StakingRewards",
-    args: [],
+    args: []
   });
 
   console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);

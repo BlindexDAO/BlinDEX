@@ -53,24 +53,24 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   return [
     [
       { name: "BDX", token: bdx },
-      { name: "BDEU", token: bdEu },
+      { name: "BDEU", token: bdEu }
     ],
     [
       { name: "BDEU", token: bdEu },
-      { name: "WETH", token: weth },
+      { name: "WETH", token: weth }
     ],
     [
       { name: "BDEU", token: bdEu },
-      { name: "WBTC", token: wbtc },
+      { name: "WBTC", token: wbtc }
     ],
     [
       { name: "BDX", token: bdx },
-      { name: "WETH", token: weth },
+      { name: "WETH", token: weth }
     ],
     [
       { name: "BDX", token: bdx },
-      { name: "WBTC", token: wbtc },
-    ],
+      { name: "WBTC", token: wbtc }
+    ]
   ];
 }
 

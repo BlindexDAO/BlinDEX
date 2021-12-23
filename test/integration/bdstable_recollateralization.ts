@@ -12,7 +12,7 @@ import {
   getDeployer,
   getUser,
   getOnChainEthEurPrice,
-  mintWeth,
+  mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";

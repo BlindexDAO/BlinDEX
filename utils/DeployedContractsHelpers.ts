@@ -119,7 +119,7 @@ export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithA
       user.address,
       Date.now() + 3600,
       {
-        value: amount_d8.mul(1e10).mul(maxBtcEthPrice), // mul*1e10 : align precision // second mul(maxBtcEthPrice) : excessive amount of eth, we'll get the rest back
+        value: amount_d8.mul(1e10).mul(maxBtcEthPrice) // mul*1e10 : align precision // second mul(maxBtcEthPrice) : excessive amount of eth, we'll get the rest back
       }
     )
   ).wait();

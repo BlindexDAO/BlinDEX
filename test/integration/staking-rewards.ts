@@ -18,7 +18,7 @@ import {
   getWbtc,
   getWeth,
   mintWbtc,
-  mintWeth,
+  mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";

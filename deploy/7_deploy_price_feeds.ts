@@ -12,7 +12,7 @@ export const ContractsNames = {
   priceFeedEurUsdName: "PriceFeed_EUR_USD",
   priceFeedETHUsdName: "PriceFeed_ETH_USD",
   BtcToEthOracle: "BtcToEthOracle",
-  oracleEthEurName: "OracleBasedCryptoFiatFeed_ETH_EUR",
+  oracleEthEurName: "OracleBasedCryptoFiatFeed_ETH_EUR"
 };
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedEurUsdName, {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
-      args: [bot.address, to_d12(1.13)],
+      args: [bot.address, to_d12(1.13)]
     });
     console.log(`deployed ${ContractsNames.priceFeedEurUsdName} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
@@ -45,8 +45,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         1e12,
         bot.address,
         60 * 60, // 60 min
-        60 * 75, // 75 min
-      ],
+        60 * 75 // 75 min
+      ]
     });
     console.log(`deployed ${ContractsNames.priceFeedETHUsdName} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
@@ -60,22 +60,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         1e12,
         bot.address,
         60 * 60, // 60 min
-        60 * 75, // 75 min
-      ], // price is reverted on RSK, it's actually ETH/USD
+        60 * 75 // 75 min
+      ] // price is reverted on RSK, it's actually ETH/USD
     });
     console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
   } else {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedEurUsdName, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.EUR_USD_FEED_ADDRESS[networkName]],
+      args: [constants.EUR_USD_FEED_ADDRESS[networkName]]
     });
     console.log(`deployed ${ContractsNames.priceFeedEurUsdName} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(ContractsNames.priceFeedETHUsdName, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.ETH_USD_FEED_ADDRESS[networkName]],
+      args: [constants.ETH_USD_FEED_ADDRESS[networkName]]
     });
     console.log(`deployed ${ContractsNames.priceFeedETHUsdName} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
@@ -84,7 +84,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
-      args: [constants.BTC_ETH_FEED_ADDRESS[networkName], constants.wETH_address[networkName]],
+      args: [constants.BTC_ETH_FEED_ADDRESS[networkName], constants.wETH_address[networkName]]
     });
     console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
   }
@@ -92,7 +92,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await hre.deployments.deploy(ContractsNames.oracleEthEurName, {
     from: deployer.address,
     contract: "OracleBasedCryptoFiatFeed",
-    args: [priceFeed_EUR_USD_Deployment.address, priceFeed_ETH_USD_Deployment.address],
+    args: [priceFeed_EUR_USD_Deployment.address, priceFeed_ETH_USD_Deployment.address]
   });
 
   const oracleBasedCryptoFiatFeed_ETH_EUR = (await hre.ethers.getContract(ContractsNames.oracleEthEurName)) as OracleBasedCryptoFiatFeed;
@@ -113,7 +113,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdeuWbtcPool = (await hre.ethers.getContract("BDEU_WBTC_POOL")) as BdStablePool;
   const weth_to_weth_oracle = await hre.deployments.deploy("WethToWethOracle", {
     from: deployer.address,
-    args: [constants.wETH_address[networkName]],
+    args: [constants.wETH_address[networkName]]
   });
 
   await (await bdeuWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait();

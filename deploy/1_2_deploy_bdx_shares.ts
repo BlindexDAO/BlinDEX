@@ -13,12 +13,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: ["BlindexShares", "BDX"],
-        },
-      },
+          args: ["BlindexShares", "BDX"]
+        }
+      }
     },
     contract: "BDXShares",
-    args: [],
+    args: []
   });
 
   console.log("BDX deployed to:", bdx_proxy.address);

@@ -12,7 +12,7 @@ import {
   getOnChainBtcEurPrice,
   getDeployer,
   getTreasury,
-  mintWeth,
+  mintWeth
 } from "./DeployedContractsHelpers";
 import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";

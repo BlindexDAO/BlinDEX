@@ -21,12 +21,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: ["BlindexEuro", "BDEU", treasury.address, bdx.address, constants.initialBdstableMintingAmount(hre.network.name)],
-        },
-      },
+          args: ["BlindexEuro", "BDEU", treasury.address, bdx.address, constants.initialBdstableMintingAmount(hre.network.name)]
+        }
+      }
     },
     contract: "BDStable",
-    args: [],
+    args: []
   });
 
   const bdEu = (await hre.ethers.getContract("BDEU")) as BDStable;
@@ -39,15 +39,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [bdEu.address, bdx.address, constants.wETH_address[hre.network.name], constants.wETH_precision[hre.network.name], true],
-        },
-      },
+          args: [bdEu.address, bdx.address, constants.wETH_address[hre.network.name], constants.wETH_precision[hre.network.name], true]
+        }
+      }
     },
     contract: "BdStablePool",
     args: [],
     libraries: {
-      BdPoolLibrary: bdPoolLibraryDeployment.address,
-    },
+      BdPoolLibrary: bdPoolLibraryDeployment.address
+    }
   });
 
   const bdeu_weth_BdStablePool = (await hre.ethers.getContract("BDEU_WETH_POOL")) as BdStablePool;
@@ -60,15 +60,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [bdEu.address, bdx.address, constants.wBTC_address[hre.network.name], constants.wBTC_precision[hre.network.name], false],
-        },
-      },
+          args: [bdEu.address, bdx.address, constants.wBTC_address[hre.network.name], constants.wBTC_precision[hre.network.name], false]
+        }
+      }
     },
     contract: "BdStablePool",
     args: [],
     libraries: {
-      BdPoolLibrary: bdPoolLibraryDeployment.address,
-    },
+      BdPoolLibrary: bdPoolLibraryDeployment.address
+    }
   });
 
   const bdeu_wbtc_BdStablePool = (await hre.ethers.getContract("BDEU_WBTC_POOL")) as BdStablePool;

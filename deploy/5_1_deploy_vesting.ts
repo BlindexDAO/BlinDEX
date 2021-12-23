@@ -16,12 +16,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [bdx.address, deployer.address, deployer.address, vestingTimeInSeconds],
-        },
-      },
+          args: [bdx.address, deployer.address, deployer.address, vestingTimeInSeconds]
+        }
+      }
     },
     contract: "Vesting",
-    args: [],
+    args: []
   });
 
   console.log("Vesting deployed to: " + vesting_ProxyDeployment.address);

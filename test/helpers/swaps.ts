@@ -161,7 +161,7 @@ export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: Si
       account.address,
       Date.now() + 3600,
       {
-        value: amountETH,
+        value: amountETH
       }
     );
 }

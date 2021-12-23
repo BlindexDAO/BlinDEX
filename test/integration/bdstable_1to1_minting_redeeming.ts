@@ -15,7 +15,7 @@ import {
   getWbtc,
   getWeth,
   mintWbtc,
-  mintWeth,
+  mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";

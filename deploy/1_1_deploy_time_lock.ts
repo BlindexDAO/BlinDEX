@@ -9,8 +9,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     args: [
       deployer,
-      60 * 60 * 24 * 14, // 2 weeks delay
-    ],
+      60 * 60 * 24 * 14 // 2 weeks delay
+    ]
   });
 
   console.log("Timelock deployed to:", timelock.address);

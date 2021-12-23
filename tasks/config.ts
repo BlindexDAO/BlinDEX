@@ -10,7 +10,7 @@ import {
   getUniswapRouter,
   getVesting,
   getWbtc,
-  getWeth,
+  getWeth
 } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber } from "../utils/NumbersHelpers";
@@ -32,7 +32,7 @@ export function load() {
     const {
       pairs,
       pairOracles,
-      pairSymbols,
+      pairSymbols
     }: {
       pairs: { address: string; token0: string; token1: string }[];
       pairOracles: { pairAddress: string; oracleAddress: string }[];
@@ -43,7 +43,7 @@ export function load() {
       return {
         pairAddress: pair.address.toLowerCase(),
         token0Address: pair.token0.toLowerCase(),
-        token1Address: pair.token1.toLowerCase(),
+        token1Address: pair.token1.toLowerCase()
       };
     });
 
@@ -73,7 +73,7 @@ export function load() {
       [`${networkName}_PRICE_FEED_ETH_EUR_ADDRESS`]: (
         await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)
       ).address.toLowerCase(),
-      [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
+      [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase()
     };
 
     console.log(
@@ -104,7 +104,7 @@ export function load() {
       VESTING: (await getVesting(hre)).address,
       BD_STABLES: [bdEu.address],
       PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
-      BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address,
+      BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address
     };
 
     console.log(cleanStringify(blockchainConfig));
@@ -120,7 +120,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
       token0Symbol: await pair[0].symbol,
       token1Symbol: await pair[1].symbol,
       token0Address: pair[0].address.toLowerCase(),
-      token1Address: pair[1].address.toLowerCase(),
+      token1Address: pair[1].address.toLowerCase()
     };
   });
 
@@ -159,7 +159,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
       return {
         pair: { address: pairAddress, token0: pairSymbols.token0Address, token1: pairSymbols.token1Address },
         pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress },
-        symbol: pairSymbol,
+        symbol: pairSymbol
       };
     })
   );
@@ -178,7 +178,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
   return {
     pairs: approvedPairs.map((p) => p.pair),
     pairOracles: approvedPairs.map((p) => p.pairOracle),
-    pairSymbols: approvedPairs.map((p) => p.symbol),
+    pairSymbols: approvedPairs.map((p) => p.symbol)
   };
 }
 
@@ -191,24 +191,24 @@ async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
   const whitelist = [
     [
       { symbol: "WETH", address: weth.address },
-      { symbol: "BDEU", address: bdEu.address },
+      { symbol: "BDEU", address: bdEu.address }
     ],
     [
       { symbol: "WBTC", address: wbtc.address },
-      { symbol: "BDEU", address: bdEu.address },
+      { symbol: "BDEU", address: bdEu.address }
     ],
     [
       { symbol: "WETH", address: weth.address },
-      { symbol: "BDX", address: bdx.address },
+      { symbol: "BDX", address: bdx.address }
     ],
     [
       { symbol: "WBTC", address: wbtc.address },
-      { symbol: "BDX", address: bdx.address },
+      { symbol: "BDX", address: bdx.address }
     ],
     [
       { symbol: "BDX", address: bdx.address },
-      { symbol: "BDEU", address: bdEu.address },
-    ],
+      { symbol: "BDEU", address: bdEu.address }
+    ]
   ];
 
   return whitelist;
@@ -234,7 +234,7 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment, allowedSwapPair
 
       return {
         address: address,
-        stakingTokenAddress: stakingTokenAddress,
+        stakingTokenAddress: stakingTokenAddress
       };
     })
   );
@@ -261,7 +261,7 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
       return {
         address: pairAddress,
         token0: await token0,
-        token1: await token1,
+        token1: await token1
       };
     })
   );
@@ -295,7 +295,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
         address: pool.address,
         collateralAddress: collateralAddress.toString(),
         mintingFee: d12_ToNumber(mingingFee),
-        redemptionFee: d12_ToNumber(redemptionFee),
+        redemptionFee: d12_ToNumber(redemptionFee)
       };
     })
   );
@@ -304,8 +304,8 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
     {
       address: bdEu.address,
       fiat: "EUR",
-      pools: await bdEuPools,
-    },
+      pools: await bdEuPools
+    }
   ];
 
   return stables;

@@ -60,13 +60,13 @@ export function load() {
     fs.mkdirSync("./package/abis");
     for (const contract of contracts) {
       fs.writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
-        encoding: "utf8",
+        encoding: "utf8"
       });
     }
     fsExtra.writeJsonSync("./package/package.json", {
       name: "@blindex/stablecoins",
       version: "0.0.1",
-      types: "typings/index.d.ts",
+      types: "typings/index.d.ts"
     });
   });
 
@@ -74,7 +74,7 @@ export function load() {
     // send ether
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: ["0xbe0eb53f46cd790cd13851d5eff43d12404d33e8"],
+      params: ["0xbe0eb53f46cd790cd13851d5eff43d12404d33e8"]
     });
 
     const signer = await hre.ethers.getSigner("0xbe0eb53f46cd790cd13851d5eff43d12404d33e8");

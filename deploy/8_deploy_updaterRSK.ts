@@ -14,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   updater = await hre.deployments.deploy("UpdaterRSK", {
     from: deployer.address,
     contract: "UpdaterRSK",
-    args: [bot.address],
+    args: [bot.address]
   });
   console.log("deployed UpdaterRSK to: " + updater.address);
   console.log("finished deployment: UpdaterRSK");

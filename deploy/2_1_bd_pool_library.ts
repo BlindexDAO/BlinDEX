@@ -7,7 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 
   const bdPoolLibraryDeployment = await hre.deployments.deploy("BdPoolLibrary", {
-    from: deployer,
+    from: deployer
   });
 
   console.log("finished deployment: bdPoolLibrary");

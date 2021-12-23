@@ -10,7 +10,7 @@ async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, n
   await hre.deployments.deploy(`UniswapPairOracle_${nameA}_${nameB}`, {
     from: deployer.address,
     contract: "UniswapPairOracle",
-    args: [uniswapFactory.address, addressA, addressB],
+    args: [uniswapFactory.address, addressA, addressB]
   });
 }
 
