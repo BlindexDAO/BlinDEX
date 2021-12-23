@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
+import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
 import {
   getBdEu, getBdx, getWeth, getWbtc, getBdEuWethPool, getBdEuWbtcPool, mintWbtc, getOnChainEthEurPrice,
   getOnChainBtcEurPrice, getDeployer, getTreasury, mintWeth
@@ -8,21 +8,16 @@ import * as constants from './Constants';
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 
-export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment, initialWethBdEuPrice: number, initialWbtcBdEuPrice: number, initialBdxBdEuPrice: number){
-  await setUpFunctionalSystem(hre, 1, 1, false, initialWethBdEuPrice, initialWbtcBdEuPrice, initialBdxBdEuPrice);
-}
-
-export async function setUpFunctionalSystemSmall(hre: HardhatRuntimeEnvironment, initialWethBdEuPrice: number, initialWbtcBdEuPrice: number, initialBdxBdEuPrice: number) {
-  const scale = 1 / d18_ToNumber(constants.INITIAL_BDSTABLE_AMOUNT_FOR_TREASURY); // it makes total liquidity value ~$1-2, useful for test deployment on real network
-
-  await setUpFunctionalSystem(hre, 1e-6, scale, false, initialWethBdEuPrice, initialWbtcBdEuPrice, initialBdxBdEuPrice);
+export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment, ethEur: number, btcEur: number, bdxEur: number){
+  await setUpFunctionalSystem(hre, 1, 1, false, ethEur, btcEur, bdxEur);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
-  const initialWethBdEuPrice = 4093;
-  const initialWbtcBdEuPrice = 50353;
-  const initialBdxBdEuPrice = 0.89;
-  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true, initialWethBdEuPrice, initialWbtcBdEuPrice, initialBdxBdEuPrice);
+  // For tests we only need approximate prices
+  const ethEur = 4093;
+  const btcEur = 50353;
+  const bdxEur = 0.89;
+  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true, ethEur, btcEur, bdxEur);
 }
 
 export async function setUpFunctionalSystem(
@@ -30,14 +25,14 @@ export async function setUpFunctionalSystem(
   initialBdEuColltFraction: number,
   scale: number,
   forIntegrationTests: boolean,
-  initialWethBdEuPriceArg: number,
-  initialWbtcBdEuPriceArg: number,
-  initialBdxBdEuPriceArg: number
+  ethEur: number,
+  btcEur: number,
+  bdxEur: number
 ) {
 
-  let initialWethBdEuPrice = initialWethBdEuPriceArg;
-  let initialWbtcBdEuPrice = initialWbtcBdEuPriceArg;
-  let initialBdxBdEuPrice = initialBdxBdEuPriceArg;
+  let initialWethBdEuPrice = ethEur;
+  let initialWbtcBdEuPrice = btcEur;
+  let initialBdxBdEuPrice = bdxEur;
 
   const deployer = await getDeployer(hre);
   const treasury = await getTreasury(hre);
