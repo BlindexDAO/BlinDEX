@@ -1,6 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Uncomment this when we decide to add prettier for everyone
-#npx lint-staged && npm run solhint --y
-npm run solhint --y
+#npx lint-staged

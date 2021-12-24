@@ -2,8 +2,7 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
-import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
+import { to_d18, d18_ToNumber, d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc, mintWeth } from "../../utils/DeployedContractsHelpers";
