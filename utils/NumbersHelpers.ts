@@ -41,3 +41,7 @@ export function diffPct(a: BigNumber, b: BigNumber){
         return a.sub(b).mul(1e6).div(a).toNumber() / 1e6 * 100;
     }
 }
+
+export function diffPctN(a: number, b: number){
+    return (a-b)/a;
+}

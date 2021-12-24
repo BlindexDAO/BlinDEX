@@ -2,16 +2,14 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import * as constants from '../../utils/Constants'
 import { 
     provideLiquidity,
-    updateWethPair,
     swapWethFor,
-    getPrices
+    getWethOraclePrices
 } from "../helpers/swaps"
-import { to_d18 } from "../../utils/NumbersHelpers"
+import { diffPctN, to_d18 } from "../../utils/NumbersHelpers"
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat"
-import { getBdEu, getUser, getWeth, getBdx, getUniswapPairOracle, mintWeth, getTreasury } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getUser, getWeth, getUniswapPairOracle, mintWeth, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
 
@@ -35,21 +33,26 @@ describe("Uniswap Oracles", () => {
         const weth = await getWeth(hre);
 
         const user = await getUser(hre);
+        const deployer = await getDeployer(hre);
         const treasury = await getTreasury(hre);
         
         await mintWeth(hre, user, to_d18(20));
         await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
 
+        // properly initalize system
         await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
         await resetOracle(hre, "BDEU", "WETH");
-
+        await simulateTimeElapseInSeconds(10); // wait a little bit to refleac real world scenario
+        await updateOracle(hre, "BDEU", "WETH", deployer); // first immediate update by deployer
         await simulateTimeElapseInSeconds(oneHour);
+
+        // make a swap to observer price changes
         await swapWethFor(hre, "BDEU", 5);
         await simulateTimeElapseInSeconds(2*oneHour);
 
         await updateOracle(hre, "BDEU", "WETH");
 
-        const [wethInBdStablePriceDecimal1, bdStableInWethPriceDecimal1] = await getPrices(hre, "BDEU");
+        const { wethInBdStableOraclePrice, bdStableInWethOraclePrice } = await getWethOraclePrices(hre, "BDEU");
 
         const wethBdBeforeSwap = 80/20;
         const wethBdSwapPrice = 80/(20+5)
@@ -57,9 +60,53 @@ describe("Uniswap Oracles", () => {
         const wethBdTwap = (1*wethBdBeforeSwap + 2*wethBdAfterSwap) / (1+2);
         const bdWethTwap = (1*(1/wethBdBeforeSwap) + 2*(1/wethBdAfterSwap)) / (1+2);
 
-        expect(wethInBdStablePriceDecimal1).to.be.closeTo(wethBdTwap, 1e-2);
-        expect(bdStableInWethPriceDecimal1).to.be.closeTo(bdWethTwap, 1e-2);
+        const wethPricePctDiff = diffPctN(wethBdTwap, wethInBdStableOraclePrice);
+        const bdEuPricePctDiff = diffPctN(bdWethTwap, bdStableInWethOraclePrice);
+
+        console.log("wethPricePctDiff:", wethPricePctDiff);
+        console.log("bdEuPricePctDiff:", bdEuPricePctDiff);
+
+        expect(wethPricePctDiff).to.be.closeTo(0, 1e-3, "wethPricePctDiff invalid");
+        expect(bdEuPricePctDiff).to.be.closeTo(0, 1e-3, "bdEuPricePctDiff invalid");
     });
+
+    const secondsInHour = 60*60;
+    const secondsInDay = secondsInHour*24;
+    const secondsInWeek = secondsInDay*7;
+    const secondsInMonth = secondsInDay*30;
+    for(let seconds of [0, 1, secondsInHour, secondsInDay, secondsInWeek, secondsInMonth]){
+        it(`oracle price sholud be close to spot price regardless when first oracle update happen | seconds [${seconds}]`, async () => {
+            const bdeu = await getBdEu(hre);
+            const weth = await getWeth(hre);
+
+            const user = await getUser(hre);
+            const treasury = await getTreasury(hre);
+            const deployer = await getDeployer(hre);
+            
+            const spotWehtBdEuPrice = 4000;
+            const spotBdEuWethPrice = 1/4000;
+
+            await mintWeth(hre, user, to_d18(1));
+            await bdeu.connect(treasury).transfer(user.address, to_d18(spotWehtBdEuPrice)); // treasury gives user some bdeu so user can provide liquidity
+
+            // properly initalize system
+            await provideLiquidity(hre, user, weth, bdeu, to_d18(1), to_d18(spotWehtBdEuPrice), false);
+            await resetOracle(hre, "BDEU", "WETH");
+            await simulateTimeElapseInSeconds(seconds); // wait before first oracle update
+            await updateOracle(hre, "BDEU", "WETH", deployer); // allow immediate update by deployer
+
+            const { wethInBdStableOraclePrice, bdStableInWethOraclePrice } = await getWethOraclePrices(hre, "BDEU");
+
+            const wethPricePctDiff = diffPctN(spotWehtBdEuPrice,wethInBdStableOraclePrice);
+            const bdEuPricePctDiff = diffPctN(spotBdEuWethPrice,bdStableInWethOraclePrice);
+
+            console.log("wethPricePctDiff:", wethPricePctDiff);
+            console.log("bdEuPricePctDiff:", bdEuPricePctDiff);
+
+            expect(wethPricePctDiff).to.be.closeTo(0, 1e-4, "wethPricePctDiff invalid");
+            expect(bdEuPricePctDiff).to.be.closeTo(0, 1e-4, "bdEuPricePctDiff invalid");
+        });
+    }
 
     it("should not update price before one hour elapses", async () => {
         const bdeu = await getBdEu(hre);
@@ -69,6 +116,7 @@ describe("Uniswap Oracles", () => {
         const treasury = await getTreasury(hre);
         
         await mintWeth(hre, user, to_d18(20));
+
         await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
         await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
         await resetOracle(hre, "BDEU", "WETH");
@@ -80,4 +128,4 @@ describe("Uniswap Oracles", () => {
 
         await expectToFail(() => oracle.updateOracle(), 'UniswapPairOracle: PERIOD_NOT_ELAPSED');
     });
-})
+});

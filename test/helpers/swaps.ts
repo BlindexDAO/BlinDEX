@@ -112,21 +112,21 @@ export async function swapAsDeployerByContract(
     currentBlock.timestamp + 24*60*60*7);
 }
 
-export async function getPrices(hre: HardhatRuntimeEnvironment, bdStableName: string) {
+export async function getWethOraclePrices(hre: HardhatRuntimeEnvironment, bdStableName: string) {
   const bdStable = await hre.ethers.getContract(bdStableName) as BDStable;
 
   const oracle = await getWethPairOracle(hre, bdStableName);
 
-  const wethInBdStablePrice = await oracle.consult(constants.wETH_address[hre.network.name], to_d18(1));
-  const bdStableWethPrice = await oracle.consult(bdStable.address, to_d18(1));
+  const wethInBdStablePrice_d18 = await oracle.consult(constants.wETH_address[hre.network.name], to_d18(1));
+  const bdStableWethPrice_d18 = await oracle.consult(bdStable.address, to_d18(1));
 
-  const wethInBdStablePriceDecimal = bigNumberToDecimal(wethInBdStablePrice, 18);
-  const bdStableInWethPriceDecimal = bigNumberToDecimal(bdStableWethPrice, 18);
+  const wethInBdStableOraclePrice = bigNumberToDecimal(wethInBdStablePrice_d18, 18);
+  const bdStableInWethOraclePrice = bigNumberToDecimal(bdStableWethPrice_d18, 18);
 
-  console.log(`WETH in ${bdStableName} price: ` + wethInBdStablePriceDecimal);
-  console.log(`${bdStableName} in WETH price: ` + bdStableInWethPriceDecimal);
+  console.log(`WETH in ${bdStableName} price: ` + wethInBdStableOraclePrice);
+  console.log(`${bdStableName} in WETH price: ` + bdStableInWethOraclePrice);
 
-  return [wethInBdStablePriceDecimal, bdStableInWethPriceDecimal];
+  return {wethInBdStableOraclePrice, bdStableInWethOraclePrice};
 }
 
 export async function provideLiquidity(

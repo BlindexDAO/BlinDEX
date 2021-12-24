@@ -1,8 +1,8 @@
 import { task } from "hardhat/config";
-import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapFactory, getUniswapPair, getUniswapPairOracle, getUniswapRouter, getWeth } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBdEuWethPool, getBdx, getBot, getDeployer, getTreasury, getUniswapFactory, getUniswapPair, getUniswapPairOracle, getWeth } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, resetUniswapPairsOracles, tokensDecimals, updateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
+import { getPools, tokensDecimals, updateUniswapPairsOracles, resetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import { BDStable } from "../typechain/BDStable";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
