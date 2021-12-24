@@ -3,10 +3,10 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d12, to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury } from "../../utils/DeployedContractsHelpers";
+import { provideBdx } from "../helpers/common";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
-import { provideBdx } from "../helpers/common";
 
 chai.use(cap);
 
