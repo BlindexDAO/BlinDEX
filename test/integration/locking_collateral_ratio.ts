@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, to_d18 } from "../../utils/NumbersHelpers";
-import { getBdEu,  getBdEuWethPool, getBdx, getWeth } from "../../utils/DeployedContractsHelpers";
+import { getBdEu,  getBdEuWethPool, getBdx, getTreasury, getWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { swapWethAsDeployer } from "../helpers/swaps";
@@ -66,17 +66,19 @@ describe("Locking collateral ratio", () => {
     });
 
     async function DecreaseCollateralizationAndWait(){
+        const treasury = await getTreasury(hre);
+
         const bdEuWethPool = await getBdEuWethPool(hre);
         const weth = await getWeth(hre);
         const bdx = await getBdx(hre);
       
         await simulateTimeElapseInSeconds(60*60*24);
 
-        // owner mints some BdEu in order to natrually trigger oracles and CR update
+        // treasury mints some BdEu in order to natrually trigger oracles and CR update
         const collateralAmount = to_d18(0.001);
         const excessiveBdxAmount = to_d18(1000);
-        await weth.approve(bdEuWethPool.address, collateralAmount);
-        await bdx.approve(bdEuWethPool.address, excessiveBdxAmount);
-        await bdEuWethPool.mintFractionalBdStable(collateralAmount, excessiveBdxAmount, 1, false, {});
+        await weth.connect(treasury).approve(bdEuWethPool.address, collateralAmount);
+        await bdx.connect(treasury).approve(bdEuWethPool.address, excessiveBdxAmount);
+        await bdEuWethPool.connect(treasury).mintFractionalBdStable(collateralAmount, excessiveBdxAmount, 1, false, {});
     }
 });

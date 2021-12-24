@@ -8,6 +8,7 @@ import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdEuWbtcPool, getBdEuWethPool, getOnChainBtcEurPrice, getOnChainEthEurPrice, getUser, getWbtc, getWeth, mintWbtc, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
+import { provideBdEu } from "../helpers/common";
 
 chai.use(cap);
 
@@ -142,7 +143,7 @@ describe("BDStable 1to1", () => {
         
         const bdEu = await getBdEu(hre);
 
-        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user so user can redeem it
+        await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user so user can redeem it
 
         var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
         var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
@@ -193,7 +194,7 @@ describe("BDStable 1to1", () => {
         
         const bdEu = await getBdEu(hre);
 
-        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user so user can redeem it
+        await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user so user can redeem it
 
         var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
         var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
@@ -258,7 +259,7 @@ describe("BDStable 1to1", () => {
 
         const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
-        await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user so user can redeem it
+        await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user so user can redeem it
 
         var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
 
