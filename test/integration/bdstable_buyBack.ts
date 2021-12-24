@@ -3,6 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d12, to_d18, d18_ToNumber } from "../../utils/NumbersHelpers"
+import { provideBdx } from "../helpers/common";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdEuCrAt } from "../helpers/bdStable";
@@ -27,6 +28,7 @@ describe("BuyBack", () => {
         await lockBdEuCrAt(hre, 0.3); // CR
 
         const testUser = await getUser(hre);
+
         const weth = await getWeth(hre);
         const bdx = await getBdx(hre);
         const bdEu = await getBdEu(hre);
@@ -34,8 +36,9 @@ describe("BuyBack", () => {
 
         const bdxAmount_d18 = to_d18(20);
 
-        bdx.transfer(testUser.address, bdxAmount_d18.mul(3));
-        
+        // treasury gives some bdx to the user
+        await provideBdx(hre, testUser.address, bdxAmount_d18.mul(3)); 
+
         const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();
         const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
@@ -88,8 +91,8 @@ describe("BuyBack", () => {
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
-        // The deployer sends BDX to the user so the user could buyback
-        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
+        // The treasury sends BDX to the user so the user could buyback
+        await provideBdx(hre, testUser.address, maxBdxToBuyBack_d18);
         
         const userBdxBalanceBefore = await bdx.balanceOf(testUser.address);
         const bdEuBdxBalanceBefore = await bdx.balanceOf(bdEu.address);
@@ -122,8 +125,8 @@ describe("BuyBack", () => {
 
         const maxBdxToBuyBack_d18 = await calculateMaxBdxToBuyBack_d18(cr);
 
-        // The deployer sends BDX to the user so the user could buyback
-        await bdx.transfer(testUser.address, maxBdxToBuyBack_d18);
+        // The treasury sends BDX to the user so the user could buyback
+        await provideBdx(hre, testUser.address, maxBdxToBuyBack_d18);
         
         const userBdxBalanceBefore = await bdx.balanceOf(testUser.address);
         const bdEuBdxBalanceBefore = await bdx.balanceOf(bdEu.address);
@@ -161,8 +164,6 @@ describe("BuyBack", () => {
         const bdxExcess = 10; // this is a very small amout (1e-17 BDX). We cannot use 1 because of roundings and low initial price of BDX (1 BDX < 1 EUR)
         const moreThanMaxBdxToBuyBack_d18 = maxBdxToBuyBack_d18.add(bdxExcess);
 
-        bdx.transfer(testUser.address, moreThanMaxBdxToBuyBack_d18);
-        
         await bdx.connect(testUser).approve(bdEuWethPool.address, moreThanMaxBdxToBuyBack_d18); 
 
         await expect((async () => {
@@ -179,8 +180,6 @@ describe("BuyBack", () => {
 
         const bdxAmount_d18 = to_d18(10);
 
-        bdx.transfer(testUser.address, bdxAmount_d18.mul(3));
-        
         await bdx.connect(testUser).approve(bdEuWethPool.address, bdxAmount_d18); 
 
         await expect((async () => {
@@ -199,7 +198,7 @@ async function calculateMaxBdxToBuyBack_d18(cr: number, useGlobalCollateralValue
     bdEuCollateralValue = await bdEu.globalCollateralValue();
   } else {
     // We need to check the collateral in the speicifc bdstable pool since in our tests
-    // we're trying to send bacl the collateral specifically from this pool.
+    // we're trying to send back the collateral specifically from this pool.
     // If we won't do this, the test might fail due to lack of WETh to send back to the buyback sender
     bdEuCollateralValue = await bdEuWethPool.collatFiatBalance();
   }
