@@ -10,13 +10,14 @@ import { BDXShares } from "../../typechain/BDXShares";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
 import { BigNumber } from "@ethersproject/bignumber";
 import { simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
+import { provideBdx } from "../helpers/common";
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-let ownerUser: SignerWithAddress;
+let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
 let testScheduler: SignerWithAddress;
@@ -28,7 +29,7 @@ let bdx: BDXShares;
 let vesting: Vesting;
 
 async function initialize() {
-  ownerUser = await getDeployer(hre);
+  deployer = await getDeployer(hre);
   testUser1 = await hre.ethers.getNamedSigner("TEST1");
   testScheduler = await hre.ethers.getNamedSigner("TEST_VESTING_SCHEDULER");
   testRewardProvider = await hre.ethers.getNamedSigner("TEST_VESTING_REWARDS_PROVIDER");
@@ -49,9 +50,9 @@ describe("Vesting", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     await setUpFunctionalSystemForTests(hre, 1);
-    await vesting.connect(ownerUser).setVestingScheduler(testScheduler.address);
-    await vesting.connect(ownerUser).setFundsProvider(testRewardProvider.address);
-    await bdx.connect(ownerUser).transfer(testRewardProvider.address, to_d18(20));
+    await vesting.connect(deployer).setVestingScheduler(testScheduler.address);
+    await vesting.connect(deployer).setFundsProvider(testRewardProvider.address);
+    await provideBdx(hre, testRewardProvider.address, to_d18(20));
   });
 
   it("should create schedule for user", async () => {
@@ -105,11 +106,10 @@ describe("Vesting", () => {
 
     await moveTimeForwardBy(vestingTimeSeconds);
 
-    await vesting.connect(ownerUser).claim(0, 100);
+    await vesting.connect(deployer).claim(0, 100);
     const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
-    await vesting.connect(ownerUser).claim(0, 100);
+    await vesting.connect(deployer).claim(0, 100);
     const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
-
     expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(0);
   });
 

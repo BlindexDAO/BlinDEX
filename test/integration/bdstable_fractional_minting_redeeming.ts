@@ -9,6 +9,7 @@ import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getDeployer, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
+import { provideBdEu, provideBdx } from "../helpers/common";
 
 chai.use(cap);
 
@@ -53,7 +54,7 @@ describe("BDStable fractional", () => {
     const cr = 0.7;
     await lockBdEuCrAt(hre, cr);
 
-    await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+    await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
     await mintWeth(hre, testUser, to_d18(100));
 
     const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
@@ -123,7 +124,7 @@ describe("BDStable fractional", () => {
     const cr = 0.7;
     await lockBdEuCrAt(hre, cr);
 
-    await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+    await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
     await mintWeth(hre, testUser, to_d18(100));
 
     const poolWethBalanceBeforeMinting_d18 = await weth.balanceOf(bdEuPool.address);
@@ -197,7 +198,7 @@ describe("BDStable fractional", () => {
     console.log("effectiveCR: " + d12_ToNumber(efCR_d12));
     expect(d12_ToNumber(efCR_d12)).to.be.gt(cr, "we want efCR > CR, for test purposes"); // test valitation
 
-    await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+    await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can redeem
     await mintWeth(hre, testUser, to_d18(100));
 
     const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
@@ -271,7 +272,7 @@ describe("BDStable fractional", () => {
     console.log("effectiveCR: " + d12_ToNumber(efCR_d12));
     expect(d12_ToNumber(efCR_d12)).to.be.lt(cr, "we want efCR < CR, for test purposes"); // test valitation
 
-    await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+    await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can redeem
     await mintWeth(hre, testUser, to_d18(100));
 
     const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
@@ -342,7 +343,7 @@ describe("BDStable fractional", () => {
     await lockBdEuCrAt(hre, cr);
 
     // calculate how much is needed to mint
-    await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can mint
+    await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
     await mintWeth(hre, testUser, to_d18(100));
 
     // setup bdEu so it's illegal to redeem for testUser
@@ -350,7 +351,7 @@ describe("BDStable fractional", () => {
     await bdEu.setMinimumSwapsDelayInBlocks(100);
     // setup finished
 
-    await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+    await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can redeem
 
     const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
 
@@ -382,7 +383,7 @@ describe("BDStable fractional", () => {
     const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
     expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation
 
-    await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+    await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can redeem
 
     const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
     const userBdxBalanceBefore_d18 = await bdx.balanceOf(testUser.address);

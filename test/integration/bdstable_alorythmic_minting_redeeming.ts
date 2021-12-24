@@ -8,6 +8,7 @@ import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
+import { provideBdEu, provideBdx } from "../helpers/common";
 
 chai.use(cap);
 
@@ -35,7 +36,7 @@ describe("BDStable algorythmic", () => {
     const weth = await getWeth(hre);
     const bdEu = await getBdEu(hre);
 
-    await bdx.transfer(testUser.address, to_d18(1000)); // deployer gives some bdx to user, so user can mint
+    await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdx to user, so user can mint
     const bdxBalanceBeforeMinting = await bdx.balanceOf(testUser.address);
 
     await lockBdEuCrAt(hre, 0);
@@ -93,7 +94,7 @@ describe("BDStable algorythmic", () => {
 
     await lockBdEuCrAt(hre, 0);
 
-    await bdEu.transfer(testUser.address, to_d18(1000)); // deployer gives some bdeu to user, so user can redeem
+    await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can redeem
 
     const bdEuBalanceBeforeRedeem_d18 = await bdEu.balanceOf(testUser.address);
     const bdxBalanceBeforeRedeem_d18 = await bdx.balanceOf(testUser.address);
@@ -151,7 +152,7 @@ describe("BDStable algorythmic", () => {
     await lockBdEuCrAt(hre, 0);
 
     const bdxAmount = 10;
-    await bdx.transfer(testUser.address, to_d18(bdxAmount * 100)); // deployer gives some bdx to user, so user can mint
+    await provideBdx(hre, testUser.address, to_d18(bdxAmount * 100)); // treasury gives some bdx to user, so user can mint
 
     // setup bdEu so it's illegal to redeem for testUser
     await performAlgorithmicMinting(testUser, bdxAmount);
@@ -178,7 +179,6 @@ describe("BDStable algorythmic", () => {
     const testUser = await hre.ethers.getNamedSigner("TEST2");
 
     const bdx = await getBdx(hre);
-    const weth = await getWeth(hre);
     const bdEu = await getBdEu(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 
@@ -193,7 +193,7 @@ describe("BDStable algorythmic", () => {
     const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
     expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation
 
-    await bdEu.transfer(testUser.address, to_d18(100)); // deployer gives some bdeu to user, so user can redeem
+    await provideBdEu(hre, testUser.address, to_d18(100)); // treasury gives some bdeu to user, so user can redeem
 
     const bdEuBdxBalanceBefore_d18 = await bdx.balanceOf(bdEu.address);
     const userBdxBalanceBefore_d18 = await bdx.balanceOf(testUser.address);

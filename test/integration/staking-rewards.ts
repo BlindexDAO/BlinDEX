@@ -12,7 +12,6 @@ import {
   getDeployer,
   getDevTreasury,
   getStakingRewardsDistribution,
-  getTreasury,
   getUniswapPair,
   getVesting,
   getWbtc,
@@ -28,6 +27,7 @@ import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { Vesting } from "../../typechain/Vesting";
 import { StakingRewards } from "../../typechain/StakingRewards";
 import { IERC20 } from "../../typechain/IERC20";
+import { provideBdEu } from "../helpers/common";
 
 chai.use(cap);
 
@@ -107,9 +107,9 @@ describe("StakingRewards", () => {
       await mintWeth(hre, testUser1, to_d18(100));
       await mintWeth(hre, testUser2, to_d18(100));
 
-      // deployer gives some bdeu to users so they can stake
-      await bdEu.transfer(testUser1.address, to_d18(100));
-      await bdEu.transfer(testUser2.address, to_d18(100));
+      // treasury gives some bdeu to users so they can stake
+      await provideBdEu(hre, testUser1.address, to_d18(100));
+      await provideBdEu(hre, testUser2.address, to_d18(100));
 
       await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
       await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20), false);
@@ -229,9 +229,9 @@ describe("StakingRewards", () => {
       await mintWeth(hre, testUser1, to_d18(100));
       await mintWeth(hre, testUser2, to_d18(100));
 
-      // deployer gives some bdeu to users so they can stake
-      await bdEu.transfer(testUser1.address, to_d18(100));
-      await bdEu.transfer(testUser2.address, to_d18(100));
+      // treasury gives some bdeu to users so they can stake
+      await provideBdEu(hre, testUser1.address, to_d18(100));
+      await provideBdEu(hre, testUser2.address, to_d18(100));
 
       await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
       await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20), false);
@@ -336,8 +336,8 @@ describe("Staking - withdrawLocked", () => {
     // provide some initaila weth for the users
     await mintWeth(hre, testUser1, to_d18(100));
 
-    // deployer gives some bdeu to users so they can stake
-    await bdEu.transfer(testUser1.address, to_d18(100));
+    // treasury gives some bdeu to users so they can stake
+    await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
@@ -376,8 +376,8 @@ describe("locking an unlocked stake", () => {
     // provide some initial weth for the users
     await mintWeth(hre, testUser1, to_d18(100));
 
-    // deployer gives some bdeu to the uses so they can stake
-    await bdEu.transfer(testUser1.address, to_d18(100));
+    // treasury gives some bdeu to the uses so they can stake
+    await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
@@ -419,8 +419,8 @@ describe("getReward interaction with vesting contract", () => {
     // provide some initaila weth for the users
     await mintWeth(hre, testUser1, to_d18(100));
 
-    // deployer gives some bdeu to users so they can stake
-    await bdEu.transfer(testUser1.address, to_d18(100));
+    // treasury gives some bdeu to users so they can stake
+    await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
@@ -508,7 +508,7 @@ describe("Claiming all rewards", () => {
   it("should collect all rewards", async () => {
     await mintWeth(hre, testUser1, to_d18(1));
     await mintWbtc(hre, testUser1, to_d8(1), 100);
-    await bdEu.transfer(testUser1.address, to_d18(100));
+    await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);
     await provideLiquidity(hre, testUser1, wbtc, bdEu, to_d8(0.01), to_d18(10), false);
@@ -560,7 +560,7 @@ describe("Claiming all rewards", () => {
 
   it("should charge fee to treasury", async () => {
     await mintWeth(hre, testUser1, to_d18(1));
-    await bdEu.transfer(testUser1.address, to_d18(100));
+    await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);
 
