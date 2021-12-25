@@ -13,7 +13,7 @@ async function setupStakingContract(
   nameB: string,
   isTrueBdPool: boolean
 ) {
-  console.log("starting deployment: euro staking");
+  console.log(`Setting up staking: ${nameA}/${nameB}`);
 
   const deployer = await getDeployer(hre);
   const uniswapFactoryContract = (await hre.ethers.getContract("UniswapV2Factory")) as UniswapV2Factory;
@@ -51,22 +51,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Setting up staking contracts");
 
   await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
-  console.log("Set up staking: BDX/WETH");
-
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
-  console.log("Set up staking: BDX/WBTC");
 
   for (const stable of await getAllBDStables(hre)) {
     const symbol = await stable.symbol();
     console.log(`Starting deployment of ${symbol} staking contracts`);
 
-    console.log(`Setting up staking: BDX/${symbol}`);
     await setupStakingContract(hre, bdx.address, stable.address, "BDX", symbol, true);
-
-    console.log(`Setting up staking: ${symbol}/WETH`);
     await setupStakingContract(hre, stable.address, constants.wETH_address[networkName], symbol, "WETH", false);
-
-    console.log(`Setting up staking: ${symbol}/WBTC`);
     await setupStakingContract(hre, stable.address, constants.wBTC_address[networkName], symbol, "WBTC", false);
 
     console.log(`Finished deployment of ${symbol} staking contracts`);
