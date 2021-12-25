@@ -18,20 +18,31 @@ import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 
-export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment) {
-  await setUpFunctionalSystem(hre, 1, 1, false);
+export async function setupProductionReadySystem(hre: HardhatRuntimeEnvironment, ethEur: number, btcEur: number, bdxEur: number) {
+  await setUpFunctionalSystem(hre, 1, 1, false, ethEur, btcEur, bdxEur);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBdEuColltFraction: number) {
-  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true);
+  // For tests we only need approximate prices
+  const ethEur = 4093;
+  const btcEur = 50353;
+  const bdxEur = 0.89;
+  await setUpFunctionalSystem(hre, initialBdEuColltFraction, 1, true, ethEur, btcEur, bdxEur);
 }
 
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBdEuColltFraction: number,
   scale: number,
-  forIntegrationTests: boolean
+  forIntegrationTests: boolean,
+  ethEur: number,
+  btcEur: number,
+  bdxEur: number
 ) {
+  let initialWethBdEuPrice = ethEur;
+  let initialWbtcBdEuPrice = btcEur;
+  let initialBdxBdEuPrice = bdxEur;
+
   const deployer = await getDeployer(hre);
   const treasury = await getTreasury(hre);
 
@@ -56,12 +67,6 @@ export async function setUpFunctionalSystem(
     // mint inital WBTC
     await mintWbtc(hre, treasury, to_d8(10), 100);
   }
-
-  // initial prices don't need to be very precise, in real world they will never be very precise
-  // prices are in EUR
-  let initialWethBdEuPrice = 4093; //todo ag from parameters
-  let initialWbtcBdEuPrice = 50353; //todo ag from parameters
-  let initialBdxBdEuPrice = 0.89; //todo ag from parameters
 
   let wethDecimals;
   let wbtcDecimals;
