@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { to_d18, to_d12 } from "../../utils/NumbersHelpers";
-import { getBdEu, getBdEuWbtcPool, getBdx, getWeth } from "../../utils/DeployedContractsHelpers";
+import { to_d12 } from "../../utils/NumbersHelpers";
+import { getBdEu } from "../../utils/DeployedContractsHelpers";
 
 const oneHour = 60 * 60;
 
