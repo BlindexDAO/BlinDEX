@@ -107,9 +107,7 @@ export function load() {
       SWAP_FACTORY: (await getUniswapFactory(hre)).address,
       STAKING_REWARDS_DISTRIBUTION: stakingRewardsDistribution.address,
       VESTING: (await getVesting(hre)).address,
-      BD_STABLES: allStables.map((stable) => {
-        return stable.address;
-      }),
+      BD_STABLES: allStables.map((stable) => stable.address),
       PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
       BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address
     };
