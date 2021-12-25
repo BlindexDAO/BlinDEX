@@ -110,6 +110,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       });
       oracleBasedCryptoFiatFeed_ETH_Stable = (await hre.ethers.getContract(ContractsNames.oracleEthUsdName)) as OracleBasedWethUSDFeed;
     } else {
+      // TODO: At the moment this only support Euro. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
       oracleBasedCryptoFiatFeed_ETH_Stable = (await hre.ethers.getContract(ContractsNames.oracleEthEurName)) as OracleBasedCryptoFiatFeed;
       console.log(`${ContractsNames.oracleEthEurName} deployed to:`, oracleBasedCryptoFiatFeed_ETH_Stable.address);
     }

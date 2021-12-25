@@ -45,6 +45,7 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
   await setUpFunctionalSystem(hre, initialBDStableCollteralRatio, 1, true, btcEur, btcUSD, bdxEur, bdxUSD, ethEur, ethUSD);
 }
 
+// TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBDStableCollteralRatio: number,
