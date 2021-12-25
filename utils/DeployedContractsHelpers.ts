@@ -25,6 +25,16 @@ const allStabesContractsDetails = {
   [bdusContractDetails.stable.symbol]: bdusContractDetails
 };
 
+export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
+  const allStables = [];
+
+  for (const symbol of Object.keys(allStabesContractsDetails)) {
+    allStables.push(await getBDStable(hre, symbol));
+  }
+
+  return allStables;
+}
+
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner("DEPLOYER");
   return deployer;

@@ -8,10 +8,10 @@ import {
   getVesting,
   getWbtc,
   getWeth,
-  getBDStable,
   getBDStableWethPool,
   getBDStableWbtcPool,
-  getBDStableFiat
+  getBDStableFiat,
+  getAllBDStables
 } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber } from "../utils/NumbersHelpers";
@@ -21,20 +21,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
-import { BDStable } from "../typechain/BDStable";
-import { ContractsDetails as bdeuContractDetails } from "../deploy/2_2_euro_stablecoin";
-import { ContractsDetails as bdusContractDetails } from "../deploy/2_3_usd_stablecoin";
-
-async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
-  const symbols = [bdeuContractDetails.stable.symbol, bdusContractDetails.stable.symbol];
-  const allStables = [];
-
-  for (const symbol of symbols) {
-    allStables.push(await getBDStable(hre, symbol));
-  }
-
-  return allStables;
-}
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
