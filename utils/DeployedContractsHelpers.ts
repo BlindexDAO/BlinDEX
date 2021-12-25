@@ -91,6 +91,10 @@ export async function getBdEu(hre: HardhatRuntimeEnvironment) {
   return getBDStable(hre, bdeuContractDetails.stable.symbol);
 }
 
+export async function getBdUS(hre: HardhatRuntimeEnvironment) {
+  return getBDStable(hre, bdusContractDetails.stable.symbol);
+}
+
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract("UniswapV2Router02", deployer)) as UniswapV2Router02;
@@ -116,7 +120,7 @@ export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment): Promise<B
 }
 
 export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
-  return getBDStableWethPool(hre, bdeuContractDetails.stable.symbol);
+  return getBDStableWbtcPool(hre, bdeuContractDetails.stable.symbol);
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment) {
