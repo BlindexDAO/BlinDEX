@@ -8,7 +8,8 @@ import { getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelp
 const stableDetails = {
   stable: {
     symbol: "BDUS",
-    name: "Blindex USD"
+    name: "Blindex USD",
+    fiat: "USD"
   }
 };
 

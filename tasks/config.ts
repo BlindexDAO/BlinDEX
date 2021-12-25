@@ -1,8 +1,5 @@
 import { task } from "hardhat/config";
 import {
-  getBdEu,
-  getBdEuWbtcPool,
-  getBdEuWethPool,
   getBdx,
   getDeployer,
   getStakingRewardsDistribution,
@@ -10,7 +7,11 @@ import {
   getUniswapRouter,
   getVesting,
   getWbtc,
-  getWeth
+  getWeth,
+  getBDStable,
+  getBDStableWethPool,
+  getBDStableWbtcPool,
+  getBDStableFiat
 } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber } from "../utils/NumbersHelpers";
@@ -20,6 +21,20 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
+import { BDStable } from "../typechain/BDStable";
+import { ContractsDetails as bdeuContractDetails } from "../deploy/2_2_euro_stablecoin";
+import { ContractsDetails as bdusContractDetails } from "../deploy/2_3_usd_stablecoin";
+
+async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
+  const symbols = [bdeuContractDetails.stable.symbol, bdusContractDetails.stable.symbol];
+  const allStables = [];
+
+  for (const symbol of symbols) {
+    allStables.push(await getBDStable(hre, symbol));
+  }
+
+  return allStables;
+}
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -53,7 +68,6 @@ export function load() {
     const networkName = hre.network.name.toUpperCase();
 
     const blockchainConfig = {
-      [`${networkName}_BDEU_ADDRESS`]: (await getBdEu(hre)).address.toLowerCase(),
       [`${networkName}_UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
       [`${networkName}_BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
       [`${networkName}_STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
@@ -76,6 +90,12 @@ export function load() {
       [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase()
     };
 
+    const allStables = await getAllBDStables(hre);
+    for (const stable of allStables) {
+      const symbol = (await stable.symbol()).toUpperCase();
+      blockchainConfig[`${networkName}_${symbol}_ADDRESS`] = stable.address;
+    }
+
     console.log(
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
     );
@@ -84,8 +104,7 @@ export function load() {
 
   task("show:fe-config").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-
-    const bdEu = await getBdEu(hre);
+    const allStables = await getAllBDStables(hre);
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stables = await getStablesConfig(hre);
@@ -102,7 +121,9 @@ export function load() {
       SWAP_FACTORY: (await getUniswapFactory(hre)).address,
       STAKING_REWARDS_DISTRIBUTION: stakingRewardsDistribution.address,
       VESTING: (await getVesting(hre)).address,
-      BD_STABLES: [bdEu.address],
+      BD_STABLES: allStables.map((stable) => {
+        return stable.address;
+      }),
       PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
       BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address
     };
@@ -185,31 +206,36 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
 async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
-  const bdEu = await getBdEu(hre);
+  const stables = await getAllBDStables(hre);
   const bdx = await getBdx(hre);
 
   const whitelist = [
     [
       { symbol: "WETH", address: weth.address },
-      { symbol: "BDEU", address: bdEu.address }
-    ],
-    [
-      { symbol: "WBTC", address: wbtc.address },
-      { symbol: "BDEU", address: bdEu.address }
-    ],
-    [
-      { symbol: "WETH", address: weth.address },
       { symbol: "BDX", address: bdx.address }
     ],
     [
       { symbol: "WBTC", address: wbtc.address },
       { symbol: "BDX", address: bdx.address }
-    ],
-    [
-      { symbol: "BDX", address: bdx.address },
-      { symbol: "BDEU", address: bdEu.address }
     ]
   ];
+
+  for (const stable of stables) {
+    const symbol = (await stable.symbol()).toUpperCase();
+
+    whitelist.push([
+      { symbol: "WETH", address: weth.address },
+      { symbol, address: stable.address }
+    ]);
+    whitelist.push([
+      { symbol: "WBTC", address: weth.address },
+      { symbol, address: stable.address }
+    ]);
+    whitelist.push([
+      { symbol: "BDX", address: weth.address },
+      { symbol, address: stable.address }
+    ]);
+  }
 
   return whitelist;
 }
@@ -281,32 +307,34 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
 }
 
 async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
-  const bdEu = await getBdEu(hre);
+  const allStables = await getAllBDStables(hre);
 
-  const bdEuPoolContracts: BdStablePool[] = [await getBdEuWethPool(hre), await getBdEuWbtcPool(hre)];
+  const stableConfigs = [];
+  for (const stable of allStables) {
+    const symbol = (await stable.symbol()).toUpperCase();
+    const pools: BdStablePool[] = [await getBDStableWethPool(hre, symbol), await getBDStableWbtcPool(hre, symbol)];
 
-  const bdEuPools = await Promise.all(
-    bdEuPoolContracts.map(async (pool) => {
-      const mingingFee = await pool.minting_fee();
-      const redemptionFee = await pool.redemption_fee();
-      const collateralAddress = await pool.collateral_token();
+    const stablePools = await Promise.all(
+      pools.map(async (pool) => {
+        const mingingFee = await pool.minting_fee();
+        const redemptionFee = await pool.redemption_fee();
+        const collateralAddress = await pool.collateral_token();
 
-      return {
-        address: pool.address,
-        collateralAddress: collateralAddress.toString(),
-        mintingFee: d12_ToNumber(mingingFee),
-        redemptionFee: d12_ToNumber(redemptionFee)
-      };
-    })
-  );
+        return {
+          address: pool.address,
+          collateralAddress: collateralAddress.toString(),
+          mintingFee: d12_ToNumber(mingingFee),
+          redemptionFee: d12_ToNumber(redemptionFee)
+        };
+      })
+    );
 
-  const stables = [
-    {
-      address: bdEu.address,
-      fiat: "EUR",
-      pools: await bdEuPools
-    }
-  ];
+    stableConfigs.push({
+      address: stable.address,
+      fiat: getBDStableFiat(symbol),
+      pools: await stablePools
+    });
+  }
 
-  return stables;
+  return stableConfigs;
 }

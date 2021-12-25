@@ -17,6 +17,8 @@ import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribut
 import { Vesting } from "../typechain/Vesting";
 import { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import { IWETH } from "../typechain/IWETH";
+import { ContractsDetails as bdeuContractDetails } from "../deploy/2_2_euro_stablecoin";
+import { ContractsDetails as bdusContractDetails } from "../deploy/2_3_usd_stablecoin";
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner("DEPLOYER");
@@ -43,9 +45,58 @@ export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<Signe
   return user;
 }
 
-export async function getBdEu(hre: HardhatRuntimeEnvironment) {
+export async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract("BDEU", deployer)) as BDStable;
+
+  switch (symbol) {
+    case bdeuContractDetails.stable.symbol:
+      return (await hre.ethers.getContract(bdeuContractDetails.stable.symbol, deployer)) as BDStable;
+    case bdusContractDetails.stable.symbol:
+      return (await hre.ethers.getContract(bdusContractDetails.stable.symbol, deployer)) as BDStable;
+    default:
+      throw new Error("Unknown bdstable");
+  }
+}
+
+export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string) {
+  const deployer = await getDeployer(hre);
+
+  switch (symbol) {
+    case bdeuContractDetails.stable.symbol:
+      return (await hre.ethers.getContract(bdeuContractDetails.pools.wbtc.name, deployer)) as BdStablePool;
+    case bdusContractDetails.stable.symbol:
+      return (await hre.ethers.getContract(bdusContractDetails.pools.wbtc.name, deployer)) as BdStablePool;
+    default:
+      throw new Error("Unknown bdstable");
+  }
+}
+
+export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol: string) {
+  const deployer = await getDeployer(hre);
+
+  switch (symbol) {
+    case bdeuContractDetails.stable.symbol:
+      return (await hre.ethers.getContract(bdeuContractDetails.pools.weth.name, deployer)) as BdStablePool;
+    case bdusContractDetails.stable.symbol:
+      return (await hre.ethers.getContract(bdusContractDetails.pools.weth.name, deployer)) as BdStablePool;
+    default:
+      throw new Error("Unknown bdstable");
+  }
+}
+
+export function getBDStableFiat(symbol: string) {
+  switch (symbol) {
+    case bdeuContractDetails.stable.symbol:
+      return bdeuContractDetails.stable.fiat;
+    case bdusContractDetails.stable.symbol:
+      return bdusContractDetails.stable.fiat;
+    default:
+      throw new Error("Unknown bdstable");
+  }
+}
+
+export async function getBdEu(hre: HardhatRuntimeEnvironment) {
+  return getBDStable(hre, bdeuContractDetails.stable.symbol);
 }
 
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment) {
@@ -69,13 +120,11 @@ export async function getVesting(hre: HardhatRuntimeEnvironment) {
 }
 
 export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
-  const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract("BDEU_WETH_POOL", deployer)) as BdStablePool;
+  return getBDStableWethPool(hre, bdeuContractDetails.stable.symbol);
 }
 
 export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
-  const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract("BDEU_WBTC_POOL", deployer)) as BdStablePool;
+  return getBDStableWethPool(hre, bdeuContractDetails.stable.symbol);
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment) {
