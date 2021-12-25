@@ -33,8 +33,8 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         uint256 _priceDisparityTolerance_d12,
         address _updater,
         uint256 _timeBeforeShouldUpdate,
-        uint256 _timeBeforeMustUpdate) public {
-
+        uint256 _timeBeforeMustUpdate
+    ) public {
         require(_sovrynNetworkAddress != address(0), "SovrynNetwork address cannot be 0");
         require(_tokenSource != address(0), "TokenSource address cannot be 0");
         require(_tokenTarget != address(0), "TokenTarget address cannot be 0");
@@ -65,7 +65,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     // ICryptoPairOracle
 
-    function consult(address tokenIn, uint256 amountIn) external view override returns (uint256) {     
+    function consult(address tokenIn, uint256 amountIn) external view override returns (uint256) {
         require(tokenIn == tokenSource, "This oracle only accepts consulting source token input");
         require(oraclePrice != 0, "Oracle not yet initiated");
         require(block.timestamp < updateTimestamp.add(timeBeforeMustUpdate), "Price is stale. Update oracle");
@@ -86,7 +86,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
     }
 
-    function updateOracleWithVerification(uint verificationPrice_d12) external onlyUpdater {
+    function updateOracleWithVerification(uint256 verificationPrice_d12) external onlyUpdater {
         address[] memory conversionPath = sovrynNetwork.conversionPath(tokenSource, tokenTarget);
 
         require(conversionPath.length == 3, "conversion path must be direct");
@@ -120,14 +120,13 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function setUpdater(address newUpdater) external onlyOwner {
         require(newUpdater != address(0), "Updater cannot be set to the zero address");
-        
+
         address oldUpdater = updater;
         updater = newUpdater;
         emit UpdaterChanged(oldUpdater, updater);
     }
 
-    modifier onlyUpdater()
-    {
+    modifier onlyUpdater() {
         require(msg.sender == updater, "You're not updater");
         _;
     }

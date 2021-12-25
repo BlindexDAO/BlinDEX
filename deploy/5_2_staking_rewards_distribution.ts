@@ -1,8 +1,8 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { DeployFunction } from 'hardhat-deploy/types';
-import { StakingRewardsDistribution } from '../typechain/StakingRewardsDistribution';
-import { to_d18 } from '../utils/NumbersHelpers'
-import { getBdx, getDevTreasury, getTreasury, getVesting } from '../utils/DeployedContractsHelpers';
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { DeployFunction } from "hardhat-deploy/types";
+import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import { to_d18 } from "../utils/NumbersHelpers";
+import { getBdx, getDevTreasury, getTreasury, getVesting } from "../utils/DeployedContractsHelpers";
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: staking rewards distribution");
@@ -10,11 +10,9 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   const treasury = await getTreasury(hre);
 
   const bdx = await getBdx(hre);
-  const stakingRewardsDistribution = await hre.ethers.getContract("StakingRewardsDistribution") as StakingRewardsDistribution;
+  const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
 
-  await(await bdx.connect(treasury).transfer(
-    stakingRewardsDistribution.address,
-    to_d18(21).mul(1e6).div(2))).wait();
+  await (await bdx.connect(treasury).transfer(stakingRewardsDistribution.address, to_d18(21).mul(1e6).div(2))).wait();
 
   console.log("Fed Staking Rewards Distribution");
 }
@@ -24,20 +22,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const vesting = await getVesting(hre);
   const devTreasury = await getDevTreasury(hre);
 
-  const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(
-    "StakingRewardsDistribution", {
+  const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy("StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER,
     proxy: {
-      proxyContract: 'OptimizedTransparentProxy',
+      proxyContract: "OptimizedTransparentProxy",
       execute: {
         init: {
           methodName: "initialize",
-          args: [
-            bdx.address,
-            vesting.address,
-            devTreasury.address,
-            90
-          ]
+          args: [bdx.address, vesting.address, devTreasury.address, 90]
         }
       }
     },
@@ -46,7 +38,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   console.log("Deployed StakingRewardsDistribution: " + stakingRewardsDistribution_ProxyDeployment.address);
-
 
   // there is cycle dependency between staking rewards distribution and vesting
   // once staking rewards distribution is available we override vesting params
@@ -61,10 +52,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("finished deployment: staking rewards distribution");
 
-	// One time migration
-	return true;
+  // One time migration
+  return true;
 };
-func.id = __filename
-func.tags = ['StakingRewardsDistribution'];
-func.dependencies = ['BDX', 'BdxMint', "Vesting"];
+func.id = __filename;
+func.tags = ["StakingRewardsDistribution"];
+func.dependencies = ["BDX", "BdxMint", "Vesting"];
 export default func;

@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { setupProductionReadySystem } from "../utils/SystemSetup";
-const { types } = require("hardhat/config")
+const { types } = require("hardhat/config");
 
 export function load() {
   task("initialize")

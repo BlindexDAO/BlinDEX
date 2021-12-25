@@ -37,3 +37,11 @@ jobs:
           sleep 7
           npm run deploy:fork:reset
           npm test
+      - name: Prettify code
+        run: npm run format
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Prettified code!
+          branch: ${{ github.head_ref }}
+          commit_options: "--no-verify"

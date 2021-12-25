@@ -10,8 +10,7 @@ import "./StakingRewardsDistribution.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Vesting is OwnableUpgradeable
-{
+contract Vesting is OwnableUpgradeable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -23,7 +22,7 @@ contract Vesting is OwnableUpgradeable
     }
 
     mapping(address => VestingSchedule[]) public vestingSchedules;
-    
+
     address public vestingScheduler;
     address public fundsProvider;
     uint256 public vestingTimeInSeconds;
@@ -34,14 +33,11 @@ contract Vesting is OwnableUpgradeable
         address _vestingScheduler,
         address _fundsProvider,
         uint256 _vestingTimeInSeconds
-    ) 
-        external
-        initializer
-    {
+    ) external initializer {
         require(_vestedTokenAddress != address(0), "Vesting address cannot be 0");
         require(_vestingScheduler != address(0), "VestingScheduler address cannot be 0");
         require(_fundsProvider != address(0), "FundsProvider address cannot be 0");
-        require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
+        require(_vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
 
         __Ownable_init();
 
@@ -55,15 +51,9 @@ contract Vesting is OwnableUpgradeable
 
     function schedule(address _receiver, uint256 _amount_d18) external {
         // to prevent melicious users form cloging user's schedules
-        require(msg.sender == vestingScheduler,
-            "Only vesting scheduler can create vesting schedules");
+        require(msg.sender == vestingScheduler, "Only vesting scheduler can create vesting schedules");
 
-        vestingSchedules[_receiver].push(VestingSchedule(
-            block.timestamp,
-            block.timestamp.add(vestingTimeInSeconds),
-            _amount_d18,
-            0
-        ));
+        vestingSchedules[_receiver].push(VestingSchedule(block.timestamp, block.timestamp.add(vestingTimeInSeconds), _amount_d18, 0));
 
         vestedToken.safeTransferFrom(fundsProvider, address(this), _amount_d18);
 
@@ -78,7 +68,7 @@ contract Vesting is OwnableUpgradeable
         for (uint256 i = from; i < to && i < userVestingSchedulesCount; i++) {
             if (isFullyVested(userVestingSchedules[i])) {
                 rewardsToClaim = rewardsToClaim.add(userVestingSchedules[i].totalVestedAmount_d18.sub(userVestingSchedules[i].releasedAmount_d18));
-                
+
                 userVestingSchedulesCount--;
                 userVestingSchedules[i] = userVestingSchedules[userVestingSchedulesCount];
                 userVestingSchedules.pop();
@@ -101,19 +91,18 @@ contract Vesting is OwnableUpgradeable
         return vestingSchedules[user].length;
     }
 
-    function isFullyVested(VestingSchedule memory _schedule) public view returns(bool) {
+    function isFullyVested(VestingSchedule memory _schedule) public view returns (bool) {
         return _schedule.vestingEndTimeStamp <= block.timestamp;
     }
 
-    function getAvailableReward(VestingSchedule memory _schedule) public view returns(uint256) {
+    function getAvailableReward(VestingSchedule memory _schedule) public view returns (uint256) {
         if (isFullyVested(_schedule)) {
             return _schedule.totalVestedAmount_d18.sub(_schedule.releasedAmount_d18);
         }
-        return (_schedule.totalVestedAmount_d18
-            .mul(block.timestamp.sub(_schedule.vestingStartedTimeStamp))
-            .div(vestingTimeInSeconds)
-        )
-        .sub(_schedule.releasedAmount_d18);
+        return
+            (_schedule.totalVestedAmount_d18.mul(block.timestamp.sub(_schedule.vestingStartedTimeStamp)).div(vestingTimeInSeconds)).sub(
+                _schedule.releasedAmount_d18
+            );
     }
 
     function vestingSchedulesOf(address account) external view returns (VestingSchedule[] memory) {
@@ -122,20 +111,14 @@ contract Vesting is OwnableUpgradeable
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setVestingScheduler(address _vestingScheduler)
-        external
-        onlyOwner
-    {
+    function setVestingScheduler(address _vestingScheduler) external onlyOwner {
         require(_vestingScheduler != address(0), "Vesting scheduler cannot be set to the zero address");
 
         vestingScheduler = _vestingScheduler;
     }
 
-    function setVestingTimeInSeconds(uint256 _vestingTimeInSeconds)
-        external
-        onlyOwner
-    {
-        require( _vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
+    function setVestingTimeInSeconds(uint256 _vestingTimeInSeconds) external onlyOwner {
+        require(_vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
         vestingTimeInSeconds = _vestingTimeInSeconds;
 
         emit VestingTimeInSecondsSet(_vestingTimeInSeconds);
@@ -143,7 +126,7 @@ contract Vesting is OwnableUpgradeable
 
     function setFundsProvider(address _fundsProvider) external onlyOwner {
         require(_fundsProvider != address(0), "Funds provider cannot be set to the zero address");
-        
+
         fundsProvider = _fundsProvider;
     }
 
