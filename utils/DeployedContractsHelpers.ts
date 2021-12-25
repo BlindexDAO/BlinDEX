@@ -17,16 +17,10 @@ import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribut
 import { Vesting } from "../typechain/Vesting";
 import { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import { IWETH } from "../typechain/IWETH";
-import { ContractsDetails as bdeuContractDetails } from "../deploy/2_2_euro_stablecoin";
-import { ContractsDetails as bdusContractDetails } from "../deploy/2_3_usd_stablecoin";
-
-const allStabesContractsDetails = {
-  [bdeuContractDetails.stable.symbol]: bdeuContractDetails,
-  [bdusContractDetails.stable.symbol]: bdusContractDetails
-};
+import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 
 export function getAllBDStablesSymbols(): string[] {
-  return Object.keys(allStabesContractsDetails);
+  return Object.values(bdstablesContractsDetails).map((stable) => stable.symbol);
 }
 
 export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
@@ -66,38 +60,43 @@ export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<Signe
 
 export async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
-
-  switch (symbol) {
-    case bdeuContractDetails.stable.symbol:
-      return (await hre.ethers.getContract(bdeuContractDetails.stable.symbol, deployer)) as BDStable;
-    case bdusContractDetails.stable.symbol:
-      return (await hre.ethers.getContract(bdusContractDetails.stable.symbol, deployer)) as BDStable;
-    default:
-      throw new Error("Unknown bdstable");
-  }
+  return (await hre.ethers.getContract(symbol, deployer)) as BDStable;
 }
 
 export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract(allStabesContractsDetails[symbol].pools.wbtc.name, deployer)) as BdStablePool;
+  return (await hre.ethers.getContract(bdstablesContractsDetails[symbol].pools.wbtc.name, deployer)) as BdStablePool;
 }
 
 export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract(allStabesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
+  return (await hre.ethers.getContract(bdstablesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
 }
 
 export function getBDStableFiat(symbol: string) {
-  return allStabesContractsDetails[symbol].stable.fiat;
+  return bdstablesContractsDetails[symbol].fiat;
 }
 
+///////////////////////////////////////Hardcoded bdstables values ///////////////////////////////////////
+// Functions with hardcoded values as it's used for testa and hardhat tasks
+
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
-  return getBDStable(hre, bdeuContractDetails.stable.symbol);
+  return getBDStable(hre, "BDEU");
 }
 
 export async function getBdUS(hre: HardhatRuntimeEnvironment) {
-  return getBDStable(hre, bdusContractDetails.stable.symbol);
+  return getBDStable(hre, "BDUS");
 }
+
+export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
+  return getBDStableWethPool(hre, "BDEU");
+}
+
+export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
+  return getBDStableWbtcPool(hre, "BDEU");
+}
+
+////////////////////////////////////End of hardcoded bdstables values ///////////////////////////////////
 
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
@@ -117,14 +116,6 @@ export async function getStakingRewardsDistribution(hre: HardhatRuntimeEnvironme
 export async function getVesting(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract("Vesting", deployer)) as Vesting;
-}
-
-export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
-  return getBDStableWethPool(hre, bdeuContractDetails.stable.symbol);
-}
-
-export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
-  return getBDStableWbtcPool(hre, bdeuContractDetails.stable.symbol);
 }
 
 export async function getBdx(hre: HardhatRuntimeEnvironment) {

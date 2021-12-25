@@ -1,8 +1,7 @@
 import { expect } from "chai";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber } from "ethers";
-import { getBDStable, getBdx, getTreasury } from "../../utils/DeployedContractsHelpers";
-import { ContractsDetails as bdeuContractDetails } from "../../deploy/2_2_euro_stablecoin";
+import { getBdEu, getBdx, getTreasury } from "../../utils/DeployedContractsHelpers";
 
 export async function expectToFail(fun: () => any, message: string) {
   await expect(
@@ -20,6 +19,6 @@ export async function provideBdx(hre: HardhatRuntimeEnvironment, to: string, amo
 
 export async function provideBdEu(hre: HardhatRuntimeEnvironment, to: string, amount: BigNumber) {
   const treasury = await getTreasury(hre);
-  const bdEu = await getBDStable(hre, bdeuContractDetails.stable.symbol);
+  const bdEu = await getBdEu(hre);
   await bdEu.connect(treasury).transfer(to, amount);
 }
