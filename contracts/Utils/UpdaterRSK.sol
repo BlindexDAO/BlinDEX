@@ -27,28 +27,18 @@ contract UpdaterRSK is Ownable {
         address[] memory _uniswapOracles,
         address[] memory _BDStables
     ) external onlyUpdater nonReentrant {
-        require(
-            _sovrynOracles.length == _sovrynPrices.length,
-            "Each sovryn oracle address needs its corresponding price"
-        );
-        require(
-            _fiatOracles.length == _fiatPrices.length,
-            "Each fiat oracle address needs its corresponding price"
-        );
+        require(_sovrynOracles.length == _sovrynPrices.length, "Each sovryn oracle address needs its corresponding price");
+        require(_fiatOracles.length == _fiatPrices.length, "Each fiat oracle address needs its corresponding price");
 
         for (uint256 i = 0; i < _sovrynOracles.length; i++) {
-            SovrynSwapPriceFeed priceFeed = SovrynSwapPriceFeed(
-                _sovrynOracles[i]
-            );
+            SovrynSwapPriceFeed priceFeed = SovrynSwapPriceFeed(_sovrynOracles[i]);
             if (priceFeed.shouldUpdateOracleWithVerification()) {
                 priceFeed.updateOracleWithVerification(_sovrynPrices[i]);
             }
         }
 
         for (uint256 i = 0; i < _fiatOracles.length; i++) {
-            FiatToFiatPseudoOracleFeed priceFeed = FiatToFiatPseudoOracleFeed(
-                _fiatOracles[i]
-            );
+            FiatToFiatPseudoOracleFeed priceFeed = FiatToFiatPseudoOracleFeed(_fiatOracles[i]);
             priceFeed.setPrice(_fiatPrices[i]);
         }
 
@@ -66,10 +56,7 @@ contract UpdaterRSK is Ownable {
     }
 
     function setUpdater(address newUpdater) external onlyOwner {
-        require(
-            newUpdater != address(0),
-            "Updater cannot be set to the zero address"
-        );
+        require(newUpdater != address(0), "Updater cannot be set to the zero address");
 
         address oldUpdater = updater;
         updater = newUpdater;
@@ -95,8 +82,5 @@ contract UpdaterRSK is Ownable {
         _status = _NOT_ENTERED;
     }
 
-    event UpdaterChanged(
-        address indexed oldUpdater,
-        address indexed newUpdater
-    );
+    event UpdaterChanged(address indexed oldUpdater, address indexed newUpdater);
 }
