@@ -25,10 +25,14 @@ const allStabesContractsDetails = {
   [bdusContractDetails.stable.symbol]: bdusContractDetails
 };
 
+export function getAllBDStablesSymbols(): string[] {
+  return Object.keys(allStabesContractsDetails);
+}
+
 export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
   const allStables = [];
 
-  for (const symbol of Object.keys(allStabesContractsDetails)) {
+  for (const symbol of getAllBDStablesSymbols()) {
     allStables.push(await getBDStable(hre, symbol));
   }
 

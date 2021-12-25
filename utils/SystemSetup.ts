@@ -54,8 +54,6 @@ export async function setUpFunctionalSystem(
   const bdEuWethPool = await getBdEuWethPool(hre);
   const bdEuWbtcPool = await getBdEuWbtcPool(hre);
 
-  const tresuryBdEuBalance = await bdEu.balanceOf(treasury.address);
-
   if (forIntegrationTests) {
     // mint initial WETH
     await mintWeth(hre, deployer, to_d18(100));

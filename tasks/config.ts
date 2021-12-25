@@ -78,7 +78,7 @@ export function load() {
 
     const allStables = await getAllBDStables(hre);
     for (const stable of allStables) {
-      const symbol = (await stable.symbol()).toUpperCase();
+      const symbol = await stable.symbol();
       blockchainConfig[`${networkName}_${symbol}_ADDRESS`] = stable.address;
     }
 
@@ -205,7 +205,7 @@ async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
   ];
 
   for (const stable of stables) {
-    const symbol = (await stable.symbol()).toUpperCase();
+    const symbol = await stable.symbol();
 
     whitelist.push([
       { symbol: "WETH", address: weth.address },
@@ -295,7 +295,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
 
   const stableConfigs = [];
   for (const stable of allStables) {
-    const symbol = (await stable.symbol()).toUpperCase();
+    const symbol = await stable.symbol();
     const pools: BdStablePool[] = [await getBDStableWethPool(hre, symbol), await getBDStableWbtcPool(hre, symbol)];
 
     const stablePools = await Promise.all(

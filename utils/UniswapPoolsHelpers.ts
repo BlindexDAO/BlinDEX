@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { IERC20 } from "../typechain/IERC20";
-import { getBdEu, getBdx, getWeth, getWbtc, getUniswapPairOracle, getERC20, getBot } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getAllBDStablesSymbols } from "./DeployedContractsHelpers";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("starting updating oracles");
@@ -47,35 +47,31 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
-  const bdEu = await getBdEu(hre);
+  const bdStables = await getAllBDStables(hre);
+  const bdxPoolData = { name: "BDX", token: bdx };
+  const wethPoolData = { name: "WETH", token: weth };
+  const wbtcPoolData = { name: "WBTC", token: wbtc };
 
-  // order is important BDX -> BDStable -> collateral
-  return [
-    [
-      { name: "BDX", token: bdx },
-      { name: "BDEU", token: bdEu }
-    ],
-    [
-      { name: "BDEU", token: bdEu },
-      { name: "WETH", token: weth }
-    ],
-    [
-      { name: "BDEU", token: bdEu },
-      { name: "WBTC", token: wbtc }
-    ],
-    [
-      { name: "BDX", token: bdx },
-      { name: "WETH", token: weth }
-    ],
-    [
-      { name: "BDX", token: bdx },
-      { name: "WBTC", token: wbtc }
-    ]
+  // In each sub array, the order of the first object matters.
+  // BDX should always comde first in any sub array, then BDStable and only then the collateral (WBTC/WETH)
+  const pools = [
+    [bdxPoolData, wethPoolData],
+    [bdxPoolData, wbtcPoolData]
   ];
+
+  for (const stable of bdStables) {
+    const symbol = await stable.symbol();
+
+    pools.push([bdxPoolData, { name: symbol, token: stable }]);
+    pools.push([{ name: symbol, token: stable }, wethPoolData]);
+    pools.push([{ name: symbol, token: stable }, wbtcPoolData]);
+  }
+
+  return pools;
 }
 
 export function tokensDecimals(hre: HardhatRuntimeEnvironment, tokenName: string): number {
-  if (["BDX", "BDEU", "WETH"].includes(tokenName)) {
+  if (["BDX", "WETH", ...getAllBDStablesSymbols()].includes(tokenName)) {
     return 18;
   } else if (tokenName == "WBTC") {
     if (hre.network.name == "rsk") {
