@@ -11,7 +11,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("BDX", () => {
+describe("BDX", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     await setUpFunctionalSystemForTests(hre, 1);
