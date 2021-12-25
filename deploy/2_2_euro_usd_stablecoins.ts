@@ -142,6 +142,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 func.id = __filename;
+// We cannot just use: ...getAllBDStablesSymbols() as it uses an object exported by thi sfile and therefore we'll have a circular dependency.
+// Everywhere else needed can use ...getAllBDStablesSymbols()
 func.tags = [...Object.values(ContractsDetails).map((stable) => stable.symbol)];
 func.dependencies = ["BDX", "BdPoolLibrary"];
 export default func;
