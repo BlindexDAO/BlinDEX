@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: ["BlindexShares", "BDX"]
+          args: ["Blindex Shares", "BDX"]
         }
       }
     },
