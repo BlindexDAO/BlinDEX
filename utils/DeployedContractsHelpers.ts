@@ -20,6 +20,11 @@ import { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdeuContractDetails } from "../deploy/2_2_euro_stablecoin";
 import { ContractsDetails as bdusContractDetails } from "../deploy/2_3_usd_stablecoin";
 
+const allStabesContractsDetails = {
+  [bdeuContractDetails.stable.symbol]: bdeuContractDetails,
+  [bdusContractDetails.stable.symbol]: bdusContractDetails
+};
+
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner("DEPLOYER");
   return deployer;
@@ -60,39 +65,16 @@ export async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string
 
 export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
-
-  switch (symbol) {
-    case bdeuContractDetails.stable.symbol:
-      return (await hre.ethers.getContract(bdeuContractDetails.pools.wbtc.name, deployer)) as BdStablePool;
-    case bdusContractDetails.stable.symbol:
-      return (await hre.ethers.getContract(bdusContractDetails.pools.wbtc.name, deployer)) as BdStablePool;
-    default:
-      throw new Error("Unknown bdstable");
-  }
+  return (await hre.ethers.getContract(allStabesContractsDetails[symbol].pools.wbtc.name, deployer)) as BdStablePool;
 }
 
 export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
-
-  switch (symbol) {
-    case bdeuContractDetails.stable.symbol:
-      return (await hre.ethers.getContract(bdeuContractDetails.pools.weth.name, deployer)) as BdStablePool;
-    case bdusContractDetails.stable.symbol:
-      return (await hre.ethers.getContract(bdusContractDetails.pools.weth.name, deployer)) as BdStablePool;
-    default:
-      throw new Error("Unknown bdstable");
-  }
+  return (await hre.ethers.getContract(allStabesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
 }
 
 export function getBDStableFiat(symbol: string) {
-  switch (symbol) {
-    case bdeuContractDetails.stable.symbol:
-      return bdeuContractDetails.stable.fiat;
-    case bdusContractDetails.stable.symbol:
-      return bdusContractDetails.stable.fiat;
-    default:
-      throw new Error("Unknown bdstable");
-  }
+  return allStabesContractsDetails[symbol].stable.fiat;
 }
 
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
