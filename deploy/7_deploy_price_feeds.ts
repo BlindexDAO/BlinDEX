@@ -1,10 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { OracleBasedCryptoFiatFeed } from "../typechain/OracleBasedCryptoFiatFeed";
+import { OracleBasedWethUSDFeed } from "../typechain/OracleBasedWethUSDFeed";
 import * as constants from "../utils/Constants";
-import { getBot, getDeployer, getWethPairOracle } from "../utils/DeployedContractsHelpers";
-import { BDStable } from "../typechain/BDStable";
-import { BdStablePool } from "../typechain/BdStablePool";
+import { getAllBDStables, getBDStableWbtcPool, getBDStableWethPool, getBot, getDeployer, getWethPairOracle } from "../utils/DeployedContractsHelpers";
 import { DeployResult } from "hardhat-deploy/dist/types";
 import { to_d12 } from "../utils/NumbersHelpers";
 
@@ -12,7 +11,8 @@ export const ContractsNames = {
   priceFeedEurUsdName: "PriceFeed_EUR_USD",
   priceFeedETHUsdName: "PriceFeed_ETH_USD",
   BtcToEthOracle: "BtcToEthOracle",
-  oracleEthEurName: "OracleBasedCryptoFiatFeed_ETH_EUR"
+  oracleEthEurName: "OracleBasedCryptoFiatFeed_ETH_EUR",
+  oracleEthUsdName: "OracleBasedWethUSDFeed_ETH_USD"
 };
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -21,7 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
   const deployer = await getDeployer(hre);
   const bot = await getBot(hre);
-  const bdeu = (await hre.ethers.getContract("BDEU")) as BDStable;
 
   let priceFeed_EUR_USD_Deployment: DeployResult;
   let priceFeed_ETH_USD_Deployment: DeployResult;
@@ -95,31 +94,50 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [priceFeed_EUR_USD_Deployment.address, priceFeed_ETH_USD_Deployment.address]
   });
 
-  const oracleBasedCryptoFiatFeed_ETH_EUR = (await hre.ethers.getContract(ContractsNames.oracleEthEurName)) as OracleBasedCryptoFiatFeed;
-  console.log(`${ContractsNames.oracleEthEurName} deployed to:`, oracleBasedCryptoFiatFeed_ETH_EUR.address);
-
-  await (await bdeu.setETH_fiat_Oracle(oracleBasedCryptoFiatFeed_ETH_EUR.address)).wait();
-  console.log(`Added WETH EUR oracle to BDEU`);
-
+  const bdstables = await getAllBDStables(hre);
   const bdxWethOracle = await getWethPairOracle(hre, "BDX");
-  await (await bdeu.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
-  console.log(`Added BDX ETH Uniswap oracle`);
 
-  const bdeuWethOracle = await getWethPairOracle(hre, "BDEU");
-  await (await bdeu.setBDStable_WETH_Oracle(bdeuWethOracle.address, constants.wETH_address[networkName])).wait();
-  console.log(`Added BDEU ETH Uniswap oracle`);
+  for (const stable of bdstables) {
+    const symbol = await stable.symbol();
+    let oracleBasedCryptoFiatFeed_ETH_Stable;
 
-  const bdeuWethPool = (await hre.ethers.getContract("BDEU_WETH_POOL")) as BdStablePool;
-  const bdeuWbtcPool = (await hre.ethers.getContract("BDEU_WBTC_POOL")) as BdStablePool;
-  const weth_to_weth_oracle = await hre.deployments.deploy("WethToWethOracle", {
-    from: deployer.address,
-    args: [constants.wETH_address[networkName]]
-  });
+    // Since our base fiat currently is USD, BDUS is a special case as it needs its own oracle that is just a dumb adapter from our ETH/USD price feed
+    if (symbol === "BDUS") {
+      await hre.deployments.deploy(ContractsNames.oracleEthUsdName, {
+        from: deployer.address,
+        contract: "OracleBasedWethUSDFeed",
+        args: [priceFeed_ETH_USD_Deployment.address]
+      });
+      oracleBasedCryptoFiatFeed_ETH_Stable = (await hre.ethers.getContract(ContractsNames.oracleEthUsdName)) as OracleBasedWethUSDFeed;
+    } else {
+      oracleBasedCryptoFiatFeed_ETH_Stable = (await hre.ethers.getContract(ContractsNames.oracleEthEurName)) as OracleBasedCryptoFiatFeed;
+      console.log(`${ContractsNames.oracleEthEurName} deployed to:`, oracleBasedCryptoFiatFeed_ETH_Stable.address);
+    }
 
-  await (await bdeuWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait();
-  await (await bdeuWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, constants.wETH_address[networkName])).wait();
+    await (await stable.setETH_fiat_Oracle(oracleBasedCryptoFiatFeed_ETH_Stable.address)).wait();
+    console.log(`Added WETH/Fiat oracle to ${symbol}`);
 
-  console.log("finished deployment: price feeds");
+    const bdstableWethOracle = await getWethPairOracle(hre, symbol);
+    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, constants.wETH_address[networkName])).wait();
+    console.log(`Added ${symbol}/WETH Uniswap oracle`);
+
+    const bdstableWethPool = await getBDStableWethPool(hre, symbol);
+    const bdstableWbtcPool = await getBDStableWbtcPool(hre, symbol);
+    const weth_to_weth_oracle = await hre.deployments.deploy("WethToWethOracle", {
+      from: deployer.address,
+      args: [constants.wETH_address[networkName]]
+    });
+
+    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait();
+    console.log(`Added ${symbol}/WETH bdstable pool oracle`);
+    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, constants.wETH_address[networkName])).wait();
+    console.log(`Added ${symbol}/WBTC bdstable pool oracle`);
+
+    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
+    console.log(`Added BDX/WETH Uniswap oracle to ${symbol}`);
+  }
+
+  console.log("Finished deployment: price feeds");
 
   // One time migration
   return true;
