@@ -73,14 +73,9 @@ export function load() {
       [`${networkName}_PRICE_FEED_ETH_EUR_ADDRESS`]: (
         await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)
       ).address.toLowerCase(),
-      [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase()
+      [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
+      [`${networkName}_BDSTABLES_ADDRESSES`]: (await getAllBDStables(hre)).map((stable) => stable.address)
     };
-
-    const allStables = await getAllBDStables(hre);
-    for (const stable of allStables) {
-      const symbol = await stable.symbol();
-      blockchainConfig[`${networkName}_${symbol}_ADDRESS`] = stable.address;
-    }
 
     console.log(
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
