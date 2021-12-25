@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
 import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import { getBdEu, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { getAllBDStables, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -46,7 +46,6 @@ async function setupStakingContract(
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
 
-  const bdeu = await getBdEu(hre);
   const bdx = await getBdx(hre);
 
   console.log("Setting up staking contracts");
@@ -57,16 +56,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
   console.log("Set up staking: BDX/WBTC");
 
-  await setupStakingContract(hre, bdx.address, bdeu.address, "BDX", "BDEU", true);
-  console.log("Set up staking: BDX/BDEU");
+  for (const stable of await getAllBDStables(hre)) {
+    const symbol = await stable.symbol();
+    console.log(`Starting deployment of ${symbol} staking contracts`);
 
-  await setupStakingContract(hre, bdeu.address, constants.wETH_address[networkName], "BDEU", "WETH", false);
-  console.log("Set up staking: BDEU/WETH");
+    console.log(`Setting up staking: BDX/${symbol}`);
+    await setupStakingContract(hre, bdx.address, stable.address, "BDX", symbol, true);
 
-  await setupStakingContract(hre, bdeu.address, constants.wBTC_address[networkName], "BDEU", "WBTC", false);
-  console.log("Set up staking: BDEU/WBTC");
+    console.log(`Setting up staking: ${symbol}/WETH`);
+    await setupStakingContract(hre, stable.address, constants.wETH_address[networkName], symbol, "WETH", false);
 
-  console.log("finished deployment: euro stable staking");
+    console.log(`Setting up staking: ${symbol}/WBTC`);
+    await setupStakingContract(hre, stable.address, constants.wBTC_address[networkName], symbol, "WBTC", false);
+
+    console.log(`Finished deployment of ${symbol} staking contracts`);
+  }
+
+  console.log("Finished deployment of all the staking contracts");
 
   // One time migration
   return true;
