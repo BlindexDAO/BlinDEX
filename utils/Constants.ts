@@ -83,7 +83,9 @@ export const initialBdstableMintingAmount = (networkName: string = "mainnetFork"
 };
 
 export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
+export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
 export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
+export const INITIAL_BDX_UNISWAP_USD_AMOUNT = 10000;
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 // original uniswap addresss on ETH

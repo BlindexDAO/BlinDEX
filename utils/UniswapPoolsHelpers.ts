@@ -53,7 +53,8 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const wbtcPoolData = { name: "WBTC", token: wbtc };
 
   // In each sub array, the order of the first object matters.
-  // BDX should always comde first in any sub array, then BDStable and only then the collateral (WBTC/WETH)
+  // BDX should always come first in any sub array, then BDStable and only then the collateral (WBTC/WETH)
+  // This is important when providing liquidity in the SystemSetup.ts file
   const pools = [
     [bdxPoolData, wethPoolData],
     [bdxPoolData, wbtcPoolData]

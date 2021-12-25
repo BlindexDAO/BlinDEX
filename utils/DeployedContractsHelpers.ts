@@ -182,17 +182,33 @@ export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment) {
   return getOnChainCryptoFiatPrice(hre, constants.EUR_USD_FEED_ADDRESS[networkName], constants.ETH_USD_FEED_ADDRESS[networkName]);
 }
 
+export async function getOnChainWethUsdPrice(hre: HardhatRuntimeEnvironment) {
+  const networkName = hre.network.name;
+
+  return getOnChainCryptoUSDPrice(hre, constants.ETH_USD_FEED_ADDRESS[networkName]);
+}
+
+export async function getOnChainWbtcUsdPrice(hre: HardhatRuntimeEnvironment) {
+  const networkName = hre.network.name;
+
+  return getOnChainCryptoUSDPrice(hre, constants.BTC_USD_FEED_ADDRESS[networkName]);
+}
+
+export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, cryptoUsdFeedAddress: string) {
+  const cryptoUsdFeed = (await hre.ethers.getContractAt("AggregatorV3Interface", cryptoUsdFeedAddress)) as AggregatorV3Interface;
+  const crypto_usd_data = await cryptoUsdFeed.latestRoundData();
+  const price_crypto_usd_decimlas = await cryptoUsdFeed.decimals();
+  return bigNumberToDecimal(crypto_usd_data.answer, price_crypto_usd_decimlas);
+}
+
 export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, fiat_usd_feed_addres: string, crypto_usd_feed_address: string) {
   const fiat_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", fiat_usd_feed_addres)) as AggregatorV3Interface;
-  const crypto_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", crypto_usd_feed_address)) as AggregatorV3Interface;
 
   const fiat_usd_data = await fiat_usd_feed.latestRoundData();
   const price_fiat_usd_decimlas = await fiat_usd_feed.decimals();
   const price_fiat_usd = bigNumberToDecimal(fiat_usd_data.answer, price_fiat_usd_decimlas);
 
-  const crypto_usd_data = await crypto_usd_feed.latestRoundData();
-  const price_crypto_usd_decimlas = await crypto_usd_feed.decimals();
-  const price_crypto_usd = bigNumberToDecimal(crypto_usd_data.answer, price_crypto_usd_decimlas);
+  const price_crypto_usd = await getOnChainCryptoUSDPrice(hre, crypto_usd_feed_address);
 
   const cryptoInFiatPrice = price_crypto_usd / price_fiat_usd;
   const cryptoInFiatPrice_1e12 = to_d12(cryptoInFiatPrice);
