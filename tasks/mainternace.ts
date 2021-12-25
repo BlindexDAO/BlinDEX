@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import {
-  getBdEu,
+  getAllBDStables,
   getBdEuWethPool,
   getBdx,
   getBot,
@@ -9,7 +9,6 @@ import {
   getUniswapFactory,
   getUniswapPair,
   getUniswapPairOracle,
-  getUniswapRouter,
   getWeth
 } from "../utils/DeployedContractsHelpers";
 import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
@@ -54,9 +53,12 @@ export function load() {
       await updateUniswapPairsOracles(hre, bot);
 
       console.log("starting refresh collateral ratio");
-      const bdEu = await getBdEu(hre);
-      await (await bdEu.connect(bot).refreshCollateralRatio()).wait();
-      console.log("refreshed collateral ratio");
+      const stables = await getAllBDStables(hre);
+
+      for (const stable of stables) {
+        await (await stable.connect(bot).refreshCollateralRatio()).wait();
+        console.log(`${await stable.symbol()} refreshed collateral ratio`);
+      }
     });
 
   task("update:eurusd:rsk")
@@ -66,7 +68,7 @@ export function load() {
         throw new Error("RSK only task");
       }
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract("PriceFeed_EUR_USD", deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
       console.log("updated EUR / USD");
     });
@@ -86,15 +88,15 @@ export function load() {
     const bot = await getBot(hre);
     const updater = (await hre.ethers.getContract("Updater", bot)) as UpdaterRSK;
 
-    let uniOracles = [];
+    const uniOracles = [];
     const pools = await getPools(hre);
     for (let pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       uniOracles.push(oracle.address);
     }
-    const bdeu = (await getBdEu(hre)) as BDStable;
 
-    await (await updater.update([], [], [], [], uniOracles, [bdeu.address])).wait();
+    const stablesAddresses = (await getAllBDStables(hre)).map((stable) => stable.address);
+    await (await updater.update([], [], [], [], uniOracles, stablesAddresses)).wait();
 
     console.log("updater has updated");
   });
@@ -110,9 +112,9 @@ export function load() {
       const bot = await getBot(hre);
       const updater = (await hre.ethers.getContract("Updater", bot)) as UpdaterRSK;
 
-      const oracleEthUsd = (await hre.ethers.getContract("PriceFeed_ETH_USD", bot)) as SovrynSwapPriceFeed;
-      const oracleBtcEth = (await hre.ethers.getContract("BtcToEthOracle", bot)) as SovrynSwapPriceFeed;
-      const oracleEurUsd = (await hre.ethers.getContract("PriceFeed_EUR_USD", bot)) as FiatToFiatPseudoOracleFeed;
+      const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, bot)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, bot)) as SovrynSwapPriceFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, bot)) as FiatToFiatPseudoOracleFeed;
 
       let uniOracles = [];
       const pools = await getPools(hre);
@@ -120,7 +122,7 @@ export function load() {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         uniOracles.push(oracle.address);
       }
-      const bdeu = await getBdEu(hre);
+      const stablesAddresses = (await getAllBDStables(hre)).map((stable) => stable.address);
 
       await (
         await updater.update(
@@ -129,7 +131,7 @@ export function load() {
           [oracleEurUsd.address],
           [to_d12(eurusd)],
           uniOracles,
-          [bdeu.address]
+          stablesAddresses
         )
       ).wait();
 
@@ -143,9 +145,9 @@ export function load() {
 
       const networkName = hre.network.name;
       const deployer = await getDeployer(hre);
-      const oracleEthUsd = (await hre.ethers.getContract("PriceFeed_ETH_USD", deployer)) as SovrynSwapPriceFeed;
-      const oracleBtcEth = (await hre.ethers.getContract("BtcToEthOracle", deployer)) as SovrynSwapPriceFeed;
-      const oracleEurUsd = (await hre.ethers.getContract("PriceFeed_EUR_USD", deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)) as SovrynSwapPriceFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
 
       if (networkName == "rsk") {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
@@ -297,9 +299,13 @@ export function load() {
 
       await show_uniswapOraclesPrices(hre, showPrices == "true" ? true : false);
 
-      await show_efCR(hre);
-      await show_CR(hre);
-      await show_efBDXCov(hre);
+      const stables = await getAllBDStables(hre);
+
+      for (const stable of stables) {
+        await show_efCR(stable);
+        await show_CR(stable);
+        await show_efBDXCov(stable);
+      }
     });
 
   async function show_ethEur(hre: HardhatRuntimeEnvironment) {
@@ -338,22 +344,19 @@ export function load() {
     console.log("EUR/USD: " + price + " last updated: " + new Date(lastUpdateTimestamp * 1000));
   }
 
-  async function show_efBDXCov(hre: HardhatRuntimeEnvironment) {
-    const bdeu = await getBdEu(hre);
-    const efBdxCov = await bdeu.get_effective_bdx_coverage_ratio();
-    console.log("BEDU efBDXCov: " + d12_ToNumber(efBdxCov));
+  async function show_efBDXCov(stable: BDStable) {
+    const efBdxCov = await stable.get_effective_bdx_coverage_ratio();
+    console.log(`${await stable.symbol()} efBDXCov: ${d12_ToNumber(efBdxCov)}`);
   }
 
-  async function show_efCR(hre: HardhatRuntimeEnvironment) {
-    const bdeu = await getBdEu(hre);
-    const efCR = await bdeu.effective_global_collateral_ratio_d12();
-    console.log("BEDU efCR: " + d12_ToNumber(efCR));
+  async function show_efCR(stable: BDStable) {
+    const efCR = await stable.effective_global_collateral_ratio_d12();
+    console.log(`${await stable.symbol()} efCR: ${d12_ToNumber(efCR)}`);
   }
 
-  async function show_CR(hre: HardhatRuntimeEnvironment) {
-    const bdeu = await getBdEu(hre);
-    const efCR = await bdeu.global_collateral_ratio_d12();
-    console.log("BEDU CR: " + d12_ToNumber(efCR));
+  async function show_CR(stable: BDStable) {
+    const efCR = await stable.global_collateral_ratio_d12();
+    console.log(`${await stable.symbol()} CR: ${d12_ToNumber(efCR)}`);
   }
 
   async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean) {
