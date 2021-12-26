@@ -21,6 +21,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
+import { BDStable } from "../typechain/BDStable";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -74,7 +75,7 @@ export function load() {
         await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)
       ).address.toLowerCase(),
       [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
-      [`${networkName}_BDSTABLES_ADDRESSES`]: (await getAllBDStables(hre)).map((stable) => stable.address)
+      [`${networkName}_BDSTABLES_ADDRESSES`]: (await getAllBDStables(hre)).map((stable: BDStable) => stable.address)
     };
 
     console.log(
@@ -102,7 +103,7 @@ export function load() {
       SWAP_FACTORY: (await getUniswapFactory(hre)).address,
       STAKING_REWARDS_DISTRIBUTION: stakingRewardsDistribution.address,
       VESTING: (await getVesting(hre)).address,
-      BD_STABLES: allStables.map((stable) => stable.address),
+      BD_STABLES: allStables.map((stable: BDStable) => stable.address),
       PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
       BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address
     };
@@ -115,6 +116,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
   const factory = await getUniswapFactory(hre);
   const pairsCount = (await factory.allPairsLength()).toNumber();
   const whitelist = await getPairsWhitelist(hre);
+
   const pairsWhitelistPromise = whitelist.map(async (pair) => {
     return {
       token0Symbol: await pair[0].symbol,
@@ -131,7 +133,6 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
       const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
       const token0 = (await pair.token0()).toLowerCase();
       const token1 = (await pair.token1()).toLowerCase();
-      let oracleAddress: string = "";
 
       let pairSymbols = pairsWhitelist.find(
         (pair) => (pair.token0Address == token0 && pair.token1Address == token1) || (pair.token0Address == token1 && pair.token1Address == token0)
@@ -140,7 +141,9 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
         throw new Error("Please update pair whitelist in getPairsWhitelist method to continue.");
       }
 
-      let pairSymbol = "";
+      let pairSymbol: string;
+      let oracleAddress: string;
+
       try {
         pairSymbol = pairSymbols?.token0Symbol + "_" + pairSymbols?.token1Symbol;
         oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
@@ -186,6 +189,7 @@ async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const stables = await getAllBDStables(hre);
+
   const bdx = await getBdx(hre);
 
   const whitelist = [
@@ -207,11 +211,11 @@ async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
       { symbol, address: stable.address }
     ]);
     whitelist.push([
-      { symbol: "WBTC", address: weth.address },
+      { symbol: "WBTC", address: wbtc.address },
       { symbol, address: stable.address }
     ]);
     whitelist.push([
-      { symbol: "BDX", address: weth.address },
+      { symbol: "BDX", address: bdx.address },
       { symbol, address: stable.address }
     ]);
   }
