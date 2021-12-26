@@ -37,7 +37,7 @@ describe("Uniswap Oracles", () => {
     // properly initalize system
     await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
     await resetOracle(hre, "BDEU", "WETH");
-    await simulateTimeElapseInSeconds(10); // wait a little bit to refleac real world scenario
+    await simulateTimeElapseInSeconds(10); // wait a little bit to reflect real world scenario
     await updateOracle(hre, "BDEU", "WETH", deployer); // first immediate update by deployer
     await simulateTimeElapseInSeconds(oneHour);
 
