@@ -62,18 +62,13 @@ export function load() {
       [`${networkName}_AVAILABLE_PAIRS`]: swapPairs,
       [`${networkName}_STAKING_REWARDS`]: stakingRewards,
       [`${networkName}_PAIR_ORACLES`]: mappedPairOracles,
-      [`${networkName}_PRICE_FEED_EUR_USD_ADDRESS`]: (
-        await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)
-      ).address.toLowerCase(),
-      [`${networkName}_PRICE_FEED_BTC_ETH_ADDRESS`]: (
-        await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)
-      ).address.toLowerCase(),
-      [`${networkName}_PRICE_FEED_ETH_USD_ADDRESS`]: (
-        await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)
-      ).address.toLowerCase(),
-      [`${networkName}_PRICE_FEED_ETH_EUR_ADDRESS`]: (
-        await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)
-      ).address.toLowerCase(),
+      // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
+      [`${networkName}_PRICE_FEEDS`]: {
+        ["EUR_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
+        ["BTC_ETH_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
+        ["ETH_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
+        ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
+      },
       [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
       [`${networkName}_BDSTABLES_ADDRESSES`]: (await getAllBDStables(hre)).map((stable: BDStable) => stable.address)
     };
@@ -119,8 +114,8 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
 
   const pairsWhitelistPromise = whitelist.map(async (pair) => {
     return {
-      token0Symbol: await pair[0].symbol,
-      token1Symbol: await pair[1].symbol,
+      token0Symbol: pair[0].symbol,
+      token1Symbol: pair[1].symbol,
       token0Address: pair[0].address.toLowerCase(),
       token1Address: pair[1].address.toLowerCase()
     };
