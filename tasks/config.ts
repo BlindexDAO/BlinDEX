@@ -294,7 +294,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
 
     const stablePools = await Promise.all(
       pools.map(async (pool) => {
-        const mingingFee = await pool.minting_fee();
+        const mintingFee = await pool.minting_fee();
         const redemptionFee = await pool.redemption_fee();
         const collateralAddress = await pool.collateral_token();
 
