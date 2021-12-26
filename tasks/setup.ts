@@ -6,7 +6,9 @@ import { setupProductionReadySystem } from "../utils/SystemSetup";
 const { types } = require("hardhat/config");
 
 export function load() {
-  // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
+  // TODO: At the moment this is not generic enough as you need to have a parameter for each bdstable * 3.
+  // We should see if we could send an object parameter for example or something to make it easier to work with.
+  // We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
   task("initialize")
     .addParam("btcEUR", "initial btc/eur Price")
     .addParam("bdxEUR", "initial bdx/eur Price")
