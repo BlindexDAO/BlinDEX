@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import moment from "moment";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
@@ -65,10 +66,10 @@ describe("Uniswap Oracles", () => {
     expect(bdEuPricePctDiff).to.be.closeTo(0, 1e-3, "bdEuPricePctDiff invalid");
   });
 
-  const secondsInHour = 60 * 60;
-  const secondsInDay = secondsInHour * 24;
-  const secondsInWeek = secondsInDay * 7;
-  const secondsInMonth = secondsInDay * 30;
+  const secondsInHour = moment.duration(1, "hour").asSeconds();
+  const secondsInDay = moment.duration(1, "day").asSeconds();
+  const secondsInWeek = moment.duration(1, "week").asSeconds();
+  const secondsInMonth = moment.duration(1, "month").asSeconds();
   for (let seconds of [0, 1, secondsInHour, secondsInDay, secondsInWeek, secondsInMonth]) {
     it(`oracle price sholud be close to spot price regardless when first oracle update happen | seconds [${seconds}]`, async () => {
       const bdeu = await getBdEu(hre);
