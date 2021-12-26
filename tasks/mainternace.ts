@@ -325,7 +325,7 @@ export function load() {
   async function show_ethUsd(hre: HardhatRuntimeEnvironment) {
     const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthUsdName)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
-    console.log("ETH/USD (RSK: BTC/EUR): " + price);
+    console.log("ETH/USD (RSK: BTC/USD): " + price);
   }
 
   async function show_btcEth(hre: HardhatRuntimeEnvironment) {
