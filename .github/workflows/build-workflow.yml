@@ -20,8 +20,6 @@ jobs:
           cache: npm
       - name: Install Node modules
         run: npm ci
-      - name: Lint
-        run: npm run lint
       - name: Compile
         run: npm run compile
       - name: Tests
@@ -45,3 +43,5 @@ jobs:
           commit_message: Prettified code!
           branch: ${{ github.head_ref }}
           commit_options: "--no-verify"
+      - name: Lint
+        run: npm run lint
