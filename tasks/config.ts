@@ -301,7 +301,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
         return {
           address: pool.address,
           collateralAddress: collateralAddress.toString(),
-          mintingFee: d12_ToNumber(mingingFee),
+          mintingFee: d12_ToNumber(mintingFee),
           redemptionFee: d12_ToNumber(redemptionFee)
         };
       })
