@@ -11,7 +11,8 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable {
     /* ========== STATE VARIABLES ========== */
     uint256 public constant MAX_TOTAL_SUPPLY = 21 * 1e6 * 1e18;
 
-    mapping(address => bool) public bdstables;
+    mapping(address => bool) public mappingBdstables;
+    address[] public bdstables;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -25,9 +26,16 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    function getBdStablesLength() external view returns (uint256) {
+        return bdstables.length;
+    }
+
     function addBdStableAddress(address bdstable_contract_address) external onlyOwner {
-        bdstables[bdstable_contract_address] = true;
-        emit BdStableAddressAdded(bdstable_contract_address);
+        if (!mappingBdstables[bdstable_contract_address]) {
+            mappingBdstables[bdstable_contract_address] = true;
+            bdstables.push(bdstable_contract_address);
+            emit BdStableAddressAdded(bdstable_contract_address);
+        }
     }
 
     function mint(
