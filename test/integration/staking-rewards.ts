@@ -236,8 +236,7 @@ describe("StakingRewards", () => {
       await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
       await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20), false);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
+      const { depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
 
       const pair = await getUniswapPair(hre, bdEu, weth);
 
@@ -342,8 +341,7 @@ describe("Staking - withdrawLocked", () => {
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
+    const { depositedLPTokenUser1_d18 } = await getUsersCurrentLpBalance();
 
     const pair = await getUniswapPair(hre, bdEu, weth);
 
