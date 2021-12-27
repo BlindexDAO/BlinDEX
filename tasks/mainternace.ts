@@ -370,8 +370,6 @@ export function load() {
   async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean) {
     const pools = await getPools(hre);
 
-    const factory = await getUniswapFactory(hre);
-
     for (let pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       const updatedAgo = new Date().getTime() / 1000 - (await oracle.blockTimestampLast());

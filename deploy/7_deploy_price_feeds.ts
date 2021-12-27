@@ -3,7 +3,15 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { OracleBasedCryptoFiatFeed } from "../typechain/OracleBasedCryptoFiatFeed";
 import { OracleBasedWethUSDFeed } from "../typechain/OracleBasedWethUSDFeed";
 import * as constants from "../utils/Constants";
-import { getAllBDStables, getBDStableWbtcPool, getBDStableWethPool, getBot, getDeployer, getWethPairOracle } from "../utils/DeployedContractsHelpers";
+import {
+  getAllBDStables,
+  getBDStable,
+  getBDStableWbtcPool,
+  getBDStableWethPool,
+  getBot,
+  getDeployer,
+  getWethPairOracle
+} from "../utils/DeployedContractsHelpers";
 import { DeployResult } from "hardhat-deploy/dist/types";
 import { to_d12 } from "../utils/NumbersHelpers";
 
@@ -88,34 +96,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
   }
 
-  await hre.deployments.deploy(ContractsNames.oracleEthEurName, {
+  const ethEurOracleDeployment = await hre.deployments.deploy(ContractsNames.oracleEthEurName, {
     from: deployer.address,
     contract: "OracleBasedCryptoFiatFeed",
     args: [priceFeed_EUR_USD_Deployment.address, priceFeed_ETH_USD_Deployment.address]
   });
 
-  const bdstables = await getAllBDStables(hre);
+  // Since our base fiat currently is USD, BDUS is a special case as it needs its own oracle that is just a dumb adapter from our ETH/USD price feed
+  const ethUsdOracleDeployment = await hre.deployments.deploy(ContractsNames.oracleEthUsdName, {
+    from: deployer.address,
+    contract: "OracleBasedWethUSDFeed",
+    args: [priceFeed_ETH_USD_Deployment.address]
+  });
+  console.log(`${ContractsNames.oracleEthEurName} deployed to:`, ethUsdOracleDeployment.address);
+
+  const bdStablesWithWethOracles = [
+    { stable: await getBDStable(hre, "BDEU"), ethFiatOracle: ethEurOracleDeployment.address },
+    { stable: await getBDStable(hre, "BDUS"), ethFiatOracle: ethUsdOracleDeployment.address }
+  ];
+
   const bdxWethOracle = await getWethPairOracle(hre, "BDX");
 
-  for (const stable of bdstables) {
+  for (const { stable, ethFiatOracle } of bdStablesWithWethOracles) {
     const symbol = await stable.symbol();
-    let oracleBasedCryptoFiatFeed_ETH_Stable;
 
-    // Since our base fiat currently is USD, BDUS is a special case as it needs its own oracle that is just a dumb adapter from our ETH/USD price feed
-    if (symbol === "BDUS") {
-      await hre.deployments.deploy(ContractsNames.oracleEthUsdName, {
-        from: deployer.address,
-        contract: "OracleBasedWethUSDFeed",
-        args: [priceFeed_ETH_USD_Deployment.address]
-      });
-      oracleBasedCryptoFiatFeed_ETH_Stable = (await hre.ethers.getContract(ContractsNames.oracleEthUsdName)) as OracleBasedWethUSDFeed;
-    } else {
-      // TODO: At the moment this only support Euro. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
-      oracleBasedCryptoFiatFeed_ETH_Stable = (await hre.ethers.getContract(ContractsNames.oracleEthEurName)) as OracleBasedCryptoFiatFeed;
-      console.log(`${ContractsNames.oracleEthEurName} deployed to:`, oracleBasedCryptoFiatFeed_ETH_Stable.address);
-    }
-
-    await (await stable.setETH_fiat_Oracle(oracleBasedCryptoFiatFeed_ETH_Stable.address)).wait();
+    await (await stable.setETH_fiat_Oracle(ethFiatOracle)).wait();
     console.log(`Added WETH/Fiat oracle to ${symbol}`);
 
     const bdstableWethOracle = await getWethPairOracle(hre, symbol);
