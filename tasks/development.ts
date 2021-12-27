@@ -9,7 +9,7 @@ import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquid
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import { RSK_SOVRYN_NETWORK } from "../utils/Constants";
-import * as fs from "fs";
+import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
@@ -28,7 +28,7 @@ export function load() {
     .addPositionalParam("testDir", "Directory with *.ts files. Sholud end with '/'")
     .setAction(async ({ testDir, noCompile, deployFixture }, { run }) => {
       const testFiles: string[] = [];
-      fs.readdir(testDir, (_err: string, files: string[]) => {
+      readdir(testDir, (_err: NodeJS.ErrnoException | null, files: string[]) => {
         files.forEach((file) => {
           if (file.endsWith(".ts")) {
             file = testDir + file;
@@ -46,7 +46,7 @@ export function load() {
     } catch {
       console.log("COuldn't sync folder using 'rimraf.sync'");
     }
-    fs.mkdirSync("./package");
+    mkdirSync("./package");
     fsExtra.copySync("./typechain", "./package/typings");
     const contracts = klaw("./artifacts/contracts")
       .filter((x: { path: string }) => x.path.endsWith(".json") && !x.path.endsWith(".dbg.json"))
@@ -54,9 +54,9 @@ export function load() {
         const { abi, contractName: name } = fsExtra.readJsonSync(x.path);
         return { abi, name };
       });
-    fs.mkdirSync("./package/abis");
+    mkdirSync("./package/abis");
     for (const contract of contracts) {
-      fs.writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
+      writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
         encoding: "utf8"
       });
     }

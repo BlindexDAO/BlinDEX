@@ -74,7 +74,7 @@
   "lint-staged": {
     "*.{js,ts,css,md,json,yml,yaml,sol}": [
       "prettier --write",
-      "npm run eslint --"
+      "npx eslint --fix"
     ]
   }
 }
