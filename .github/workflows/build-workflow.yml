@@ -24,8 +24,6 @@ jobs:
         run: npm run lint
       - name: Compile
         run: npm run compile
-      - name: Lint
-        run: npm run lint
       - name: Tests
         env:
           MAINNET_URL: ${{ secrets.MAINNET_URL }}
