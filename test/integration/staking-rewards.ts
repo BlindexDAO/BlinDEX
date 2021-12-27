@@ -479,22 +479,24 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
+    const numberOfStakingPools = 8;
+    const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async (i) => await srd.stakingRewardsAddresses(i)));
+    const poolIndexToRemove = 2;
+    const thirdPoolAddress = poolsAddresses[poolIndexToRemove];
+    const lastPoolAddress = poolsAddresses[poolsAddresses.length - 1];
+    const thirdPoolWeight = await srd.stakingRewardsWeights(thirdPoolAddress);
 
-    const pools = await Promise.all([...Array(5).keys()].map(async (i) => await srd.stakingRewardsAddresses(i)));
-    const pool2 = pools[2];
-    const pool4 = pools[4];
-    const pool2Weight = await srd.stakingRewardsWeights(pool2);
-
-    expect(pool2Weight).to.be.gt(0); // test validation
+    expect(thirdPoolWeight).to.be.gt(0); // test validation
 
     const totalWeightsBefore = await srd.stakingRewardsWeightsTotal();
 
-    await srd.unregisterPool(pool2, 0, 100);
-
+    await srd.unregisterPool(thirdPoolAddress, 0, 10000);
     const totalWeightsAfter = await srd.stakingRewardsWeightsTotal();
 
-    expect(totalWeightsAfter).to.eq(totalWeightsBefore.sub(pool2Weight));
-    expect(await srd.stakingRewardsAddresses(2)).to.eq(pool4); // the last pool (4) replaced the pool no 2 (the one unregistered)
+    expect(totalWeightsAfter).to.eq(totalWeightsBefore.sub(thirdPoolWeight));
+
+    // The last pool replaced the pool we removed
+    expect(await srd.stakingRewardsAddresses(poolIndexToRemove)).to.eq(lastPoolAddress);
   });
 });
 

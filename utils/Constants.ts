@@ -71,19 +71,21 @@ export const numberOfLPs = 11;
 export const initialBdstableMintingAmount = (networkName: string = "mainnetFork"): BigNumber => {
   switch (networkName) {
     case "rsk": {
-      return to_d18(10e3);
+      return to_d18(15e3);
     }
     case "mainnetFork": {
       return to_d18(30e3);
     }
     default: {
-      return to_d18(10e3);
+      return to_d18(15e3);
     }
   }
 };
 
 export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
+export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
 export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
+export const INITIAL_BDX_UNISWAP_USD_AMOUNT = 10000;
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 // original uniswap addresss on ETH

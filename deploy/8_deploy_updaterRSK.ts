@@ -1,12 +1,11 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { getBot, getDeployer, getWethPair, getWethPairOracle } from "../utils/DeployedContractsHelpers";
+import { getBot, getDeployer } from "../utils/DeployedContractsHelpers";
 import { DeployResult } from "hardhat-deploy/dist/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: UpdaterRSK");
 
-  const networkName = hre.network.name;
   const deployer = await getDeployer(hre);
   const bot = await getBot(hre);
 
