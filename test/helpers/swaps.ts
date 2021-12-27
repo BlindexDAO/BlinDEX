@@ -1,19 +1,19 @@
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BDStable } from "../../typechain/BDStable";
-import { bigNumberToDecimal, d18_ToNumber, to_d18, to_d8 } from "../../utils/NumbersHelpers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { BDStable } from "../../typechain/BDStable";
+import { bigNumberToDecimal, to_d18 } from "../../utils/NumbersHelpers";
 import * as constants from "../../utils/Constants";
-import { IWETH } from "../../typechain/IWETH";
-import { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
-import { ERC20 } from "../../typechain/ERC20";
+import type { IWETH } from "../../typechain/IWETH";
+import type { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
+import type { ERC20 } from "../../typechain/ERC20";
 import { getWethPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
-import { BigNumber } from "ethers";
-import { IERC20 } from "../../typechain/IERC20";
+import type { BigNumber } from "ethers";
+import type { IERC20 } from "../../typechain/IERC20";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string) {
-  var oracle = await getWethPairOracle(hre, tokenName);
+  const oracle = await getWethPairOracle(hre, tokenName);
 
   await oracle.updateOracle();
 }

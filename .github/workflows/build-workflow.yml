@@ -20,8 +20,8 @@ jobs:
           cache: npm
       - name: Install Node modules
         run: npm ci
-      - name: Solidity Lint
-        run: npm run solhint --y
+      - name: Lint
+        run: npm run lint
       - name: Compile
         run: npm run compile
       - name: Tests

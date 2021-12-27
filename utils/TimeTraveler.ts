@@ -1,6 +1,7 @@
-import { EthereumProvider } from "hardhat/types";
+import type { EthereumProvider } from "hardhat/types";
 
 class TimeTraveler {
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   private snapshotID: any;
   private ethereum: EthereumProvider;
 

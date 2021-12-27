@@ -13,15 +13,15 @@ import {
   getBDStableFiat,
   getAllBDStables
 } from "../utils/DeployedContractsHelpers";
-import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
+import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { d12_ToNumber } from "../utils/NumbersHelpers";
-import { BdStablePool } from "../typechain/BdStablePool";
-import { StakingRewards } from "../typechain/StakingRewards";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { BdStablePool } from "../typechain/BdStablePool";
+import type { StakingRewards } from "../typechain/StakingRewards";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
-import { BDStable } from "../typechain/BDStable";
+import type { BDStable } from "../typechain/BDStable";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -135,7 +135,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
       const token0 = (await pair.token0()).toLowerCase();
       const token1 = (await pair.token1()).toLowerCase();
 
-      let pairSymbols = pairsWhitelist.find(
+      const pairSymbols = pairsWhitelist.find(
         (pair) => (pair.token0Address == token0 && pair.token1Address == token1) || (pair.token0Address == token1 && pair.token1Address == token0)
       );
       if (pairSymbols == null) {
@@ -170,7 +170,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
 
   const approvedPairs = pairInfos.filter((pairInfo) => {
     const sortedPair = [pairInfo.pair.token0, pairInfo.pair.token1].sort();
-    for (let wlPair of whitelist) {
+    for (const wlPair of whitelist) {
       const wlPairSorted = [wlPair[0].address.toLowerCase(), wlPair[1].address.toLowerCase()].sort();
       if (wlPairSorted[0] === sortedPair[0] && wlPairSorted[1] === sortedPair[1]) {
         return true;
@@ -224,7 +224,7 @@ async function getPairsWhitelist(hre: HardhatRuntimeEnvironment) {
   return whitelist;
 }
 
-async function getStakingsConfig(hre: HardhatRuntimeEnvironment, allowedSwapPairs: Array<{ address: string }>) {
+async function getStakingsConfig(hre: HardhatRuntimeEnvironment, allowedSwapPairs: { address: string }[]) {
   const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
   const stakingRewardsAddresses = [];
@@ -278,7 +278,7 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
 
   const approvedPairs = pairs.filter((pair) => {
     const sortedPair = [pair.token0.toLowerCase(), pair.token1.toLowerCase()].sort();
-    for (let wlPair of whitelist) {
+    for (const wlPair of whitelist) {
       const wlPairSorted = [wlPair[0].address.toLowerCase(), wlPair[1].address.toLowerCase()].sort();
       if (wlPairSorted[0] === sortedPair[0] && wlPairSorted[1] === sortedPair[1]) {
         return true;

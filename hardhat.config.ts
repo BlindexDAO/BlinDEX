@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // Dirty hack to enforce hardhat-deploy-ethers type precedence over hardhat-ethers, while making hardhat-deploy-ethers extendEnvironment function execute last
 // import type * as deployEthers from "hardhat-deploy-ethers";
+// eslint-disable-next-line
 import type * as deployEthers from "hardhat-deploy-ethers";
 
-import { HardhatUserConfig } from "hardhat/config";
+import type { HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-deploy-ethers";
@@ -15,8 +17,8 @@ import * as maintenanceTasks from "./tasks/mainternace";
 import * as developmentTasks from "./tasks/development";
 import * as feConfig from "./tasks/config";
 import "hardhat-gas-reporter";
+import * as path from "path";
 
-const path = require("path");
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
 

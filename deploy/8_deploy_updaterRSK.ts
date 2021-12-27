@@ -1,8 +1,8 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
 import { getBot, getDeployer } from "../utils/DeployedContractsHelpers";
-import { DeployResult } from "hardhat-deploy/dist/types";
+import type { DeployResult } from "hardhat-deploy/dist/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: UpdaterRSK");
@@ -10,8 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
   const botAddress = hre.network.name === "rsk" ? constants.rskBotAddress : (await getBot(hre)).address;
 
-  let updater: DeployResult;
-  updater = await hre.deployments.deploy("UpdaterRSK", {
+  const updater: DeployResult = await hre.deployments.deploy("UpdaterRSK", {
     from: deployer.address,
     contract: "UpdaterRSK",
     args: [botAddress]

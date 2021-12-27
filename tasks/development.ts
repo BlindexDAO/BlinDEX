@@ -4,18 +4,17 @@ import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } fr
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
-import { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
-import { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
-import { ISovrynAnchor } from "../typechain/ISovrynAnchor";
-import { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
+import type { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
+import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
+import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
+import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import { RSK_SOVRYN_NETWORK } from "../utils/Constants";
-
-const fs = require("fs");
+import { readdir, mkdirSync, writeFileSync } from "fs";
+import * as rimraf from "rimraf";
+import * as fsExtra from "fs-extra";
+import { default as klaw } from "klaw-sync";
 
 export function load() {
-  // generl purpose task to run any ad-hoc job
-  task("run:job").setAction(async (args, hre) => {});
-
   task("accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 
@@ -27,9 +26,9 @@ export function load() {
   task("test:dir")
     .addFlag("deployFixture", "run the global fixture before tests")
     .addPositionalParam("testDir", "Directory with *.ts files. Sholud end with '/'")
-    .setAction(async ({ testDir, noCompile, deployFixture }, { run, network, ethers }) => {
+    .setAction(async ({ testDir, noCompile, deployFixture }, { run }) => {
       const testFiles: string[] = [];
-      fs.readdir(testDir, (err: string, files: string[]) => {
+      readdir(testDir, (_err: NodeJS.ErrnoException | null, files: string[]) => {
         files.forEach((file) => {
           if (file.endsWith(".ts")) {
             file = testDir + file;
@@ -42,24 +41,22 @@ export function load() {
     });
 
   task("npm-package", "Packages type definitions and abis into npm package").setAction(async () => {
-    const rimraf = require("rimraf");
-    const fs = require("fs");
-    const fsExtra = require("fs-extra");
     try {
       rimraf.sync("./package");
-    } catch {}
-    fs.mkdirSync("./package");
+    } catch {
+      console.log("COuldn't sync folder using 'rimraf.sync'");
+    }
+    mkdirSync("./package");
     fsExtra.copySync("./typechain", "./package/typings");
-    const klaw = require("klaw-sync");
     const contracts = klaw("./artifacts/contracts")
       .filter((x: { path: string }) => x.path.endsWith(".json") && !x.path.endsWith(".dbg.json"))
       .map((x: { path: string }) => {
         const { abi, contractName: name } = fsExtra.readJsonSync(x.path);
         return { abi, name };
       });
-    fs.mkdirSync("./package/abis");
+    mkdirSync("./package/abis");
     for (const contract of contracts) {
-      fs.writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
+      writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
         encoding: "utf8"
       });
     }
@@ -89,7 +86,7 @@ export function load() {
     const signerLink = hre.ethers.provider.getSigner(bigDaiHolder);
     const DaiContractFactory = await hre.ethers.getContractFactory("ERC20", signerLink);
     const DaiContract = DaiContractFactory.attach(dai);
-    const transferTransaction = await DaiContract.transfer("0x774289Cb40c98B4f5b64a152BF7e5F94Fee38669", BigNumber.from("10000000000000000000"));
+    await DaiContract.transfer("0x774289Cb40c98B4f5b64a152BF7e5F94Fee38669", BigNumber.from("10000000000000000000"));
     await hre.ethers.provider.send("hardhat_stopImpersonatingAccount", [bigDaiHolder]);
   });
 
@@ -98,8 +95,6 @@ export function load() {
 
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
-    const bdx = await getBdx(hre);
-    const bdeu = await getBdEu(hre);
 
     await mintWeth(hre, deployer, to_d18(200));
     await mintWbtc(hre, deployer, to_d8(10), 100);
@@ -111,8 +106,6 @@ export function load() {
   });
 
   task("setup:test-user-balance-ag").setAction(async (args, hre) => {
-    const deployer = await getDeployer(hre);
-
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
     const bdx = await getBdx(hre);
@@ -145,7 +138,7 @@ export function load() {
   task("show:moc-feeds").setAction(async (args, hre) => {
     async function showFor(address: string, priceName: string) {
       const feed = (await hre.ethers.getContractAt("IMoCBaseOracle", address)) as IMoCBaseOracle;
-      const [price_d18_str, isValid] = await feed.peek();
+      const [price_d18_str] = await feed.peek();
       console.log(priceName + ": " + d18_ToNumber(BigNumber.from(price_d18_str)));
     }
 
@@ -166,17 +159,17 @@ export function load() {
         throw `conversion path shoulb be 3, but is ${conversionPath.length}`;
       }
 
-      for (let a of conversionPath) {
+      for (const a of conversionPath) {
         console.log(a);
       }
 
-      var anchorAddress = conversionPath[1];
-      var anchor = (await hre.ethers.getContractAt("ISovrynAnchor", anchorAddress)) as ISovrynAnchor;
+      const anchorAddress = conversionPath[1];
+      const anchor = (await hre.ethers.getContractAt("ISovrynAnchor", anchorAddress)) as ISovrynAnchor;
 
-      var lpAddress = await anchor.owner();
+      const lpAddress = await anchor.owner();
       console.log(`lp ${token1Name}-${token2Name}: ` + lpAddress);
 
-      var lpBtcEth = (await hre.ethers.getContractAt("ISovrynLiquidityPoolV1Converter", lpAddress)) as ISovrynLiquidityPoolV1Converter;
+      const lpBtcEth = (await hre.ethers.getContractAt("ISovrynLiquidityPoolV1Converter", lpAddress)) as ISovrynLiquidityPoolV1Converter;
 
       const res1 = await lpBtcEth.targetAmountAndFee(token1, token2, to_d12(1));
       console.log(`${token1Name}/${token2Name}: ` + d12_ToNumber(res1.amountMinusFee.add(res1.fee)));

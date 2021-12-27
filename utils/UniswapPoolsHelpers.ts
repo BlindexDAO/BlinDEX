@@ -1,6 +1,6 @@
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { IERC20 } from "../typechain/IERC20";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { IERC20 } from "../typechain/IERC20";
 import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getAllBDStablesSymbols } from "./DeployedContractsHelpers";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
@@ -8,7 +8,7 @@ export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, 
 
   const pools = await getPools(hre);
 
-  for (let pool of pools) {
+  for (const pool of pools) {
     await updateOracle(hre, pool[0].name, pool[1].name, signer);
     console.log(`updated ${pool[0].name} / ${pool[1].name}`);
   }
@@ -21,7 +21,7 @@ export async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
 
   const pools = await getPools(hre);
 
-  for (let pool of pools) {
+  for (const pool of pools) {
     await resetOracle(hre, pool[0].name, pool[1].name);
     console.log(`reset ${pool[0].name} / ${pool[1].name}`);
   }

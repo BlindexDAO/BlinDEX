@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import TimeTraveler from "./TimeTraveler";
 
 export async function simulateTimeElapseInDays(days: number) {

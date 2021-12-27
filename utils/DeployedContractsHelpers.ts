@@ -1,22 +1,22 @@
-import { IERC20 } from "../typechain/IERC20";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BDStable } from "../typechain/BDStable";
-import { BdStablePool } from "../typechain/BdStablePool";
-import { BDXShares } from "../typechain/BDXShares";
-import { AggregatorV3Interface } from "../typechain/AggregatorV3Interface";
-import { ERC20 } from "../typechain/ERC20";
+import type { IERC20 } from "../typechain/IERC20";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { BDStable } from "../typechain/BDStable";
+import type { BdStablePool } from "../typechain/BdStablePool";
+import type { BDXShares } from "../typechain/BDXShares";
+import type { AggregatorV3Interface } from "../typechain/AggregatorV3Interface";
+import type { ERC20 } from "../typechain/ERC20";
 import { UniswapV2Router02__factory } from "../typechain/factories/UniswapV2Router02__factory";
-import { UniswapV2Factory } from "../typechain/UniswapV2Factory";
-import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
-import { UniswapV2Router02 } from "../typechain/UniswapV2Router02";
-import { BigNumber } from "@ethersproject/bignumber";
+import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
+import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
+import type { UniswapV2Router02 } from "../typechain/UniswapV2Router02";
+import type { BigNumber } from "@ethersproject/bignumber";
 import * as constants from "./Constants";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { bigNumberToDecimal, to_d12 } from "./NumbersHelpers";
-import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import { Vesting } from "../typechain/Vesting";
-import { UniswapPairOracle } from "../typechain/UniswapPairOracle";
-import { IWETH } from "../typechain/IWETH";
+import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import type { Vesting } from "../typechain/Vesting";
+import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
+import type { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 
 export function getAllBDStablesSymbols(): string[] {

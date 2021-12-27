@@ -4,11 +4,11 @@ import { solidity } from "ethereum-waffle";
 import hre from "hardhat";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { getBdx, getDeployer, getVesting } from "../../utils/DeployedContractsHelpers";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { Vesting } from "../../typechain/Vesting";
-import { BDXShares } from "../../typechain/BDXShares";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { Vesting } from "../../typechain/Vesting";
+import type { BDXShares } from "../../typechain/BDXShares";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
-import { BigNumber } from "@ethersproject/bignumber";
+import type { BigNumber } from "@ethersproject/bignumber";
 import { simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { provideBdx } from "../helpers/common";
 
