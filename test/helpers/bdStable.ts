@@ -1,8 +1,6 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d12 } from "../../utils/NumbersHelpers";
 import { getBdEu } from "../../utils/DeployedContractsHelpers";
-
-const oneHour = 60 * 60;
 
 export async function lockBdEuCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
   if (targetCR < 0) {

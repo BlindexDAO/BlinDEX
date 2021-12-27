@@ -1,6 +1,6 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DeployFunction } from "hardhat-deploy/types";
+import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
 import { to_d18 } from "../utils/NumbersHelpers";
 import { getBdx, getDevTreasury, getTreasury, getVesting } from "../utils/DeployedContractsHelpers";
 

@@ -190,7 +190,7 @@ describe("BuyBack", () => {
   });
 });
 
-async function calculateMaxBdxToBuyBack_d18(cr: number, useGlobalCollateralValue: boolean = false) {
+async function calculateMaxBdxToBuyBack_d18(cr: number, useGlobalCollateralValue = false) {
   const bdEu = await getBdEu(hre);
   const bdEuWethPool = await getBdEuWethPool(hre);
   const bdxInEurPrice_d12 = await bdEu.BDX_price_d12();

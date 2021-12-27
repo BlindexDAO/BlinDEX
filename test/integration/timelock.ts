@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { Timelock } from "../../typechain/Timelock";
+import type { Timelock } from "../../typechain/Timelock";
 import { getDeployer, getStakingRewardsDistribution } from "../../utils/DeployedContractsHelpers";
 
 chai.use(cap);

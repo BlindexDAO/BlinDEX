@@ -8,22 +8,21 @@ import {
   getBot,
   getDeployer,
   getTreasury,
-  getUniswapFactory,
   getUniswapPair,
   getUniswapPairOracle,
   getWeth
 } from "../utils/DeployedContractsHelpers";
-import { UniswapV2Pair } from "../typechain/UniswapV2Pair";
+import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
 import { getPools, tokensDecimals, updateUniswapPairsOracles, resetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
-import { BDStable } from "../typechain/BDStable";
-import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
-import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
-import { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
-import { IPriceFeed } from "../typechain/IPriceFeed";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { UpdaterRSK } from "../typechain/UpdaterRSK";
+import type { BDStable } from "../typechain/BDStable";
+import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
+import type { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
+import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
+import type { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
+import type { IPriceFeed } from "../typechain/IPriceFeed";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 
@@ -92,7 +91,7 @@ export function load() {
 
     const uniOracles = [];
     const pools = await getPools(hre);
-    for (let pool of pools) {
+    for (const pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       uniOracles.push(oracle.address);
     }
@@ -118,9 +117,9 @@ export function load() {
       const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, bot)) as SovrynSwapPriceFeed;
       const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, bot)) as FiatToFiatPseudoOracleFeed;
 
-      let uniOracles = [];
+      const uniOracles = [];
       const pools = await getPools(hre);
-      for (let pool of pools) {
+      for (const pool of pools) {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         uniOracles.push(oracle.address);
       }
@@ -172,7 +171,7 @@ export function load() {
 
       console.log("setting consultLeniency to: " + newVal);
 
-      for (let pool of pools) {
+      for (const pool of pools) {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         console.log(`starting for ${pool[0].name} / ${pool[1].name}`);
 
@@ -186,7 +185,7 @@ export function load() {
     .addPositionalParam("enable", "1 = enable, 0 = disable")
     .setAction(async ({ enable }, hre) => {
       const pools = await getPools(hre);
-      for (let pool of pools) {
+      for (const pool of pools) {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
 
         await (await oracle.setAllowStaleConsults(enable == 0 ? false : true)).wait();
@@ -254,7 +253,7 @@ export function load() {
   task("show:pools").setAction(async (args, hre) => {
     const pools = await getPools(hre);
 
-    for (let pool of pools) {
+    for (const pool of pools) {
       const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
       console.log(`${pool[0].name} / ${pool[1].name} : ${pair.address}`);
       console.log(`\t${pool[0].token.address} / ${pool[1].token.address}`);
@@ -370,9 +369,7 @@ export function load() {
   async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean) {
     const pools = await getPools(hre);
 
-    const factory = await getUniswapFactory(hre);
-
-    for (let pool of pools) {
+    for (const pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       const updatedAgo = new Date().getTime() / 1000 - (await oracle.blockTimestampLast());
 

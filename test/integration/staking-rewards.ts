@@ -1,9 +1,9 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { BDStable } from "../../typechain/BDStable";
-import { BDXShares } from "../../typechain/BDXShares";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { BDStable } from "../../typechain/BDStable";
+import type { BDXShares } from "../../typechain/BDXShares";
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber, to_d8 } from "../../utils/NumbersHelpers";
 import {
@@ -22,11 +22,11 @@ import {
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
 import { provideLiquidity } from "../helpers/swaps";
-import { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
+import type { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import { Vesting } from "../../typechain/Vesting";
-import { StakingRewards } from "../../typechain/StakingRewards";
-import { IERC20 } from "../../typechain/IERC20";
+import type { Vesting } from "../../typechain/Vesting";
+import type { StakingRewards } from "../../typechain/StakingRewards";
+import type { IERC20 } from "../../typechain/IERC20";
 import { provideBdEu } from "../helpers/common";
 
 chai.use(cap);
@@ -236,6 +236,7 @@ describe("StakingRewards", () => {
       await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
       await provideLiquidity(hre, testUser2, weth, bdEu, to_d18(4), to_d18(20), false);
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
 
       const pair = await getUniswapPair(hre, bdEu, weth);
@@ -341,6 +342,7 @@ describe("Staking - withdrawLocked", () => {
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(1), to_d18(5), false);
 
+    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 } = await getUsersCurrentLpBalance();
 
     const pair = await getUniswapPair(hre, bdEu, weth);

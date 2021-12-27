@@ -70,7 +70,7 @@ describe("Uniswap Oracles", () => {
   const secondsInDay = moment.duration(1, "day").asSeconds();
   const secondsInWeek = moment.duration(1, "week").asSeconds();
   const secondsInMonth = moment.duration(1, "month").asSeconds();
-  for (let seconds of [0, 1, secondsInHour, secondsInDay, secondsInWeek, secondsInMonth]) {
+  for (const seconds of [0, 1, secondsInHour, secondsInDay, secondsInWeek, secondsInMonth]) {
     it(`oracle price sholud be close to spot price regardless when first oracle update happen | seconds [${seconds}]`, async () => {
       const bdeu = await getBdEu(hre);
       const weth = await getWeth(hre);
