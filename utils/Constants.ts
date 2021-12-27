@@ -71,13 +71,13 @@ export const numberOfLPs = 11;
 export const initialBdstableMintingAmount = (networkName: string = "mainnetFork"): BigNumber => {
   switch (networkName) {
     case "rsk": {
-      return to_d18(10e3);
+      return to_d18(15e3);
     }
     case "mainnetFork": {
       return to_d18(30e3);
     }
     default: {
-      return to_d18(10e3);
+      return to_d18(15e3);
     }
   }
 };
