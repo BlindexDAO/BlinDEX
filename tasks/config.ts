@@ -70,9 +70,13 @@ export function load() {
         ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
       },
       [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
-      [`${networkName}_BDSTABLES`]: (await getAllBDStables(hre)).map(async (stable: BDStable) => {
-        return { symbol: await stable.symbol(), address: stable.address };
-      })
+      [`${networkName}_BDSTABLES`]: await Promise.all(
+        (
+          await getAllBDStables(hre)
+        ).map(async (stable: BDStable) => {
+          return { symbol: await stable.symbol(), address: stable.address };
+        })
+      )
     };
 
     console.log(
