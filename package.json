@@ -16,7 +16,7 @@
     "npm-package": "hardhat --network mainnetFork npm-package",
     "compile": "hardhat compile --config hardhat.compile.config.ts",
     "solhint": "npx solhint 'contracts/**/*.sol' --y",
-    "eslint": "npx eslint . --ext .js,.ts,.json",
+    "eslint": "npx eslint . --ext .js,.ts,.json --fix",
     "lint": "npm-run-all --parallel solhint eslint",
     "format": "npx prettier --write . --loglevel silent"
   },
