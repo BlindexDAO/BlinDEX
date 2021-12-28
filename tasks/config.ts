@@ -62,7 +62,6 @@ export function load() {
       [`${networkName}_AVAILABLE_PAIRS`]: swapPairs,
       [`${networkName}_STAKING_REWARDS`]: stakingRewards,
       [`${networkName}_PAIR_ORACLES`]: mappedPairOracles,
-      // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
       [`${networkName}_PRICE_FEEDS`]: {
         ["EUR_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
         ["BTC_ETH_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),

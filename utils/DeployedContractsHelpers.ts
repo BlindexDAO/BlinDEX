@@ -58,11 +58,6 @@ export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<Signe
   return user;
 }
 
-export async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
-  const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract(symbol, deployer)) as BDStable;
-}
-
 export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract(bdstablesContractsDetails[symbol].pools.wbtc.name, deployer)) as BdStablePool;
@@ -77,14 +72,11 @@ export function getBDStableFiat(symbol: string) {
   return bdstablesContractsDetails[symbol].fiat;
 }
 
-///////////////////////////////////////Hardcoded bdstables values ///////////////////////////////////////
-// Functions with hardcoded values as it's used for testa and hardhat tasks
-
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
   return getBDStable(hre, "BDEU");
 }
 
-export async function getBdUS(hre: HardhatRuntimeEnvironment) {
+export async function getBdUs(hre: HardhatRuntimeEnvironment) {
   return getBDStable(hre, "BDUS");
 }
 
@@ -95,8 +87,6 @@ export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment): Promise<B
 export async function getBdEuWbtcPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {
   return getBDStableWbtcPool(hre, "BDEU");
 }
-
-////////////////////////////////////End of hardcoded bdstables values ///////////////////////////////////
 
 export async function getUniswapRouter(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
@@ -250,4 +240,9 @@ export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, token
   const oracle = (await hre.ethers.getContract(`UniswapPairOracle_${tokenAName}_${tokenBName}`, deployer)) as UniswapPairOracle;
 
   return oracle;
+}
+
+async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
+  const deployer = await getDeployer(hre);
+  return (await hre.ethers.getContract(symbol, deployer)) as BDStable;
 }

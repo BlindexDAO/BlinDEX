@@ -3,7 +3,7 @@ import type { DeployFunction } from "hardhat-deploy/types";
 import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
 import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import { getBDStable, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBdUs, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -53,8 +53,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
 
-  const bdEu = await getBDStable(hre, "BDEU");
-  const bdUs = await getBDStable(hre, "BDUS");
+  const bdEu = await getBdEu(hre);
+  const bdUs = await getBdUs(hre);
   const stables = [bdEu, bdUs];
 
   for (const stable of stables) {

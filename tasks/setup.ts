@@ -5,30 +5,27 @@ import { setupProductionReadySystem } from "../utils/SystemSetup";
 import { types } from "hardhat/config";
 
 export function load() {
-  // TODO: At the moment this is not generic enough as you need to have a parameter for each bdstable * 3.
-  // We should see if we could send an object parameter for example or something to make it easier to work with.
-  // We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
   task("initialize")
-    .addParam("btcEUR", "initial btc/eur Price")
-    .addParam("bdxEUR", "initial bdx/eur Price")
-    .addParam("ethEUR", "initial eth/eur Price")
-    .addParam("ethUSD", "initial eth/usd Price")
-    .addParam("btcUSD", "initial btc/usd Price")
-    .addParam("bdxUSD", "initial bdx/usd Price")
-    .addParam("usdEUR", "initial usd/eur Price")
-    .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD, usdEUR }, hre) => {
-      await setupProductionReadySystem(hre, btcEUR, btcUSD, bdxEUR, bdxUSD, ethEUR, ethUSD, usdEUR);
+    .addParam("btcEur", "initial btc/eur Price")
+    .addParam("bdxEur", "initial bdx/eur Price")
+    .addParam("ethEur", "initial eth/eur Price")
+    .addParam("ethUsd", "initial eth/usd Price")
+    .addParam("btcUsd", "initial btc/usd Price")
+    .addParam("bdxUsd", "initial bdx/usd Price")
+    .addParam("usdEur", "initial usd/eur Price")
+    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur }, hre) => {
+      await setupProductionReadySystem(hre, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
     });
 
   task("initialize:local")
-    .addOptionalParam("btcEUR", "initial btc/eur Price", 50353, types.float)
-    .addOptionalParam("bdxEUR", "initial bdx/eur Price", 0.89, types.float)
-    .addOptionalParam("ethEUR", "initial eth/eur Price", 3900, types.float)
-    .addOptionalParam("ethUSD", "initial eth/usd Price", 4000, types.float)
-    .addOptionalParam("btcUSD", "initial btc/usd Price", 57000, types.float)
-    .addOptionalParam("bdxUSD", "initial bdx/usd Price", 1, types.float)
-    .addOptionalParam("usdEUR", "initial usd/eur Price", 0.88, types.float)
-    .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD, usdEUR }, hre) => {
+    .addOptionalParam("btcEur", "initial btc/eur Price", 50353, types.float)
+    .addOptionalParam("bdxEur", "initial bdx/eur Price", 0.89, types.float)
+    .addOptionalParam("ethEur", "initial eth/eur Price", 3900, types.float)
+    .addOptionalParam("ethUsd", "initial eth/usd Price", 4000, types.float)
+    .addOptionalParam("btcUsd", "initial btc/usd Price", 57000, types.float)
+    .addOptionalParam("bdxUsd", "initial bdx/usd Price", 1, types.float)
+    .addOptionalParam("usdEur", "initial usd/eur Price", 0.88, types.float)
+    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur }, hre) => {
       const deployer = await getDeployer(hre);
       const treasury = await getTreasury(hre);
 
@@ -44,6 +41,6 @@ export function load() {
       // mint inital WBTC
       await mintWbtc(hre, treasury, to_d8(10), 1000);
 
-      await setupProductionReadySystem(hre, btcEUR, btcUSD, bdxEUR, bdxUSD, ethEUR, ethUSD, usdEUR);
+      await setupProductionReadySystem(hre, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
     });
 }

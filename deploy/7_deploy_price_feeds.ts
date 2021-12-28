@@ -1,7 +1,7 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
-import { getBDStable, getBDStableWbtcPool, getBDStableWethPool, getBot, getDeployer, getWethPairOracle } from "../utils/DeployedContractsHelpers";
+import { getBdEu, getBDStableWbtcPool, getBDStableWethPool, getBdUs, getBot, getDeployer, getWethPairOracle } from "../utils/DeployedContractsHelpers";
 import type { DeployResult } from "hardhat-deploy/dist/types";
 import { to_d12 } from "../utils/NumbersHelpers";
 
@@ -101,8 +101,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`${ContractsNames.oracleEthEurName} deployed to:`, ethUsdOracleDeployment.address);
 
   const bdStablesWithWethOracles = [
-    { stable: await getBDStable(hre, "BDEU"), ethFiatOracle: ethEurOracleDeployment.address },
-    { stable: await getBDStable(hre, "BDUS"), ethFiatOracle: ethUsdOracleDeployment.address }
+    { stable: await getBdEu(hre), ethFiatOracle: ethEurOracleDeployment.address },
+    { stable: await getBdUs(hre), ethFiatOracle: ethUsdOracleDeployment.address }
   ];
 
   const bdxWethOracle = await getWethPairOracle(hre, "BDX");

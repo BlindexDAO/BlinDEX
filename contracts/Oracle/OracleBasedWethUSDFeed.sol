@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 @dev A contract that will be used ONLY by BDUS as we're using USD as out base fiat currency
 */
 contract OracleBasedWethUSDFeed is IOracleBasedCryptoFiatFeed {
-    uint8 constant DECIMALS = 12;
+    uint8 private constant DECIMALS = 12;
 
     IPriceFeed internal wethUsdFeed;
     using SafeMath for uint256;

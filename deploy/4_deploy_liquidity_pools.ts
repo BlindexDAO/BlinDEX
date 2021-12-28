@@ -1,6 +1,6 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getBDStable } from "../utils/DeployedContractsHelpers";
+import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getBdEu, getBdUs } from "../utils/DeployedContractsHelpers";
 
 async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string, addressA: string, addressB: string) {
   const deployer = await getDeployer(hre);
@@ -23,8 +23,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const wethAddress = (await getWeth(hre)).address;
   const wbtcAddress = (await getWbtc(hre)).address;
 
-  const bdEu = await getBDStable(hre, "BDEU");
-  const bdUs = await getBDStable(hre, "BDUS");
+  const bdEu = await getBdEu(hre);
+  const bdUs = await getBdUs(hre);
   const stables = [bdEu, bdUs];
 
   await (await factory.createPair(bdx.address, wethAddress)).wait();
@@ -47,7 +47,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   }
 
   await (await factory.createPair(bdEu.address, bdUs.address)).wait();
-  await deployPairOracle(hre, "BDEU", "BDUS", bdEu.address, bdUs.address);
+  await deployPairOracle(hre, await bdEu.symbol(), await bdUs.symbol(), bdEu.address, bdUs.address);
   console.log(`Created BDEU/BDUS liquidity pool pair`);
 
   console.log("Finished deployment: liquidity pools");
