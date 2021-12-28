@@ -1,8 +1,9 @@
 import { expect } from "chai";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BigNumber } from "ethers";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { BigNumber } from "ethers";
 import { getBdEu, getBdx, getTreasury } from "../../utils/DeployedContractsHelpers";
 
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function expectToFail(fun: () => any, message: string) {
   await expect(
     (async () => {

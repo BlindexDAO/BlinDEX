@@ -21,7 +21,7 @@ describe("BDX", () => {
     const bdx = await getBdx(hre);
 
     const expected = to_d18(21e6);
-    var actual = await bdx.totalSupply();
+    const actual = await bdx.totalSupply();
 
     expect(actual).to.be.eq(expected);
   });

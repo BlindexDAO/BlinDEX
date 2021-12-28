@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { setupProductionReadySystem } from "../utils/SystemSetup";
-const { types } = require("hardhat/config");
+import { types } from "hardhat/config";
 
 export function load() {
   // TODO: At the moment this is not generic enough as you need to have a parameter for each bdstable * 3.

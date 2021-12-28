@@ -1,8 +1,8 @@
-import { BDStable } from "../typechain/BDStable";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import type { BDStable } from "../typechain/BDStable";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
-import { BdStablePool } from "../typechain/BdStablePool";
+import type { BdStablePool } from "../typechain/BdStablePool";
 import { getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
 
 interface BDStableContractDetail {
@@ -61,7 +61,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bdx = await getBdx(hre);
     const bdPoolLibraryDeployment = await hre.ethers.getContract("BdPoolLibrary");
 
-    const bdstable_proxy = await hre.deployments.deploy(stableDetails.symbol, {
+    await hre.deployments.deploy(stableDetails.symbol, {
       from: deployer.address,
       proxy: {
         proxyContract: "OptimizedTransparentProxy",
@@ -79,7 +79,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bdstable = (await hre.ethers.getContract(stableDetails.symbol)) as BDStable;
     console.log(`${stableDetails.symbol} deployed to:`, bdstable.address);
 
-    const bdstable_weth_BdStablePoolDeployment = await hre.deployments.deploy(stableDetails.pools.weth.name, {
+    await hre.deployments.deploy(stableDetails.pools.weth.name, {
       from: deployer.address,
       proxy: {
         proxyContract: "OptimizedTransparentProxy",
@@ -100,7 +100,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bdstable_weth_BdStablePool = (await hre.ethers.getContract(stableDetails.pools.weth.name)) as BdStablePool;
     console.log(`${stableDetails.pools.weth.name} pool deployed to:`, bdstable_weth_BdStablePool.address);
 
-    const bdstable_wbtc_BdStablePoolDeployment = await hre.deployments.deploy(stableDetails.pools.wbtc.name, {
+    await hre.deployments.deploy(stableDetails.pools.wbtc.name, {
       from: deployer.address,
       proxy: {
         proxyContract: "OptimizedTransparentProxy",

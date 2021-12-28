@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getDeployer, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
@@ -332,9 +332,6 @@ describe("BDStable fractional", () => {
     await setUpFunctionalSystemForTests(hre, 0.9); // low initial collateralization so efCR is low (for test purposes)
 
     const testUser = await hre.ethers.getNamedSigner("TEST2");
-
-    const bdx = await getBdx(hre);
-    const weth = await getWeth(hre);
     const bdEu = await getBdEu(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 
@@ -368,7 +365,6 @@ describe("BDStable fractional", () => {
     const testUser = await hre.ethers.getNamedSigner("TEST2");
 
     const bdx = await getBdx(hre);
-    const weth = await getWeth(hre);
     const bdEu = await getBdEu(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 

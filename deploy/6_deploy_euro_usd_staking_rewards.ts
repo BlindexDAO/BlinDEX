@@ -1,8 +1,8 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { UniswapV2Factory } from "../typechain/UniswapV2Factory";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DeployFunction } from "hardhat-deploy/types";
+import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
-import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
 import { getBDStable, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
 
 async function setupStakingContract(

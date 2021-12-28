@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber, d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { lockBdEuCrAt } from "../helpers/bdStable";
 import {
   getBdEu,
@@ -18,7 +18,7 @@ import {
   mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
+import type { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
 import { provideBdEu } from "../helpers/common";
 
 chai.use(cap);
@@ -158,8 +158,8 @@ describe("BDStable 1to1", () => {
 
     await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user so user can redeem it
 
-    var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
-    var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
+    const bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
+    const wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
 
     await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem);
 
@@ -178,8 +178,8 @@ describe("BDStable 1to1", () => {
     await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1);
     await bdEuPool.connect(testUser).collectRedemption(false);
 
-    var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
-    var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
+    const bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
+    const wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
 
     console.log("bdEu balance before redeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem));
     console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem));
@@ -214,9 +214,9 @@ describe("BDStable 1to1", () => {
 
     await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user so user can redeem it
 
-    var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
-    var wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
-    var poolWethBalanceBeforeRedeem = await weth.balanceOf(bdEuPool.address);
+    const bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
+    const wethBalanceBeforeRedeem = await weth.balanceOf(testUser.address);
+    const poolWethBalanceBeforeRedeem = await weth.balanceOf(bdEuPool.address);
 
     await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem);
 
@@ -238,9 +238,9 @@ describe("BDStable 1to1", () => {
     await bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1);
     await bdEuPool.connect(testUser).collectRedemption(true);
 
-    var bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
-    var wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
-    var poolWethBalanceAfterRedeem = await weth.balanceOf(bdEuPool.address);
+    const bdEuBalanceAfterRedeem = await bdEu.balanceOf(testUser.address);
+    const wethBalanceAfterRedeem = await weth.balanceOf(testUser.address);
+    const poolWethBalanceAfterRedeem = await weth.balanceOf(bdEuPool.address);
 
     console.log("bdEu balance before redeem: " + d18_ToNumber(bdEuBalanceBeforeRedeem));
     console.log("bdEu balance after redeem:  " + d18_ToNumber(bdEuBalanceAfterRedeem));
@@ -281,11 +281,9 @@ describe("BDStable 1to1", () => {
     await bdEu.setMinimumSwapsDelayInBlocks(100);
     // setup finished
 
-    const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
-
     await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user so user can redeem it
 
-    var bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
+    const bdEuBalanceBeforeRedeem = await bdEu.balanceOf(testUser.address);
 
     await bdEu.connect(testUser).approve(bdEuPool.address, bdEuBalanceBeforeRedeem);
 
@@ -293,9 +291,6 @@ describe("BDStable 1to1", () => {
 
     const efCr_d12 = await bdEu.effective_global_collateral_ratio_d12();
     expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ratio should be less than 1"); // test validation
-
-    let expectedWethForRedeem = bdEuToRedeem.mul(efCr_d12).div(1e12).mul(1e12).div(ethInEurPrice_1e12);
-    expectedWethForRedeem = expectedWethForRedeem.mul(to_d12(1 - 0.003)).div(1e12); // decrease by redemption fee;
 
     await expect(bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1)).to.be.revertedWith("Cannot legally redeem");
   });

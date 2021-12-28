@@ -1,4 +1,4 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import { numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "./NumbersHelpers";
 import {
   getBdEu,

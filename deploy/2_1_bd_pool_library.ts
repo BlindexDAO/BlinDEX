@@ -1,12 +1,12 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DeployFunction } from "hardhat-deploy/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: bdPoolLibrary");
 
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 
-  const bdPoolLibraryDeployment = await hre.deployments.deploy("BdPoolLibrary", {
+  await hre.deployments.deploy("BdPoolLibrary", {
     from: deployer
   });
 

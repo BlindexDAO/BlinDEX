@@ -1,8 +1,8 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import type { HardhatRuntimeEnvironment } from "hardhat/types";
+import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
 import { getBDStable, getBDStableWbtcPool, getBDStableWethPool, getBot, getDeployer, getWethPairOracle } from "../utils/DeployedContractsHelpers";
-import { DeployResult } from "hardhat-deploy/dist/types";
+import type { DeployResult } from "hardhat-deploy/dist/types";
 import { to_d12 } from "../utils/NumbersHelpers";
 
 export const ContractsNames = {

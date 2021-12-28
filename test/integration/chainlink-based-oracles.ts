@@ -1,8 +1,8 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { IOracleBasedCryptoFiatFeed } from "../../typechain/IOracleBasedCryptoFiatFeed";
-import { BtcToEthOracleChinlink } from "../../typechain/BtcToEthOracleChinlink";
+import type { IOracleBasedCryptoFiatFeed } from "../../typechain/IOracleBasedCryptoFiatFeed";
+import type { BtcToEthOracleChinlink } from "../../typechain/BtcToEthOracleChinlink";
 import cap from "chai-as-promised";
 
 import { bigNumberToDecimal } from "../../utils/NumbersHelpers";

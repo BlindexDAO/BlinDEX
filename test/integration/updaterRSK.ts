@@ -3,11 +3,11 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { UpdaterRSK } from "../../typechain/UpdaterRSK";
+import type { UpdaterRSK } from "../../typechain/UpdaterRSK";
 import { getBdEu, getBot, getUser, getDeployer, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
 import { getPools } from "../../utils/UniswapPoolsHelpers";
-import { BDStable } from "../../typechain/BDStable";
-import { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
+import type { BDStable } from "../../typechain/BDStable";
+import type { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { expectToFail } from "../helpers/common";
 
@@ -28,8 +28,8 @@ describe("UpdaterRSK", () => {
     const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
 
     const pools = await getPools(hre);
-    let uniOracles: UniswapPairOracle[] = [];
-    for (let pool of pools) {
+    const uniOracles: UniswapPairOracle[] = [];
+    for (const pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       uniOracles.push(oracle);
     }
@@ -38,7 +38,7 @@ describe("UpdaterRSK", () => {
     await simulateTimeElapseInSeconds(60 * oneHour);
 
     // test validation
-    for (let orac of uniOracles) {
+    for (const orac of uniOracles) {
       expect(await orac.shouldUpdateOracle()).to.be.eq(true);
     }
     expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.eq(0);
@@ -54,7 +54,7 @@ describe("UpdaterRSK", () => {
       )
     ).wait();
 
-    for (let orac of uniOracles) {
+    for (const orac of uniOracles) {
       expect(await orac.shouldUpdateOracle()).to.be.eq(false);
     }
     expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.gt(0);
@@ -71,7 +71,7 @@ describe("UpdaterRSK", () => {
       )
     ).wait();
 
-    for (let orac of uniOracles) {
+    for (const orac of uniOracles) {
       expect(await orac.shouldUpdateOracle()).to.be.eq(false);
     }
     expect(await bdeu.when_should_refresh_collateral_ratio_in_seconds()).to.be.gt(0);
