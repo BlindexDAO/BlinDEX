@@ -84,6 +84,9 @@ export function load() {
   });
 
   task("update:all-with-bot:local").setAction(async (args, hre) => {
+    if (hre.network.name != "mainnetFork") {
+      throw new Error("Local only task");
+    }
     console.log("starting the updater");
 
     const bot = await getBot(hre);
