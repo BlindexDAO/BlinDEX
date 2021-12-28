@@ -98,6 +98,6 @@ export const RSK_XUSD_ADDRESS = "0xb5999795be0ebb5bab23144aa5fd6a02d080299f";
 
 export const RSK_SOVRYN_NETWORK = "0x98ace08d2b759a265ae326f010496bcd63c15afc";
 
-export const rskBotAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
+export const rskBotAddress = "0x2a119532248d0e4ff68a42bb37f64336c3f20872";
 export const rskDevTreasuryAddress = "0x48e2b176db179d81135052f4bee7fb1129f270dd";
 export const bdxLockAmount = to_d18(3150000);
