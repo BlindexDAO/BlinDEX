@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getAllBDStables, getAllBDStablesSymbols } from "../utils/DeployedContractsHelpers";
+import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getBDStable } from "../utils/DeployedContractsHelpers";
 
 async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string, addressA: string, addressB: string) {
   const deployer = await getDeployer(hre);
@@ -22,7 +22,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const factory = await getUniswapFactory(hre);
   const wethAddress = (await getWeth(hre)).address;
   const wbtcAddress = (await getWbtc(hre)).address;
-  const stables = await getAllBDStables(hre);
+
+  const stables = [await getBDStable(hre, "BDEU"), await getBDStable(hre, "BDUS")];
 
   await (await factory.createPair(bdx.address, wethAddress)).wait();
   await deployPairOracle(hre, "BDX", "WETH", bdx.address, wethAddress);
@@ -50,5 +51,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename;
 func.tags = ["LiquidityPools"];
-func.dependencies = ["BDX", "BdxMint", "UniswapHelpers", ...getAllBDStablesSymbols()];
+func.dependencies = ["BDX", "BdxMint", "UniswapHelpers", "BDUS", "BDEU"];
 export default func;

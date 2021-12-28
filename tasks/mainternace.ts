@@ -8,7 +8,6 @@ import {
   getBot,
   getDeployer,
   getTreasury,
-  getUniswapFactory,
   getUniswapPair,
   getUniswapPairOracle,
   getWeth

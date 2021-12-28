@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
 import { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import { getAllBDStables, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { getBDStable, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -53,7 +53,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
 
-  for (const stable of await getAllBDStables(hre)) {
+  const stables = [await getBDStable(hre, "BDEU"), await getBDStable(hre, "BDUS")];
+
+  for (const stable of stables) {
     const symbol = await stable.symbol();
     console.log(`Starting deployment of ${symbol} staking contracts`);
 
