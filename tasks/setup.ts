@@ -1,5 +1,4 @@
 import { task } from "hardhat/config";
-import { ContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 import { getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { setupProductionReadySystem } from "../utils/SystemSetup";
@@ -16,8 +15,9 @@ export function load() {
     .addParam("ethUSD", "initial eth/usd Price")
     .addParam("btcUSD", "initial btc/usd Price")
     .addParam("bdxUSD", "initial bdx/usd Price")
-    .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD }, hre) => {
-      await setupProductionReadySystem(hre, btcEUR, btcUSD, bdxEUR, bdxUSD, ethEUR, ethUSD);
+    .addParam("usdEUR", "initial usd/eur Price")
+    .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD, usdEUR }, hre) => {
+      await setupProductionReadySystem(hre, btcEUR, btcUSD, bdxEUR, bdxUSD, ethEUR, ethUSD, usdEUR);
     });
 
   task("initialize:local")
@@ -27,7 +27,8 @@ export function load() {
     .addOptionalParam("ethUSD", "initial eth/usd Price", 4000, types.float)
     .addOptionalParam("btcUSD", "initial btc/usd Price", 57000, types.float)
     .addOptionalParam("bdxUSD", "initial bdx/usd Price", 1, types.float)
-    .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD }, hre) => {
+    .addOptionalParam("usdEUR", "initial usd/eur Price", 0.88, types.float)
+    .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD, usdEUR }, hre) => {
       const deployer = await getDeployer(hre);
       const treasury = await getTreasury(hre);
 
@@ -43,6 +44,6 @@ export function load() {
       // mint inital WBTC
       await mintWbtc(hre, treasury, to_d8(10), 1000);
 
-      await setupProductionReadySystem(hre, btcEUR, btcUSD, bdxEUR, bdxUSD, ethEUR, ethUSD);
+      await setupProductionReadySystem(hre, btcEUR, btcUSD, bdxEUR, bdxUSD, ethEUR, ethUSD, usdEUR);
     });
 }

@@ -53,7 +53,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
   await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
 
-  const stables = [await getBDStable(hre, "BDEU"), await getBDStable(hre, "BDUS")];
+  const bdEu = await getBDStable(hre, "BDEU");
+  const bdUs = await getBDStable(hre, "BDUS");
+  const stables = [bdEu, bdUs];
 
   for (const stable of stables) {
     const symbol = await stable.symbol();
@@ -65,6 +67,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     console.log(`Finished deployment of ${symbol} staking contracts`);
   }
+
+  await setupStakingContract(hre, bdEu.address, bdUs.address, "BDEU", "BDUS", false);
+  console.log(`Finished deployment of BDEU/BDUS staking contracts`);
 
   console.log("Finished deployment of all the staking contracts");
 

@@ -60,12 +60,28 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
     [bdxPoolData, wbtcPoolData]
   ];
 
-  for (const stable of bdStables) {
-    const symbol = await stable.symbol();
+  for (const stable1 of bdStables) {
+    const symbol = await stable1.symbol();
 
-    pools.push([bdxPoolData, { name: symbol, token: stable }]);
-    pools.push([{ name: symbol, token: stable }, wethPoolData]);
-    pools.push([{ name: symbol, token: stable }, wbtcPoolData]);
+    pools.push([bdxPoolData, { name: symbol, token: stable1 }]);
+    pools.push([{ name: symbol, token: stable1 }, wethPoolData]);
+    pools.push([{ name: symbol, token: stable1 }, wbtcPoolData]);
+
+    // Add stable-stable pools
+    for (const stable2 of bdStables) {
+      const pairAlreadyOnList = pools.some(
+        (tokens) =>
+          (tokens[0].token.address === stable1.address && tokens[1].token.address === stable2.address) ||
+          (tokens[1].token.address === stable1.address && tokens[0].token.address === stable2.address)
+      );
+
+      if (stable1 !== stable2 && !pairAlreadyOnList) {
+        pools.push([
+          { name: await stable1.symbol(), token: stable1 },
+          { name: await stable2.symbol(), token: stable2 }
+        ]);
+      }
+    }
   }
 
   return pools;

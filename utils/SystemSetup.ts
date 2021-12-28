@@ -28,9 +28,10 @@ export async function setupProductionReadySystem(
   bdxEur: number,
   bdxUSD: number,
   ethEur: number,
-  ethUSD: number
+  ethUSD: number,
+  usdEUR: number
 ) {
-  await setUpFunctionalSystem(hre, 1, 1, false, btcEur, btcUSD, bdxEur, bdxUSD, ethEur, ethUSD);
+  await setUpFunctionalSystem(hre, 1, 1, false, btcEur, btcUSD, bdxEur, bdxUSD, ethEur, ethUSD, usdEUR);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBDStableCollteralRatio: number) {
@@ -41,8 +42,9 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
   const btcUSD = 57000;
   const bdxEur = 0.89;
   const bdxUSD = 1;
+  const usdEUR = 0.88;
 
-  await setUpFunctionalSystem(hre, initialBDStableCollteralRatio, 1, true, btcEur, btcUSD, bdxEur, bdxUSD, ethEur, ethUSD);
+  await setUpFunctionalSystem(hre, initialBDStableCollteralRatio, 1, true, btcEur, btcUSD, bdxEur, bdxUSD, ethEur, ethUSD, usdEUR);
 }
 
 // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
@@ -56,7 +58,8 @@ export async function setUpFunctionalSystem(
   bdxEur: number,
   bdxUSD: number,
   ethEur: number,
-  ethUSD: number
+  ethUSD: number,
+  usdEUR: number
 ) {
   const deployer = await getDeployer(hre);
   const treasury = await getTreasury(hre);
@@ -64,7 +67,7 @@ export async function setUpFunctionalSystem(
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
   const bdEu = await getBdEu(hre);
-  const bdUS = await getBdUS(hre);
+  const bdUs = await getBdUS(hre);
 
   let euroInitialWethPrice = ethEur;
   let euroInitialWbtcPrice = btcEur;
@@ -130,7 +133,7 @@ export async function setUpFunctionalSystem(
   await provideLiquidity(
     hre,
     treasury,
-    bdUS,
+    bdUs,
     weth,
     to_d18(usdValueForLiquidityForPoolSide_bdUS_weth),
     numberToBigNumberFixed(usdValueForLiquidityForPoolSide_bdUS_weth, wethDecimals).mul(1e12).div(to_d12(usdInitialWethPrice)),
@@ -154,7 +157,7 @@ export async function setUpFunctionalSystem(
   await provideLiquidity(
     hre,
     treasury,
-    bdUS,
+    bdUs,
     wbtc,
     to_d18(usdValueForLiquidityForPoolSide_bdUS_wbtc),
     numberToBigNumberFixed(usdValueForLiquidityForPoolSide_bdUS_wbtc, wbtcDecimals).mul(1e12).div(to_d12(usdInitialWbtcPrice)),
@@ -205,9 +208,22 @@ export async function setUpFunctionalSystem(
     hre,
     treasury,
     bdx,
-    bdUS,
+    bdUs,
     to_d18(usdValueForLiquidityForPoolSide_bdx_bdUS / bdxUSD),
     to_d18(usdValueForLiquidityForPoolSide_bdx_bdUS),
+    verbose
+  );
+
+  verboseLog(verbose, "provide liquidity bdeu/bdus");
+
+  const eurValueForLiquidityForPoolSide_bdEU_bdUS = constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT * scale;
+  await provideLiquidity(
+    hre,
+    treasury,
+    bdUs,
+    bdEu,
+    to_d18(eurValueForLiquidityForPoolSide_bdEU_bdUS / usdEUR),
+    to_d18(eurValueForLiquidityForPoolSide_bdEU_bdUS),
     verbose
   );
 
@@ -273,13 +289,13 @@ export async function setUpFunctionalSystem(
     await (await weth.connect(treasury).transfer(bdEuWethPool.address, euroCollateralWeth)).wait();
     await (await wbtc.connect(treasury).transfer(bdEuWbtcPool.address, euroCollateralWbtc)).wait();
 
-    const bdUSWethPool = await getBDStableWethPool(hre, await bdUS.symbol());
-    const bdUSWbtcPool = await getBDStableWbtcPool(hre, await bdUS.symbol());
+    const bdUSWethPool = await getBDStableWethPool(hre, await bdUs.symbol());
+    const bdUSWbtcPool = await getBDStableWbtcPool(hre, await bdUs.symbol());
     await (await weth.connect(treasury).transfer(bdUSWethPool.address, usdCollateralWeth)).wait();
     await (await wbtc.connect(treasury).transfer(bdUSWbtcPool.address, usdCollateralWbtc)).wait();
 
     await bdEu.refreshCollateralRatio();
-    await bdUS.refreshCollateralRatio();
+    await bdUs.refreshCollateralRatio();
   }
 }
 

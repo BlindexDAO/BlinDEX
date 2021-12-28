@@ -23,7 +23,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const wethAddress = (await getWeth(hre)).address;
   const wbtcAddress = (await getWbtc(hre)).address;
 
-  const stables = [await getBDStable(hre, "BDEU"), await getBDStable(hre, "BDUS")];
+  const bdEu = await getBDStable(hre, "BDEU");
+  const bdUs = await getBDStable(hre, "BDUS");
+  const stables = [bdEu, bdUs];
 
   await (await factory.createPair(bdx.address, wethAddress)).wait();
   await deployPairOracle(hre, "BDX", "WETH", bdx.address, wethAddress);
@@ -43,6 +45,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await (await factory.createPair(bdStable.address, wbtcAddress)).wait();
     await deployPairOracle(hre, symbol, "WBTC", bdStable.address, wbtcAddress);
   }
+
+  await (await factory.createPair(bdEu.address, bdUs.address)).wait();
+  await deployPairOracle(hre, "BDEU", "BDUS", bdEu.address, bdUs.address);
+  console.log(`Created BDEU/BDUS liquidity pool pair`);
 
   console.log("Finished deployment: liquidity pools");
 
