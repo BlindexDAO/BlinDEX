@@ -108,6 +108,9 @@ export function load() {
     .addParam("ethbtc", "ethbtc price to_d12")
     .addParam("eurusd", "eurusd price to_d12")
     .setAction(async ({ btcusd, ethbtc, eurusd }, hre) => {
+      if (hre.network.name != "rsk") {
+        throw new Error("RSK only task");
+      }
       console.log("starting the updater");
 
       const bot = await getBot(hre);
@@ -219,6 +222,9 @@ export function load() {
   task("set:rsk-eur-usd")
     .addPositionalParam("newPrice", "new price")
     .setAction(async ({ newPrice }, hre) => {
+      if (hre.network.name != "rsk") {
+        throw new Error("RSK only task");
+      }
       const bot = await hre.ethers.getNamedSigner("BOT");
 
       if (newPrice < 0.5 || newPrice > 2) {
@@ -289,10 +295,16 @@ export function load() {
   });
 
   task("show:rsk-eur-usd").setAction(async (args, hre) => {
+    if (hre.network.name != "rsk") {
+      throw new Error("RSK only task");
+    }
     await show_eurUsd(hre);
   });
 
   task("show:rsk-eth-usd").setAction(async (args, hre) => {
+    if (hre.network.name != "rsk") {
+      throw new Error("RSK only task");
+    }
     await show_ethUsd(hre);
   });
 
