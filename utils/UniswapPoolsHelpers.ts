@@ -48,26 +48,26 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
   const bdStables = await getAllBDStables(hre);
-  const bdxPoolData = { name: "BDX", token: bdx };
+  const bdxPoolData = { name: await bdx.symbol(), token: bdx };
   const wethPoolData = { name: "WETH", token: weth };
   const wbtcPoolData = { name: "WBTC", token: wbtc };
 
   // In each sub array, the order of the first object matters.
   // BDX should always come first in any sub array, then BDStable and only then the collateral (WBTC/WETH)
   // This is important when providing liquidity in the SystemSetup.ts file
-  const pools: { name: string, token: IERC20 }[][] = [];
+  const pools: { name: string; token: IERC20 }[][] = [];
   const registeredPools = new Set<string>();
 
   function getPoolKey(name1: string, name2: string) {
     return `${name1}_${name2}`;
   }
 
-  function registerPool(data1: { name: string, token: IERC20 }, data2: { name: string, token: IERC20 }) {
+  function registerPool(data1: { name: string; token: IERC20 }, data2: { name: string; token: IERC20 }) {
     if (registeredPools.has(getPoolKey(data1.name, data2.name))) {
       throw `Trying to add the same pool twice: ${data1.name}:${data2.name}`;
     }
 
-    pools.push([data1, data2])
+    pools.push([data1, data2]);
     registeredPools.add(getPoolKey(data1.name, data2.name));
     registeredPools.add(getPoolKey(data2.name, data1.name));
   }
@@ -80,7 +80,7 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
 
     pools.push([bdxPoolData, { name: symbol, token: stable1 }]);
 
-    const stabl1Data = { name: symbol, token: stable1 }
+    const stabl1Data = { name: symbol, token: stable1 };
 
     registerPool(stabl1Data, wethPoolData);
     registerPool(stabl1Data, wbtcPoolData);
@@ -90,10 +90,7 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
       const stable1Symbol = await stable1.symbol();
       const stable2Symbol = await stable2.symbol();
       if (stable1 !== stable2 && !registeredPools.has(getPoolKey(stable1Symbol, stable2Symbol))) {
-        registerPool(
-          { name: stable1Symbol, token: stable1 },
-          { name: stable2Symbol, token: stable2 }
-        );
+        registerPool({ name: stable1Symbol, token: stable1 }, { name: stable2Symbol, token: stable2 });
       }
     }
   }
