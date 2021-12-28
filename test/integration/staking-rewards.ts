@@ -479,7 +479,7 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
-    const numberOfStakingPools = 8;
+    const numberOfStakingPools = 9;
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async (i) => await srd.stakingRewardsAddresses(i)));
     const poolIndexToRemove = 2;
     const thirdPoolAddress = poolsAddresses[poolIndexToRemove];
