@@ -68,7 +68,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Finished deployment of ${symbol} staking contracts`);
   }
 
-  await setupStakingContract(hre, bdEu.address, bdUs.address, "BDEU", "BDUS", false);
+  await setupStakingContract(hre, bdEu.address, bdUs.address, "BDEU", "BDUS", true);
   console.log(`Finished deployment of BDEU/BDUS staking contracts`);
 
   console.log("Finished deployment of all the staking contracts");
