@@ -64,7 +64,7 @@ async function initialize() {
   bdEu = await getBdEu(hre);
   bdx = await getBdx(hre);
   stakingRewards_BDEU_WETH = await getBDStableWethStakingRewards(hre, await bdEu.symbol());
-  stakingRewards_BDEU_WBTC = await getBDStableWbtcStakingRewards(hre, "BDEU");
+  stakingRewards_BDEU_WBTC = await getBDStableWbtcStakingRewards(hre, await bdEu.symbol());
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
 }
