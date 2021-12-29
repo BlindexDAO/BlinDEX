@@ -32,7 +32,6 @@ jobs:
         with:
           path: "./@blindex/stablecoins/package.json"
           prop_path: "version"
-        run: echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.prop}}"
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
@@ -40,7 +39,9 @@ jobs:
           cache: npm
       - name: Get Remote Package Version
         id: remotePackageVersion
-        run: echo "::set-output name=remotePackageVersion::$(npm view ${{steps.packageName.outputs.prop}} version))"
+        run: |
+          echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.prop}}"
+          echo "::set-output name=remotePackageVersion::$(npm view ${{steps.packageName.outputs.prop}} version))"
 
   publish-npmpackage:
     if: ${{jobs.check-if-publish-needed.outputs.localPackageVersion != jobs.check-if-publish-needed.outputs.remotePackageVersion}}
