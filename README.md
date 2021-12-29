@@ -44,9 +44,9 @@ npm test
 npm run solhint
 ```
 
-## Generate & publish @blindex/stablecoins npm package
+## Update version & publish @blindex/stablecoins npm package
 
-### Generate
+### Update version
 
 ```bash
 npm run blindex-package <semver_version>
@@ -56,11 +56,8 @@ npm run blindex-package <semver_version>
 
 ### Publish
 
-Before running this command, make sure you're connected to the blindex npm org or that you have a valid .npmrc file with the blindex org token npm token. Please contact one of the repo's admins to gain access.
-
-```bash
-npm run publish-blindex-package
-```
+Open a pull request with your changes after you upgrades the version of the npm package.
+Once your pull request will be merged, our Github action on the `master` branch will publish the package for you. So just look at the [actions tab](https://github.com/BlindexDAO/BlinDEX/actions) on the github repo.
 
 # Accounts
 

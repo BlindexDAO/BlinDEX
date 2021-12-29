@@ -45,10 +45,10 @@ export function load() {
   task("blindex-npm-package", "Packages type definitions and abis into npm package")
     .addParam("newVersion", "A valid semver version greater than the current one set for the package")
     .setAction(async ({ newVersion }) => {
-      const distFolder = "./@blindex/stablecoins";
+      const packageName = "@blindex/stablecoins";
       const typesSubFolder = "typings";
-      const abisFolder = `${distFolder}/abis`;
-      const packageJson = `${distFolder}/package.json`;
+      const abisFolder = `${packageName}/abis`;
+      const packageJson = `${packageName}/package.json`;
 
       if (!semver.valid(newVersion)) {
         throw new Error(`You new version '${newVersion} is not a valid semver format`);
@@ -66,13 +66,13 @@ export function load() {
       }
 
       try {
-        rimraf.sync(distFolder);
+        rimraf.sync(packageName);
       } catch {
         console.log("Couldn't sync folder using 'rimraf.sync'");
       }
 
-      mkdirSync(distFolder);
-      fsExtra.copySync(typechainOutDir, `${distFolder}/${typesSubFolder}`);
+      mkdirSync(packageName);
+      fsExtra.copySync(typechainOutDir, `${packageName}/${typesSubFolder}`);
       const contracts = klaw("./artifacts/contracts")
         .filter((x: { path: string }) => x.path.endsWith(".json") && !x.path.endsWith(".dbg.json"))
         .map((x: { path: string }) => {
@@ -86,7 +86,7 @@ export function load() {
         });
       }
       fsExtra.writeJsonSync(packageJson, {
-        name: "@blindex/stablecoins",
+        name: packageName + "-test",
         version: newVersion
       });
     });
