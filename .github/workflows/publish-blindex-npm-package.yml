@@ -55,14 +55,15 @@ jobs:
           ref: ${{ github.head_ref }}
       - name: Setup Node.js
         uses: actions/setup-node@v2
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         with:
           node-version: "16.x"
+          registry-url: "https://registry.npmjs.org"
           cache: npm
       - name: Install Node modules
         run: npm ci
       - name: Compile
         run: npm run compile
       - name: Publish npm package
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm run publish-blindex-package
