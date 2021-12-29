@@ -27,7 +27,7 @@ export function load() {
   task("show:be-config").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
     const swaps = await getSwapsConfig(hre);
-    const stakingRewards = (await getStakingsConfig(hre, swaps)).map((reward) => {
+    const stakingRewards = (await getStakingsConfig(hre, swaps)).map(reward => {
       return { pairAddress: reward.stakingTokenAddress.toLowerCase(), stakingRewardAddress: reward.address.toLowerCase() };
     });
 
@@ -41,7 +41,7 @@ export function load() {
       pairSymbols: string[];
     } = await getPairsOraclesAndSymbols(hre, deployer);
 
-    const swapPairs = pairs.map((pair) => {
+    const swapPairs = pairs.map(pair => {
       return {
         pairAddress: pair.address.toLowerCase(),
         token0Address: pair.token0.toLowerCase(),
@@ -49,7 +49,7 @@ export function load() {
       };
     });
 
-    const mappedPairOracles = pairOracles.map((pairOracle) => {
+    const mappedPairOracles = pairOracles.map(pairOracle => {
       return { pairAddress: pairOracle.pairAddress.toLowerCase(), oracleAddress: pairOracle.oracleAddress.toLowerCase() };
     });
     const networkName = hre.network.name.toUpperCase();
@@ -118,7 +118,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
   const pairsCount = (await factory.allPairsLength()).toNumber();
   const whitelist = await getPairsWhitelist(hre);
 
-  const pairsWhitelistPromise = whitelist.map(async (pair) => {
+  const pairsWhitelistPromise = whitelist.map(async pair => {
     return {
       token0Symbol: pair[0].symbol,
       token1Symbol: pair[1].symbol,
@@ -129,14 +129,14 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
 
   const pairsWhitelist = await Promise.all(pairsWhitelistPromise);
   const pairInfos = await Promise.all(
-    [...Array(pairsCount).keys()].map(async (i) => {
+    [...Array(pairsCount).keys()].map(async i => {
       const pairAddress = await factory.allPairs(i);
       const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
       const token0 = (await pair.token0()).toLowerCase();
       const token1 = (await pair.token1()).toLowerCase();
 
       const pairSymbols = pairsWhitelist.find(
-        (pair) => (pair.token0Address == token0 && pair.token1Address == token1) || (pair.token0Address == token1 && pair.token1Address == token0)
+        pair => (pair.token0Address == token0 && pair.token1Address == token1) || (pair.token0Address == token1 && pair.token1Address == token0)
       );
       if (pairSymbols == null) {
         throw new Error("Please update pair whitelist in getPairsWhitelist method to continue.");
@@ -168,7 +168,7 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
     })
   );
 
-  const approvedPairs = pairInfos.filter((pairInfo) => {
+  const approvedPairs = pairInfos.filter(pairInfo => {
     const sortedPair = [pairInfo.pair.token0, pairInfo.pair.token1].sort();
     for (const wlPair of whitelist) {
       const wlPairSorted = [wlPair[0].address.toLowerCase(), wlPair[1].address.toLowerCase()].sort();
@@ -180,9 +180,9 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
   });
 
   return {
-    pairs: approvedPairs.map((p) => p.pair),
-    pairOracles: approvedPairs.map((p) => p.pairOracle),
-    pairSymbols: approvedPairs.map((p) => p.symbol)
+    pairs: approvedPairs.map(p => p.pair),
+    pairOracles: approvedPairs.map(p => p.pairOracle),
+    pairSymbols: approvedPairs.map(p => p.symbol)
   };
 }
 
@@ -238,7 +238,7 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment, allowedSwapPair
   }
 
   const stakings = await Promise.all(
-    stakingRewardsAddresses.map(async (address) => {
+    stakingRewardsAddresses.map(async address => {
       const stakingRewards = (await hre.ethers.getContractAt("StakingRewards", address)) as StakingRewards;
       const stakingTokenAddress = await stakingRewards.stakingToken();
 
@@ -249,8 +249,8 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment, allowedSwapPair
     })
   );
 
-  const approvedStakings = stakings.filter((s) =>
-    allowedSwapPairs.some((allowedSwap) => s.stakingTokenAddress.toLowerCase() === allowedSwap.address.toLowerCase())
+  const approvedStakings = stakings.filter(s =>
+    allowedSwapPairs.some(allowedSwap => s.stakingTokenAddress.toLowerCase() === allowedSwap.address.toLowerCase())
   );
 
   return approvedStakings;
@@ -263,7 +263,7 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
   const whitelist = await getPairsWhitelist(hre);
 
   const pairs = await Promise.all(
-    [...Array(pairsCount).keys()].map(async (i) => {
+    [...Array(pairsCount).keys()].map(async i => {
       const pairAddress = await factory.allPairs(i);
       const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
       const token0 = pair.token0();
@@ -276,7 +276,7 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
     })
   );
 
-  const approvedPairs = pairs.filter((pair) => {
+  const approvedPairs = pairs.filter(pair => {
     const sortedPair = [pair.token0.toLowerCase(), pair.token1.toLowerCase()].sort();
     for (const wlPair of whitelist) {
       const wlPairSorted = [wlPair[0].address.toLowerCase(), wlPair[1].address.toLowerCase()].sort();
@@ -299,7 +299,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
     const pools: BdStablePool[] = [await getBDStableWethPool(hre, symbol), await getBDStableWbtcPool(hre, symbol)];
 
     const stablePools = await Promise.all(
-      pools.map(async (pool) => {
+      pools.map(async pool => {
         const mintingFee = await pool.minting_fee();
         const redemptionFee = await pool.redemption_fee();
         const collateralAddress = await pool.collateral_token();

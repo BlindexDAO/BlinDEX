@@ -20,7 +20,7 @@ import type { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 
 export function getAllBDStablesSymbols(): string[] {
-  return Object.values(bdstablesContractsDetails).map((stable) => stable.symbol);
+  return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
 }
 
 export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
