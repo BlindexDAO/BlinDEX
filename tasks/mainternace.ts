@@ -3,7 +3,7 @@ import {
   getAllBDStables,
   getBdEu,
   getBdEuWethPool,
-  getBdUS,
+  getBdUs,
   getBdx,
   getBot,
   getDeployer,
@@ -278,14 +278,12 @@ export function load() {
     console.log("bot     : " + bot.address);
   });
 
-  // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
   task("show:bdeu:ef-bdx-cov").setAction(async (args, hre) => {
     await show_efBDXCov(await getBdEu(hre));
   });
 
-  // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
   task("show:bdus:ef-bdx-cov").setAction(async (args, hre) => {
-    await show_efBDXCov(await getBdUS(hre));
+    await show_efBDXCov(await getBdUs(hre));
   });
 
   task("show:rsk-eur-usd").setAction(async (args, hre) => {

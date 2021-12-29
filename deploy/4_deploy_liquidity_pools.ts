@@ -1,18 +1,22 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getAllBDStables, getAllBDStablesSymbols } from "../utils/DeployedContractsHelpers";
+import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getBdEu, getBdUs } from "../utils/DeployedContractsHelpers";
+import { getPoolKey, sortUniswapPairTokens } from "../utils/UniswapPoolsHelpers";
 
 async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string, addressA: string, addressB: string) {
   const deployer = await getDeployer(hre);
   const uniswapFactory = await getUniswapFactory(hre);
 
-  await hre.deployments.deploy(`UniswapPairOracle_${nameA}_${nameB}`, {
+  const sortedTokens = sortUniswapPairTokens(addressA, addressB, nameA, nameB);
+  const poolKey = getPoolKey(addressA, addressB, nameA, nameB);
+
+  await hre.deployments.deploy(`UniswapPairOracle_${poolKey}`, {
     from: deployer.address,
     contract: "UniswapPairOracle",
-    args: [uniswapFactory.address, addressA, addressB]
+    args: [uniswapFactory.address, sortedTokens.token0Address, sortedTokens.token1Address]
   });
 
-  console.log(`Created ${nameA}/${nameB} liquidity pool pair`);
+  console.log(`Created ${poolKey} liquidity pool pair`);
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -22,7 +26,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const factory = await getUniswapFactory(hre);
   const wethAddress = (await getWeth(hre)).address;
   const wbtcAddress = (await getWbtc(hre)).address;
-  const stables = await getAllBDStables(hre);
+
+  const bdEu = await getBdEu(hre);
+  const bdUs = await getBdUs(hre);
+  const stables = [bdEu, bdUs];
 
   await (await factory.createPair(bdx.address, wethAddress)).wait();
   await deployPairOracle(hre, "BDX", "WETH", bdx.address, wethAddress);
@@ -43,6 +50,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await deployPairOracle(hre, symbol, "WBTC", bdStable.address, wbtcAddress);
   }
 
+  await (await factory.createPair(bdEu.address, bdUs.address)).wait();
+  await deployPairOracle(hre, await bdEu.symbol(), await bdUs.symbol(), bdEu.address, bdUs.address);
+  console.log(`Created BDEU/BDUS liquidity pool pair`);
+
   console.log("Finished deployment: liquidity pools");
 
   // One time migration
@@ -50,5 +61,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename;
 func.tags = ["LiquidityPools"];
-func.dependencies = ["BDX", "BdxMint", "UniswapHelpers", ...getAllBDStablesSymbols()];
+func.dependencies = ["BDX", "BdxMint", "UniswapHelpers", "BDUS", "BDEU"];
 export default func;

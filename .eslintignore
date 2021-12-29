@@ -4,3 +4,5 @@ artifacts/
 typechain/
 
 package-lock.json
+
+**/*.sol
