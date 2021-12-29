@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     # Map a step output to a job output
     outputs:
-      localPackageVersion: ${{ steps.localPackageVersion.outputs.localPackageVersion }}
+      localPackageVersion: ${{ steps.localPackageVersion.outputs.prop }}
       remotePackageVersion: ${{ steps.remotePackageVersion.outputs.remotePackageVersion }}
 
     steps:
@@ -40,7 +40,6 @@ jobs:
         id: remotePackageVersion
         run: |
           remotePackageVersion=$(npm view ${{steps.packageName.outputs.prop}} version)
-          echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.version}}"
           echo "::set-output name=remotePackageVersion::$remotePackageVersion"
 
   publish-npmpackage:
