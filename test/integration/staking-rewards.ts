@@ -8,6 +8,8 @@ import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber, to_d8 } from "../../utils/NumbersHelpers";
 import {
   getBdEu,
+  getBDStableWbtcStakingRewards,
+  getBDStableWethStakingRewards,
   getBdx,
   getDeployer,
   getDevTreasury,
@@ -61,8 +63,8 @@ async function initialize() {
   wbtc = await getWbtc(hre);
   bdEu = await getBdEu(hre);
   bdx = await getBdx(hre);
-  stakingRewards_BDEU_WETH = (await hre.ethers.getContract("StakingRewards_BDEU_WETH", deployer)) as StakingRewards;
-  stakingRewards_BDEU_WBTC = (await hre.ethers.getContract("StakingRewards_BDEU_WBTC", deployer)) as StakingRewards;
+  stakingRewards_BDEU_WETH = await getBDStableWethStakingRewards(hre, "BDEU");
+  stakingRewards_BDEU_WBTC = await getBDStableWbtcStakingRewards(hre, "BDEU");
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
 }
