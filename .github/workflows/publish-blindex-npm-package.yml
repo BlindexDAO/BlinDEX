@@ -48,8 +48,6 @@ jobs:
     needs: check-if-publish-needed
     if: ${{needs.check-if-publish-needed.outputs.localPackageVersion != needs.check-if-publish-needed.outputs.remotePackageVersion}}
     steps:
-      - env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -65,4 +63,6 @@ jobs:
       - name: Compile
         run: npm run compile
       - name: Publish npm package
+      - env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm run publish-blindex-package
