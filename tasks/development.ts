@@ -86,7 +86,7 @@ export function load() {
         });
       }
       fsExtra.writeJsonSync(packageJson, {
-        name: packageName + "-test",
+        name: packageName,
         version: newVersion
       });
     });

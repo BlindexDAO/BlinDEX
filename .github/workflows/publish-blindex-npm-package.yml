@@ -3,7 +3,7 @@ name: Continuous Integration
 on:
   push:
     branches:
-      - kazaz/lago-219-stablecoins-package
+      - master
 
 jobs:
   check-if-publish-needed:
