@@ -4,6 +4,7 @@ import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
 import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
 import { getBdEu, getBdUs, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { getPoolKey } from "../utils/UniswapPoolsHelpers";
 
 async function setupStakingContract(
   hre: HardhatRuntimeEnvironment,
@@ -13,13 +14,15 @@ async function setupStakingContract(
   nameB: string,
   isTrueBdPool: boolean
 ) {
-  console.log(`Setting up staking: ${nameA}/${nameB}`);
+  const poolKey = getPoolKey(addressA, addressB, nameA, nameB);
+
+  console.log(`Setting up staking: ${poolKey}`);
 
   const deployer = await getDeployer(hre);
   const uniswapFactoryContract = (await hre.ethers.getContract("UniswapV2Factory")) as UniswapV2Factory;
   const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
 
-  const stakingRewardsContractName = `StakingRewards_${nameA}_${nameB}`;
+  const stakingRewardsContractName = `StakingRewards_${poolKey}`;
   const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
 
   const stakingRewards_ProxyDeployment = await hre.deployments.deploy(stakingRewardsContractName, {

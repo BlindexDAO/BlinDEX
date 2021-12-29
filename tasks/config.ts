@@ -66,27 +66,23 @@ export function load() {
     const networkName = hre.network.name.toUpperCase();
 
     const blockchainConfig = {
-      [`${networkName}_UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
-      [`${networkName}_BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
-      [`${networkName}_STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
-      [`${networkName}_AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
-      [`${networkName}_AVAILABLE_PAIRS`]: swapPairs,
-      [`${networkName}_STAKING_REWARDS`]: stakingRewards,
-      [`${networkName}_PAIR_ORACLES`]: mappedPairOracles,
-      [`${networkName}_PRICE_FEEDS`]: {
-        ["EUR_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
-        ["BTC_ETH_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
-        ["ETH_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
-        ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
-      },
-      [`${networkName}_UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
-      [`${networkName}_BDSTABLES`]: await Promise.all(
-        (
-          await getAllBDStables(hre)
-        ).map(async (stable: BDStable) => {
-          return { symbol: await stable.symbol(), address: stable.address };
-        })
-      )
+      [`${networkName}`]: {
+        [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
+        [`BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
+        [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
+        [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
+        [`AVAILABLE_PAIRS`]: swapPairs,
+        [`STAKING_REWARDS`]: stakingRewards,
+        [`PAIR_ORACLES`]: mappedPairOracles,
+        [`PRICE_FEEDS`]: {
+          ["EUR_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
+          ["BTC_ETH_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
+          ["ETH_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
+          ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
+        },
+        [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
+        [`BDSTABLES`]: await getStablesConfig(hre)
+      }
     };
 
     console.log(
@@ -241,6 +237,8 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
     );
 
     stableConfigs.push({
+      symbol: await stable.symbol(),
+      decimals: await stable.decimals(),
       address: stable.address,
       fiat: getBDStableFiat(symbol),
       pools: await stablePools

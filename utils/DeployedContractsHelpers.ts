@@ -19,6 +19,7 @@ import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import type { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 import { getPoolKey } from "./UniswapPoolsHelpers";
+import type { StakingRewards } from "../typechain/StakingRewards";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
@@ -78,6 +79,24 @@ export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol
 export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract(bdstablesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
+}
+
+export async function getBDStableWethStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "WETH");
+}
+
+export async function getBDStableWbtcStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "WBTC");
+}
+
+async function getBDStableCollateralStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string, collateralSymbol: string) {
+  const deployer = await getDeployer(hre);
+
+  const collateralAddress = await getContratAddress(hre, collateralSymbol);
+  const stableAddress = await getContratAddress(hre, stableSymbol);
+  const poolKey = getPoolKey(collateralAddress, stableAddress, collateralSymbol, stableSymbol);
+
+  return (await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards;
 }
 
 export function getBDStableFiat(symbol: string) {
