@@ -5,7 +5,5 @@ typechain/
 
 package-lock.json
 
-**/*.sol
-**/*.md
 @blindex/stablecoins/typings
 @blindex/stablecoins/abis
