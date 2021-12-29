@@ -22,12 +22,12 @@ import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
-import { getPools } from "../utils/UniswapPoolsHelpers";
+import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    const stakingRewards = (await getStakingsConfig(hre)).map((reward) => {
+    const stakingRewards = (await getStakingsConfig(hre)).map(reward => {
       return {
         pairAddress: reward.stakingTokenAddress.toLowerCase(),
         stakingRewardAddress: reward.address.toLowerCase(),
@@ -40,7 +40,7 @@ export function load() {
 
     const pairOracles = await getPairsOraclesAndSymbols(hre, deployer);
 
-    const swapPairs = pairOracles.map((pairOracle) => {
+    const swapPairs = pairOracles.map(pairOracle => {
       return {
         pairAddress: pairOracle.pair.address.toLowerCase(),
         token0Address: pairOracle.pair.token0.toLowerCase(),
@@ -50,7 +50,7 @@ export function load() {
       };
     });
 
-    const mappedPairOracles = pairOracles.map((pairOracle) => {
+    const mappedPairOracles = pairOracles.map(pairOracle => {
       return {
         pairAddress: pairOracle.pair.address.toLowerCase(),
         oracleAddress: pairOracle.pairOracle.oracleAddress.toLowerCase(),
@@ -61,7 +61,7 @@ export function load() {
       };
     });
 
-    const pairSymbols = pairOracles.map((po) => po.symbol);
+    const pairSymbols = pairOracles.map(po => po.symbol);
 
     const networkName = hre.network.name.toUpperCase();
 
@@ -141,22 +141,9 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
     symbol: string;
   }[] = [];
   for (const poolPair of pools) {
-    let pairSymbol: string;
-    let oracleAddress: string;
-    let pairAddress: string;
-
-    try {
-      pairSymbol = poolPair[0].name + "_" + poolPair[1].name;
-      pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
-      oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
-    } catch (e) {
-      const tmp = poolPair[0];
-      poolPair[0] = poolPair[1];
-      poolPair[1] = tmp;
-      pairSymbol = poolPair[0].name + "_" + poolPair[1].name;
-      pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
-      oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
-    }
+    let pairSymbol = getPoolKey(poolPair[0].token.address, poolPair[1].token.address, poolPair[0].name, poolPair[1].name);
+    const pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
+    const oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
 
     if (hre.network.name.toLowerCase() == "rsk") {
       pairSymbol = pairSymbol.replace("ETH", "RBTC").replace("WBTC", "ETHs");
@@ -192,7 +179,7 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
   }
 
   const stakings = await Promise.all(
-    stakingRewardsAddresses.map(async (address) => {
+    stakingRewardsAddresses.map(async address => {
       const stakingRewards = (await hre.ethers.getContractAt("StakingRewards", address)) as StakingRewards;
       const stakingTokenAddress = await stakingRewards.stakingToken();
 
@@ -222,7 +209,7 @@ async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
   const pairsCount = (await factory.allPairsLength()).toNumber();
 
   const pairs = await Promise.all(
-    [...Array(pairsCount).keys()].map(async (i) => {
+    [...Array(pairsCount).keys()].map(async i => {
       const pairAddress = await factory.allPairs(i);
       const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
       const token0 = pair.token0();
@@ -247,7 +234,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
     const pools: BdStablePool[] = [await getBDStableWethPool(hre, symbol), await getBDStableWbtcPool(hre, symbol)];
 
     const stablePools = await Promise.all(
-      pools.map(async (pool) => {
+      pools.map(async pool => {
         const mintingFee = await pool.minting_fee();
         const redemptionFee = await pool.redemption_fee();
         const collateralAddress = await pool.collateral_token();
