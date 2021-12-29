@@ -20,6 +20,7 @@ import type { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
+import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
@@ -33,6 +34,17 @@ export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<B
   }
 
   return allStables;
+}
+
+export async function getAllBDStablePools(hre: HardhatRuntimeEnvironment): Promise<BdStablePool[]> {
+  const allStablePools = [];
+
+  for (const symbol of getAllBDStablesSymbols()) {
+    allStablePools.push(await getBDStableWbtcPool(hre, symbol));
+    allStablePools.push(await getBDStableWethPool(hre, symbol));
+  }
+
+  return allStablePools;
 }
 
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
@@ -78,6 +90,10 @@ export async function getBDStableWbtcStakingRewards(hre: HardhatRuntimeEnvironme
   return await getBDStableCollateralStakingRewards(hre, stableSymbol, "WBTC");
 }
 
+export async function getBDStableBdxStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "BDX");
+}
+
 async function getBDStableCollateralStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string, collateralSymbol: string) {
   const deployer = await getDeployer(hre);
 
@@ -86,6 +102,36 @@ async function getBDStableCollateralStakingRewards(hre: HardhatRuntimeEnvironmen
   const poolKey = getPoolKey(collateralAddress, stableAddress, collateralSymbol, stableSymbol);
 
   return (await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards;
+}
+
+export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironment) {
+  const deployer = await getDeployer(hre);
+  const bdstablesSymbols = getAllBDStablesSymbols();
+  const bdx = await getBdx(hre);
+  const stakingRewards = [];
+  const stakingRewardsStablesMap = new Set<string>();
+
+  stakingRewards.push(await getBDStableWethStakingRewards(hre, await bdx.symbol()));
+  stakingRewards.push(await getBDStableWbtcStakingRewards(hre, await bdx.symbol()));
+
+  for (const symbol of bdstablesSymbols) {
+    stakingRewards.push(await getBDStableWethStakingRewards(hre, symbol));
+    stakingRewards.push(await getBDStableWbtcStakingRewards(hre, symbol));
+    stakingRewards.push(await getBDStableBdxStakingRewards(hre, symbol));
+
+    for (const symbolB of bdstablesSymbols) {
+      const stableAddress = await getContratAddress(hre, symbol);
+      const stableBAddress = await getContratAddress(hre, symbolB);
+      const poolKey = getPoolKey(stableBAddress, stableAddress, symbolB, symbol);
+
+      // Do not repeat the same staking rewards twice
+      if (symbol !== symbolB && !stakingRewardsStablesMap.has(poolKey)) {
+        stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
+      }
+    }
+  }
+
+  return stakingRewards;
 }
 
 export function getBDStableFiat(symbol: string) {
@@ -276,6 +322,11 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
   } else {
     return (await hre.ethers.getContract(contractName)).address;
   }
+}
+
+export async function getUpdater(hre: HardhatRuntimeEnvironment) {
+  const deployer = await getDeployer(hre);
+  return (await hre.ethers.getContract("UpdaterRSK", deployer)) as UpdaterRSK;
 }
 
 async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
