@@ -48,6 +48,10 @@ jobs:
     needs: check-if-publish-needed
     if: ${{needs.check-if-publish-needed.outputs.localPackageVersion != needs.check-if-publish-needed.outputs.remotePackageVersion}}
     steps:
+      - name: "Echo"
+        run: |
+          echo "localPackageVersion: ${{needs.check-if-publish-needed.outputs.localPackageVersion}}
+          echo "remotePackageVersion: ${{needs.check-if-publish-needed.outputs.remotePackageVersion}}
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -60,8 +64,8 @@ jobs:
           cache: npm
       - name: Install Node modules
         run: npm ci
-      # - name: Compile
-      #   run: npm run compile
+      - name: Compile
+        run: npm run compile
       # - name: Publish npm package
       # - env:
       #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
