@@ -39,14 +39,14 @@ jobs:
       - name: Get Remote Package Version
         id: remotePackageVersion
         run: |
+          $remotePackageVersion=(npm view ${{steps.packageName.outputs.prop}} version)
           echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.prop}}"
-          echo "::set-output name=remotePackageVersion::$(npm view ${{steps.packageName.outputs.prop}} version))"
+          echo "::set-output name=remotePackageVersion::$remotePackageVersion"
 
   publish-npmpackage:
-    if: ${{jobs.check-if-publish-needed.outputs.localPackageVersion != jobs.check-if-publish-needed.outputs.remotePackageVersion}}
     runs-on: ubuntu-latest
-
     needs: check-if-publish-needed
+    if: ${{needs.check-if-publish-needed.outputs.localPackageVersion != needs.check-if-publish-needed.outputs.remotePackageVersion}}
     steps:
       - env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
