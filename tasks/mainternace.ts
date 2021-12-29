@@ -96,7 +96,7 @@ export function load() {
       uniOracles.push(oracle.address);
     }
 
-    const stablesAddresses = (await getAllBDStables(hre)).map((stable) => stable.address);
+    const stablesAddresses = (await getAllBDStables(hre)).map(stable => stable.address);
     await (await updater.update([], [], [], [], uniOracles, stablesAddresses)).wait();
 
     console.log("updater has updated");
@@ -123,7 +123,7 @@ export function load() {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         uniOracles.push(oracle.address);
       }
-      const stablesAddresses = (await getAllBDStables(hre)).map((stable) => stable.address);
+      const stablesAddresses = (await getAllBDStables(hre)).map(stable => stable.address);
 
       await (
         await updater.update(
