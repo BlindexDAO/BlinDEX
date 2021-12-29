@@ -62,7 +62,7 @@ export function load() {
       }
 
       if (!semver.gt(newVersion, currentVersion)) {
-        throw new Error(`New version '${newVersion}' must be great than existing version '${currentVersion}'`);
+        throw new Error(`New version '${newVersion}' must be greater than the existing version '${currentVersion}'`);
       }
 
       try {
