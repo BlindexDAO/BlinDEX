@@ -89,6 +89,10 @@ export async function getBDStableWbtcStakingRewards(hre: HardhatRuntimeEnvironme
   return await getBDStableCollateralStakingRewards(hre, stableSymbol, "WBTC");
 }
 
+export async function getBDStableBdxStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "BDX");
+}
+
 async function getBDStableCollateralStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string, collateralSymbol: string) {
   const deployer = await getDeployer(hre);
 
@@ -97,6 +101,36 @@ async function getBDStableCollateralStakingRewards(hre: HardhatRuntimeEnvironmen
   const poolKey = getPoolKey(collateralAddress, stableAddress, collateralSymbol, stableSymbol);
 
   return (await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards;
+}
+
+export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironment) {
+  const deployer = await getDeployer(hre);
+  const bdstablesSymbols = getAllBDStablesSymbols();
+  const bdx = await getBdx(hre);
+  const stakingRewards = [];
+  const stakingRewardsStablesMap = new Set<string>();
+
+  stakingRewards.push(await getBDStableWethStakingRewards(hre, await bdx.symbol()));
+  stakingRewards.push(await getBDStableWbtcStakingRewards(hre, await bdx.symbol()));
+
+  for (const symbol of bdstablesSymbols) {
+    stakingRewards.push(await getBDStableWethStakingRewards(hre, symbol));
+    stakingRewards.push(await getBDStableWbtcStakingRewards(hre, symbol));
+    stakingRewards.push(await getBDStableBdxStakingRewards(hre, symbol));
+
+    for (const symbolB of bdstablesSymbols) {
+      const stableAddress = await getContratAddress(hre, symbol);
+      const stableBAddress = await getContratAddress(hre, symbolB);
+      const poolKey = getPoolKey(stableBAddress, stableAddress, symbolB, symbol);
+
+      // Do not repeat the same staking rewatds twice
+      if (symbol !== symbolB && !stakingRewardsStablesMap.has(poolKey)) {
+        stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
+      }
+    }
+  }
+
+  return stakingRewards;
 }
 
 export function getBDStableFiat(symbol: string) {

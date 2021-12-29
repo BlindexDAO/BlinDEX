@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import {
+  getAllBDStableStakingRewards,
   getAllBDStablePools,
   getAllBDStables,
   getBdEu,
@@ -29,7 +30,6 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
-import type { StakingRewards } from "../typechain/StakingRewards";
 
 export function load() {
   task("update:all")
@@ -187,19 +187,9 @@ export function load() {
       const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
       await (await stakingRewardsDistribution.transferOwnership(owner)).wait();
 
-      const stakingRewardsNames = [
-        "StakingRewards_BDX_WETH",
-        "StakingRewards_BDX_WBTC",
-        "StakingRewards_BDX_BDEU",
-        "StakingRewards_BDEU_WETH",
-        "StakingRewards_BDEU_WBTC",
-        "StakingRewards_BDUS_WETH",
-        "StakingRewards_BDUS_WBTC",
-        "StakingRewards_BDEU_BDUS"
-      ];
-      for (const stakingName of stakingRewardsNames) {
-        const staking = (await hre.ethers.getContract(stakingName, deployer)) as StakingRewards;
-        await (await staking.transferOwnership(owner)).wait();
+      const stakingRewards = await getAllBDStableStakingRewards(hre);
+      for (const stakingReward of stakingRewards) {
+        await (await stakingReward.transferOwnership(owner)).wait();
       }
 
       const vesting = await getVesting(hre);
