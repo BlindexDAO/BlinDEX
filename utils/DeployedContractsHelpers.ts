@@ -123,7 +123,7 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
       const stableBAddress = await getContratAddress(hre, symbolB);
       const poolKey = getPoolKey(stableBAddress, stableAddress, symbolB, symbol);
 
-      // Do not repeat the same staking rewatds twice
+      // Do not repeat the same staking rewards twice
       if (symbol !== symbolB && !stakingRewardsStablesMap.has(poolKey)) {
         stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
       }
