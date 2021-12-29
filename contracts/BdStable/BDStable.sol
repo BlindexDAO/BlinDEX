@@ -366,6 +366,11 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         emit CollateralRatioLocked(wantedCR_d12);
     }
 
+    function setTreasury(address _treasury) external onlyOwner {
+        treasury = _treasury;
+        emit TreasuryChanged(_treasury);
+    }
+
     function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner {
         minimumMintRedeemDelayInBlocks = _minimumMintRedeemDelayInBlocks;
         emit MinimumMintRedeemDelayInBlocksSet(_minimumMintRedeemDelayInBlocks);
@@ -413,4 +418,5 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     event CollateralRatioPausedToggled(bool collateral_ratio_paused);
     event CollateralRatioLocked(uint256 lockedCR_d12);
     event MinimumMintRedeemDelayInBlocksSet(uint256 minimumMintRedeemDelayInBlocks);
+    event TreasuryChanged(address newTreasury);
 }

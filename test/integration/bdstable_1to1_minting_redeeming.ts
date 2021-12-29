@@ -19,7 +19,7 @@ import {
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
-import { provideBdEu } from "../helpers/common";
+import { provideBdEu, expectToFail } from "../helpers/common";
 
 chai.use(cap);
 
@@ -293,6 +293,29 @@ describe("BDStable 1to1", () => {
     expect(d12_ToNumber(efCr_d12)).to.be.lt(1, "effective collateral ratio should be less than 1"); // test validation
 
     await expect(bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1)).to.be.revertedWith("Cannot legally redeem");
+  });
+
+  it("should set right treasury", async () => {
+    const bdEu = await getBdEu(hre);
+    const testUser = await getUser(hre);
+
+    await bdEu.setTreasury(testUser.address);
+    expect(await bdEu.treasury()).to.be.equal(testUser.address);
+  });
+
+  it("set treasury should emit event", async () => {
+    const bdEu = await getBdEu(hre);
+    const testUser = await getUser(hre);
+
+    const tx = await bdEu.setTreasury(testUser.address);
+    expect(tx).to.emit(bdEu, "TreasuryChanged").withArgs(testUser.address);
+  });
+
+  it("should fail if not owner calls setTreasury()", async () => {
+    const bdEu = await getBdEu(hre);
+    const testUser = await getUser(hre);
+
+    await expectToFail(() => bdEu.connect(testUser).setTreasury(testUser.address), "Ownable: caller is not the owner");
   });
 });
 
