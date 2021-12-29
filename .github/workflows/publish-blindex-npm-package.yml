@@ -47,10 +47,6 @@ jobs:
     needs: check-if-publish-needed
     if: ${{needs.check-if-publish-needed.outputs.localPackageVersion != needs.check-if-publish-needed.outputs.remotePackageVersion}}
     steps:
-      - name: "Echo"
-        run: |
-          echo "localPackageVersion: ${{needs.check-if-publish-needed.outputs.localPackageVersion}}
-          echo "remotePackageVersion: ${{needs.check-if-publish-needed.outputs.remotePackageVersion}}
       - name: Checkout
         uses: actions/checkout@v2
         with:
