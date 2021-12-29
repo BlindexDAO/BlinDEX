@@ -294,6 +294,22 @@ describe("BDStable 1to1", () => {
 
     await expect(bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1)).to.be.revertedWith("Cannot legally redeem");
   });
+
+  it.only("should set right treasury", async () => {
+    const bdEu = await getBdEu(hre);
+    const testUser = await getUser(hre);
+
+    await bdEu.setTreasury(testUser.address);
+    expect(await bdEu.treasury()).to.be.equal(testUser.address);
+  });
+
+  it.only("set treasury should emit event", async () => {
+    const bdEu = await getBdEu(hre);
+    const testUser = await getUser(hre);
+
+    const tx = await bdEu.setTreasury(testUser.address);
+    expect(tx).to.emit(bdEu, "TreasuryChanged").withArgs(testUser.address);
+  });
 });
 
 export async function perform1To1MintingForWeth(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, collateralAmount: number) {
