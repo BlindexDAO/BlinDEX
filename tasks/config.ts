@@ -22,7 +22,7 @@ import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
-import { getPools } from "../utils/UniswapPoolsHelpers";
+import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -133,22 +133,9 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
     symbol: string;
   }[] = [];
   for (const poolPair of pools) {
-    let pairSymbol: string;
-    let oracleAddress: string;
-    let pairAddress: string;
-
-    try {
-      pairSymbol = poolPair[0].name + "_" + poolPair[1].name;
-      pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
-      oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
-    } catch (e) {
-      const tmp = poolPair[0];
-      poolPair[0] = poolPair[1];
-      poolPair[1] = tmp;
-      pairSymbol = poolPair[0].name + "_" + poolPair[1].name;
-      pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
-      oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
-    }
+    let pairSymbol = getPoolKey(poolPair[0].token.address, poolPair[1].token.address, poolPair[0].name, poolPair[1].name);
+    const pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
+    const oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
 
     if (hre.network.name.toLowerCase() == "rsk") {
       pairSymbol = pairSymbol.replace("ETH", "RBTC").replace("WBTC", "ETHs");

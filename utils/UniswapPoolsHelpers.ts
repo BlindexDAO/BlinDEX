@@ -43,6 +43,24 @@ export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: strin
   await (await oracle.reset()).wait();
 }
 
+export function sortUniswapPairTokens(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenBSymbol: string) {
+  // Logic form UniswapV2Factory.createPair()
+  // TODO verify on RSK if we have to lowercase addresses
+
+  const retRes =
+    tokenAAddress < tokenBAddress
+      ? { token0Address: tokenAAddress, token1Address: tokenBAddress, token0Symbol: tokenASymbol, token1Symbol: tokenBSymbol }
+      : { token0Address: tokenBAddress, token1Address: tokenAAddress, token0Symbol: tokenBSymbol, token1Symbol: tokenASymbol };
+
+  return retRes;
+}
+
+export function getPoolKey(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenbSymbol: string) {
+  const sortedTokens = sortUniswapPairTokens(tokenAAddress, tokenBAddress, tokenASymbol, tokenbSymbol);
+
+  return `${sortedTokens.token0Symbol}_${sortedTokens.token1Symbol}`;
+}
+
 export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: string; token: IERC20 }[][]> {
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
@@ -58,39 +76,35 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const pools: { name: string; token: IERC20 }[][] = [];
   const registeredPools = new Set<string>();
 
-  function getPoolKey(name1: string, name2: string) {
-    return `${name1}_${name2}`;
-  }
-
-  function registerPool(data1: { name: string; token: IERC20 }, data2: { name: string; token: IERC20 }) {
-    if (registeredPools.has(getPoolKey(data1.name, data2.name))) {
-      throw `Trying to add the same pool twice: ${data1.name}:${data2.name}`;
+  function registerPool(dataA: { name: string; token: IERC20 }, dataB: { name: string; token: IERC20 }) {
+    const poolKey = getPoolKey(dataA.token.address, dataB.token.address, dataA.name, dataB.name);
+    if (registeredPools.has(poolKey)) {
+      throw `Trying to add the same pool twice: ${dataA.name}:${dataB.name}`;
     }
 
-    pools.push([data1, data2]);
-    registeredPools.add(getPoolKey(data1.name, data2.name));
-    registeredPools.add(getPoolKey(data2.name, data1.name));
+    pools.push([dataA, dataB]);
+    registeredPools.add(poolKey);
   }
 
   registerPool(bdxPoolData, wethPoolData);
   registerPool(bdxPoolData, wbtcPoolData);
 
-  for (const stable1 of bdStables) {
-    const symbol = await stable1.symbol();
+  for (const stableA of bdStables) {
+    const symbol = await stableA.symbol();
 
-    pools.push([bdxPoolData, { name: symbol, token: stable1 }]);
+    pools.push([bdxPoolData, { name: symbol, token: stableA }]);
 
-    const stabl1Data = { name: symbol, token: stable1 };
+    const stabl1Data = { name: symbol, token: stableA };
 
     registerPool(stabl1Data, wethPoolData);
     registerPool(stabl1Data, wbtcPoolData);
 
     // Add stable-stable pools
-    for (const stable2 of bdStables) {
-      const stable1Symbol = await stable1.symbol();
-      const stable2Symbol = await stable2.symbol();
-      if (stable1 !== stable2 && !registeredPools.has(getPoolKey(stable1Symbol, stable2Symbol))) {
-        registerPool({ name: stable1Symbol, token: stable1 }, { name: stable2Symbol, token: stable2 });
+    for (const stableB of bdStables) {
+      const stableASymbol = await stableA.symbol();
+      const stableBSymbol = await stableB.symbol();
+      if (stableA !== stableB && !registeredPools.has(getPoolKey(stableA.address, stableB.address, stableASymbol, stableBSymbol))) {
+        registerPool({ name: stableASymbol, token: stableA }, { name: stableBSymbol, token: stableB });
       }
     }
   }

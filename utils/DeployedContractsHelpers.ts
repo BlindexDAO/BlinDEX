@@ -18,6 +18,7 @@ import type { Vesting } from "../typechain/Vesting";
 import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import type { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
+import { getPoolKey } from "./UniswapPoolsHelpers";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map((stable) => stable.symbol);
@@ -237,9 +238,25 @@ export function getWbtcPairOracle(hre: HardhatRuntimeEnvironment, tokenName: str
 
 export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, tokenAName: string, tokenBName: string): Promise<UniswapPairOracle> {
   const deployer = await getDeployer(hre);
-  const oracle = (await hre.ethers.getContract(`UniswapPairOracle_${tokenAName}_${tokenBName}`, deployer)) as UniswapPairOracle;
+
+  const tokenAAddress = await getContratAddress(hre, tokenAName);
+  const tokenBAddress = await getContratAddress(hre, tokenBName);
+
+  const poolKey = getPoolKey(tokenAAddress, tokenBAddress, tokenAName, tokenBName);
+
+  const oracle = (await hre.ethers.getContract(`UniswapPairOracle_${poolKey}`, deployer)) as UniswapPairOracle;
 
   return oracle;
+}
+
+export async function getContratAddress(hre: HardhatRuntimeEnvironment, contractName: string) {
+  if (contractName === "WETH") {
+    return constants.wETH_address[hre.network.name];
+  } else if (contractName === "WBTC") {
+    return constants.wBTC_address[hre.network.name];
+  } else {
+    return (await hre.ethers.getContract(contractName)).address;
+  }
 }
 
 async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
