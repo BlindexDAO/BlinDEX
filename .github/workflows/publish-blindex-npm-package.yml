@@ -7,9 +7,8 @@ on:
 
 jobs:
   check-if-publish-needed:
-    runs-on:
-      ubuntu-latest
-      # Map a step output to a job output
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
     outputs:
       localPackageVersion: ${{ steps.localPackageVersion.outputs.localPackageVersion }}
       remotePackageVersion: ${{ steps.remotePackageVersion.outputs.remotePackageVersion }}
@@ -50,7 +49,7 @@ jobs:
     needs: check-if-publish-needed
     steps:
       - env:
-        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v2
         with:
