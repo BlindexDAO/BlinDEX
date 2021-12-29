@@ -40,7 +40,7 @@ jobs:
         id: remotePackageVersion
         run: |
           remotePackageVersion=$(npm view ${{steps.packageName.outputs.prop}} version)
-          echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.prop}}"
+          echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.version}}"
           echo "::set-output name=remotePackageVersion::$remotePackageVersion"
 
   publish-npmpackage:
