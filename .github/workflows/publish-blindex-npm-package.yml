@@ -39,7 +39,7 @@ jobs:
       - name: Get Remote Package Version
         id: remotePackageVersion
         run: |
-          $remotePackageVersion=(npm view ${{steps.packageName.outputs.prop}} version)
+          remotePackageVersion=$(npm view ${{steps.packageName.outputs.prop}} version)
           echo "::set-output name=localPackageVersion::${{steps.localPackageVersion.outputs.prop}}"
           echo "::set-output name=remotePackageVersion::$remotePackageVersion"
 
