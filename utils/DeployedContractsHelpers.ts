@@ -20,6 +20,7 @@ import type { IWETH } from "../typechain/IWETH";
 import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
+import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
@@ -325,7 +326,7 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
 
 export async function getUpdater(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract("UpdaterRSK", deployer)) as BDStable;
+  return (await hre.ethers.getContract("UpdaterRSK", deployer)) as UpdaterRSK;
 }
 
 async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
