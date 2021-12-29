@@ -49,7 +49,7 @@ describe("UpdaterRSK", () => {
         [],
         [],
         [],
-        uniOracles.map((x) => x.address),
+        uniOracles.map(x => x.address),
         [bdeu.address]
       )
     ).wait();
@@ -66,7 +66,7 @@ describe("UpdaterRSK", () => {
         [],
         [],
         [],
-        uniOracles.map((x) => x.address),
+        uniOracles.map(x => x.address),
         [bdeu.address]
       )
     ).wait();

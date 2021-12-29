@@ -21,7 +21,7 @@ import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_eur
 import { getPoolKey } from "./UniswapPoolsHelpers";
 
 export function getAllBDStablesSymbols(): string[] {
-  return Object.values(bdstablesContractsDetails).map((stable) => stable.symbol);
+  return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
 }
 
 export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {

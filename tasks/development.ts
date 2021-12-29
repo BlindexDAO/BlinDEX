@@ -29,7 +29,7 @@ export function load() {
     .setAction(async ({ testDir, noCompile, deployFixture }, { run }) => {
       const testFiles: string[] = [];
       readdir(testDir, (_err: NodeJS.ErrnoException | null, files: string[]) => {
-        files.forEach((file) => {
+        files.forEach(file => {
           if (file.endsWith(".ts")) {
             file = testDir + file;
             testFiles.push(file);
