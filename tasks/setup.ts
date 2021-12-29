@@ -27,6 +27,9 @@ export function load() {
     .addOptionalParam("btcUSD", "initial eth/usd Price", 57000, types.float)
     .addOptionalParam("bdxUSD", "initial eth/usd Price", 1, types.float)
     .setAction(async ({ btcEUR, bdxEUR, ethEUR, ethUSD, btcUSD, bdxUSD }, hre) => {
+      if (hre.network.name != "mainnetFork") {
+        throw new Error("Local only task");
+      }
       const deployer = await getDeployer(hre);
       const treasury = await getTreasury(hre);
 
