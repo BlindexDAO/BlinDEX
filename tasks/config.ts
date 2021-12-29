@@ -65,11 +65,6 @@ export function load() {
 
     const networkName = hre.network.name.toUpperCase();
 
-    const stableFiats: { [id: string]: string } = {
-      BDEU: "EUR",
-      BDUS: "USD"
-    };
-
     const blockchainConfig = {
       [`${networkName}`]: {
         [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
@@ -86,14 +81,7 @@ export function load() {
           ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
         },
         [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
-        [`BDSTABLES`]: await Promise.all(
-          (
-            await getAllBDStables(hre)
-          ).map(async (stable: BDStable) => {
-            const symbol = await stable.symbol();
-            return { symbol: symbol, address: stable.address, decimals: await stable.decimals(), fiatCurrency: stableFiats[symbol] };
-          })
-        )
+        [`BDSTABLES`]: await getStablesConfig(hre)
       }
     };
 
@@ -249,6 +237,8 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
     );
 
     stableConfigs.push({
+      symbol: await stable.symbol(),
+      decimals: await stable.decimals(),
       address: stable.address,
       fiat: getBDStableFiat(symbol),
       pools: await stablePools
