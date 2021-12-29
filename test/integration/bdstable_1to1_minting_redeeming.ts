@@ -295,7 +295,7 @@ describe("BDStable 1to1", () => {
     await expect(bdEuPool.connect(testUser).redeemFractionalBdStable(bdEuToRedeem, 0, 1)).to.be.revertedWith("Cannot legally redeem");
   });
 
-  it.only("should set right treasury", async () => {
+  it("should set right treasury", async () => {
     const bdEu = await getBdEu(hre);
     const testUser = await getUser(hre);
 
@@ -303,7 +303,7 @@ describe("BDStable 1to1", () => {
     expect(await bdEu.treasury()).to.be.equal(testUser.address);
   });
 
-  it.only("set treasury should emit event", async () => {
+  it("set treasury should emit event", async () => {
     const bdEu = await getBdEu(hre);
     const testUser = await getUser(hre);
 
