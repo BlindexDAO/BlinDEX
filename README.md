@@ -44,10 +44,22 @@ npm test
 npm run solhint
 ```
 
-## Generate abis and typings
+## Generate & publish @blindex/stablecoins npm package
+
+### Generate
 
 ```bash
-npm run npm-package
+npm run blindex-package <semver_version>
+```
+
+`semver_version` must be a valid semver format. It must also be greater than the current version which could be be found [here](./@blindex/stablecoins/package.json).
+
+### Publish
+
+Before running this command, make sure you're connected to the blindex npm org or that you have a valid .npmrc file with the blindex org token npm token. Please contact one of the repo's admins to gain access.
+
+```bash
+npm run publish-blindex-package
 ```
 
 # Accounts

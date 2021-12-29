@@ -27,6 +27,8 @@ maintenanceTasks.load();
 setupTasks.load();
 feConfig.load();
 
+export const typechainOutDir = "typechain";
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -74,7 +76,7 @@ const config: HardhatUserConfig = {
     timeout: 20000000
   },
   typechain: {
-    outDir: "typechain",
+    outDir: typechainOutDir,
     target: "ethers-v5",
     externalArtifacts: [
       "./node_modules/@uniswap/v2-core/build/UniswapV2Pair.json",
