@@ -3,7 +3,7 @@ import {
   getAllBDStables,
   getBdEu,
   getBdEuWethPool,
-  getBdUS,
+  getBdUs,
   getBdx,
   getBot,
   getDeployer,
@@ -99,7 +99,7 @@ export function load() {
       uniOracles.push(oracle.address);
     }
 
-    const stablesAddresses = (await getAllBDStables(hre)).map((stable) => stable.address);
+    const stablesAddresses = (await getAllBDStables(hre)).map(stable => stable.address);
     await (await updater.update([], [], [], [], uniOracles, stablesAddresses)).wait();
 
     console.log("updater has updated");
@@ -129,7 +129,7 @@ export function load() {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
         uniOracles.push(oracle.address);
       }
-      const stablesAddresses = (await getAllBDStables(hre)).map((stable) => stable.address);
+      const stablesAddresses = (await getAllBDStables(hre)).map(stable => stable.address);
 
       await (
         await updater.update(
@@ -287,14 +287,12 @@ export function load() {
     console.log("bot     : " + bot.address);
   });
 
-  // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
   task("show:bdeu:ef-bdx-cov").setAction(async (args, hre) => {
     await show_efBDXCov(await getBdEu(hre));
   });
 
-  // TODO: At the moment this is not generic enough. We should make this part generic as well - https://lagoslabs.atlassian.net/browse/LAGO-125
   task("show:bdus:ef-bdx-cov").setAction(async (args, hre) => {
-    await show_efBDXCov(await getBdUS(hre));
+    await show_efBDXCov(await getBdUs(hre));
   });
 
   task("show:rsk-eur-usd").setAction(async (args, hre) => {

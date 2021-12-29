@@ -43,29 +43,70 @@ export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: strin
   await (await oracle.reset()).wait();
 }
 
+export function sortUniswapPairTokens(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenBSymbol: string) {
+  // Logic form UniswapV2Factory.createPair()
+  // TODO verify on RSK if we have to lowercase addresses
+
+  const retRes =
+    tokenAAddress < tokenBAddress
+      ? { token0Address: tokenAAddress, token1Address: tokenBAddress, token0Symbol: tokenASymbol, token1Symbol: tokenBSymbol }
+      : { token0Address: tokenBAddress, token1Address: tokenAAddress, token0Symbol: tokenBSymbol, token1Symbol: tokenASymbol };
+
+  return retRes;
+}
+
+export function getPoolKey(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenbSymbol: string) {
+  const sortedTokens = sortUniswapPairTokens(tokenAAddress, tokenBAddress, tokenASymbol, tokenbSymbol);
+
+  return `${sortedTokens.token0Symbol}_${sortedTokens.token1Symbol}`;
+}
+
 export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: string; token: IERC20 }[][]> {
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
   const bdStables = await getAllBDStables(hre);
-  const bdxPoolData = { name: "BDX", token: bdx };
+  const bdxPoolData = { name: await bdx.symbol(), token: bdx };
   const wethPoolData = { name: "WETH", token: weth };
   const wbtcPoolData = { name: "WBTC", token: wbtc };
 
   // In each sub array, the order of the first object matters.
   // BDX should always come first in any sub array, then BDStable and only then the collateral (WBTC/WETH)
   // This is important when providing liquidity in the SystemSetup.ts file
-  const pools = [
-    [bdxPoolData, wethPoolData],
-    [bdxPoolData, wbtcPoolData]
-  ];
+  const pools: { name: string; token: IERC20 }[][] = [];
+  const registeredPools = new Set<string>();
 
-  for (const stable of bdStables) {
-    const symbol = await stable.symbol();
+  function registerPool(dataA: { name: string; token: IERC20 }, dataB: { name: string; token: IERC20 }) {
+    const poolKey = getPoolKey(dataA.token.address, dataB.token.address, dataA.name, dataB.name);
+    if (registeredPools.has(poolKey)) {
+      throw `Trying to add the same pool twice: ${dataA.name}:${dataB.name}`;
+    }
 
-    pools.push([bdxPoolData, { name: symbol, token: stable }]);
-    pools.push([{ name: symbol, token: stable }, wethPoolData]);
-    pools.push([{ name: symbol, token: stable }, wbtcPoolData]);
+    pools.push([dataA, dataB]);
+    registeredPools.add(poolKey);
+  }
+
+  registerPool(bdxPoolData, wethPoolData);
+  registerPool(bdxPoolData, wbtcPoolData);
+
+  for (const stableA of bdStables) {
+    const symbol = await stableA.symbol();
+
+    pools.push([bdxPoolData, { name: symbol, token: stableA }]);
+
+    const stabl1Data = { name: symbol, token: stableA };
+
+    registerPool(stabl1Data, wethPoolData);
+    registerPool(stabl1Data, wbtcPoolData);
+
+    // Add stable-stable pools
+    for (const stableB of bdStables) {
+      const stableASymbol = await stableA.symbol();
+      const stableBSymbol = await stableB.symbol();
+      if (stableA !== stableB && !registeredPools.has(getPoolKey(stableA.address, stableB.address, stableASymbol, stableBSymbol))) {
+        registerPool({ name: stableASymbol, token: stableA }, { name: stableBSymbol, token: stableB });
+      }
+    }
   }
 
   return pools;

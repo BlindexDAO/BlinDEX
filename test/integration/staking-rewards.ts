@@ -361,7 +361,7 @@ describe("Staking - withdrawLocked", () => {
 
     const lockedStakesAfter = await stakingRewards_BDEU_WETH.lockedStakesOf(testUser1.address);
     expect(lockedStakesAfter.length).to.eq(3);
-    expect(lockedStakesAfter.map((s) => d18_ToNumber(s.amount))).to.members([0.001, 0.004, 0.003]);
+    expect(lockedStakesAfter.map(s => d18_ToNumber(s.amount))).to.members([0.001, 0.004, 0.003]);
   });
 });
 
@@ -479,8 +479,8 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
-    const numberOfStakingPools = 8;
-    const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async (i) => await srd.stakingRewardsAddresses(i)));
+    const numberOfStakingPools = 9;
+    const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
     const poolIndexToRemove = 2;
     const thirdPoolAddress = poolsAddresses[poolIndexToRemove];
     const lastPoolAddress = poolsAddresses[poolsAddresses.length - 1];
