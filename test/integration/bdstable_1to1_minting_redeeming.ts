@@ -19,7 +19,7 @@ import {
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { HardhatRuntimeEnvironment } from "hardhat/types/runtime";
-import { provideBdEu } from "../helpers/common";
+import { provideBdEu, expectToFail } from "../helpers/common";
 
 chai.use(cap);
 
@@ -309,6 +309,13 @@ describe("BDStable 1to1", () => {
 
     const tx = await bdEu.setTreasury(testUser.address);
     expect(tx).to.emit(bdEu, "TreasuryChanged").withArgs(testUser.address);
+  });
+
+  it("should fail if not owner calls setTreasury()", async () => {
+    const bdEu = await getBdEu(hre);
+    const testUser = await getUser(hre);
+
+    await expectToFail(() => bdEu.connect(testUser).setTreasury(testUser.address), "Ownable: caller is not the owner");
   });
 });
 
