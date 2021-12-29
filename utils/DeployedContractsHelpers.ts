@@ -34,6 +34,17 @@ export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<B
   return allStables;
 }
 
+export async function getAllBDStablePools(hre: HardhatRuntimeEnvironment): Promise<BdStablePool[]> {
+  const allStablePools = [];
+
+  for (const symbol of getAllBDStablesSymbols()) {
+    allStablePools.push(await getBDStableWbtcPool(hre, symbol));
+    allStablePools.push(await getBDStableWethPool(hre, symbol));
+  }
+
+  return allStablePools;
+}
+
 export async function getDeployer(hre: HardhatRuntimeEnvironment) {
   const deployer = await hre.ethers.getNamedSigner("DEPLOYER");
   return deployer;
@@ -257,6 +268,11 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
   } else {
     return (await hre.ethers.getContract(contractName)).address;
   }
+}
+
+export async function getUpdater(hre: HardhatRuntimeEnvironment) {
+  const deployer = await getDeployer(hre);
+  return (await hre.ethers.getContract("UpdaterRSK", deployer)) as BDStable;
 }
 
 async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
