@@ -42,9 +42,9 @@ export function load() {
 
     const swapPairs = pairOracles.map(pairOracle => {
       return {
-        pairAddress: pairOracle.pair.address.toLowerCase(),
-        token0Address: pairOracle.pair.token0.toLowerCase(),
-        token1Address: pairOracle.pair.token1.toLowerCase(),
+        pairAddress: pairOracle.pair.address,
+        token0Address: pairOracle.pair.token0,
+        token1Address: pairOracle.pair.token1,
         token0Symbol: pairOracle.pair.token0Symbol,
         token1Symbol: pairOracle.pair.token1Symbol
       };
@@ -52,8 +52,8 @@ export function load() {
 
     const mappedPairOracles = pairOracles.map(pairOracle => {
       return {
-        pairAddress: pairOracle.pair.address.toLowerCase(),
-        oracleAddress: pairOracle.pairOracle.oracleAddress.toLowerCase(),
+        pairAddress: pairOracle.pair.address,
+        oracleAddress: pairOracle.pairOracle.oracleAddress,
         token0Address: pairOracle.pair.token0,
         token1Address: pairOracle.pair.token1,
         token0Symbol: pairOracle.pair.token0Symbol,
@@ -97,7 +97,7 @@ export function load() {
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stables = await getStablesConfig(hre);
-    const swaps = await getSwapsConfig(hre);
+    const swaps = await getSwapsConfig(hre, deployer);
     const stakings = await getStakingsConfig(hre);
 
     const blockchainConfig = {
@@ -139,14 +139,14 @@ async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deploye
 
     pairInfos.push({
       pair: {
-        address: pairAddress,
-        token0: poolPair[0].token.address,
-        token1: poolPair[1].token.address,
-        token0Symbol: poolPair[0].name,
-        token1Symbol: poolPair[1].name
+        address: pairAddress.toLowerCase(),
+        token0: poolPair[0].token.address.toLowerCase(),
+        token1: poolPair[1].token.address.toLowerCase(),
+        token0Symbol: poolPair[0].name.toUpperCase(),
+        token1Symbol: poolPair[1].name.toUpperCase()
       },
-      pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress },
-      symbol: pairSymbol
+      pairOracle: { pairAddress: pairAddress.toLowerCase(), oracleAddress: oracleAddress.toLowerCase() },
+      symbol: pairSymbol.toUpperCase()
     });
   }
 
@@ -179,12 +179,12 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
       const token1 = (await hre.ethers.getContractAt("ERC20", token1Address)) as ERC20;
 
       return {
-        address: address,
-        stakingTokenAddress: stakingTokenAddress,
-        token0Address: token0.address,
-        token1Address: token1.address,
-        token0Symbol: await token0.symbol(),
-        token1Symbol: await token1.symbol()
+        address: address.toLowerCase(),
+        stakingTokenAddress: stakingTokenAddress.toLowerCase(),
+        token0Address: token0.address.toLowerCase(),
+        token1Address: token1.address.toLowerCase(),
+        token0Symbol: (await token0.symbol()).toUpperCase(),
+        token1Symbol: (await token1.symbol()).toUpperCase()
       };
     })
   );
@@ -192,25 +192,9 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
   return stakings;
 }
 
-async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
-  const factory = await getUniswapFactory(hre);
-  const pairsCount = (await factory.allPairsLength()).toNumber();
-
-  const pairs = await Promise.all(
-    [...Array(pairsCount).keys()].map(async i => {
-      const pairAddress = await factory.allPairs(i);
-      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
-      const token0 = pair.token0();
-      const token1 = pair.token1();
-      return {
-        address: pairAddress,
-        token0: await token0,
-        token1: await token1
-      };
-    })
-  );
-
-  return pairs;
+async function getSwapsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
+  const swaps = (await getPairsOraclesAndSymbols(hre, deployer)).map(pairInfo => pairInfo.pair);
+  return swaps;
 }
 
 async function getStablesConfig(hre: HardhatRuntimeEnvironment) {

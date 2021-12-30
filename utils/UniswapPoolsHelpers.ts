@@ -48,7 +48,7 @@ export function sortUniswapPairTokens(tokenAAddress: string, tokenBAddress: stri
   // TODO verify on RSK if we have to lowercase addresses
 
   const retRes =
-    tokenAAddress < tokenBAddress
+    Number(tokenAAddress) < Number(tokenBAddress)
       ? { token0Address: tokenAAddress, token1Address: tokenBAddress, token0Symbol: tokenASymbol, token1Symbol: tokenBSymbol }
       : { token0Address: tokenBAddress, token1Address: tokenAAddress, token0Symbol: tokenBSymbol, token1Symbol: tokenASymbol };
 
@@ -82,7 +82,11 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
       throw `Trying to add the same pool twice: ${dataA.name}:${dataB.name}`;
     }
 
-    pools.push([dataA, dataB]);
+    const sortedTokens = sortUniswapPairTokens(dataA.token.address, dataB.token.address, dataA.name, dataB.name);
+    const data0 = dataA.name == sortedTokens.token0Symbol ? dataA : dataB;
+    const data1 = dataA.name == sortedTokens.token0Symbol ? dataB : dataA;
+
+    pools.push([data0, data1]);
     registeredPools.add(poolKey);
   }
 
