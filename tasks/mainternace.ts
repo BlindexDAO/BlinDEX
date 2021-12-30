@@ -15,7 +15,8 @@ import {
   getUniswapPairOracle,
   getUpdater,
   getVesting,
-  getWeth
+  getWeth,
+  formatAddress
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -243,7 +244,7 @@ export function load() {
   task("set:updater")
     .addPositionalParam("newUpdater", "new updater address")
     .setAction(async ({ newUpdater }, hre) => {
-      console.log("starting the setUpdaters");
+      console.log("starting the setUpdaters to:", newUpdater);
 
       const networkName = hre.network.name;
       const deployer = await getDeployer(hre);
@@ -329,7 +330,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const stable = (await hre.ethers.getContractAt("BDStable", stableAddress)) as BDStable;
+      const stable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, stableAddress))) as BDStable;
       await (await stable.connect(deployer).lockCollateralRatioAt(to_d12(val))).wait();
     });
 
@@ -338,7 +339,7 @@ export function load() {
     .setAction(async ({ stableAddress }, hre) => {
       const deployer = await getDeployer(hre);
 
-      const stable = (await hre.ethers.getContractAt("BDStable", stableAddress)) as BDStable;
+      const stable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, stableAddress))) as BDStable;
       await (await stable.connect(deployer).toggleCollateralRatioPaused()).wait();
     });
 
@@ -392,7 +393,7 @@ export function load() {
   task("show:pool-reserves")
     .addPositionalParam("pairAddress", "pair address")
     .setAction(async ({ pairAddress }, hre) => {
-      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
+      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress))) as UniswapV2Pair;
       const reserves = await pair.getReserves();
       console.log(`Reserves: ${d18_ToNumber(reserves[0])} ${d18_ToNumber(reserves[1])}`);
     });

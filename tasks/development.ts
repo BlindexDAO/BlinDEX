@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { BigNumber } from "ethers";
-import { getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { formatAddress, getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
@@ -137,7 +137,7 @@ export function load() {
 
   task("show:moc-feeds").setAction(async (args, hre) => {
     async function showFor(address: string, priceName: string) {
-      const feed = (await hre.ethers.getContractAt("IMoCBaseOracle", address)) as IMoCBaseOracle;
+      const feed = (await hre.ethers.getContractAt("IMoCBaseOracle", formatAddress(hre, address))) as IMoCBaseOracle;
       const [price_d18_str] = await feed.peek();
       console.log(priceName + ": " + d18_ToNumber(BigNumber.from(price_d18_str)));
     }
@@ -148,7 +148,7 @@ export function load() {
 
   task("show:sovryn-swap-prices").setAction(async (args, hre) => {
     async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
-      const swapNetwork = (await hre.ethers.getContractAt("ISovrynSwapNetwork", RSK_SOVRYN_NETWORK)) as ISovrynSwapNetwork;
+      const swapNetwork = (await hre.ethers.getContractAt("ISovrynSwapNetwork", formatAddress(hre, RSK_SOVRYN_NETWORK))) as ISovrynSwapNetwork;
 
       // format:  token1 - acnchor_A - token2
       const conversionPath = await swapNetwork.conversionPath(token1, token2);
@@ -164,12 +164,15 @@ export function load() {
       }
 
       const anchorAddress = conversionPath[1];
-      const anchor = (await hre.ethers.getContractAt("ISovrynAnchor", anchorAddress)) as ISovrynAnchor;
+      const anchor = (await hre.ethers.getContractAt("ISovrynAnchor", formatAddress(hre, anchorAddress))) as ISovrynAnchor;
 
       const lpAddress = await anchor.owner();
       console.log(`lp ${token1Name}-${token2Name}: ` + lpAddress);
 
-      const lpBtcEth = (await hre.ethers.getContractAt("ISovrynLiquidityPoolV1Converter", lpAddress)) as ISovrynLiquidityPoolV1Converter;
+      const lpBtcEth = (await hre.ethers.getContractAt(
+        "ISovrynLiquidityPoolV1Converter",
+        formatAddress(hre, lpAddress)
+      )) as ISovrynLiquidityPoolV1Converter;
 
       const res1 = await lpBtcEth.targetAmountAndFee(token1, token2, to_d12(1));
       console.log(`${token1Name}/${token2Name}: ` + d12_ToNumber(res1.amountMinusFee.add(res1.fee)));

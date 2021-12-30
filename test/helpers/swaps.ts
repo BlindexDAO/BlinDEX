@@ -3,7 +3,6 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BDStable } from "../../typechain/BDStable";
 import { bigNumberToDecimal, to_d18 } from "../../utils/NumbersHelpers";
 import * as constants from "../../utils/Constants";
-import type { IWETH } from "../../typechain/IWETH";
 import type { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import type { ERC20 } from "../../typechain/ERC20";
 import { getWethPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
@@ -18,24 +17,22 @@ export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: 
   await oracle.updateOracle();
 }
 
-export async function swapWethFor(hre: HardhatRuntimeEnvironment, bdStableName: string, wEthToSwap: number) {
+export async function swapWethFor(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress, bdStableName: string, wEthToSwap: number) {
   const bdStable = (await hre.ethers.getContract(bdStableName)) as BDStable;
 
-  const testUser = await hre.ethers.getNamedSigner("TEST2");
-
-  const uniswapV2Router02 = (await hre.ethers.getContract("UniswapV2Router02", testUser)) as UniswapV2Router02;
+  const uniswapV2Router02 = (await hre.ethers.getContract("UniswapV2Router02", signer)) as UniswapV2Router02;
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");
 
-  const weth = (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], testUser.address)) as IWETH;
-  await mintWeth(hre, testUser, to_d18(100));
+  const weth = await (await getWeth(hre)).connect(signer);
+  await mintWeth(hre, signer, to_d18(100));
 
   await weth.approve(uniswapV2Router02.address, to_d18(wEthToSwap));
   await uniswapV2Router02.swapExactTokensForTokens(
     to_d18(wEthToSwap),
     1,
     [constants.wETH_address[hre.network.name], bdStable.address],
-    testUser.address,
+    signer.address,
     currentBlock.timestamp + 24 * 60 * 60 * 7
   );
 
