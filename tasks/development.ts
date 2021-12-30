@@ -90,20 +90,21 @@ export function load() {
     await hre.ethers.provider.send("hardhat_stopImpersonatingAccount", [bigDaiHolder]);
   });
 
-  task("setup:feed-test-user-ag").setAction(async (args, hre) => {
-    const deployer = await getDeployer(hre);
+  task("setup:feed-test-user")
+    .addPositionalParam("address", "receiver address")
+    .setAction(async ({ address }, hre) => {
+      const deployer = await getDeployer(hre);
 
-    const weth = await getWeth(hre);
-    const wbtc = await getWbtc(hre);
+      const weth = await getWeth(hre);
+      const wbtc = await getWbtc(hre);
 
-    await mintWeth(hre, deployer, to_d18(200));
-    await mintWbtc(hre, deployer, to_d8(10), 100);
+      await deployer.sendTransaction({ to: address, value: hre.ethers.utils.parseEther("7.5") });
+      await mintWeth(hre, deployer, to_d18(200));
+      await mintWbtc(hre, deployer, to_d8(10), 100);
 
-    const testUserAddress = "0xED3622f02b1619d397502a9FFF1dfe3d0fB2988c";
-
-    await (await weth.transfer(testUserAddress, to_d18(1))).wait();
-    await (await wbtc.transfer(testUserAddress, to_d8(1))).wait();
-  });
+      await (await weth.transfer(address, to_d18(1))).wait();
+      await (await wbtc.transfer(address, to_d8(1))).wait();
+    });
 
   task("setup:test-user-balance-ag").setAction(async (args, hre) => {
     const weth = await getWeth(hre);
