@@ -265,6 +265,31 @@ export function load() {
       console.log("updaters set");
     });
 
+  async function isSameTreasury(treasury: string, contract: Contract): Promise<boolean> {
+    const currentTreasury = await contract.treasury();
+    return currentTreasury.toLowerCase() === treasury.toLowerCase();
+  }
+
+  task("set:treasury")
+    .addPositionalParam("treasury", "new treasury address")
+    .setAction(async ({ treasury }, hre) => {
+      console.log(`set:treasury ${treasury} on ${hre.network.name}`);
+
+      const stables = await getAllBDStables(hre);
+      for (const stable of stables) {
+        if (!(await isSameTreasury(treasury, stable))) {
+          await (await stable.setTreasury(treasury)).wait();
+          console.log(`${await stable.name()} treasury set to ${treasury}`);
+        }
+      }
+
+      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+      if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
+        await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
+        console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
+      }
+    });
+
   task("set:oracles:ConsultLeniency")
     .addPositionalParam("newVal", "new value")
     .setAction(async ({ newVal }, hre) => {
