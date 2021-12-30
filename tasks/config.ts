@@ -10,7 +10,8 @@ import {
   getBDStableWethPool,
   getBDStableWbtcPool,
   getBDStableFiat,
-  getAllBDStables
+  getAllBDStables,
+  formatAddress
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -29,8 +30,8 @@ export function load() {
     const deployer = await getDeployer(hre);
     const stakingRewards = (await getStakingsConfig(hre)).map(reward => {
       return {
-        pairAddress: reward.stakingTokenAddress.toLowerCase(),
-        stakingRewardAddress: reward.address.toLowerCase(),
+        pairAddress: reward.stakingTokenAddress,
+        stakingRewardAddress: reward.address,
         token0Address: reward.token0Address,
         token1Address: reward.token1Address,
         token0Symbol: reward.token0Symbol,
@@ -42,9 +43,9 @@ export function load() {
 
     const swapPairs = pairOracles.map(pairOracle => {
       return {
-        pairAddress: pairOracle.pair.address.toLowerCase(),
-        token0Address: pairOracle.pair.token0.toLowerCase(),
-        token1Address: pairOracle.pair.token1.toLowerCase(),
+        pairAddress: pairOracle.pair.address,
+        token0Address: pairOracle.pair.token0,
+        token1Address: pairOracle.pair.token1,
         token0Symbol: pairOracle.pair.token0Symbol,
         token1Symbol: pairOracle.pair.token1Symbol
       };
@@ -52,8 +53,8 @@ export function load() {
 
     const mappedPairOracles = pairOracles.map(pairOracle => {
       return {
-        pairAddress: pairOracle.pair.address.toLowerCase(),
-        oracleAddress: pairOracle.pairOracle.oracleAddress.toLowerCase(),
+        pairAddress: pairOracle.pair.address,
+        oracleAddress: pairOracle.pairOracle.oracleAddress,
         token0Address: pairOracle.pair.token0,
         token1Address: pairOracle.pair.token1,
         token0Symbol: pairOracle.pair.token0Symbol,
@@ -67,20 +68,20 @@ export function load() {
 
     const blockchainConfig = {
       [`${networkName}`]: {
-        [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address.toLowerCase(),
-        [`BDX_ADDRESS`]: (await getBdx(hre)).address.toLowerCase(),
-        [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address.toLowerCase(),
+        [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
+        [`BDX_ADDRESS`]: (await getBdx(hre)).address,
+        [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
         [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
         [`AVAILABLE_PAIRS`]: swapPairs,
         [`STAKING_REWARDS`]: stakingRewards,
         [`PAIR_ORACLES`]: mappedPairOracles,
         [`PRICE_FEEDS`]: {
-          ["EUR_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address.toLowerCase(),
-          ["BTC_ETH_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address.toLowerCase(),
-          ["ETH_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address.toLowerCase(),
-          ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address.toLowerCase()
+          ["EUR_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
+          ["BTC_ETH_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address,
+          ["ETH_USD_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)).address,
+          ["ETH_EUR_ADDRESS"]: (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName, deployer)).address
         },
-        [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address.toLowerCase(),
+        [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
         [`BDSTABLES`]: await getStablesConfig(hre)
       }
     };
@@ -97,7 +98,7 @@ export function load() {
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stables = await getStablesConfig(hre);
-    const swaps = await getSwapsConfig(hre);
+    const swaps = await getSwapsConfig(hre, deployer);
     const stakings = await getStakingsConfig(hre);
 
     const blockchainConfig = {
@@ -168,23 +169,23 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
 
   const stakings = await Promise.all(
     stakingRewardsAddresses.map(async address => {
-      const stakingRewards = (await hre.ethers.getContractAt("StakingRewards", address)) as StakingRewards;
+      const stakingRewards = (await hre.ethers.getContractAt("StakingRewards", formatAddress(hre, address))) as StakingRewards;
       const stakingTokenAddress = await stakingRewards.stakingToken();
 
       const lpAddress = await stakingRewards.stakingToken();
-      const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
+      const lp = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, lpAddress))) as UniswapV2Pair;
       const token0Address = await lp.token0();
       const token1Address = await lp.token1();
-      const token0 = (await hre.ethers.getContractAt("ERC20", token0Address)) as ERC20;
-      const token1 = (await hre.ethers.getContractAt("ERC20", token1Address)) as ERC20;
+      const token0 = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, token0Address))) as ERC20;
+      const token1 = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, token1Address))) as ERC20;
 
       return {
         address: address,
         stakingTokenAddress: stakingTokenAddress,
         token0Address: token0.address,
         token1Address: token1.address,
-        token0Symbol: await token0.symbol(),
-        token1Symbol: await token1.symbol()
+        token0Symbol: (await token0.symbol()).toUpperCase(),
+        token1Symbol: (await token1.symbol()).toUpperCase()
       };
     })
   );
@@ -192,25 +193,9 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
   return stakings;
 }
 
-async function getSwapsConfig(hre: HardhatRuntimeEnvironment) {
-  const factory = await getUniswapFactory(hre);
-  const pairsCount = (await factory.allPairsLength()).toNumber();
-
-  const pairs = await Promise.all(
-    [...Array(pairsCount).keys()].map(async i => {
-      const pairAddress = await factory.allPairs(i);
-      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
-      const token0 = pair.token0();
-      const token1 = pair.token1();
-      return {
-        address: pairAddress,
-        token0: await token0,
-        token1: await token1
-      };
-    })
-  );
-
-  return pairs;
+async function getSwapsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
+  const swaps = (await getPairsOraclesAndSymbols(hre, deployer)).map(pairInfo => pairInfo.pair);
+  return swaps;
 }
 
 async function getStablesConfig(hre: HardhatRuntimeEnvironment) {

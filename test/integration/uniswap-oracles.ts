@@ -43,7 +43,8 @@ describe("Uniswap Oracles", () => {
     await simulateTimeElapseInSeconds(oneHour);
 
     // make a swap to observer price changes
-    await swapWethFor(hre, "BDEU", 5);
+    const testUser = await hre.ethers.getNamedSigner("TEST2");
+    await swapWethFor(hre, testUser, "BDEU", 5);
     await simulateTimeElapseInSeconds(2 * oneHour);
 
     await updateOracle(hre, "BDEU", "WETH");
@@ -117,7 +118,8 @@ describe("Uniswap Oracles", () => {
     await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
     await resetOracle(hre, "BDEU", "WETH");
 
-    await swapWethFor(hre, "BDEU", 5);
+    const testUser = await hre.ethers.getNamedSigner("TEST2");
+    await swapWethFor(hre, testUser, "BDEU", 5);
 
     let oracle = await getUniswapPairOracle(hre, "BDEU", "WETH");
     oracle = oracle.connect(user); // this restriction doesn't apply to the owner

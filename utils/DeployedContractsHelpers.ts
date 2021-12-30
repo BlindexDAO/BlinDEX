@@ -181,31 +181,31 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
 
 export async function getWeth(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IWETH", formatAddress(hre, constants.wETH_address[hre.network.name]), deployer)) as IERC20;
 }
 
 export async function getWethConcrete(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IWETH;
+  return (await hre.ethers.getContractAt("IWETH", formatAddress(hre, constants.wETH_address[hre.network.name]), deployer)) as IWETH;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", formatAddress(hre, constants.wBTC_address[hre.network.name]), deployer)) as ERC20;
 }
 
 export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IERC20", address, deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IERC20", formatAddress(hre, address), deployer)) as IERC20;
 }
 
 export async function getERC20(hre: HardhatRuntimeEnvironment, address: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", address, deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", formatAddress(hre, address), deployer)) as ERC20;
 }
 
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number) {
-  const uniRouter = UniswapV2Router02__factory.connect(constants.uniswapRouterAddress, user);
+  const uniRouter = UniswapV2Router02__factory.connect(constants.ETH_uniswapRouterAddress, user);
   const networkName = hre.network.name;
 
   await (
@@ -251,14 +251,14 @@ export async function getOnChainWbtcUsdPrice(hre: HardhatRuntimeEnvironment) {
 }
 
 export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, cryptoUsdFeedAddress: string) {
-  const cryptoUsdFeed = (await hre.ethers.getContractAt("AggregatorV3Interface", cryptoUsdFeedAddress)) as AggregatorV3Interface;
+  const cryptoUsdFeed = (await hre.ethers.getContractAt("AggregatorV3Interface", formatAddress(hre, cryptoUsdFeedAddress))) as AggregatorV3Interface;
   const crypto_usd_data = await cryptoUsdFeed.latestRoundData();
   const price_crypto_usd_decimlas = await cryptoUsdFeed.decimals();
   return bigNumberToDecimal(crypto_usd_data.answer, price_crypto_usd_decimlas);
 }
 
 export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, fiat_usd_feed_addres: string, crypto_usd_feed_address: string) {
-  const fiat_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", fiat_usd_feed_addres)) as AggregatorV3Interface;
+  const fiat_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", formatAddress(hre, fiat_usd_feed_addres))) as AggregatorV3Interface;
 
   const fiat_usd_data = await fiat_usd_feed.latestRoundData();
   const price_fiat_usd_decimlas = await fiat_usd_feed.decimals();
@@ -275,7 +275,7 @@ export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, 
 export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: IERC20, tokenB: IERC20) {
   const factory = await getUniswapFactory(hre);
   const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
-  const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
+  const pair = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress))) as UniswapV2Pair;
 
   return pair;
 }
@@ -288,7 +288,7 @@ export async function getWethPair(hre: HardhatRuntimeEnvironment, tokenName: str
 
   const pairAddress = await uniswapFactory.getPair(token.address, constants.wETH_address[hre.network.name]);
 
-  const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
+  const pair = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress))) as UniswapV2Pair;
 
   return pair;
 }
@@ -327,6 +327,19 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
 export async function getUpdater(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract("UpdaterRSK", deployer)) as UpdaterRSK;
+}
+
+// This is used to convert address string to a value suppored by particular network
+// Where to we need a formatted address?
+// NOT when address is contract function parameter
+// NOT when address is deployment parameter (constructor or initializer parameters array)
+// YES when we call hre.ethers.getContractAt(...)
+export function formatAddress(hre: HardhatRuntimeEnvironment, address: string) {
+  if (hre.network.name === "rsk") {
+    return address.toLowerCase();
+  }
+
+  return address;
 }
 
 async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
