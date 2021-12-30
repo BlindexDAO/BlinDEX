@@ -44,7 +44,7 @@ npm test
 npm run solhint
 ```
 
-## Update version & publish @blindex/stablecoins npm package
+## Update version & publish @blindex/interfaces npm package
 
 ### Update version
 
@@ -52,7 +52,7 @@ npm run solhint
 npm run blindex-package <semver_version>
 ```
 
-`semver_version` must be a valid semver format. It must also be greater than the current version which could be be found [here](./@blindex/stablecoins/package.json).
+`semver_version` must be a valid semver format. It must also be greater than the current version which could be be found [here](./@blindex/interfaces/package.json).
 
 ### Publish
 

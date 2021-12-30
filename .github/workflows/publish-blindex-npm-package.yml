@@ -23,13 +23,13 @@ jobs:
         id: packageName
         uses: notiz-dev/github-action-json-property@release
         with:
-          path: "./@blindex/stablecoins/package.json"
+          path: "./@blindex/interfaces/package.json"
           prop_path: "name"
       - name: Get Local Package Version
         id: localPackageVersion
         uses: notiz-dev/github-action-json-property@release
         with:
-          path: "./@blindex/stablecoins/package.json"
+          path: "./@blindex/interfaces/package.json"
           prop_path: "version"
       - name: Setup Node.js
         uses: actions/setup-node@v2

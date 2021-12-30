@@ -5,5 +5,5 @@ typechain/
 
 package-lock.json
 
-@blindex/stablecoins/typings
-@blindex/stablecoins/abis
+@blindex/interfaces/types
+@blindex/interfaces/abis

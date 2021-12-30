@@ -20,7 +20,7 @@
     "format": "npx prettier --write . --loglevel silent",
     "prepare-blindex-package": "npx hardhat --network mainnetFork blindex-npm-package",
     "blindex-package": "npm-run-all compile \"prepare-blindex-package -- --new-version {1}\" --",
-    "publish-blindex-package": "npm publish @blindex/stablecoins/ --access public"
+    "publish-blindex-package": "npm publish @blindex/interfaces/ --access public"
   },
   "devDependencies": {
     "@ethersproject/providers": "^5.5.0",

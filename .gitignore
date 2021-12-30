@@ -42,5 +42,5 @@ typechain
 # Ignore for now, however mainnet/testnet deployments should be included in repository
 deployments/mainnetFork
 package
-@blindex/stablecoins/typings
-@blindex/stablecoins/abis
+@blindex/interfaces/types
+@blindex/interfaces/abis

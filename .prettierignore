@@ -5,8 +5,8 @@ artifacts/
 cache/
 node_modules/
 typechain/
-@blindex/stablecoins/typings
-@blindex/stablecoins/abis
+@blindex/interfaces/types
+@blindex/interfaces/abis
 
 # Files
 package-lock.json

@@ -45,8 +45,8 @@ export function load() {
   task("blindex-npm-package", "Packages type definitions and abis into npm package")
     .addParam("newVersion", "A valid semver version greater than the current one set for the package")
     .setAction(async ({ newVersion }) => {
-      const packageName = "@blindex/stablecoins";
-      const typesSubFolder = "typings";
+      const packageName = "@blindex/interfaces";
+      const typesSubFolder = "types";
       const abisFolder = `${packageName}/abis`;
       const packageJson = `${packageName}/package.json`;
 
