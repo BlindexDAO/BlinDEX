@@ -16,6 +16,7 @@ import * as setupTasks from "./tasks/setup";
 import * as maintenanceTasks from "./tasks/mainternace";
 import * as developmentTasks from "./tasks/development";
 import * as feConfig from "./tasks/config";
+import * as npmTasks from "./tasks/npm";
 import "hardhat-gas-reporter";
 import * as path from "path";
 
@@ -26,6 +27,7 @@ developmentTasks.load();
 maintenanceTasks.load();
 setupTasks.load();
 feConfig.load();
+npmTasks.load();
 
 export const typechainOutDir = "typechain";
 
