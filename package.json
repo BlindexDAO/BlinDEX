@@ -18,6 +18,7 @@
     "eslint": "npx eslint . --ext .js,.ts,.json --fix",
     "lint": "npm-run-all --parallel solhint eslint",
     "format": "npx prettier --write . --loglevel silent",
+    "npm-package": "npx hardhat --network mainnetFork npm-package",
     "prepare-blindex-package": "npx hardhat --network mainnetFork blindex-npm-package",
     "blindex-package": "npm-run-all compile \"prepare-blindex-package -- --new-version {1}\" --",
     "publish-blindex-package": "npm publish @blindex/interfaces/ --access public"

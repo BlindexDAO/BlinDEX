@@ -9,7 +9,10 @@ import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquid
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
 import { RSK_SOVRYN_NETWORK } from "../utils/Constants";
-import { readdir } from "fs";
+import { readdir, mkdirSync, writeFileSync } from "fs";
+import * as rimraf from "rimraf";
+import * as fsExtra from "fs-extra";
+import { default as klaw } from "klaw-sync";
 
 export function load() {
   task("accounts", "Prints the list of accounts", async (args, hre) => {
@@ -36,6 +39,33 @@ export function load() {
 
       await run("test", { testFiles, noCompile, deployFixture });
     });
+
+  task("npm-package", "Packages type definitions and abis into npm package").setAction(async () => {
+    try {
+      rimraf.sync("./package");
+    } catch {
+      console.log("COuldn't sync folder using 'rimraf.sync'");
+    }
+    mkdirSync("./package");
+    fsExtra.copySync("./typechain", "./package/typings");
+    const contracts = klaw("./artifacts/contracts")
+      .filter((x: { path: string }) => x.path.endsWith(".json") && !x.path.endsWith(".dbg.json"))
+      .map((x: { path: string }) => {
+        const { abi, contractName: name } = fsExtra.readJsonSync(x.path);
+        return { abi, name };
+      });
+    mkdirSync("./package/abis");
+    for (const contract of contracts) {
+      writeFileSync(`./package/abis/${contract.name}.json`, JSON.stringify(contract.abi), {
+        encoding: "utf8"
+      });
+    }
+    fsExtra.writeJsonSync("./package/package.json", {
+      name: "@blindex/stablecoins",
+      version: "0.0.1",
+      types: "typings/index.d.ts"
+    });
+  });
 
   task("setup:account").setAction(async (args, hre) => {
     // send ether
