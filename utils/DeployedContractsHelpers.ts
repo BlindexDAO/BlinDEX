@@ -330,6 +330,10 @@ export async function getUpdater(hre: HardhatRuntimeEnvironment) {
 }
 
 // This is used to convert address string to a value suppored by particular network
+// Where to we need a formatted address?
+// NOT when address is contract function parameter
+// NOT when address is deployment parameter (constructor or initializer parameters array)
+// YES when we call hre.ethers.getContractAt(...)
 export function formatAddress(hre: HardhatRuntimeEnvironment, address: string) {
   if (hre.network.name == "rsk") {
     return address.toLowerCase();
