@@ -7,7 +7,6 @@ Chceck us out at [https://blindex.io](https://blindex.io).
 
 ![MEDIUM HEADER 1500x750px_](https://user-images.githubusercontent.com/1577655/147810830-1b200126-47d1-4a78-a95a-45a8c8a105cc.png)
 
-
 # Development
 
 ## Environment variables
