@@ -13,12 +13,15 @@
     "initialize": "hardhat --network mainnetFork initialize:local",
     "update:oracles:fork": "hardhat --network mainnetFork update:oracles",
     "update:oracles:rsk": "hardhat --network rsk update:oracles",
-    "npm-package": "hardhat --network mainnetFork npm-package",
     "compile": "hardhat compile --config hardhat.compile.config.ts",
     "solhint": "npx solhint 'contracts/**/*.sol' --y",
     "eslint": "npx eslint . --ext .js,.ts,.json --fix",
     "lint": "npm-run-all --parallel solhint eslint",
-    "format": "npx prettier --write . --loglevel silent"
+    "format": "npx prettier --write . --loglevel silent",
+    "npm-package": "npx hardhat --network mainnetFork npm-package",
+    "prepare-blindex-package": "npx hardhat --network mainnetFork blindex-npm-package",
+    "blindex-package": "npm-run-all compile \"prepare-blindex-package -- --new-version {1}\" --",
+    "publish-blindex-package": "npm publish @blindex/interfaces/ --access public"
   },
   "devDependencies": {
     "@ethersproject/providers": "^5.5.0",
@@ -37,6 +40,7 @@
     "@types/mocha": "^8.2.1",
     "@types/node": "^14.14.31",
     "@types/rimraf": "^3.0.2",
+    "@types/semver": "^7.3.9",
     "@typescript-eslint/eslint-plugin": "^5.8.0",
     "@typescript-eslint/parser": "^5.8.0",
     "@uniswap/lib": "4.0.1-alpha",
@@ -66,6 +70,7 @@
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "rimraf": "^3.0.2",
+    "semver": "^7.3.5",
     "ts-generator": "^0.1.1",
     "ts-node": "^9.1.1",
     "typechain": "^6.0.3",
@@ -73,8 +78,10 @@
   },
   "lint-staged": {
     "*.{js,ts,css,md,json,yml,yaml,sol}": [
-      "prettier --write",
-      "npx eslint --ext .js,.ts,.json --fix"
+      "prettier --write"
+    ],
+    "*.{js,ts,json}": [
+      "npx eslint --fix"
     ]
   }
 }

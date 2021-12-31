@@ -43,3 +43,5 @@ typechain
 # Ignore for now, however mainnet/testnet deployments should be included in repository
 deployments/mainnetFork
 package
+@blindex/interfaces/types
+@blindex/interfaces/abis
