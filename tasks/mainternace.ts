@@ -1,5 +1,7 @@
 import { task } from "hardhat/config";
 import {
+  getAllBDStableStakingRewards,
+  getAllBDStablePools,
   getAllBDStables,
   getBdEu,
   getBdEuWethPool,
@@ -7,10 +9,14 @@ import {
   getBdx,
   getBot,
   getDeployer,
+  getStakingRewardsDistribution,
   getTreasury,
   getUniswapPair,
   getUniswapPairOracle,
-  getWeth
+  getUpdater,
+  getVesting,
+  getWeth,
+  formatAddress
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -25,6 +31,7 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+import type { Contract } from "ethers";
 
 export function load() {
   task("update:all")
@@ -145,10 +152,99 @@ export function load() {
       console.log("updater has updated");
     });
 
+  async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {
+    const currentOwner = await contract.owner();
+    return currentOwner.toLowerCase() === owner.toLowerCase();
+  }
+
+  task("set:owner")
+    .addPositionalParam("owner", "owner address")
+    .setAction(async ({ owner }, hre) => {
+      console.log(`set:owner ${owner} on ${hre.network.name}`);
+      const deployer = await getDeployer(hre);
+      if (hre.network.name == "rsk") {
+        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)) as SovrynSwapPriceFeed;
+        if (!(await isSameOwner(owner, oracleEthUsd))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.priceFeedETHUsdName} to ${owner}`);
+          await (await oracleEthUsd.transferOwnership(owner)).wait();
+        }
+
+        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)) as SovrynSwapPriceFeed;
+        if (!(await isSameOwner(owner, oracleBtcEth))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.BtcToEthOracle} to ${owner}`);
+          await (await oracleBtcEth.transferOwnership(owner)).wait();
+        }
+
+        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
+        if (!(await isSameOwner(owner, oracleEurUsd))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.priceFeedEurUsdName} to ${owner}`);
+          await (await oracleEurUsd.transferOwnership(owner)).wait();
+        }
+      }
+
+      const pools = await getPools(hre);
+      for (const pool of pools) {
+        const uniOracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        if (!(await isSameOwner(owner, uniOracle))) {
+          console.log(`transfer ownership on uniswap pair oracle ${pool[0].name}-${pool[1].name} to ${owner}`);
+          await (await uniOracle.transferOwnership(owner)).wait();
+        }
+      }
+
+      const stables = await getAllBDStables(hre);
+      for (const stable of stables) {
+        if (!(await isSameOwner(owner, stable))) {
+          console.log(`transfer ownership on BDStable ${await stable.name()} to ${owner}`);
+          await (await stable.transferOwnership(owner)).wait();
+        }
+      }
+
+      const stablePools = await getAllBDStablePools(hre);
+      for (const stablePool of stablePools) {
+        if (!(await isSameOwner(owner, stablePool))) {
+          console.log(`transfer ownership on BDStablePool ${stablePool.address} to ${owner}`);
+          await (await stablePool.transferOwnership(owner)).wait();
+        }
+      }
+
+      const bdx = await getBdx(hre);
+      if (!(await isSameOwner(owner, bdx))) {
+        console.log(`transfer ownership on BDXShares ${bdx.address} to ${owner}`);
+        await (await bdx.transferOwnership(owner)).wait();
+      }
+
+      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+      if (!(await isSameOwner(owner, stakingRewardsDistribution))) {
+        console.log(`transfer ownership on stakingRewardsDistribution contract ${stakingRewardsDistribution.address} to ${owner}`);
+        await (await stakingRewardsDistribution.transferOwnership(owner)).wait();
+      }
+
+      const stakingRewards = await getAllBDStableStakingRewards(hre);
+      for (const stakingReward of stakingRewards) {
+        if (!(await isSameOwner(owner, stakingReward))) {
+          console.log(`transfer ownership on stakingReward contract ${stakingReward.address} to ${owner}`);
+          await (await stakingReward.transferOwnership(owner)).wait();
+        }
+      }
+
+      const vesting = await getVesting(hre);
+      if (!(await isSameOwner(owner, vesting))) {
+        console.log(`transfer ownership on vesting contract ${vesting.address} to ${owner}`);
+        await (await vesting.transferOwnership(owner)).wait();
+      }
+      const updater = await getUpdater(hre);
+      if (!(await isSameOwner(owner, updater))) {
+        console.log(`transfer ownership on updater ${updater.address} to ${owner}`);
+        await (await updater.transferOwnership(owner)).wait();
+      }
+
+      console.log(`All ownership transfered to ${owner}`);
+    });
+
   task("set:updater")
     .addPositionalParam("newUpdater", "new updater address")
     .setAction(async ({ newUpdater }, hre) => {
-      console.log("starting the setUpdaters");
+      console.log("starting the setUpdaters to:", newUpdater);
 
       const networkName = hre.network.name;
       const deployer = await getDeployer(hre);
@@ -168,6 +264,31 @@ export function load() {
       }
 
       console.log("updaters set");
+    });
+
+  async function isSameTreasury(treasury: string, contract: Contract): Promise<boolean> {
+    const currentTreasury = await contract.treasury();
+    return currentTreasury.toLowerCase() === treasury.toLowerCase();
+  }
+
+  task("set:treasury")
+    .addPositionalParam("treasury", "new treasury address")
+    .setAction(async ({ treasury }, hre) => {
+      console.log(`set:treasury ${treasury} on ${hre.network.name}`);
+
+      const stables = await getAllBDStables(hre);
+      for (const stable of stables) {
+        if (!(await isSameTreasury(treasury, stable))) {
+          await (await stable.setTreasury(treasury)).wait();
+          console.log(`${await stable.name()} treasury set to ${treasury}`);
+        }
+      }
+
+      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+      if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
+        await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
+        console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
+      }
     });
 
   task("set:oracles:ConsultLeniency")
@@ -209,7 +330,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const stable = (await hre.ethers.getContractAt("BDStable", stableAddress)) as BDStable;
+      const stable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, stableAddress))) as BDStable;
       await (await stable.connect(deployer).lockCollateralRatioAt(to_d12(val))).wait();
     });
 
@@ -218,7 +339,7 @@ export function load() {
     .setAction(async ({ stableAddress }, hre) => {
       const deployer = await getDeployer(hre);
 
-      const stable = (await hre.ethers.getContractAt("BDStable", stableAddress)) as BDStable;
+      const stable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, stableAddress))) as BDStable;
       await (await stable.connect(deployer).toggleCollateralRatioPaused()).wait();
     });
 
@@ -272,7 +393,7 @@ export function load() {
   task("show:pool-reserves")
     .addPositionalParam("pairAddress", "pair address")
     .setAction(async ({ pairAddress }, hre) => {
-      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
+      const pair = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress))) as UniswapV2Pair;
       const reserves = await pair.getReserves();
       console.log(`Reserves: ${d18_ToNumber(reserves[0])} ${d18_ToNumber(reserves[1])}`);
     });

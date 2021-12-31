@@ -49,11 +49,6 @@ const config: HardhatUserConfig = {
       timeout: 60000,
       gas: 10_000_000
     },
-    kovan: {
-      url: "https://kovan.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!],
-      timeout: 240000
-    },
     rsk: {
       url: "https://public-node.rsk.co",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
