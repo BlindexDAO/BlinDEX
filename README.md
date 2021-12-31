@@ -1,9 +1,12 @@
 # BlinDEX
 
-Blindex is the first **multi-currency stablecoin-based DeFi platform** that sees all currencies as equals.
+BlinDEX is the first **multi-currency stablecoin-based DeFi platform** that sees all currencies as equals.
 Replacing all traditional financial systems calls for a completely stable, inclusive, and **100% decentralized** alternative. We don't play around with centralized collateral.
 
 Chceck us out at [https://blindex.io](https://blindex.io).
+
+![MEDIUM HEADER 1500x750px_](https://user-images.githubusercontent.com/1577655/147810830-1b200126-47d1-4a78-a95a-45a8c8a105cc.png)
+
 
 # Development
 
