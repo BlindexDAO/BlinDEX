@@ -1,0 +1,112 @@
+{
+  "address": "0x5859EE37789591D73cB012f994e6664A0b93d3fA",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_wethAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "tokenIn",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        }
+      ],
+      "name": "consult",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "shouldUpdateOracle",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updateOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xba5b1a8c4b5b72a5be01e814ebe58e5ada12b0b9f47660e4604a462e38099fd3",
+  "receipt": {
+    "to": null,
+    "from": "0x524348A6fD0836Ee4c78F08C62D1BE7594061a8c",
+    "contractAddress": "0x5859EE37789591D73cB012f994e6664A0b93d3fA",
+    "transactionIndex": 0,
+    "gasUsed": "202129",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xe2ca7abdb5607ee20986bfe1ff0d0fc7534c5bcfda8182f5c1cec8142fe53f3e",
+    "transactionHash": "0xba5b1a8c4b5b72a5be01e814ebe58e5ada12b0b9f47660e4604a462e38099fd3",
+    "logs": [],
+    "blockNumber": 3973151,
+    "cumulativeGasUsed": "202129",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x542fda317318ebf1d3deaf76e0b632741a7e677d"
+  ],
+  "solcInputHash": "a2b283f9ba339a090f7b294daff0e306",
+  "metadata": "{\"compiler\":{\"version\":\"0.6.12+commit.27d51765\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_wethAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenIn\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountIn\",\"type\":\"uint256\"}],\"name\":\"consult\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOut\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"shouldUpdateOracle\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"updateOracle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/Oracle/WethToWethOracle.sol\":\"WethToWethOracle\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/Oracle/ICryptoPairOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.6.12;\\n\\ninterface ICryptoPairOracle {\\n    function consult(address tokenIn, uint256 amountIn) external view returns (uint256 amountOut);\\n\\n    function updateOracle() external;\\n\\n    function shouldUpdateOracle() external view returns (bool);\\n}\\n\",\"keccak256\":\"0x97776aa353e065eb0779b4496d5665baf517d88c51b1bab4faa6c9307c8a521a\",\"license\":\"MIT\"},\"contracts/Oracle/WethToWethOracle.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity 0.6.12;\\n\\nimport \\\"./ICryptoPairOracle.sol\\\";\\n\\n// Fixed window oracle that recomputes the average price for the entire period once every period\\n// Note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period\\ncontract WethToWethOracle is ICryptoPairOracle {\\n    address internal wethAddress;\\n\\n    constructor(address _wethAddress) public {\\n        require(_wethAddress != address(0), \\\"Weth address cannot be 0\\\");\\n\\n        wethAddress = _wethAddress;\\n    }\\n\\n    function consult(address tokenIn, uint256 amountIn) external view override returns (uint256 amountOut) {\\n        require(tokenIn == wethAddress, \\\"This oracle only accepts consulting WETH input\\\");\\n\\n        return amountIn;\\n    }\\n\\n    function updateOracle() external override {\\n        revert(\\\"This oracle doesn't need updates\\\");\\n    }\\n\\n    function shouldUpdateOracle() external view override returns (bool) {\\n        return false;\\n    }\\n}\\n\",\"keccak256\":\"0xedc0b98aa51495eee437c98b269e5ca8cffc79069cb49a2d025d93940af9495e\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516102733803806102738339818101604052602081101561003357600080fd5b50516001600160a01b038116610090576040805162461bcd60e51b815260206004820152601860248201527f5765746820616464726573732063616e6e6f7420626520300000000000000000604482015290519081900360640190fd5b600080546001600160a01b039092166001600160a01b03199092169190911790556101b3806100c06000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c806309bf39ed146100465780633ddac95314610062578063d6f124f0146100a0575b600080fd5b61004e6100aa565b604080519115158252519081900360200190f35b61008e6004803603604081101561007857600080fd5b506001600160a01b0381351690602001356100af565b60408051918252519081900360200190f35b6100a8610102565b005b600090565b600080546001600160a01b038481169116146100fc5760405162461bcd60e51b815260040180806020018281038252602e815260200180610150602e913960400191505060405180910390fd5b50919050565b6040805162461bcd60e51b815260206004820181905260248201527f54686973206f7261636c6520646f65736e2774206e6565642075706461746573604482015290519081900360640190fdfe54686973206f7261636c65206f6e6c79206163636570747320636f6e73756c74696e67205745544820696e707574a26469706673582212207d822bc9b47e3c96621d7e974228ba22b127deba5b5dd65c7723a0b07d062e5464736f6c634300060c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100415760003560e01c806309bf39ed146100465780633ddac95314610062578063d6f124f0146100a0575b600080fd5b61004e6100aa565b604080519115158252519081900360200190f35b61008e6004803603604081101561007857600080fd5b506001600160a01b0381351690602001356100af565b60408051918252519081900360200190f35b6100a8610102565b005b600090565b600080546001600160a01b038481169116146100fc5760405162461bcd60e51b815260040180806020018281038252602e815260200180610150602e913960400191505060405180910390fd5b50919050565b6040805162461bcd60e51b815260206004820181905260248201527f54686973206f7261636c6520646f65736e2774206e6565642075706461746573604482015290519081900360640190fdfe54686973206f7261636c65206f6e6c79206163636570747320636f6e73756c74696e67205745544820696e707574a26469706673582212207d822bc9b47e3c96621d7e974228ba22b127deba5b5dd65c7723a0b07d062e5464736f6c634300060c0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 10504,
+        "contract": "contracts/Oracle/WethToWethOracle.sol:WethToWethOracle",
+        "label": "wethAddress",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      }
+    }
+  }
+}
