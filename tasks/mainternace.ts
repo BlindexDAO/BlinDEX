@@ -5,6 +5,7 @@ import {
   getAllBDStables,
   getBdEu,
   getBdEuWethPool,
+  getBdEuWbtcPool,
   getBdUs,
   getBdx,
   getBot,
@@ -32,43 +33,70 @@ import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { Contract } from "ethers";
+import * as constants from "../utils/Constants";
 
 export function load() {
+
+  task("tmp-job", "", async (args, hre) => {
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as SovrynSwapPriceFeed;
+    const res = await feed.consult(formatAddress(hre, constants.wBTC_address[hre.network.name]), to_d12(1));
+    console.log(res.toString());
+    // const stable = await getBdUs(hre);
+    // const pool = await getBdEuWbtcPool(hre);
+    // await show_efCR(stable);
+    // await stable.globalCollateralValue();
+    // console.log(await pool.collatWEthOracle());
+  });
+
   task("update:all")
     .addParam("btcusd", "BTCUSD price")
     .addParam("ethbtc", "ETHBTC price")
     .addParam("eurusd", "EURUSD price")
     .setAction(async ({ btcusd, ethbtc, eurusd }, hre) => {
-      const bot = await getBot(hre);
+      const signer = await getBot(hre);
 
       if (hre.network.name == "rsk") {
         console.log("starting sovryn swap price oracles updates");
-        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, bot)) as SovrynSwapPriceFeed;
+        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, signer)) as SovrynSwapPriceFeed;
         await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
         console.log("updated ETH / USD (RSK BTC / USD)");
 
-        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, bot)) as SovrynSwapPriceFeed;
+        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, signer)) as SovrynSwapPriceFeed;
         await (await oracleBtcEth.updateOracleWithVerification(to_d12(ethbtc))).wait();
         console.log("updated BTC / ETH (RSK ETH / BTC)");
 
         console.log("starting fiat to fiat oracles updates");
-        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, bot)) as FiatToFiatPseudoOracleFeed;
+        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, signer)) as FiatToFiatPseudoOracleFeed;
         await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
         console.log("updated EUR / USD");
       }
 
       console.log("starting uniswap pairs oracles updates");
-      await updateUniswapPairsOracles(hre, bot);
+      await updateUniswapPairsOracles(hre, signer);
 
       console.log("starting refresh collateral ratio");
       const stables = await getAllBDStables(hre);
 
       for (const stable of stables) {
-        await (await stable.connect(bot).refreshCollateralRatio()).wait();
+        await (await stable.connect(signer).refreshCollateralRatio()).wait();
         console.log(`${await stable.symbol()} refreshed collateral ratio`);
       }
     });
+  
+  task("update:btc-eth:rsk")
+    .addParam("ethbtc", "ETHBTC price")
+    .setAction(async ({ ethbtc }, hre) => {
+      if (hre.network.name != "rsk") {
+        throw new Error("RSK only task");
+      }
 
+      const signer = await getBot(hre);
+
+      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, signer)) as SovrynSwapPriceFeed;
+      await (await oracleBtcEth.updateOracleWithVerification(to_d12(ethbtc))).wait();
+      console.log("updatedRSK ETH / BTC");
+    });
+  
   task("update:eurusd:rsk")
     .addPositionalParam("eurusd", "EURUSD price")
     .setAction(async ({ eurusd }, hre) => {

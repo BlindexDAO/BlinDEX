@@ -5,7 +5,7 @@ import { bigNumberToDecimal, to_d18 } from "../../utils/NumbersHelpers";
 import * as constants from "../../utils/Constants";
 import type { UniswapV2Router02 } from "../../typechain/UniswapV2Router02";
 import type { ERC20 } from "../../typechain/ERC20";
-import { getWethPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
+import { formatAddress, getWethPairOracle, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import type { BigNumber } from "ethers";
@@ -31,8 +31,8 @@ export async function swapWethFor(hre: HardhatRuntimeEnvironment, signer: Signer
   await uniswapV2Router02.swapExactTokensForTokens(
     to_d18(wEthToSwap),
     1,
-    [constants.wETH_address[hre.network.name], bdStable.address],
-    signer.address,
+    [formatAddress(hre, constants.wETH_address[hre.network.name]), formatAddress(hre, bdStable.address)],
+    formatAddress(hre, signer.address),
     currentBlock.timestamp + 24 * 60 * 60 * 7
   );
 
@@ -48,8 +48,8 @@ export async function swapAsDeployer(
 ) {
   const deployer = await getDeployer(hre);
 
-  const tokenIn = (await hre.ethers.getContract(tokenInName, deployer.address)) as ERC20;
-  const tokenOut = (await hre.ethers.getContract(tokenOutName, deployer.address)) as ERC20;
+  const tokenIn = (await hre.ethers.getContract(tokenInName, formatAddress(hre, deployer.address))) as ERC20;
+  const tokenOut = (await hre.ethers.getContract(tokenOutName, formatAddress(hre, deployer.address))) as ERC20;
 
   await swapAsDeployerByContract(hre, tokenIn, tokenOut, tokenInValue, tokenOutMinValue);
 
@@ -60,7 +60,7 @@ export async function swapWethAsDeployer(hre: HardhatRuntimeEnvironment, tokenOu
   const deployer = await getDeployer(hre);
 
   const tokenIn = await getWeth(hre);
-  const tokenOut = (await hre.ethers.getContract(tokenOutName, deployer.address)) as ERC20;
+  const tokenOut = (await hre.ethers.getContract(tokenOutName, formatAddress(hre, deployer.address))) as ERC20;
 
   await swapAsDeployerByContract(hre, tokenIn, tokenOut, wethInValue, tokenMinOutValue);
 
@@ -70,7 +70,7 @@ export async function swapWethAsDeployer(hre: HardhatRuntimeEnvironment, tokenOu
 export async function swapForWethAsDeployer(hre: HardhatRuntimeEnvironment, tokenInName: string, tokenInValue: number, wethMinOutValue: number) {
   const deployer = await getDeployer(hre);
 
-  const tokenIn = (await hre.ethers.getContract(tokenInName, deployer.address)) as ERC20;
+  const tokenIn = (await hre.ethers.getContract(tokenInName, formatAddress(hre, deployer.address))) as ERC20;
   const tokenOut = await getWeth(hre);
 
   await swapAsDeployerByContract(hre, tokenIn, tokenOut, tokenInValue, wethMinOutValue);
@@ -91,12 +91,12 @@ export async function swapAsDeployerByContract(
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");
 
-  await tokenIn.approve(uniswapV2Router02.address, to_d18(tokenInValue));
+  await tokenIn.approve(formatAddress(hre, uniswapV2Router02.address), to_d18(tokenInValue));
   await uniswapV2Router02.swapExactTokensForTokens(
     to_d18(tokenInValue),
     to_d18(tokenOutMinValue),
-    [tokenIn.address, tokenOut.address],
-    deployer.address,
+    [formatAddress(hre, tokenIn.address), formatAddress(hre, tokenOut.address)],
+    formatAddress(hre, deployer.address),
     currentBlock.timestamp + 24 * 60 * 60 * 7
   );
 }
@@ -106,8 +106,8 @@ export async function getWethOraclePrices(hre: HardhatRuntimeEnvironment, bdStab
 
   const oracle = await getWethPairOracle(hre, bdStableName);
 
-  const wethInBdStablePrice_d18 = await oracle.consult(constants.wETH_address[hre.network.name], to_d18(1));
-  const bdStableWethPrice_d18 = await oracle.consult(bdStable.address, to_d18(1));
+  const wethInBdStablePrice_d18 = await oracle.consult(formatAddress(hre, constants.wETH_address[hre.network.name]), to_d18(1));
+  const bdStableWethPrice_d18 = await oracle.consult(formatAddress(hre, bdStable.address), to_d18(1));
 
   const wethInBdStableOraclePrice = bigNumberToDecimal(wethInBdStablePrice_d18, 18);
   const bdStableInWethOraclePrice = bigNumberToDecimal(bdStableWethPrice_d18, 18);
@@ -129,33 +129,33 @@ export async function provideLiquidity(
 ) {
   const router = await getUniswapRouter(hre);
 
-  await (await tokenA.connect(user).approve(router.address, amountA)).wait();
-  await (await tokenB.connect(user).approve(router.address, amountB)).wait();
+  await (await tokenA.connect(user).approve(formatAddress(hre, router.address), amountA)).wait();
+  await (await tokenB.connect(user).approve(formatAddress(hre, router.address), amountB)).wait();
 
   const currentBlock = await hre.ethers.provider.getBlock("latest");
 
   if (verbose) {
-    console.log("balanceA: " + (await tokenA.balanceOf(user.address)));
+    console.log("balanceA: " + (await tokenA.balanceOf(formatAddress(hre, user.address))));
     console.log("amountA : " + amountA);
-    console.log("balanceB: " + (await tokenB.balanceOf(user.address)));
+    console.log("balanceB: " + (await tokenB.balanceOf(formatAddress(hre, user.address))));
     console.log("amountB : " + amountB);
   }
   // router routes to the proper pair
   await (
-    await router.connect(user).addLiquidity(tokenA.address, tokenB.address, amountA, amountB, 1, 1, user.address, currentBlock.timestamp + 600)
+    await router.connect(user).addLiquidity(formatAddress(hre, tokenA.address), formatAddress(hre, tokenB.address), amountA, amountB, 1, 1, formatAddress(hre, user.address), currentBlock.timestamp + 600)
   ).wait();
 }
 
 export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: SignerWithAddress, amountETH: BigNumber) {
   // swaps ETH for WETH internally
 
-  const uniRouter = UniswapV2Router02__factory.connect(constants.ETH_uniswapRouterAddress, account);
+  const uniRouter = UniswapV2Router02__factory.connect(formatAddress(hre, constants.ETH_uniswapRouterAddress), account);
   await uniRouter
     .connect(account)
     .swapExactETHForTokens(
       0,
-      [constants.wETH_address[hre.network.name], constants.wBTC_address[hre.network.name]],
-      account.address,
+      [formatAddress(hre, constants.wETH_address[hre.network.name]), formatAddress(hre, constants.wBTC_address[hre.network.name])],
+      formatAddress(hre, account.address),
       Date.now() + 3600,
       {
         value: amountETH

@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { BigNumber } from "ethers";
-import { formatAddress, getBdEu, getBdx, getDeployer, getWbtc, getWeth, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { formatAddress, getBdEu, getBdx, getDeployer, getTreasury, getWbtc, getWeth, getWethConcrete, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
@@ -13,8 +13,19 @@ import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
+import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
+import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+import { IPriceFeed } from "../typechain/IPriceFeed";
+import * as constants from "../utils/Constants"
 
 export function load() {
+  task("mint-wrbtc-rsk", "", async (args, hre) => {
+    const treasury = await getTreasury(hre);
+    const wrbtc = await getWethConcrete(hre);
+
+    await (await wrbtc.connect(treasury).deposit({ value: to_d18(0.001) })).wait();
+  });
+
   task("accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 
