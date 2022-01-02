@@ -56,6 +56,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`deployed ${ContractsNames.priceFeedETHUsdName} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
+    // This is BTC/ETH on both networks
     btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
@@ -87,6 +88,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     // if deployed on ETH, probably we should replace with a better implementaion (price from uniswap3?)
     // chainlink has big lag
+    // This is BTC/ETH on both networks
     btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
