@@ -3,7 +3,7 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
 import type { BdStablePool } from "../typechain/BdStablePool";
-import { getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
+import { formatAddress, getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -86,7 +86,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         execute: {
           init: {
             methodName: "initialize",
-            args: [bdstable.address, bdx.address, constants.wETH_address[hre.network.name], constants.wETH_precision[hre.network.name], true]
+            args: [
+              bdstable.address,
+              bdx.address,
+              formatAddress(hre, constants.wETH_address[hre.network.name]),
+              constants.wETH_precision[hre.network.name],
+              true
+            ]
           }
         }
       },
@@ -107,7 +113,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         execute: {
           init: {
             methodName: "initialize",
-            args: [bdstable.address, bdx.address, constants.wBTC_address[hre.network.name], constants.wBTC_precision[hre.network.name], false]
+            args: [
+              bdstable.address,
+              bdx.address,
+              formatAddress(hre, constants.wBTC_address[hre.network.name]),
+              constants.wBTC_precision[hre.network.name],
+              false
+            ]
           }
         }
       },
