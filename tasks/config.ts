@@ -10,8 +10,7 @@ import {
   getBDStableWethPool,
   getBDStableWbtcPool,
   getBDStableFiat,
-  getAllBDStables,
-  formatAddress
+  getAllBDStables
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -169,15 +168,15 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
 
   const stakings = await Promise.all(
     stakingRewardsAddresses.map(async address => {
-      const stakingRewards = (await hre.ethers.getContractAt("StakingRewards", formatAddress(hre, address))) as StakingRewards;
+      const stakingRewards = (await hre.ethers.getContractAt("StakingRewards", address)) as StakingRewards;
       const stakingTokenAddress = await stakingRewards.stakingToken();
 
       const lpAddress = await stakingRewards.stakingToken();
-      const lp = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, lpAddress))) as UniswapV2Pair;
+      const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
       const token0Address = await lp.token0();
       const token1Address = await lp.token1();
-      const token0 = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, token0Address))) as ERC20;
-      const token1 = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, token1Address))) as ERC20;
+      const token0 = (await hre.ethers.getContractAt("ERC20", token0Address)) as ERC20;
+      const token1 = (await hre.ethers.getContractAt("ERC20", token1Address)) as ERC20;
 
       return {
         address: address,

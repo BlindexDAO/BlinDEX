@@ -3,7 +3,7 @@ import { to_d18 } from "./NumbersHelpers";
 
 export const wETH_address: { [key: string]: string } = {
   mainnetFork: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-  rsk: "0x542FDA317318eBf1d3DeAF76E0B632741a7e677d" // actually wrBTC, reversed to reflect rbtc native coin
+  rsk: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d" // actually wrBTC, reversed to reflect rbtc native coin
 };
 
 export const wETH_precision: { [key: string]: number } = {

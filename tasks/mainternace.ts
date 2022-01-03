@@ -98,6 +98,23 @@ export function load() {
       console.log("updated EUR / USD");
     });
 
+  task("update:eurusd:maxDayChange:rsk")
+    .addPositionalParam("change", "Max day change")
+    .setAction(async ({ change }, hre) => {
+      if (hre.network.name != "rsk") {
+        throw new Error("RSK only task");
+      }
+
+      if (change < 0.01 || change > 0.1) {
+        throw new Error("Mach day change shlud be between 0.01 and 0.1");
+      }
+
+      const deployer = await getDeployer(hre);
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
+      await (await oracleEurUsd.connect(deployer).setMaxDayChange_d12(to_d12(change))).wait();
+      console.log("updated EUR / USD max day change");
+    });
+
   task("reset:uniswap-oracles").setAction(async (args, hre) => {
     await resetUniswapPairsOracles(hre);
   });

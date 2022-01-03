@@ -184,27 +184,27 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
 
 export async function getWeth(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", formatAddress(hre, constants.wETH_address[hre.network.name]), deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IERC20;
 }
 
 export async function getWethConcrete(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", formatAddress(hre, constants.wETH_address[hre.network.name]), deployer)) as IWETH;
+  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IWETH;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", formatAddress(hre, constants.wBTC_address[hre.network.name]), deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], deployer)) as ERC20;
 }
 
 export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IERC20", formatAddress(hre, address), deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IERC20", address, deployer)) as IERC20;
 }
 
 export async function getERC20(hre: HardhatRuntimeEnvironment, address: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", formatAddress(hre, address), deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", address, deployer)) as ERC20;
 }
 
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number) {
