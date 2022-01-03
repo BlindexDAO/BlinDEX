@@ -16,7 +16,10 @@ import {
   getUpdater,
   getVesting,
   getWeth,
-  formatAddress
+  formatAddress,
+  getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
+  getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
+  getFiatToFiat_EurUsd
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -43,16 +46,16 @@ export function load() {
 
       if (hre.network.name == "rsk") {
         console.log("starting sovryn swap price oracles updates");
-        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, signer)) as SovrynSwapPriceFeed;
+        const oracleEthUsd = await getSovrynFeed_RbtcUsd(hre);
         await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
         console.log("updated ETH / USD (RSK BTC / USD)");
 
-        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, signer)) as SovrynSwapPriceFeed;
+        const oracleBtcEth = await getSovrynFeed_RbtcEths(hre);
         await (await oracleBtcEth.updateOracleWithVerification(to_d12(btceth))).wait();
         console.log("updated BTC / ETH (same on both networks)");
 
         console.log("starting fiat to fiat oracles updates");
-        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, signer)) as FiatToFiatPseudoOracleFeed;
+        const oracleEurUsd = await getFiatToFiat_EurUsd(hre);
         await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
         console.log("updated EUR / USD");
       }
@@ -104,27 +107,38 @@ export function load() {
     await updateUniswapPairsOracles(hre, deployer);
   });
 
-  task("update:all-with-bot:local").setAction(async (args, hre) => {
-    if (hre.network.name != "mainnetFork") {
-      throw new Error("Local only task");
-    }
-    console.log("starting the updater");
+  task("update:all-with-updater")
+    .addParam("btcusd", "BTCUSD price")
+    .addParam("btceth", "BTCETH price")
+    .addParam("eurusd", "EURUSD price")
+    .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
+      console.log("starting the updater");
 
-    const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("Updater", bot)) as UpdaterRSK;
+      const bot = await getBot(hre);
+      const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
 
-    const uniOracles = [];
-    const pools = await getPools(hre);
-    for (const pool of pools) {
-      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-      uniOracles.push(oracle.address);
-    }
+      const uniOracles = [];
+      const pools = await getPools(hre);
+      for (const pool of pools) {
+        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        uniOracles.push(oracle.address);
+      }
 
-    const stablesAddresses = (await getAllBDStables(hre)).map(stable => stable.address);
-    await (await updater.update([], [], [], [], uniOracles, stablesAddresses)).wait();
+      const oracleEthUsd = await getSovrynFeed_RbtcUsd(hre);
+      const oracleBtcEth = await getSovrynFeed_RbtcEths(hre); // this one is not inverted
+      const oracleEurUsd = await getFiatToFiat_EurUsd(hre);
 
-    console.log("updater has updated");
-  });
+      const sovrynOracles = [formatAddress(hre, oracleEthUsd.address), formatAddress(hre, oracleBtcEth.address)];
+      const sovrynPrices = [to_d12(btcusd), to_d12(btceth)];
+
+      const fiatToFiatOracles = [formatAddress(hre, oracleEurUsd.address)];
+      const fiatToFiatPrices = [to_d12(eurusd)];
+
+      const stablesAddresses = (await getAllBDStables(hre)).map(stable => stable.address);
+      await (await updater.update(sovrynOracles, sovrynPrices, fiatToFiatOracles, fiatToFiatPrices, uniOracles, stablesAddresses)).wait();
+
+      console.log("updater has updated");
+    });
 
   async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {
     const currentOwner = await contract.owner();
