@@ -357,10 +357,11 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         address user,
         uint256 immediatelyReleasedReward,
         uint256 vestedReward
-    ) external onlyStakingRewardsDistribution {
+    ) external onlyOwner {
+        //todo change the modifier to onlyStakingDistributionRewards
         rewards[user] = 0;
-        emit RewardPaid(user, immediatelyReleasedReward);
-        emit RewardVested(user, vestedReward);
+        // emit RewardPaid(user, immediatelyReleasedReward);
+        // emit RewardVested(user, vestedReward);
     }
 
     function renewIfApplicable() external {
@@ -398,6 +399,14 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
             rewards[account] = earned(account);
             userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
         }
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */

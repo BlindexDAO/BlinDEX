@@ -379,6 +379,25 @@ export function load() {
       await (await pool.mintFractionalBdStable(btcIn, to_d18(1), to_d18(0.001), false)).wait();
     });
 
+  task("pause:staking").setAction(async (args, hre) => {
+    const stakings = await getAllBDStableStakingRewards(hre);
+    for (const staking of stakings) {
+      if (!(await staking.paused())) {
+        await staking.pause();
+        console.log("paused", staking.address);
+      } else {
+        console.log("already paused", staking.address);
+      }
+    }
+  });
+
+  task("show:stakings:paused").setAction(async (args, hre) => {
+    const stakings = await getAllBDStableStakingRewards(hre);
+    for (const staking of stakings) {
+      console.log(`staking: ${staking.address}`, await staking.paused());
+    }
+  });
+
   // -------------------------- readonly
 
   task("show:oracles-prices").setAction(async (args, hre) => {
