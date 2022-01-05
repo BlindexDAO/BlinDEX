@@ -454,6 +454,14 @@ export function load() {
       }
     });
 
+  task("show:efCRs").setAction(async (args, hre) => {
+    const stables = await getAllBDStables(hre);
+
+    for (const stable of stables) {
+      await show_efCR(stable);
+    }
+  });
+
   async function show_ethEur(hre: HardhatRuntimeEnvironment) {
     const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
