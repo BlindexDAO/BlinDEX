@@ -142,7 +142,18 @@ export async function provideLiquidity(
   }
   // router routes to the proper pair
   await (
-    await router.connect(user).addLiquidity(formatAddress(hre, tokenA.address), formatAddress(hre, tokenB.address), amountA, amountB, 1, 1, formatAddress(hre, user.address), currentBlock.timestamp + 600)
+    await router
+      .connect(user)
+      .addLiquidity(
+        formatAddress(hre, tokenA.address),
+        formatAddress(hre, tokenB.address),
+        amountA,
+        amountB,
+        1,
+        1,
+        formatAddress(hre, user.address),
+        currentBlock.timestamp + 600
+      )
   ).wait();
 }
 
