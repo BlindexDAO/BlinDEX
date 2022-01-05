@@ -48,7 +48,7 @@ describe("FiatToFiatPseudoOracleFeed", () => {
   });
 
   it("should not update price if change too big", async () => {
-    const newPrice = 1.15 * 1.02;
+    const newPrice = 1.15 * 1.06;
     await simulateTimeElapseInDays(1);
 
     await expectToFail(() => oracle.connect(updater).setPrice(to_d12(newPrice)), "Price change too big");

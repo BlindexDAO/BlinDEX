@@ -2,6 +2,7 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
 import {
+  formatAddress,
   getBdEu,
   getBDStableWbtcPool,
   getBDStableWethPool,
@@ -44,9 +45,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        constants.RSK_SOVRYN_NETWORK,
-        constants.wETH_address[hre.network.name], // it's actually wrBTC (on RSK)
-        constants.RSK_XUSD_ADDRESS,
+        formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
+        formatAddress(hre, constants.wETH_address[hre.network.name]), // it's actually wrBTC (on RSK)
+        formatAddress(hre, constants.RSK_XUSD_ADDRESS),
         1e12,
         bot.address,
         60 * 60, // 60 min
@@ -55,13 +56,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`deployed ${ContractsNames.priceFeedETHUsdName} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
+    // This is BTC/ETH on both networks
     btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        constants.RSK_SOVRYN_NETWORK,
-        constants.wETH_address[hre.network.name],
-        constants.wBTC_address[hre.network.name],
+        formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
+        formatAddress(hre, constants.wETH_address[hre.network.name]),
+        formatAddress(hre, constants.wBTC_address[hre.network.name]),
         1e12,
         bot.address,
         60 * 60, // 60 min
@@ -86,10 +88,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     // if deployed on ETH, probably we should replace with a better implementaion (price from uniswap3?)
     // chainlink has big lag
+    // This is BTC/ETH on both networks
     btc_eth_oracle = await hre.deployments.deploy(ContractsNames.BtcToEthOracle, {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
-      args: [constants.BTC_ETH_FEED_ADDRESS[networkName], constants.wETH_address[networkName]]
+      args: [constants.BTC_ETH_FEED_ADDRESS[networkName], formatAddress(hre, constants.wETH_address[networkName])]
     });
     console.log(`deployed ${ContractsNames.BtcToEthOracle} to: ${btc_eth_oracle.address}`);
   }
@@ -122,22 +125,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Added WETH/Fiat oracle to ${symbol}`);
 
     const bdstableWethOracle = await getWethPairOracle(hre, symbol);
-    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, constants.wETH_address[networkName])).wait();
+    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
     console.log(`Added ${symbol}/WETH Uniswap oracle`);
 
     const bdstableWethPool = await getBDStableWethPool(hre, symbol);
     const bdstableWbtcPool = await getBDStableWbtcPool(hre, symbol);
     const weth_to_weth_oracle = await hre.deployments.deploy("WethToWethOracle", {
       from: deployer.address,
-      args: [constants.wETH_address[networkName]]
+      args: [formatAddress(hre, constants.wETH_address[networkName])]
     });
 
-    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, constants.wETH_address[networkName])).wait();
+    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
     console.log(`Added ${symbol}/WETH bdstable pool oracle`);
-    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, constants.wETH_address[networkName])).wait();
+    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
     console.log(`Added ${symbol}/WBTC bdstable pool oracle`);
 
-    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, constants.wETH_address[networkName])).wait();
+    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
     console.log(`Added BDX/WETH Uniswap oracle to ${symbol}`);
   }
 

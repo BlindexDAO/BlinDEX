@@ -6,15 +6,15 @@ import { types } from "hardhat/config";
 
 export function load() {
   task("initialize")
-    .addParam("btcEur", "initial btc/eur Price")
-    .addParam("bdxEur", "initial bdx/eur Price")
-    .addParam("ethEur", "initial eth/eur Price")
-    .addParam("ethUsd", "initial eth/usd Price")
-    .addParam("btcUsd", "initial btc/usd Price")
-    .addParam("bdxUsd", "initial bdx/usd Price")
-    .addParam("usdEur", "initial usd/eur Price")
-    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur }, hre) => {
-      await setupProductionReadySystem(hre, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+    .addParam("btceur", "initial btc/eur Price")
+    .addParam("bdxeur", "initial bdx/eur Price")
+    .addParam("etheur", "initial eth/eur Price")
+    .addParam("ethusd", "initial eth/usd Price")
+    .addParam("btcusd", "initial btc/usd Price")
+    .addParam("bdxusd", "initial bdx/usd Price")
+    .addParam("usdeur", "initial usd/eur Price")
+    .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur }, hre) => {
+      await setupProductionReadySystem(hre, btceur, btcusd, bdxeur, bdxusd, etheur, ethusd, usdeur);
     });
 
   task("initialize:local")

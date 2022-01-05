@@ -3,7 +3,7 @@ import type { DeployFunction } from "hardhat-deploy/types";
 import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
 import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import { getBdEu, getBdUs, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { formatAddress, getBdEu, getBdUs, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
 import { getPoolKey } from "../utils/UniswapPoolsHelpers";
 
 async function setupStakingContract(
@@ -53,8 +53,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Setting up staking contracts");
 
-  await setupStakingContract(hre, bdx.address, constants.wETH_address[networkName], "BDX", "WETH", false);
-  await setupStakingContract(hre, bdx.address, constants.wBTC_address[networkName], "BDX", "WBTC", false);
+  await setupStakingContract(hre, bdx.address, formatAddress(hre, constants.wETH_address[networkName]), "BDX", "WETH", false);
+  await setupStakingContract(hre, bdx.address, formatAddress(hre, constants.wBTC_address[networkName]), "BDX", "WBTC", false);
 
   const bdEu = await getBdEu(hre);
   const bdUs = await getBdUs(hre);
@@ -65,8 +65,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Starting deployment of ${symbol} staking contracts`);
 
     await setupStakingContract(hre, bdx.address, stable.address, "BDX", symbol, true);
-    await setupStakingContract(hre, stable.address, constants.wETH_address[networkName], symbol, "WETH", false);
-    await setupStakingContract(hre, stable.address, constants.wBTC_address[networkName], symbol, "WBTC", false);
+    await setupStakingContract(hre, stable.address, formatAddress(hre, constants.wETH_address[networkName]), symbol, "WETH", false);
+    await setupStakingContract(hre, stable.address, formatAddress(hre, constants.wBTC_address[networkName]), symbol, "WBTC", false);
 
     console.log(`Finished deployment of ${symbol} staking contracts`);
   }

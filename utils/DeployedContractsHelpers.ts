@@ -21,6 +21,9 @@ import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_eur
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
+import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
+import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
@@ -181,27 +184,27 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
 
 export async function getWeth(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", formatAddress(hre, constants.wETH_address[hre.network.name]), deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IERC20;
 }
 
 export async function getWethConcrete(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", formatAddress(hre, constants.wETH_address[hre.network.name]), deployer)) as IWETH;
+  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IWETH;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", formatAddress(hre, constants.wBTC_address[hre.network.name]), deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], deployer)) as ERC20;
 }
 
 export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IERC20", formatAddress(hre, address), deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IERC20", address, deployer)) as IERC20;
 }
 
 export async function getERC20(hre: HardhatRuntimeEnvironment, address: string) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", formatAddress(hre, address), deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", address, deployer)) as ERC20;
 }
 
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number) {
@@ -299,6 +302,18 @@ export async function getWethPairOracle(hre: HardhatRuntimeEnvironment, tokenNam
 
 export function getWbtcPairOracle(hre: HardhatRuntimeEnvironment, tokenName: string): Promise<UniswapPairOracle> {
   return getUniswapPairOracle(hre, tokenName, "WBTC");
+}
+
+export async function getSovrynFeed_RbtcUsd(hre: HardhatRuntimeEnvironment) {
+  return (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName)) as SovrynSwapPriceFeed;
+}
+
+export async function getSovrynFeed_RbtcEths(hre: HardhatRuntimeEnvironment) {
+  return (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as SovrynSwapPriceFeed;
+}
+
+export async function getFiatToFiat_EurUsd(hre: HardhatRuntimeEnvironment) {
+  return (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName)) as FiatToFiatPseudoOracleFeed;
 }
 
 export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, tokenAName: string, tokenBName: string): Promise<UniswapPairOracle> {

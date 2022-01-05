@@ -31,7 +31,7 @@ export async function setupProductionReadySystem(
   ethUsd: number,
   usdEur: number
 ) {
-  await setUpFunctionalSystem(hre, 1, 1, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+  await setUpFunctionalSystem(hre, 1, 0.001, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBDStableCollteralRatio: number) {
@@ -293,8 +293,8 @@ export async function setUpFunctionalSystem(
     await (await weth.connect(treasury).transfer(bdUSWethPool.address, usdCollateralWeth)).wait();
     await (await wbtc.connect(treasury).transfer(bdUSWbtcPool.address, usdCollateralWbtc)).wait();
 
-    await bdEu.refreshCollateralRatio();
-    await bdUs.refreshCollateralRatio();
+    await (await bdEu.refreshCollateralRatio()).wait();
+    await (await bdUs.refreshCollateralRatio()).wait();
   }
 }
 
