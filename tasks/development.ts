@@ -65,6 +65,11 @@ export function load() {
     }
   });
 
+  task("voidVesting", "", async (args, hre) => {
+    const vesting = await getVesting(hre);
+    await (await vesting.transferAllFundsToTresury()).wait();
+  });
+
   task("showAndrey", "", async (args, hre) => {
     const pools = [
       "0xF96D1b8F161A0E513C11200B1F80500B4d550367",

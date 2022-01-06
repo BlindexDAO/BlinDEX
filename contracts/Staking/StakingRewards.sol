@@ -90,7 +90,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
 
         _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
-        _paused = true;
+        _pause();
     }
 
     /* ========== VIEWS ========== */
