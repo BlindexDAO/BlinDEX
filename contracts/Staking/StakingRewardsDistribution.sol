@@ -155,7 +155,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             uint256 poolReward = stakingRewards.rewards(msg.sender);
 
             if (poolReward > 0) {
-                uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE); // todo ag
+                uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE);
                 uint256 userReward = poolReward.sub(rewardFee);
 
                 uint256 immediatelyReleasedReward = calculateImmediateReward(userReward);
