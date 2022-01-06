@@ -202,11 +202,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit TreasuryChanged(_treasury);
     }
 
-    function setVesting(address _vesting) external onlyOwner {
-        vesting = Vesting(_vesting);
-        //emit VestingChanged(_vesting); // to we need it?
-    }
-
     function setRewardFee_d12(uint256 _rewardFee_d12) external onlyOwner {
         require(_rewardFee_d12 <= MAX_REWARD_FEE, "Reward fee cannot exceed 100%");
         rewardFee_d12 = _rewardFee_d12;

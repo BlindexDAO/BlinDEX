@@ -44,6 +44,12 @@ export function load() {
     await (await stakingRewardsDistribution.connect(deployer).registerPools(poolsAddresses, poolsShares)).wait();
   });
 
+  task("show:staking-pools", "", async (args, hre) => {
+    const sdr = await getStakingRewardsDistribution(hre);
+    const pool0 = await sdr.stakingRewardsAddresses(0);
+    console.log(pool0);
+  });
+
   task("unregiseter-staking-pools", "", async (args, hre) => {
     const pools = [
       "0xF96D1b8F161A0E513C11200B1F80500B4d550367",
