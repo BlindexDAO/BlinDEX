@@ -8,6 +8,7 @@ import {
   getDeployer,
   getStakingRewardsDistribution,
   getTreasury,
+  getVesting,
   getWbtc,
   getWeth,
   getWethConcrete,
@@ -26,6 +27,7 @@ import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
+import type { StakingRewards } from "../typechain/StakingRewards";
 
 export function load() {
   task("show:pools", "", async (args, hre) => {
@@ -63,10 +65,69 @@ export function load() {
     }
   });
 
+  task("showAndrey", "", async (args, hre) => {
+    const pools = [
+      "0xF96D1b8F161A0E513C11200B1F80500B4d550367",
+      "0xaE5C914f251A006a8fFe716AB1D641667Cb145e8",
+      "0x4492Cb5CFcBdb4eC98b064517D0268b8FA75EeAA",
+      "0xbDeE0DE5c6938afCf823E15F904cC04BeF76d73D",
+      "0x98aCD834e02ccb5253d809b0e14De06eF037eB4a",
+      "0x7E12705B950d22645dffa65879a872cdea6600d1",
+      "0xb3FB3B98B4A1e9264ba0039093Aa70233f5Db128",
+      "0x444C7130732B0Bb67b1FA0234A02603B087A9855",
+      "0xCC91e8aeF888A6089165C508A778F77a8C213188"
+    ];
+
+    for (const p of pools) {
+      const sr = (await hre.ethers.getContractAt("StakingRewards", p)) as StakingRewards;
+      const lockedStakes = await sr.lockedStakesOf("0xe8f80de47be01f431870a9de0353447953a78750");
+      console.log("locked");
+      for (const s of lockedStakes) {
+        console.log(s.kek_id + " " + d18_ToNumber(s.amount));
+      }
+    }
+  });
+
+  task("showlocked", "", async (args, hre) => {
+    // const sr = await hre.ethers.getContractAt("StakingRewards", "0xF96D1b8F161A0E513C11200B1F80500B4d550367") as StakingRewards; // wrbtc bdx
+    const sr = (await hre.ethers.getContractAt("StakingRewards", "0xb3FB3B98B4A1e9264ba0039093Aa70233f5Db128")) as StakingRewards; // weth bdus
+    const lockedStakes = await sr.lockedStakesOf("0xE45a943F9B8B366042e58C69edF354023ac943e2");
+    for (const s of lockedStakes) {
+      console.log(s.kek_id + " " + s.amount);
+    }
+  });
+
+  task("verify-bdx", "", async (args, hre) => {
+    const vesting = await getVesting(hre);
+    const srd = await getStakingRewardsDistribution(hre);
+    const bdx = await getBdx(hre);
+
+    const myBal = d18_ToNumber(await bdx.balanceOf("0xE45a943F9B8B366042e58C69edF354023ac943e2"));
+    const devTreasuryBal = d18_ToNumber(await bdx.balanceOf("0x48e2b176db179d81135052f4bee7fb1129f270dd"));
+    const vestingBal = d18_ToNumber(await bdx.balanceOf(vesting.address));
+    const srdBal = d18_ToNumber(await bdx.balanceOf(srd.address));
+
+    console.log(myBal);
+    console.log(vestingBal);
+    console.log(srdBal);
+    console.log(devTreasuryBal);
+    console.log(myBal + vestingBal + srdBal + devTreasuryBal); // 10.5M
+    console.log(10.5e6 - (myBal + vestingBal + srdBal + devTreasuryBal)); // +0
+    console.log("------");
+  });
+
   task("unlock-stakes", "", async (args, hre) => {
     const pools = await getAllBDStableStakingRewards(hre);
     for (const pool of pools) {
+      console.log(pool.address);
       await (await pool.toggleUnlockStakes()).wait();
+    }
+  });
+
+  task("show:unlockedStakes", "", async (args, hre) => {
+    const pools = await getAllBDStableStakingRewards(hre);
+    for (const pool of pools) {
+      console.log(pool.address, await pool.unlockedStakes());
     }
   });
 
