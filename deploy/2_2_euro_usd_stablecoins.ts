@@ -10,6 +10,7 @@ interface BDStableContractDetail {
     symbol: string;
     name: string;
     fiat: string;
+    fiatCurrencyCharacter: string;
     pools: {
       weth: { name: string };
       wbtc: { name: string };
@@ -22,12 +23,14 @@ function prepareStablesContractsDetails() {
     {
       symbol: "BDEU",
       name: "Blindex Euro",
-      fiat: "EUR"
+      fiat: "EUR",
+      fiatCurrencyCharacter: "€"
     },
     {
       symbol: "BDUS",
       name: "Blindex USD",
-      fiat: "USD"
+      fiat: "USD",
+      fiatCurrencyCharacter: "$"
     }
   ];
 

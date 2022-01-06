@@ -141,6 +141,10 @@ export function getBDStableFiat(symbol: string) {
   return bdstablesContractsDetails[symbol].fiat;
 }
 
+export function getBDStableFiatCurrencyCharacter(symbol: string) {
+  return bdstablesContractsDetails[symbol].fiatCurrencyCharacter;
+}
+
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
   return getBDStable(hre, "BDEU");
 }

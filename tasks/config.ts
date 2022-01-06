@@ -10,6 +10,7 @@ import {
   getBDStableWethPool,
   getBDStableWbtcPool,
   getBDStableFiat,
+  getBDStableFiatCurrencyCharacter,
   getAllBDStables
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
@@ -225,6 +226,7 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
       decimals: await stable.decimals(),
       address: stable.address,
       fiat: getBDStableFiat(symbol),
+      fiatCurrencyCharacter: getBDStableFiatCurrencyCharacter(symbol),
       pools: await stablePools
     });
   }
