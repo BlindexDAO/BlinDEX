@@ -13,5 +13,6 @@
   "D:\\dev\\Blindex\\deploy\\8_deploy_updaterRSK.ts": 1641138962,
   "D:\\dev\\Blindex\\deploy\\9_pause_all_staking.ts": 1641395436,
   "D:\\dev\\Blindex\\deploy\\99_tmp_upgrade_vesting.ts": 1641482941,
-  "D:\\dev\\Blindex\\deploy\\99_tmp_upgrade_vesting_restore_original.ts": 1641484737
+  "D:\\dev\\Blindex\\deploy\\99_tmp_upgrade_vesting_restore_original.ts": 1641484737,
+  "D:\\dev\\Blindex\\deploy\\999_tmp_redeploy_staking_rewards.ts": 1641487784
 }
