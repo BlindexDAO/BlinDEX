@@ -1,6 +1,19 @@
 import { task } from "hardhat/config";
 import { BigNumber } from "ethers";
-import { formatAddress, getBdEu, getBdx, getDeployer, getTreasury, getWbtc, getWeth, getWethConcrete, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import {
+  formatAddress,
+  getAllBDStableStakingRewards,
+  getBdEu,
+  getBdx,
+  getDeployer,
+  getStakingRewardsDistribution,
+  getTreasury,
+  getWbtc,
+  getWeth,
+  getWethConcrete,
+  mintWbtc,
+  mintWeth
+} from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import { lockBdEuCrAt } from "../test/helpers/bdStable";
@@ -13,12 +26,50 @@ import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
-import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
-import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
-import { IPriceFeed } from "../typechain/IPriceFeed";
-import * as constants from "../utils/Constants"
 
 export function load() {
+  task("show:pools", "", async (args, hre) => {
+    const pools = await getAllBDStableStakingRewards(hre);
+    console.log("".concat(...pools.map(pool => `"${pool.address}",\n`)));
+  });
+
+  task("show:register-pools", "", async (args, hre) => {
+    const pools = await getAllBDStableStakingRewards(hre);
+    const poolsAddresses = pools.map(p => p.address);
+    const poolsShares = pools.map(_ => 1e6);
+
+    const deployer = await getDeployer(hre);
+    const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+
+    await (await stakingRewardsDistribution.connect(deployer).registerPools(poolsAddresses, poolsShares)).wait();
+  });
+
+  task("unregiseter-pools", "", async (args, hre) => {
+    const pools = [
+      "0xF96D1b8F161A0E513C11200B1F80500B4d550367",
+      "0xaE5C914f251A006a8fFe716AB1D641667Cb145e8",
+      "0x4492Cb5CFcBdb4eC98b064517D0268b8FA75EeAA",
+      "0xbDeE0DE5c6938afCf823E15F904cC04BeF76d73D",
+      "0x98aCD834e02ccb5253d809b0e14De06eF037eB4a",
+      "0x7E12705B950d22645dffa65879a872cdea6600d1",
+      "0xb3FB3B98B4A1e9264ba0039093Aa70233f5Db128",
+      "0x444C7130732B0Bb67b1FA0234A02603B087A9855",
+      "0xCC91e8aeF888A6089165C508A778F77a8C213188"
+    ];
+
+    const srd = await getStakingRewardsDistribution(hre);
+    for (const pool of pools) {
+      await (await srd.unregisterPool(pool, 0, 100)).wait();
+    }
+  });
+
+  task("unlock-stakes", "", async (args, hre) => {
+    const pools = await getAllBDStableStakingRewards(hre);
+    for (const pool of pools) {
+      await (await pool.toggleUnlockStakes()).wait();
+    }
+  });
+
   task("mint-wrbtc-rsk", "", async (args, hre) => {
     const treasury = await getTreasury(hre);
     const wrbtc = await getWethConcrete(hre);

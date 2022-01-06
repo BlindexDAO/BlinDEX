@@ -90,6 +90,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
 
         _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
+        _paused = true;
     }
 
     /* ========== VIEWS ========== */
@@ -357,11 +358,10 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         address user,
         uint256 immediatelyReleasedReward,
         uint256 vestedReward
-    ) external onlyOwner {
-        //todo change the modifier to onlyStakingDistributionRewards
+    ) external onlyStakingRewardsDistribution {
         rewards[user] = 0;
-        // emit RewardPaid(user, immediatelyReleasedReward);
-        // emit RewardVested(user, vestedReward);
+        emit RewardPaid(user, immediatelyReleasedReward);
+        emit RewardVested(user, vestedReward);
     }
 
     function renewIfApplicable() external {

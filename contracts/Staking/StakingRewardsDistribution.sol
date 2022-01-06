@@ -155,7 +155,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             uint256 poolReward = stakingRewards.rewards(msg.sender);
 
             if (poolReward > 0) {
-                uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE);
+                uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE); // todo ag
                 uint256 userReward = poolReward.sub(rewardFee);
 
                 uint256 immediatelyReleasedReward = calculateImmediateReward(userReward);
@@ -200,6 +200,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     function setTreasury(address _treasury) external onlyOwner {
         treasury = _treasury;
         emit TreasuryChanged(_treasury);
+    }
+
+    function setVesting(address _vesting) external onlyOwner {
+        vesting = Vesting(_vesting);
+        //emit VestingChanged(_vesting); // to we need it?
     }
 
     function setRewardFee_d12(uint256 _rewardFee_d12) external onlyOwner {

@@ -130,6 +130,12 @@ contract Vesting is OwnableUpgradeable {
         fundsProvider = _fundsProvider;
     }
 
+    function transferAllFundsToTresury() external onlyOwner {
+        //todo ag remember to remove this before redeployment
+        uint256 balance = rewardsToken.balanceOf(this(address));
+        vestedToken.safeTransfer(fundsProvider, balance); // todo ag fundsProvider is staking rewards distributions. maybe we should hardcode it to the treasury address?
+    }
+
     event ScheduleCreated(address user, uint256 amount);
     event RewardClaimed(address user, uint256 amount);
     event VestingTimeInSecondsSet(uint256 vestingTimeInSeconds);

@@ -29,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;
 
   console.log(`Starting deployment of BDX WETH staking contracts`);
-  // await upgradeStakingContracts(bdx.address, formatAddress(hre, constants.wETH_address[networkName]), "BDX", "WETH");
+  await upgradeStakingContracts(bdx.address, formatAddress(hre, constants.wETH_address[networkName]), "BDX", "WETH");
 
   console.log(`Starting deployment of BDX WBTC staking contracts`);
   await upgradeStakingContracts(bdx.address, formatAddress(hre, constants.wBTC_address[networkName]), "BDX", "WBTC");
