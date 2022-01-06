@@ -2,11 +2,9 @@ import { task } from "hardhat/config";
 import { BigNumber } from "ethers";
 import {
   formatAddress,
-  getAllBDStableStakingRewards,
   getBdEu,
   getBdx,
   getDeployer,
-  getStakingRewardsDistribution,
   getTreasury,
   getWbtc,
   getWeth,
@@ -28,18 +26,6 @@ import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
 
 export function load() {
-  task("show:staking-pools", "", async (args, hre) => {
-    const pools = await getAllBDStableStakingRewards(hre);
-    console.log("".concat(...pools.map(pool => `"${pool.address}",\n`)));
-  });
-
-  task("show:staking-pools", "", async (args, hre) => {
-    const sdr = await getStakingRewardsDistribution(hre);
-    for (let i = 0; i <= 10; i = i + 1) {
-      console.log(await sdr.stakingRewardsAddresses(i));
-    }
-  });
-
   task("mint-wrbtc-rsk", "", async (args, hre) => {
     const treasury = await getTreasury(hre);
     const wrbtc = await getWethConcrete(hre);
