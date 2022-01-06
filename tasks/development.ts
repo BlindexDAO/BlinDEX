@@ -46,8 +46,9 @@ export function load() {
 
   task("show:staking-pools", "", async (args, hre) => {
     const sdr = await getStakingRewardsDistribution(hre);
-    const pool0 = await sdr.stakingRewardsAddresses(0);
-    console.log(pool0);
+    for (let i = 0; i <= 10; i = i + 1) {
+      console.log(await sdr.stakingRewardsAddresses(i));
+    }
   });
 
   task("unregiseter-staking-pools", "", async (args, hre) => {
