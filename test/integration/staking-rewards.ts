@@ -63,10 +63,15 @@ async function initialize() {
   wbtc = await getWbtc(hre);
   bdEu = await getBdEu(hre);
   bdx = await getBdx(hre);
+
   stakingRewards_BDEU_WETH = await getBDStableWethStakingRewards(hre, await bdEu.symbol());
   stakingRewards_BDEU_WBTC = await getBDStableWbtcStakingRewards(hre, await bdEu.symbol());
+
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
+
+  await stakingRewards_BDEU_WETH.unpause();
+  await stakingRewards_BDEU_WBTC.unpause();
 }
 
 async function get_BDEU_WETH_poolWeight() {

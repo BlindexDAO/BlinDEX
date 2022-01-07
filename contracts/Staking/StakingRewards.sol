@@ -90,6 +90,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         periodFinish = block.timestamp.add(rewardsDurationSeconds);
 
         _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
+        _pause();
     }
 
     /* ========== VIEWS ========== */
@@ -398,6 +399,14 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
             rewards[account] = earned(account);
             userRewardPerTokenPaid_REWARD_PRECISION[account] = rewardPerTokenStored_REWARD_PRECISION;
         }
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */

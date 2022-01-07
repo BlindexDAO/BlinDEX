@@ -2,6 +2,7 @@ node_modules/
 cache/
 artifacts/
 typechain/
+deployments/
 
 package-lock.json
 

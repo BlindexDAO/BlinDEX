@@ -112,24 +112,25 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
   const bdstablesSymbols = getAllBDStablesSymbols();
   const bdx = await getBdx(hre);
   const stakingRewards = [];
-  const stakingRewardsStablesMap = new Set<string>();
+  const stakingRewardsBdStablesMap = new Set<string>();
 
   stakingRewards.push(await getBDStableWethStakingRewards(hre, await bdx.symbol()));
   stakingRewards.push(await getBDStableWbtcStakingRewards(hre, await bdx.symbol()));
 
-  for (const symbol of bdstablesSymbols) {
-    stakingRewards.push(await getBDStableWethStakingRewards(hre, symbol));
-    stakingRewards.push(await getBDStableWbtcStakingRewards(hre, symbol));
-    stakingRewards.push(await getBDStableBdxStakingRewards(hre, symbol));
+  for (const symbolA of bdstablesSymbols) {
+    stakingRewards.push(await getBDStableWethStakingRewards(hre, symbolA));
+    stakingRewards.push(await getBDStableWbtcStakingRewards(hre, symbolA));
+    stakingRewards.push(await getBDStableBdxStakingRewards(hre, symbolA));
 
     for (const symbolB of bdstablesSymbols) {
-      const stableAddress = await getContratAddress(hre, symbol);
+      const stableAddress = await getContratAddress(hre, symbolA);
       const stableBAddress = await getContratAddress(hre, symbolB);
-      const poolKey = getPoolKey(stableBAddress, stableAddress, symbolB, symbol);
+      const poolKey = getPoolKey(stableBAddress, stableAddress, symbolB, symbolA);
 
       // Do not repeat the same staking rewards twice
-      if (symbol !== symbolB && !stakingRewardsStablesMap.has(poolKey)) {
+      if (symbolA !== symbolB && !stakingRewardsBdStablesMap.has(poolKey)) {
         stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
+        stakingRewardsBdStablesMap.add(poolKey);
       }
     }
   }
