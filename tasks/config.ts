@@ -23,6 +23,7 @@ import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_pri
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
+import { readFileSync, readdirSync } from "fs";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -116,6 +117,19 @@ export function load() {
     };
 
     console.log(cleanStringify(blockchainConfig));
+  });
+
+  task("show:contracts-doc").setAction(async () => {
+    readdirSync("./deployments/rsk").forEach((file: string) => {
+      const isContract = file.endsWith(".json") && !file.includes("_Proxy") && !file.includes("_Implementation") && file != ".migrations.json";
+
+      if (isContract) {
+        const contractObject = JSON.parse(readFileSync(`./deployments/rsk/${file}`, "utf8"));
+        const contractName = file.replace(".json", "");
+
+        console.log(`${contractName}: ${contractObject.address}`);
+      }
+    });
   });
 }
 
