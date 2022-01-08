@@ -120,7 +120,7 @@ The account which accumulates fees to finance BlinDEX operational expenses.
 # Audits
 
 We take security very seriously. Therefore the Blindex protocol had and will been go through security Audits.
-You can find the audits we did so far [in our docs](https://docs.blindex.io/audits).
+You can find the audits we did so far [in our docs](https://docs.blindex.io/smart-contracts/audits).
 
 # Credits
 
