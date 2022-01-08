@@ -202,6 +202,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit TreasuryChanged(_treasury);
     }
 
+    function setVesting(address _vesting) external onlyOwner {
+        vesting = Vesting(_vesting);
+        emit VestingChanged(_vesting);
+    }
+
     function setRewardFee_d12(uint256 _rewardFee_d12) external onlyOwner {
         require(_rewardFee_d12 <= MAX_REWARD_FEE, "Reward fee cannot exceed 100%");
         rewardFee_d12 = _rewardFee_d12;
@@ -218,5 +223,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     event PoolRegistered(address indexed stakingRewardsAddress, uint256 indexed stakingRewardsWeight);
     event VestingRewardRatioSet(uint256 vestingRewardRatio_percent);
     event TreasuryChanged(address newTreasury);
+    event VestingChanged(address newVesting);
     event RewardFeeChanged(uint256 newRewardFee_d12);
 }

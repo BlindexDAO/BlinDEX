@@ -5,7 +5,9 @@ import {
   getBdEu,
   getBdx,
   getDeployer,
+  getStakingRewardsDistribution,
   getTreasury,
+  getVesting,
   getWbtc,
   getWeth,
   getWethConcrete,
@@ -26,6 +28,15 @@ import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
 
 export function load() {
+  task("tmp", "", async (args, hre) => {
+    const srd = await getStakingRewardsDistribution(hre);
+    const vestingFromSrd = await srd.vesting();
+    const vesting = await getVesting(hre);
+
+    console.log("Vesting(SRD):", vestingFromSrd);
+    console.log("Vesting     :", vesting.address);
+  });
+
   task("mint-wrbtc-rsk", "", async (args, hre) => {
     const treasury = await getTreasury(hre);
     const wrbtc = await getWethConcrete(hre);
