@@ -28,7 +28,7 @@ import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
 
 export function load() {
-  task("tmp", "", async (args, hre) => {
+  task("printVestingContractAddress", "", async (args, hre) => {
     const srd = await getStakingRewardsDistribution(hre);
     const vestingFromSrd = await srd.vesting();
     const vesting = await getVesting(hre);
