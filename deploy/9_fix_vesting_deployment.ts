@@ -39,7 +39,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Deployed StakingRewardsDistribution: " + stakingRewardsDistribution_ProxyDeployment.address);
 
-  const srd = await hre.ethers.getContractAt("Vesting", stakingRewardsDistribution_ProxyDeployment.address);
+  const srd = await hre.ethers.getContractAt("StakingRewardsDistribution", stakingRewardsDistribution_ProxyDeployment.address);
   await (await srd.setVesting(vesting_ProxyDeployment.address)).wait();
 
   const vesting = await hre.ethers.getContractAt("Vesting", vesting_ProxyDeployment.address);
