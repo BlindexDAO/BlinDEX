@@ -48,7 +48,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Setting the funds provider for the Vesting contract");
 
   await (await vesting.setVestingScheduler(stakingRewardsDistribution_ProxyDeployment.address)).wait();
-  console.log("set set vesting scheduler");
+  console.log("Setting the vesting scheduler");
 
   console.log("finished deployment: fix vesting");
 
