@@ -33,6 +33,11 @@ export function load() {
     await (await wrbtc.connect(treasury).deposit({ value: to_d18(0.001) })).wait();
   });
 
+  task("slow-down-mining", "Slows down mining on local fork", async (args, hre) => {
+    await hre.ethers.provider.send("evm_setAutomine", [false]);
+    await hre.ethers.provider.send("evm_setIntervalMining", [60000]);
+  });
+
   task("accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 

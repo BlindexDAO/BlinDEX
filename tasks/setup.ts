@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { getAllBDStableStakingRewards, getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { setupProductionReadySystem } from "../utils/SystemSetup";
 import { types } from "hardhat/config";
@@ -46,5 +46,11 @@ export function load() {
       await mintWbtc(hre, treasury, to_d8(10), 1000);
 
       await setupProductionReadySystem(hre, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+
+      // soft launch simulation
+      const stakings = await getAllBDStableStakingRewards(hre);
+      for (const staking of stakings) {
+        await staking.unpause();
+      }
     });
 }
