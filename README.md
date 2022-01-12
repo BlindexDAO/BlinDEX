@@ -99,7 +99,7 @@ Once your pull request will be merged, our Github action on the `master` branch 
 
 # Accounts
 
-Blindex uses 4 accounts. Deployer, Treasury & Dev Treasury will be converted to multisig accounts after deployment.
+Blindex uses 4 accounts. Deployer, Treasury & Operational Treasury will be converted to multisig accounts after deployment.
 
 ### Deployer account
 
@@ -113,7 +113,7 @@ The holder of BDX reserves.
 
 The account responsible for updating oracles and refreshing other parts of the system e.g. collateral ratio.
 
-### Dev treasury account
+### Operational treasury account
 
 The account which accumulates fees to finance BlinDEX operational expenses.
 
