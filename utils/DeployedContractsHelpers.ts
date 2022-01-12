@@ -61,8 +61,7 @@ export async function getBot(hre: HardhatRuntimeEnvironment) {
 }
 
 export async function getOperationalTreasury(hre: HardhatRuntimeEnvironment) {
-  const bot = await hre.ethers.getNamedSigner("OPERATIONAL_TREASURY");
-  return bot;
+  return await hre.ethers.getNamedSigner("OPERATIONAL_TREASURY");
 }
 
 export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
