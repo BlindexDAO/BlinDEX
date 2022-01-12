@@ -17,6 +17,7 @@ import * as maintenanceTasks from "./tasks/mainternace";
 import * as developmentTasks from "./tasks/development";
 import * as feConfig from "./tasks/config";
 import * as npmTasks from "./tasks/npm";
+import * as lpTasks from "./tasks/liquidity-pools";
 import "hardhat-gas-reporter";
 import * as path from "path";
 
@@ -28,6 +29,7 @@ maintenanceTasks.load();
 setupTasks.load();
 feConfig.load();
 npmTasks.load();
+lpTasks.load();
 
 export const typechainOutDir = "typechain";
 
@@ -109,7 +111,7 @@ const config: HardhatUserConfig = {
     BOT: {
       default: 2
     },
-    DEV_TREASURY: {
+    OPERATIONAL_TREASURY: {
       default: 3
     },
     TEST1: {

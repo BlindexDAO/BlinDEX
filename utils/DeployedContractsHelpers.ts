@@ -60,8 +60,8 @@ export async function getBot(hre: HardhatRuntimeEnvironment) {
   return bot;
 }
 
-export async function getDevTreasury(hre: HardhatRuntimeEnvironment) {
-  const bot = await hre.ethers.getNamedSigner("DEV_TREASURY");
+export async function getOperationalTreasury(hre: HardhatRuntimeEnvironment) {
+  const bot = await hre.ethers.getNamedSigner("OPERATIONAL_TREASURY");
   return bot;
 }
 
@@ -274,6 +274,19 @@ export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, 
   const cryptoInFiatPrice_1e12 = to_d12(cryptoInFiatPrice);
 
   return { price_1e12: cryptoInFiatPrice_1e12, price: cryptoInFiatPrice };
+}
+
+export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment): Promise<UniswapV2Pair[]> {
+  const uniswapPairs: UniswapV2Pair[] = [];
+  const factory = await getUniswapFactory(hre);
+  const amountOfPairs = (await factory.allPairsLength()).toNumber();
+
+  for (let index = 0; index < amountOfPairs; index++) {
+    const pairAddress = formatAddress(hre, await factory.allPairs(index));
+    uniswapPairs.push(await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress)));
+  }
+
+  return uniswapPairs;
 }
 
 export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: IERC20, tokenB: IERC20) {

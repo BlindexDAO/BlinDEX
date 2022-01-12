@@ -43,6 +43,11 @@ export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
   rsk: "RBTC"
 };
 
+export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
+  mainnetFork: "BTC",
+  rsk: "ETHs"
+};
+
 export const numberOfLPs = 11;
 
 export const initialBdstableMintingAmount = (networkName = "mainnetFork"): BigNumber => {
