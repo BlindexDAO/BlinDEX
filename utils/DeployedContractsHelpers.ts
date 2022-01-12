@@ -282,7 +282,7 @@ export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment): Promise
 
   for (let index = 0; index < amountOfPairs; index++) {
     const pairAddress = formatAddress(hre, await factory.allPairs(index));
-    uniswapPairs.push(await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress)));
+    uniswapPairs.push(await hre.ethers.getContractAt("UniswapV2Pair", pairAddress));
   }
 
   return uniswapPairs;
