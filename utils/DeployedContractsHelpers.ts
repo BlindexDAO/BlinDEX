@@ -275,14 +275,35 @@ export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, 
   return { price_1e12: cryptoInFiatPrice_1e12, price: cryptoInFiatPrice };
 }
 
-export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment): Promise<UniswapV2Pair[]> {
+export async function getWhitelistedTokensAddresses(hre: HardhatRuntimeEnvironment): Promise<string[]> {
+  const [bdx, nativeToken, secondaryCollateral, bdstables] = await Promise.all([getBdx(hre), getWeth(hre), getWbtc(hre), getAllBDStables(hre)]);
+
+  return [bdx.address, nativeToken.address, secondaryCollateral.address, ...bdstables.map(stable => stable.address)];
+}
+
+export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false): Promise<UniswapV2Pair[]> {
   const uniswapPairs: UniswapV2Pair[] = [];
   const factory = await getUniswapFactory(hre);
   const amountOfPairs = (await factory.allPairsLength()).toNumber();
+  let whitelistedTokens;
+
+  if (onlyWhitelistedTokens) {
+    whitelistedTokens = await getWhitelistedTokensAddresses(hre);
+  }
 
   for (let index = 0; index < amountOfPairs; index++) {
     const pairAddress = formatAddress(hre, await factory.allPairs(index));
-    uniswapPairs.push(await hre.ethers.getContractAt("UniswapV2Pair", pairAddress));
+    const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
+    const [token0, token1] = await Promise.all([pair.token0(), pair.token1()]);
+
+    if (
+      !whitelistedTokens ||
+      (whitelistedTokens &&
+        whitelistedTokens.find(tokenAddress => tokenAddress === token0) &&
+        whitelistedTokens.find(tokenAddress => tokenAddress === token1))
+    ) {
+      uniswapPairs.push(pair);
+    }
   }
 
   return uniswapPairs;
