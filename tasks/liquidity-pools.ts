@@ -18,6 +18,11 @@ export function load() {
     }
   );
 
+  task("lp:all:show:feeTo", "Shows the 'feeTo' address set on the Uniswap Factory").setAction(async (_args, hre) => {
+    const factory = await getUniswapFactory(hre);
+    console.log("Current 'feeTo' address:", await factory.feeTo());
+  });
+
   task("lp:all:show", "Showing information for all the liquidity pools in the system").setAction(async (_args, hre) => {
     async function getTokenData(tokenAddress: string, bdx: BDXShares, hre: HardhatRuntimeEnvironment): Promise<{ symbol: string; decimals: number }> {
       if (tokenAddress === bdx.address) {
