@@ -21,9 +21,10 @@ export function load() {
   task("lp:all:show", "Showing information for all the liquidity pools in the system").setAction(async (_args, hre) => {
     async function getTokenData(tokenAddress: string, bdx: BDXShares, hre: HardhatRuntimeEnvironment): Promise<{ symbol: string; decimals: number }> {
       if (tokenAddress === bdx.address) {
+        const [symbol, decimals] = await Promise.all([bdx.symbol(), bdx.decimals()]);
         return {
-          symbol: await bdx.symbol(),
-          decimals: await bdx.decimals()
+          symbol,
+          decimals
         };
       } else if (tokenAddress === constants.wETH_address[hre.network.name]) {
         return {
@@ -37,23 +38,20 @@ export function load() {
         };
       } else {
         const token = await getERC20(hre, tokenAddress);
+        const [symbol, decimals] = await Promise.all([token.symbol(), token.decimals()]);
         return {
-          symbol: await token.symbol(),
-          decimals: await token.decimals()
+          symbol,
+          decimals
         };
       }
     }
 
-    const pairs = await getAllUniswaPairs(hre);
-    const bdx = await getBdx(hre);
+    const [pairs, bdx] = await Promise.all([getAllUniswaPairs(hre), getBdx(hre)]);
 
     const fullData = await Promise.all(
       pairs.map(async pair => {
-        const reserves = await pair.getReserves();
-        const token0 = await pair.token0();
-        const token0Data = await getTokenData(token0, bdx, hre);
-        const token1 = await pair.token1();
-        const token1Data = await getTokenData(token1, bdx, hre);
+        const [reserves, token0, token1] = await Promise.all([pair.getReserves(), pair.token0(), pair.token1()]);
+        const [token0Data, token1Data] = await Promise.all([getTokenData(token0, bdx, hre), getTokenData(token1, bdx, hre)]);
 
         return {
           pairName: `${token0Data.symbol}_${token1Data.symbol}`,
