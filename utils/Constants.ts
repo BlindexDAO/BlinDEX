@@ -43,6 +43,11 @@ export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
   rsk: "RBTC"
 };
 
+export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
+  mainnetFork: "BTC",
+  rsk: "ETHs"
+};
+
 export const numberOfLPs = 11;
 
 export const initialBdstableMintingAmount = (networkName = "mainnetFork"): BigNumber => {
@@ -76,6 +81,6 @@ export const RSK_XUSD_ADDRESS = "0xb5999795BE0eBb5BAb23144Aa5fD6a02d080299f";
 export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
 
 export const rskBotAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
-export const rskDevTreasuryAddress = "0x48e2B176dB179d81135052F4bee7fB1129f270DD";
+export const rskOperationalTreasuryAddress = "0x48e2B176dB179d81135052F4bee7fB1129f270DD";
 
 export const bdxLockAmount = to_d18(3150000);

@@ -60,9 +60,8 @@ export async function getBot(hre: HardhatRuntimeEnvironment) {
   return bot;
 }
 
-export async function getDevTreasury(hre: HardhatRuntimeEnvironment) {
-  const bot = await hre.ethers.getNamedSigner("DEV_TREASURY");
-  return bot;
+export function getOperationalTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("OPERATIONAL_TREASURY");
 }
 
 export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
@@ -276,6 +275,40 @@ export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, 
   return { price_1e12: cryptoInFiatPrice_1e12, price: cryptoInFiatPrice };
 }
 
+export async function getWhitelistedTokensAddresses(hre: HardhatRuntimeEnvironment): Promise<string[]> {
+  const [bdx, nativeToken, secondaryCollateral, bdstables] = await Promise.all([getBdx(hre), getWeth(hre), getWbtc(hre), getAllBDStables(hre)]);
+
+  return [bdx.address, nativeToken.address, secondaryCollateral.address, ...bdstables.map(stable => stable.address)];
+}
+
+export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false): Promise<UniswapV2Pair[]> {
+  const uniswapPairs: UniswapV2Pair[] = [];
+  const factory = await getUniswapFactory(hre);
+  const amountOfPairs = (await factory.allPairsLength()).toNumber();
+  let whitelistedTokens;
+
+  if (onlyWhitelistedTokens) {
+    whitelistedTokens = await getWhitelistedTokensAddresses(hre);
+  }
+
+  for (let index = 0; index < amountOfPairs; index++) {
+    const pairAddress = formatAddress(hre, await factory.allPairs(index));
+    const pair = (await hre.ethers.getContractAt("UniswapV2Pair", pairAddress)) as UniswapV2Pair;
+    const [token0, token1] = await Promise.all([pair.token0(), pair.token1()]);
+
+    if (
+      !whitelistedTokens ||
+      (whitelistedTokens &&
+        whitelistedTokens.find(tokenAddress => tokenAddress === token0) &&
+        whitelistedTokens.find(tokenAddress => tokenAddress === token1))
+    ) {
+      uniswapPairs.push(pair);
+    }
+  }
+
+  return uniswapPairs;
+}
+
 export async function getUniswapPair(hre: HardhatRuntimeEnvironment, tokenA: IERC20, tokenB: IERC20) {
   const factory = await getUniswapFactory(hre);
   const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
@@ -361,4 +394,32 @@ export function formatAddress(hre: HardhatRuntimeEnvironment, address: string) {
 async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract(symbol, deployer)) as BDStable;
+}
+
+export async function getTokenData(tokenAddress: string, hre: HardhatRuntimeEnvironment): Promise<{ symbol: string; decimals: number }> {
+  const bdx = await getBdx(hre);
+  if (tokenAddress === bdx.address) {
+    const [symbol, decimals] = await Promise.all([bdx.symbol(), bdx.decimals()]);
+    return {
+      symbol,
+      decimals
+    };
+  } else if (tokenAddress === constants.wETH_address[hre.network.name]) {
+    return {
+      symbol: constants.NATIVE_TOKEN_NAME[hre.network.name],
+      decimals: constants.wETH_precision[hre.network.name]
+    };
+  } else if (tokenAddress === constants.wBTC_address[hre.network.name]) {
+    return {
+      symbol: constants.SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name],
+      decimals: constants.wBTC_precision[hre.network.name]
+    };
+  } else {
+    const token = await getERC20(hre, tokenAddress);
+    const [symbol, decimals] = await Promise.all([token.symbol(), token.decimals()]);
+    return {
+      symbol,
+      decimals
+    };
+  }
 }
