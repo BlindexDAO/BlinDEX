@@ -395,3 +395,31 @@ async function getBDStable(hre: HardhatRuntimeEnvironment, symbol: string) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract(symbol, deployer)) as BDStable;
 }
+
+export async function getTokenData(tokenAddress: string, hre: HardhatRuntimeEnvironment): Promise<{ symbol: string; decimals: number }> {
+  const bdx = await getBdx(hre);
+  if (tokenAddress === bdx.address) {
+    const [symbol, decimals] = await Promise.all([bdx.symbol(), bdx.decimals()]);
+    return {
+      symbol,
+      decimals
+    };
+  } else if (tokenAddress === constants.wETH_address[hre.network.name]) {
+    return {
+      symbol: constants.NATIVE_TOKEN_NAME[hre.network.name],
+      decimals: constants.wETH_precision[hre.network.name]
+    };
+  } else if (tokenAddress === constants.wBTC_address[hre.network.name]) {
+    return {
+      symbol: constants.SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name],
+      decimals: constants.wBTC_precision[hre.network.name]
+    };
+  } else {
+    const token = await getERC20(hre, tokenAddress);
+    const [symbol, decimals] = await Promise.all([token.symbol(), token.decimals()]);
+    return {
+      symbol,
+      decimals
+    };
+  }
+}

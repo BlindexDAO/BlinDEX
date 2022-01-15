@@ -11,7 +11,6 @@ import {
   getDeployer,
   getStakingRewardsDistribution,
   getTreasury,
-  getUniswapPair,
   getUniswapPairOracle,
   getUpdater,
   getVesting,
@@ -19,11 +18,12 @@ import {
   formatAddress,
   getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
   getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
-  getFiatToFiat_EurUsd
+  getFiatToFiat_EurUsd,
+  getTokenData
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, tokensDecimals, updateUniswapPairsOracles, resetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, updateUniswapPairsOracles, resetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import type { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
@@ -35,6 +35,9 @@ import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { Contract } from "ethers";
+import { showAllUniswapPairs } from "./liquidity-pools";
+import * as constants from "../utils/Constants";
+import moment from "moment";
 
 export function load() {
   task("update:all")
@@ -401,17 +404,7 @@ export function load() {
   // -------------------------- readonly
 
   task("show:oracles-prices").setAction(async (args, hre) => {
-    await show_uniswapOraclesPrices(hre, true);
-  });
-
-  task("show:pools").setAction(async (args, hre) => {
-    const pools = await getPools(hre);
-
-    for (const pool of pools) {
-      const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-      console.log(`${pool[0].name} / ${pool[1].name} : ${pair.address}`);
-      console.log(`\t${pool[0].token.address} / ${pool[1].token.address}`);
-    }
+    await showUniswapOraclesPrices(hre, true);
   });
 
   task("show:pool-reserves")
@@ -454,24 +447,37 @@ export function load() {
     await show_ethUsd(hre);
   });
 
-  task("show:full-diagnostics")
-    .addOptionalPositionalParam("showPrices", "if true, shows all prices", "false")
-    .setAction(async ({ showPrices }, hre) => {
-      await show_ethEur(hre);
-      await show_ethUsd(hre);
-      await show_btcEth(hre);
-      await show_eurUsd(hre);
+  task("show:full-diagnostics").setAction(async (_args, hre) => {
+    console.log("==================================");
+    console.log("Oracles - Price Feeds");
+    console.log("==================================");
+    await show_ethEur(hre);
+    await show_ethUsd(hre);
+    await show_btcEth(hre);
+    await show_eurUsd(hre);
 
-      await show_uniswapOraclesPrices(hre, showPrices == "true" ? true : false);
+    console.log("==================================");
+    console.log("Oracles - Uniswap");
+    console.log("==================================");
+    await showUniswapOraclesPrices(hre);
 
-      const stables = await getAllBDStables(hre);
+    console.log("==================================");
+    console.log("BDStables Information");
+    console.log("==================================");
 
-      for (const stable of stables) {
-        await show_efCR(stable);
-        await show_CR(stable);
-        await show_efBDXCov(stable);
-      }
-    });
+    const stables = await getAllBDStables(hre);
+
+    for (const stable of stables) {
+      await show_efCR(stable);
+      await show_CR(stable);
+      await show_efBDXCov(stable);
+    }
+
+    console.log("==================================");
+    console.log("Uniswap Pairs Information");
+    console.log("==================================");
+    await showAllUniswapPairs(hre);
+  });
 
   task("show:efCRs").setAction(async (args, hre) => {
     const stables = await getAllBDStables(hre);
@@ -484,13 +490,13 @@ export function load() {
   async function show_ethEur(hre: HardhatRuntimeEnvironment) {
     const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
-    console.log("ETH/EUR (RSK: BTC/EUR): " + price);
+    console.log(`${constants.NATIVE_TOKEN_NAME[hre.network.name]}/EUR: ${price}`);
   }
 
   async function show_ethUsd(hre: HardhatRuntimeEnvironment) {
     const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthUsdName)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
-    console.log("ETH/USD (RSK: BTC/USD): " + price);
+    console.log(`${constants.NATIVE_TOKEN_NAME[hre.network.name]}/USD: ${price}`);
   }
 
   async function show_btcEth(hre: HardhatRuntimeEnvironment) {
@@ -502,7 +508,8 @@ export function load() {
       const feed = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as BtcToEthOracleChinlink;
       price = d12_ToNumber(await feed.getPrice_1e12());
     }
-    console.log("BTC/ETH (same on both networks): " + price);
+
+    console.log(`BTC/ETH (should be the same on all networks): ${price}`);
   }
 
   async function show_eurUsd(hre: HardhatRuntimeEnvironment) {
@@ -514,7 +521,7 @@ export function load() {
       lastUpdateTimestamp = await (await feedConcrete.lastUpdateTimestamp()).toNumber();
     }
 
-    console.log("EUR/USD: " + price + " last updated: " + new Date(lastUpdateTimestamp * 1000));
+    console.log(`EUR/USD: ${price} last updated: ${new Date(lastUpdateTimestamp * 1000)}`);
   }
 
   async function show_efBDXCov(stable: BDStable) {
@@ -532,32 +539,27 @@ export function load() {
     console.log(`${await stable.symbol()} CR: ${d12_ToNumber(efCR)}`);
   }
 
-  async function show_uniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices: boolean) {
+  async function showUniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices = true) {
     const pools = await getPools(hre);
 
     for (const pool of pools) {
       const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
       const updatedAgo = new Date().getTime() / 1000 - (await oracle.blockTimestampLast());
-
-      const pair = await getUniswapPair(hre, pool[0].token, pool[1].token);
-      const reserves = await pair.getReserves();
+      const humanizedUpdatedAgo = moment.duration(-Math.round(updatedAgo), "seconds").humanize(true);
 
       if (showPrices) {
         const token0Address = pool[0].token.address;
-        const token0Name = pool[0].name;
-        const token1Name = pool[1].name;
-
-        const token0Decimals = tokensDecimals(hre, token0Name);
-        const token1Decimals = tokensDecimals(hre, token1Name);
+        const token1Address = pool[1].token.address;
+        const [token0Data, token1Data] = await Promise.all([getTokenData(token0Address, hre), getTokenData(token1Address, hre)]);
 
         const amountIn = to_d18(1e6);
-        let amountOut: BigNumber;
+        let amountOut;
 
-        if (token0Decimals < token1Decimals) {
-          const missingDecimals = BigNumber.from(token1Decimals - token0Decimals);
+        if (token0Data.decimals < token1Data.decimals) {
+          const missingDecimals = BigNumber.from(token1Data.decimals - token0Data.decimals);
           amountOut = await oracle.consult(token0Address, amountIn.div(BigNumber.from(10).pow(missingDecimals)));
-        } else if (token0Decimals > token1Decimals) {
-          const missingDecimals = BigNumber.from(token0Decimals - token1Decimals);
+        } else if (token0Data.decimals > token1Data.decimals) {
+          const missingDecimals = BigNumber.from(token0Data.decimals - token1Data.decimals);
           amountOut = await oracle.consult(token0Address, amountIn.mul(BigNumber.from(10).pow(missingDecimals)));
         } else {
           amountOut = await oracle.consult(token0Address, amountIn);
@@ -565,13 +567,11 @@ export function load() {
 
         const price = d12_ToNumber(to_d12(1).mul(amountOut).div(amountIn));
 
-        console.log(`oracle ${pool[0].name} / ${pool[1].name} price: ${price}, updated: ${Math.round(updatedAgo)}s ago`);
+        console.log(`oracle ${pool[0].name} / ${pool[1].name} price: ${price}, updated: ${humanizedUpdatedAgo}`);
         console.log(`       ${pool[1].name} / ${pool[0].name} price: ${1 / price}`);
       } else {
-        console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${Math.round(updatedAgo)}s ago`);
+        console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${humanizedUpdatedAgo}`);
       }
-
-      console.log(`       liquidity: ${reserves[0].toString()}  |  ${reserves[1].toString()}`);
     }
   }
 }

@@ -1,7 +1,7 @@
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getAllBDStablesSymbols } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables } from "./DeployedContractsHelpers";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("starting updating oracles");
@@ -114,18 +114,4 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   }
 
   return pools;
-}
-
-export function tokensDecimals(hre: HardhatRuntimeEnvironment, tokenName: string): number {
-  if (["BDX", "WETH", ...getAllBDStablesSymbols()].includes(tokenName)) {
-    return 18;
-  } else if (tokenName == "WBTC") {
-    if (hre.network.name == "rsk") {
-      return 18; // ETHs on RSK
-    } else {
-      return 8;
-    }
-  } else {
-    throw `unknown token '${tokenName}'`;
-  }
 }
