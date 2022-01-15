@@ -16,7 +16,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
 
     uint256 private recentPrice;
     uint256 public lastUpdateTimestamp;
-    uint256 public maxDayChange_d12 = 1e9; // 10%
+    uint256 public maxDayChange_d12 = 1e11; // 10%
 
     address private updater;
 
