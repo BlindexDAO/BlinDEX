@@ -526,17 +526,17 @@ export function load() {
 
   async function show_efBDXCov(stable: BDStable) {
     const efBdxCov = await stable.get_effective_bdx_coverage_ratio();
-    console.log(`${await stable.symbol()} efBDXCov: ${d12_ToNumber(efBdxCov)}`);
+    console.log(`${await stable.symbol()} efBDXCov: ${d12_ToNumber(efBdxCov.mul(100))}%`);
   }
 
   async function show_efCR(stable: BDStable) {
     const efCR = await stable.effective_global_collateral_ratio_d12();
-    console.log(`${await stable.symbol()} efCR: ${d12_ToNumber(efCR)}`);
+    console.log(`${await stable.symbol()} efCR: ${d12_ToNumber(efCR.mul(100))}%`);
   }
 
   async function show_CR(stable: BDStable) {
     const efCR = await stable.global_collateral_ratio_d12();
-    console.log(`${await stable.symbol()} CR: ${d12_ToNumber(efCR)}`);
+    console.log(`${await stable.symbol()} CR: ${d12_ToNumber(efCR.mul(100))}%`);
   }
 
   async function showUniswapOraclesPrices(hre: HardhatRuntimeEnvironment, showPrices = true) {
