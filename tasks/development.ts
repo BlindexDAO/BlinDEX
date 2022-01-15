@@ -38,6 +38,10 @@ export function load() {
     await hre.ethers.provider.send("evm_setIntervalMining", [60000]);
   });
 
+  task("speed-up-mining", "Speeds up mining on local fork", async (args, hre) => {
+    await hre.ethers.provider.send("evm_setAutomine", [true]);
+  });
+
   task("accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 
