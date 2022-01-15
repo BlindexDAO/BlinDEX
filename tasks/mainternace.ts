@@ -106,7 +106,7 @@ export function load() {
       }
 
       if (change < 0.01 || change > 0.2) {
-        throw new Error("Mach day change shlud be between 0.01 and 0.2");
+        throw new Error("Max day change shloud be between 0.01 and 0.2");
       }
 
       const deployer = await getDeployer(hre);

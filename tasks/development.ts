@@ -184,7 +184,7 @@ export function load() {
       console.log("path length: " + conversionPath.length);
 
       if (conversionPath.length != 3) {
-        throw `conversion path shoulb be 3, but is ${conversionPath.length}`;
+        throw `conversion path should be 3, but is ${conversionPath.length}`;
       }
 
       for (const a of conversionPath) {
