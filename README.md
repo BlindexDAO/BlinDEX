@@ -76,7 +76,7 @@ Enjoy!
 
 ### Update version & publish
 
-#### Old way - soon to be deprecated nad removed from this docs
+#### Old way - soon to be deprecated and removed from this docs
 
 This way of preparing the package to be consumed by the FE & BE will be deprecated soon as part of these tasks:
 
