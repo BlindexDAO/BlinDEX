@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("proxyAdminAddress", proxyAdminOwner);
 
   // this should ba another migration
-  await admin.transferOwnership(newProxyAdminOwnerAddress);
+  await (await admin.transferOwnership(newProxyAdminOwnerAddress)).wait();
   console.log("transferred admin");
 
   console.log("finished proxt admin ownership transfer");
