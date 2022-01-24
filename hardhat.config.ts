@@ -18,6 +18,7 @@ import * as developmentTasks from "./tasks/development";
 import * as feConfig from "./tasks/config";
 import * as npmTasks from "./tasks/npm";
 import { load as lpTasksLoad } from "./tasks/liquidity-pools";
+import { load as bdStablePoolsTasksLoad } from "./tasks/bd-stable-pools";
 import "hardhat-gas-reporter";
 import * as path from "path";
 
@@ -30,6 +31,7 @@ setupTasks.load();
 feConfig.load();
 npmTasks.load();
 lpTasksLoad();
+bdStablePoolsTasksLoad();
 
 export const typechainOutDir = "typechain";
 
