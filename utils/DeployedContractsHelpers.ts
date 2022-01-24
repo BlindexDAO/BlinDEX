@@ -184,9 +184,9 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
 }
 
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
-  if ([wETH_address.mainnetFork, wETH_address.rsk].includes(tokenAddress)) {
+  if (wETH_address[hre.network.name] === tokenAddress) {
     return getWeth(hre);
-  } else if ([wBTC_address.mainnetFork, wBTC_address.rsk].includes(tokenAddress)) {
+  } else if (wBTC_address[hre.network.name] === tokenAddress) {
     return getWbtc(hre);
   } else {
     throw new Error(`Unknown token address ${tokenAddress}`);
