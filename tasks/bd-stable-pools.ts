@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getAllBDStablePools, getBdx, getCollateralContract, getCollateralPrecision } from "../utils/DeployedContractsHelpers";
+import { getAllBDStablePools, getBdx, getCollateralContract, getTokenData } from "../utils/DeployedContractsHelpers";
 import { d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
 import { utils } from "ethers";
 
@@ -47,8 +47,8 @@ export function load() {
       useNativeToken = useNativeToken.toLowerCase() === "true";
 
       const collateralTokenAddress = await stablePool.collateral_token();
-      const precision = getCollateralPrecision(hre, collateralTokenAddress);
-      const preciseMaxCollateralAmount = utils.parseUnits(maxCollateralAmount, precision);
+      const { decimals } = await getTokenData(collateralTokenAddress, hre);
+      const preciseMaxCollateralAmount = utils.parseUnits(maxCollateralAmount, decimals);
 
       if (!useNativeToken) {
         const collateralToken = await getCollateralContract(hre, collateralTokenAddress);

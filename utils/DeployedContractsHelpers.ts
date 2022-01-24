@@ -24,7 +24,7 @@ import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { wBTC_address, wBTC_precision, wETH_address, wETH_precision } from "./Constants";
+import { wBTC_address, wETH_address } from "./Constants";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
@@ -181,16 +181,6 @@ export async function getVesting(hre: HardhatRuntimeEnvironment) {
 export async function getBdx(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract("BDX", deployer)) as BDXShares;
-}
-
-export function getCollateralPrecision(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
-  if ([wETH_address.mainnetFork, wETH_address.rsk].includes(tokenAddress)) {
-    return wETH_precision[hre.network.name];
-  } else if ([wBTC_address.mainnetFork, wBTC_address.rsk].includes(tokenAddress)) {
-    return wBTC_precision[hre.network.name];
-  } else {
-    throw new Error(`Unknown token address ${tokenAddress}`);
-  }
 }
 
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
