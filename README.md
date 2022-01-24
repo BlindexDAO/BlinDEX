@@ -71,43 +71,8 @@ npm test
 
 ## @blindex/interfaces npm package
 
-We reuse code betwen our blockchain & frontend apps. For that reason we have the `@blindex/interfaces` npm package that can be used to import all of Blindex's ABIs & Typescript types.
+We reuse code between our blockchain & frontend apps. For that reason we have the `@blindex/interfaces` npm package that can be used to import all of Blindex's ABIs & Typescript types.
 Enjoy!
-
-### Update version & publish
-
-#### Old way - soon to be deprecated and removed from this docs
-
-This way of preparing the package to be consumed by the FE & BE will be deprecated soon as part of these tasks:
-
-- https://lagoslabs.atlassian.net/browse/LAGO-230
-- https://lagoslabs.atlassian.net/browse/LAGO-231
-- https://lagoslabs.atlassian.net/browse/LAGO-229
-
-Just run:
-
-```bash
-npm run npm-package
-```
-
-#### New way of doing things
-
-Will be the only way once we work on this task:
-
-- https://lagoslabs.atlassian.net/browse/LAGO-229
-
-#### Update version
-
-```bash
-npm run blindex-package <semver_version>
-```
-
-`semver_version` must be a valid semver format. It must also be greater than the current version which could be be found [here](./@blindex/interfaces/package.json).
-
-#### Publish
-
-Open a pull request with your changes after you upgrades the version of the npm package.
-Once your pull request will be merged, our Github action on the `master` branch will publish the package for you. So just look at the [actions tab](https://github.com/BlindexDAO/BlinDEX/actions) on the github repo.
 
 # Accounts
 
