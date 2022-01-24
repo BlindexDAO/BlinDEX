@@ -1,11 +1,22 @@
+![MEDIUM HEADER 1500x750px_](https://user-images.githubusercontent.com/1577655/147810830-1b200126-47d1-4a78-a95a-45a8c8a105cc.png)
+
 # BlinDEX
 
 BlinDEX is the first **multi-currency stablecoin-based DeFi platform** that sees all currencies as equals.
 Replacing all traditional financial systems calls for a completely stable, inclusive, and **100% decentralized** alternative. We don't play around with centralized collateral.
 
-Chceck us out at [https://blindex.io](https://blindex.io).
+💻 [Website](https://blindex.io)
 
-![MEDIUM HEADER 1500x750px_](https://user-images.githubusercontent.com/1577655/147810830-1b200126-47d1-4a78-a95a-45a8c8a105cc.png)
+📱 [App](https://app.blindex.io/)
+
+📜 [Docs](https://docs.blindex.io/)
+
+♣️ [Discord](https://discord.gg/dbN2bmJ42u)
+
+💬 [Telegram](https://t.me/BlinDEXio)
+
+🤳 [Twitter](https://twitter.com/BlinDEXio)
+
 
 # Development
 
@@ -129,3 +140,4 @@ We're grateful to the following projects for sharing their code and packages, us
 
 - [FRAX](https://github.com/FraxFinance/frax-solidity)
 - [Uniswap](https://github.com/Uniswap/v2-core)
+- [Sovryn](https://github.com/DistributedCollective/Sovryn-smart-contracts)
