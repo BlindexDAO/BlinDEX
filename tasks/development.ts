@@ -14,7 +14,7 @@ import {
 } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
-import { lockBdEuCrAt } from "../test/helpers/bdStable";
+import { lockBdEuCrAt, lockBdUsCrAt } from "../test/helpers/bdStable";
 import type { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
@@ -151,17 +151,17 @@ export function load() {
     await simulateTimeElapseInSeconds(3600 * 24 * 365 * 6);
   });
 
-  task("setBdEuCollateralRatioTo1").setAction(async (args, hre) => {
-    await lockBdEuCrAt(hre, 1);
-  });
+  task("setBdEuCollateralRatio")
+    .addPositionalParam("crRatio", "The desired collateral ratio")
+    .setAction(async ({ crRatio }, hre) => {
+      await lockBdEuCrAt(hre, crRatio);
+    });
 
-  task("setBdEuCollateralRatioTo05").setAction(async (args, hre) => {
-    await lockBdEuCrAt(hre, 0.5);
-  });
-
-  task("setBdEuCollateralRatioTo0").setAction(async (args, hre) => {
-    await lockBdEuCrAt(hre, 0);
-  });
+  task("setBdUsCollateralRatio")
+    .addPositionalParam("crRatio", "The desired collateral ratio")
+    .setAction(async ({ crRatio }, hre) => {
+      await lockBdUsCrAt(hre, crRatio);
+    });
 
   task("show:moc-feeds").setAction(async (args, hre) => {
     async function showFor(address: string, priceName: string) {

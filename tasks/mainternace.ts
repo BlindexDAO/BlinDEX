@@ -19,7 +19,9 @@ import {
   getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
   getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
   getFiatToFiat_EurUsd,
-  getTokenData
+  getTokenData,
+  getCollateralContract,
+  getCollateralPrecision
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -35,6 +37,7 @@ import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { Contract } from "ethers";
+import { utils } from "ethers";
 import { showAllUniswapPairs } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
 import moment from "moment";
@@ -441,10 +444,20 @@ export function load() {
         return;
       }
 
-      const collateralAmount = to_d18(maxCollateralAmount);
+      useNativeToken = useNativeToken.toLowerCase() === "true";
+
+      const collateralTokenAddress = await stablePool.collateral_token();
+      const precision = getCollateralPrecision(hre, collateralTokenAddress);
+      const preciseMaxCollateralAmount = utils.parseUnits(maxCollateralAmount, precision);
+
+      if (!useNativeToken) {
+        const collateralToken = await getCollateralContract(hre, collateralTokenAddress);
+        await collateralToken.approve(stablePool.address, preciseMaxCollateralAmount);
+      }
+
       const res = await (
-        await stablePool.recollateralizeBdStable(collateralAmount, to_d18(minExpectedBDX), useNativeToken, {
-          value: collateralAmount
+        await stablePool.recollateralizeBdStable(preciseMaxCollateralAmount, to_d18(minExpectedBDX), useNativeToken, {
+          value: useNativeToken ? preciseMaxCollateralAmount : 0
         })
       ).wait();
 
