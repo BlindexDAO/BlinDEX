@@ -69,4 +69,28 @@ export function load() {
         console.log("BDX recieved:", d18_ToNumber(recollateralizedEvent.args[1]));
       }
     });
+
+  task("toggleAll:buybackOnlyForOwner").setAction(async (args, hre) => {
+    const stablePools = await getAllBDStablePools(hre);
+
+    for (let index = 0; index < stablePools.length; index++) {
+      const stablePool = stablePools[index];
+      console.log("\nBDStablePool address:", stablePool.address);
+      console.log("Before: buybackOnlyForOwner:", await stablePool.buybackOnlyForOwner());
+      await (await stablePool.toggleBuybackOnlyForOwner()).wait();
+      console.log("After: buybackOnlyForOwner:", await stablePool.buybackOnlyForOwner());
+    }
+  });
+
+  task("toggleAll:recollateralizeOnlyForOwner").setAction(async (args, hre) => {
+    const stablePools = await getAllBDStablePools(hre);
+
+    for (let index = 0; index < stablePools.length; index++) {
+      const stablePool = stablePools[index];
+      console.log("\nBDStablePool address:", stablePool.address);
+      console.log("Before: recollateralizeOnlyForOwner:", await stablePool.recollateralizeOnlyForOwner());
+      await (await stablePool.toggleRecollateralizeOnlyForOwner()).wait();
+      console.log("After: recollateralizeOnlyForOwner:", await stablePool.recollateralizeOnlyForOwner());
+    }
+  });
 }
