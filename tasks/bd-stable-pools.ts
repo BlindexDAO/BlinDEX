@@ -4,7 +4,7 @@ import { d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
 import { utils } from "ethers";
 
 export function load() {
-  task("run:buyback")
+  task("bdsp:buyback")
     .addPositionalParam("stablePoolAddress", "The address of the stable pool we'd like to buyback")
     .addPositionalParam("maxBdxAmount", "Maximum BDX amount to be paid for the buyback")
     .addPositionalParam("minCollateralAmount", "Minimum collateral amount to buy back")
@@ -31,7 +31,7 @@ export function load() {
       }
     });
 
-  task("run:recollateralize")
+  task("bdsp:recollateralize")
     .addPositionalParam("stablePoolAddress", "The address of the stable pool we'd like to recollateralize")
     .addPositionalParam("maxCollateralAmount", "Maximum amount of collateral to be paid")
     .addPositionalParam("minExpectedBDX", "Minimum amount of BDX we'd like to get in return for the recollateralization")
@@ -70,7 +70,7 @@ export function load() {
       }
     });
 
-  task("toggleAll:buybackOnlyForOwner").setAction(async (args, hre) => {
+  task("bdsp:all:toggle:buybackOnlyForOwner").setAction(async (args, hre) => {
     const stablePools = await getAllBDStablePools(hre);
 
     for (let index = 0; index < stablePools.length; index++) {
@@ -82,7 +82,7 @@ export function load() {
     }
   });
 
-  task("toggleAll:recollateralizeOnlyForOwner").setAction(async (args, hre) => {
+  task("bdsp:all:toggle:recollateralizeOnlyForOwner").setAction(async (args, hre) => {
     const stablePools = await getAllBDStablePools(hre);
 
     for (let index = 0; index < stablePools.length; index++) {
