@@ -1,8 +1,8 @@
 ![MEDIUM HEADER 1500x750px_](https://user-images.githubusercontent.com/1577655/147810830-1b200126-47d1-4a78-a95a-45a8c8a105cc.png)
 
-# BlinDEX
+# Blindex
 
-BlinDEX is the first **multi-currency stablecoin-based DeFi platform** that sees all currencies as equals.
+Blindex is the first **multi-currency stablecoin-based DeFi platform** that sees all currencies as equals.
 Replacing all traditional financial systems calls for a completely stable, inclusive, and **100% decentralized** alternative. We don't play around with centralized collateral.
 
 💻 [Website](https://blindex.io)
@@ -13,9 +13,9 @@ Replacing all traditional financial systems calls for a completely stable, inclu
 
 ♣️ [Discord](https://discord.gg/dbN2bmJ42u)
 
-💬 [Telegram](https://t.me/BlinDEXio)
+💬 [Telegram](https://t.me/Blindexio)
 
-🤳 [Twitter](https://twitter.com/BlinDEXio)
+🤳 [Twitter](https://twitter.com/Blindexio)
 
 
 # Development
@@ -92,7 +92,7 @@ The account responsible for updating oracles and refreshing other parts of the s
 
 ### Operational treasury account
 
-The account which accumulates fees to finance BlinDEX operational expenses.
+The account which accumulates fees to finance Blindex operational expenses.
 
 # Audits
 
