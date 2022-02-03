@@ -21,7 +21,7 @@ import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_eur
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
-import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { wBTC_address, wETH_address } from "./Constants";
@@ -350,15 +350,15 @@ export function getWbtcPairOracle(hre: HardhatRuntimeEnvironment, tokenName: str
 }
 
 export async function getSovrynFeed_RbtcUsd(hre: HardhatRuntimeEnvironment) {
-  return (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName)) as SovrynSwapPriceFeed;
+  return (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD)) as SovrynSwapPriceFeed;
 }
 
 export async function getSovrynFeed_RbtcEths(hre: HardhatRuntimeEnvironment) {
-  return (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as SovrynSwapPriceFeed;
+  return (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as SovrynSwapPriceFeed;
 }
 
 export async function getFiatToFiat_EurUsd(hre: HardhatRuntimeEnvironment) {
-  return (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName)) as FiatToFiatPseudoOracleFeed;
+  return (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as FiatToFiatPseudoOracleFeed;
 }
 
 export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, tokenAName: string, tokenBName: string): Promise<UniswapPairOracle> {
