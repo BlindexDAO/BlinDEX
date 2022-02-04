@@ -10,7 +10,8 @@ import {
   getBDStableWethPool,
   getBDStableWbtcPool,
   getBDStableFiat,
-  getAllBDStables
+  getAllBDStables,
+  getWbtc
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -100,20 +101,28 @@ export function load() {
     const stables = await getStablesConfig(hre);
     const swaps = await getSwapsConfig(hre, deployer);
     const stakings = await getStakingsConfig(hre);
+    const weth = await getWeth(hre);
+    const bdx = await getBdx(hre);
+    const erc20Info = await getErc20Info(
+      hre,
+      stables.map(x => x.address),
+      swaps.map(x => x.address)
+    );
 
     const blockchainConfig = {
       STABLES: stables,
       SWAPS: swaps,
       STAKING_REWARDS: stakings,
-      WETH: (await getWeth(hre)).address,
-      BDX: (await getBdx(hre)).address,
+      WETH: weth.address,
+      BDX: bdx.address,
       SWAP_ROUTER: (await getUniswapRouter(hre)).address,
       SWAP_FACTORY: (await getUniswapFactory(hre)).address,
       STAKING_REWARDS_DISTRIBUTION: stakingRewardsDistribution.address,
       VESTING: (await getVesting(hre)).address,
       BD_STABLES: allStables.map((stable: BDStable) => stable.address),
       PRICE_FEED_EUR_USD: (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)).address,
-      BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address
+      BTC_TO_ETH_ORACLE: (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)).address,
+      ERC20_INFO: erc20Info
     };
 
     console.log(cleanStringify(blockchainConfig));
@@ -186,6 +195,9 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
       const stakingTokenAddress = await stakingRewards.stakingToken();
 
       const lpAddress = await stakingRewards.stakingToken();
+      const stakingTokendDecimals = (await stakingRewards.stakingDecimals()).toNumber();
+      const isTrueBdPool = await stakingRewards.isTrueBdPool();
+      const rewardForDuration = (await stakingRewards.getRewardForDuration()).toString();
       const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
       const token0Address = await lp.token0();
       const token1Address = await lp.token1();
@@ -193,7 +205,10 @@ async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {
       const token1 = (await hre.ethers.getContractAt("ERC20", token1Address)) as ERC20;
 
       return {
-        address: address,
+        address,
+        stakingTokendDecimals,
+        isTrueBdPool,
+        rewardForDuration,
         stakingTokenAddress: stakingTokenAddress,
         token0Address: token0.address,
         token1Address: token1.address,
@@ -244,4 +259,26 @@ async function getStablesConfig(hre: HardhatRuntimeEnvironment) {
   }
 
   return stableConfigs;
+}
+
+async function getErc20Info(hre: HardhatRuntimeEnvironment, stablesAddresses: string[], swapsAddresses: string[]) {
+  const weth = await getWeth(hre);
+  const wbtc = await getWbtc(hre);
+  const bdx = await getBdx(hre);
+
+  const addresses = [bdx.address, weth.address, wbtc.address, ...stablesAddresses, ...swapsAddresses];
+
+  const contractsData = await Promise.all(
+    addresses.map(async address => {
+      const contact = (await hre.ethers.getContractAt("ERC20", address)) as ERC20;
+
+      return {
+        address: address,
+        symbol: await contact.symbol(),
+        decimals: await contact.decimals()
+      };
+    })
+  );
+
+  return contractsData;
 }
