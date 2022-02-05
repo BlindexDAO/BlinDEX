@@ -6,18 +6,18 @@ import type { BDStable } from "../../typechain/BDStable";
 export async function lockBdeuCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
   console.log("Lock BDEU CR at", targetCR);
   const bdEu = await getBdEu(hre);
-  await lockBdStableCRAt(targetCR, bdEu);
+  await lockBdStableCrAt(targetCR, bdEu);
   console.log("Lock BDEU completed!");
 }
 
 export async function lockBdusCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
   console.log("Lock BDUS CR at", targetCR);
   const bdUs = await getBdUs(hre);
-  await lockBdStableCRAt(targetCR, bdUs);
+  await lockBdStableCrAt(targetCR, bdUs);
   console.log("Lock BDUS completed!");
 }
 
-async function lockBdStableCRAt(targetCR: number, bdStable: BDStable) {
+async function lockBdStableCrAt(targetCR: number, bdStable: BDStable) {
   if (targetCR < 0) {
     throw new Error("targetCR must >= 0");
   }
