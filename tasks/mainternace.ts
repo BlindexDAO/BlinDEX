@@ -394,6 +394,18 @@ export function load() {
     }
   });
 
+  task("unpause:staking").setAction(async (args, hre) => {
+    const stakings = await getAllBDStableStakingRewards(hre);
+    for (const staking of stakings) {
+      if (await staking.paused()) {
+        await staking.unpause();
+        console.log("unpaused", staking.address);
+      } else {
+        console.log("already unpaused", staking.address);
+      }
+    }
+  });
+
   task("show:stakings:paused").setAction(async (args, hre) => {
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
