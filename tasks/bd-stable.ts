@@ -25,7 +25,7 @@ export function load() {
     await toggleBdeuCrPaused(hre);
   });
 
-  task("bds:toggleBdusCrPaused").setAction(async (args, hre) => {
+  task("bds:bdus:toggleCrPaused").setAction(async (args, hre) => {
     await toggleBdusCrPaused(hre);
   });
 
