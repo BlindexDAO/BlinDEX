@@ -399,7 +399,7 @@ export function load() {
     for (const staking of stakings) {
       if (await staking.paused()) {
         const transaction = await staking.unpause();
-        console.log(`Unpause transaction sumitted: ${transaction.hash}. Waiting for it to finish.`);
+        console.log(`Unpause transaction submitted: ${transaction.hash}. Waiting for it to finish.`);
         await transaction.wait();
         console.log("unpaused", staking.address);
       } else {
