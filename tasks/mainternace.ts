@@ -415,6 +415,21 @@ export function load() {
     }
   });
 
+  task("show:rewards:earned")
+    .addPositionalParam("address", "The address to check the rewards for")
+    .setAction(async ({ address }, hre) => {
+      const stakings = await getAllBDStableStakingRewards(hre);
+
+      let totalBDXRewards = 0;
+      for (const staking of stakings) {
+        const rewards = bigNumberToDecimal(await staking.earned(formatAddress(hre, address)), 18);
+        totalBDXRewards += rewards;
+        console.log(`Pool - ${staking.address} - Rewards for address ${address}`, rewards);
+      }
+
+      console.log("Total rewards", totalBDXRewards);
+    });
+
   // -------------------------- readonly
 
   task("show:oracles-prices").setAction(async (args, hre) => {

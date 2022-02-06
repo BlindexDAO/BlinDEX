@@ -6,7 +6,7 @@ import { to_d12, to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
 import { provideBdx } from "../helpers/common";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import { lockBdEuCrAt } from "../helpers/bdStable";
+import { lockBdeuCrAt } from "../helpers/bdStable";
 
 chai.use(cap);
 
@@ -25,7 +25,7 @@ describe("BuyBack", () => {
   it("should buy back", async () => {
     await setUpFunctionalSystemForTests(hre, 0.9);
 
-    await lockBdEuCrAt(hre, 0.3); // CR
+    await lockBdeuCrAt(hre, 0.3); // CR
 
     const testUser = await getUser(hre);
 
@@ -81,7 +81,7 @@ describe("BuyBack", () => {
     const cr = 0.3;
 
     await setUpFunctionalSystemForTests(hre, collateralizedFraction);
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     const testUser = await getUser(hre);
     const bdx = await getBdx(hre);
@@ -114,7 +114,7 @@ describe("BuyBack", () => {
     const cr = 0.3;
 
     await setUpFunctionalSystemForTests(hre, collateralizedFraction);
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     const testUser = await getUser(hre);
     const bdx = await getBdx(hre);
@@ -149,7 +149,7 @@ describe("BuyBack", () => {
 
     await setUpFunctionalSystemForTests(hre, collateralizedFraction);
 
-    await lockBdEuCrAt(hre, cr); // CR
+    await lockBdeuCrAt(hre, cr); // CR
 
     const testUser = await getUser(hre);
     const bdx = await getBdx(hre);
