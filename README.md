@@ -17,7 +17,6 @@ Replacing all traditional financial systems calls for a completely stable, inclu
 
 🤳 [Twitter](https://twitter.com/Blindexio)
 
-
 # Development
 
 ## Environment variables
