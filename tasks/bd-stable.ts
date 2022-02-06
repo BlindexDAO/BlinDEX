@@ -8,7 +8,7 @@ export function load() {
       await lockBdeuCrAt(hre, crRatio);
     });
 
-  task("bds:lockBdUsCollateralRatio")
+  task("bds:bdus:lockCollateralRatio")
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
       await lockBdusCrAt(hre, crRatio);
