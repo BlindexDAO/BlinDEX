@@ -5,7 +5,7 @@ import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { lockBdEuCrAt } from "../helpers/bdStable";
+import { lockBdeuCrAt } from "../helpers/bdStable";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getDeployer, mintWeth } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
@@ -52,7 +52,7 @@ describe("BDStable fractional", () => {
     const bdEuPool = await getBdEuWethPool(hre);
 
     const cr = 0.7;
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
     await mintWeth(hre, testUser, to_d18(100));
@@ -122,7 +122,7 @@ describe("BDStable fractional", () => {
     const bdEuPool = await getBdEuWethPool(hre);
 
     const cr = 0.7;
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
     await mintWeth(hre, testUser, to_d18(100));
@@ -192,7 +192,7 @@ describe("BDStable fractional", () => {
 
     const cr = 0.7;
 
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     const efCR_d12 = await bdEu.effective_global_collateral_ratio_d12();
     console.log("effectiveCR: " + d12_ToNumber(efCR_d12));
@@ -266,7 +266,7 @@ describe("BDStable fractional", () => {
 
     const cr = 0.7;
 
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     const efCR_d12 = await bdEu.effective_global_collateral_ratio_d12();
     console.log("effectiveCR: " + d12_ToNumber(efCR_d12));
@@ -337,7 +337,7 @@ describe("BDStable fractional", () => {
 
     const cr = 0.2;
 
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     // calculate how much is needed to mint
     await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
@@ -374,7 +374,7 @@ describe("BDStable fractional", () => {
 
     // enable fractional redeem
     const cr = 0.7;
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
     expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation

@@ -15,7 +15,7 @@ import {
   mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import { lockBdEuCrAt } from "../helpers/bdStable";
+import { lockBdeuCrAt } from "../helpers/bdStable";
 import * as constants from "../../utils/Constants";
 
 chai.use(cap);
@@ -40,7 +40,7 @@ describe("Recollateralization", () => {
     const bdEu = await getBdEu(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
 
-    await lockBdEuCrAt(hre, 0.7);
+    await lockBdeuCrAt(hre, 0.7);
 
     await mintWeth(hre, testUser, to_d18(100));
 
@@ -101,7 +101,7 @@ describe("Recollateralization", () => {
     const testUser = await getUser(hre);
     const weth = await getWeth(hre);
 
-    await lockBdEuCrAt(hre, 0.9); // CR
+    await lockBdeuCrAt(hre, 0.9); // CR
 
     await mintWeth(hre, testUser, to_d18(100));
 
@@ -115,7 +115,7 @@ describe("Recollateralization", () => {
   it("recollateralize should fail when efCR > CR", async () => {
     await setUpFunctionalSystemForTests(hre, 0.9); // ~efCR
 
-    await lockBdEuCrAt(hre, 0.3); // CR
+    await lockBdeuCrAt(hre, 0.3); // CR
 
     const testUser = await getUser(hre);
     const weth = await getWeth(hre);
@@ -143,7 +143,7 @@ describe("Recollateralization", () => {
     const weth = await getWeth(hre);
 
     const cr = 0.9;
-    await lockBdEuCrAt(hre, cr); // CR
+    await lockBdeuCrAt(hre, cr); // CR
 
     const wethPrice = (await getOnChainEthEurPrice(hre)).price;
     const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
@@ -193,7 +193,7 @@ describe("Recollateralization", () => {
     const testUser = await getUser(hre);
     const weth = await getWeth(hre);
 
-    await lockBdEuCrAt(hre, 0.9); // CR
+    await lockBdeuCrAt(hre, 0.9); // CR
 
     const bdEuWethPool = await getBdEuWethPool(hre);
 
