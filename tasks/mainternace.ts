@@ -398,7 +398,9 @@ export function load() {
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
       if (await staking.paused()) {
-        await staking.unpause();
+        const transaction = await staking.unpause();
+        console.log(`Unpause transaction sumitted: ${transaction.hash}. Waiting for it to finish.`);
+        await transaction.wait();
         console.log("unpaused", staking.address);
       } else {
         console.log("already unpaused", staking.address);
