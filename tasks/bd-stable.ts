@@ -41,4 +41,11 @@ export function load() {
     await toggleBdeuCrPaused(hre);
     await toggleBdusCrPaused(hre);
   });
+
+  task("bds:show:all:cr").setAction(async (args, hre) => {
+    const stables = await getAllBDStables(hre);
+    for (const stable of stables) {
+      console.log(`${await stable.symbol()} CR is: ${await stable.global_collateral_ratio_d12()}`);
+    }
+  });
 }
