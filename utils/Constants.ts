@@ -84,3 +84,4 @@ export const rskBotAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
 export const rskOperationalTreasuryAddress = "0x48e2B176dB179d81135052F4bee7fB1129f270DD";
 
 export const bdxLockAmount = to_d18(3150000);
+export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";

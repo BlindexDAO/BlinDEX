@@ -35,7 +35,7 @@ import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { Contract } from "ethers";
-import { showAllUniswapPairs } from "./liquidity-pools";
+import { getAllUniswapPairsData } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
 import moment from "moment";
 
@@ -505,7 +505,7 @@ export function load() {
     console.log("==================================");
     console.log("Uniswap Pairs Information");
     console.log("==================================");
-    await showAllUniswapPairs(hre);
+    console.log(await getAllUniswapPairsData(hre));
   });
 
   task("show:efCRs").setAction(async (args, hre) => {
