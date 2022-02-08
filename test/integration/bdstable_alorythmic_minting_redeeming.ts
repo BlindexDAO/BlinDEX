@@ -6,7 +6,7 @@ import { d12_ToNumber, diffPct, to_d12 } from "../../utils/NumbersHelpers";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getDeployer } from "../../utils/DeployedContractsHelpers";
-import { lockBdEuCrAt } from "../helpers/bdStable";
+import { lockBdeuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { provideBdEu, provideBdx } from "../helpers/common";
 
@@ -39,7 +39,7 @@ describe("BDStable algorythmic", () => {
     await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdx to user, so user can mint
     const bdxBalanceBeforeMinting = await bdx.balanceOf(testUser.address);
 
-    await lockBdEuCrAt(hre, 0);
+    await lockBdeuCrAt(hre, 0);
 
     const wethBalanceBeforeMinting = await weth.balanceOf(testUser.address);
     const bdEulBalanceBeforeMinting = await bdEu.balanceOf(testUser.address);
@@ -92,7 +92,7 @@ describe("BDStable algorythmic", () => {
     const bdEu = await getBdEu(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 
-    await lockBdEuCrAt(hre, 0);
+    await lockBdeuCrAt(hre, 0);
 
     await provideBdEu(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can redeem
 
@@ -148,7 +148,7 @@ describe("BDStable algorythmic", () => {
     const bdEu = await getBdEu(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 
-    await lockBdEuCrAt(hre, 0);
+    await lockBdeuCrAt(hre, 0);
 
     const bdxAmount = 10;
     await provideBdx(hre, testUser.address, to_d18(bdxAmount * 100)); // treasury gives some bdx to user, so user can mint
@@ -187,7 +187,7 @@ describe("BDStable algorythmic", () => {
 
     // enable alogirthimc redeem
     const cr = 0;
-    await lockBdEuCrAt(hre, cr);
+    await lockBdeuCrAt(hre, cr);
 
     const bdxEfCr = d12_ToNumber(await bdEu.get_effective_bdx_coverage_ratio());
     expect(bdxEfCr).to.be.lt(1, "bdxEfCr should be < 1"); // test validation

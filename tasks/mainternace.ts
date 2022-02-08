@@ -394,12 +394,41 @@ export function load() {
     }
   });
 
+  task("unpause:staking").setAction(async (args, hre) => {
+    const stakings = await getAllBDStableStakingRewards(hre);
+    for (const staking of stakings) {
+      if (await staking.paused()) {
+        const transaction = await staking.unpause();
+        console.log(`Unpause transaction submitted: ${transaction.hash}. Waiting for it to finish.`);
+        await transaction.wait();
+        console.log("unpaused", staking.address);
+      } else {
+        console.log("already unpaused", staking.address);
+      }
+    }
+  });
+
   task("show:stakings:paused").setAction(async (args, hre) => {
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
       console.log(`staking: ${staking.address}`, await staking.paused());
     }
   });
+
+  task("show:rewards:earned")
+    .addPositionalParam("address", "The address to check the rewards for")
+    .setAction(async ({ address }, hre) => {
+      const stakings = await getAllBDStableStakingRewards(hre);
+
+      let totalBDXRewards = 0;
+      for (const staking of stakings) {
+        const rewards = bigNumberToDecimal(await staking.earned(formatAddress(hre, address)), 18);
+        totalBDXRewards += rewards;
+        console.log(`Pool - ${staking.address} - Rewards for address ${address}`, rewards);
+      }
+
+      console.log("Total rewards", totalBDXRewards);
+    });
 
   // -------------------------- readonly
 
