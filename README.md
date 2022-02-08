@@ -17,7 +17,6 @@ Replacing all traditional financial systems calls for a completely stable, inclu
 
 🤳 [Twitter](https://twitter.com/BlinDEXio)
 
-
 # Development
 
 ## Environment variables
@@ -73,6 +72,10 @@ npm test
 
 We reuse code between our blockchain & frontend apps. For that reason we have the `@blindex/interfaces` npm package that can be used to import all of Blindex's ABIs & Typescript types.
 Enjoy!
+
+# Technical documentation
+
+- [Upgrading contracts as a multi-sig owner](documentation/upgrading-contracts-multisig)
 
 # Accounts
 
