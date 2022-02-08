@@ -19,11 +19,12 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { PriceFeedContractNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 import { readFileSync, readdirSync } from "fs";
+import type { Contract } from "ethers";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -131,11 +132,21 @@ export function load() {
   async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
     const priceFeeds = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
       const instance = await hre.ethers.getContract(value, deployer);
-      return { symbol: key, address: instance.address, decimals: instance.decimals ? await instance.decimals() : undefined };
+      return { symbol: key, address: instance.address, decimals: await getDecimals(instance) };
     });
 
     const results = await Promise.all(priceFeeds);
     return results;
+  }
+
+  async function getDecimals(instance: Contract): Promise<number | undefined> {
+    if (instance.decimals) {
+      return await instance.decimals();
+    } else if (instance.getDecimals) {
+      return await instance.getDecimals();
+    } else {
+      return undefined;
+    }
   }
 
   async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
