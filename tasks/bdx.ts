@@ -2,7 +2,14 @@ import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BDXShares } from "../typechain/BDXShares";
 import { bdxLockingContractAddressRSK, rskOperationalTreasuryAddress } from "../utils/Constants";
-import { getAllBDStables, getBdx, getOperationalTreasury, getStakingRewardsDistribution, getTreasury } from "../utils/DeployedContractsHelpers";
+import {
+  getAllBDStables,
+  getBdUs,
+  getBdx,
+  getOperationalTreasury,
+  getStakingRewardsDistribution,
+  getTreasury
+} from "../utils/DeployedContractsHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 
@@ -62,7 +69,10 @@ export function load() {
 
     const bdxTotalSupply_d18 = bigNumberToDecimal(bdxTotalSupply, 18);
     console.log("\n=======================================================================");
-    console.log(`BDX circulating supply: ${bdxTotalSupply_d18.toLocaleString()}`);
+    const bdxPriceUSD = bigNumberToDecimal(await (await getBdUs(hre)).BDX_price_d12(), 12);
+    console.log(`BDX Price $${bdxPriceUSD.toLocaleString()}`);
+    console.log(`BDX Marketcap $${(bdxPriceUSD * bdxTotalSupply_d18).toLocaleString()}`);
+    console.log(`BDX Circulating Supply: ${bdxTotalSupply_d18.toLocaleString()}`);
     console.log("\nOut of that amount, we have this amount of BDX in the uniswap pools:");
     const bdxInPools = await getBdxInUniswapPools(hre, bdx);
     console.log(`\n- And outside of the pools: ${(bdxTotalSupply_d18 - bdxInPools).toLocaleString()}`);
