@@ -75,7 +75,7 @@ Enjoy!
 
 # Technical documentation
 
-- [Upgrading contracts as a multi-sig owner](documentation/upgrading-contracts-multisig)
+- [Upgrading contracts as a multi-sig owner](documentation/upgrading-contracts)
 
 # Accounts
 
