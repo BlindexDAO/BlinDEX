@@ -8,7 +8,7 @@ import "./ICryptoPairOracle.sol";
 contract WethToWethOracle is ICryptoPairOracle {
     address internal wethAddress;
 
-    uint8 private constant DECIMALS = 0;
+    uint8 private constant DECIMALS = 18;
 
     constructor(address _wethAddress) public {
         require(_wethAddress != address(0), "Weth address cannot be 0");
