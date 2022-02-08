@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber, d12_ToNumber, diffPct, to_d12, to_d8 } from "../../utils/NumbersHelpers";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { lockBdEuCrAt } from "../helpers/bdStable";
+import { lockBdeuCrAt } from "../helpers/bdStable";
 import {
   getBdEu,
   getBdEuWbtcPool,
@@ -43,7 +43,7 @@ describe("BDStable 1to1", () => {
     const testUser = await getUser(hre);
     const collateralAmount = 10;
 
-    await lockBdEuCrAt(hre, 1);
+    await lockBdeuCrAt(hre, 1);
 
     const bdEuBefore_d18 = await bdEu.balanceOf(testUser.address);
     const poolWethBefore_d18 = await weth.balanceOf(bdEuPool.address);
@@ -80,7 +80,7 @@ describe("BDStable 1to1", () => {
     const testUser = await getUser(hre);
     const collateralAmount = 10;
 
-    await lockBdEuCrAt(hre, 1);
+    await lockBdeuCrAt(hre, 1);
 
     const bdEuBefore_d18 = await bdEu.balanceOf(testUser.address);
     const poolWethBefore_d18 = await weth.balanceOf(bdEuPool.address);
@@ -114,7 +114,7 @@ describe("BDStable 1to1", () => {
     const testUser = await getUser(hre);
     const collateralAmount = 0.5;
 
-    await lockBdEuCrAt(hre, 1);
+    await lockBdeuCrAt(hre, 1);
 
     const bdEuBefore_d18 = await bdEu.balanceOf(testUser.address);
 
@@ -150,7 +150,7 @@ describe("BDStable 1to1", () => {
     const weth = await getWeth(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 
-    await lockBdEuCrAt(hre, 1);
+    await lockBdeuCrAt(hre, 1);
 
     const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
@@ -206,7 +206,7 @@ describe("BDStable 1to1", () => {
     const weth = await getWeth(hre);
     const bdEuPool = await getBdEuWethPool(hre);
 
-    await lockBdEuCrAt(hre, 1);
+    await lockBdeuCrAt(hre, 1);
 
     const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
 
@@ -272,7 +272,7 @@ describe("BDStable 1to1", () => {
     const bdEuPool = await getBdEuWethPool(hre);
     const bdEu = await getBdEu(hre);
 
-    await lockBdEuCrAt(hre, 1);
+    await lockBdeuCrAt(hre, 1);
 
     const collateralAmount = 0.1;
 
