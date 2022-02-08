@@ -33,7 +33,7 @@ import type { IPriceFeed } from "../typechain/IPriceFeed";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
+import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { Contract } from "ethers";
 import { showAllUniswapPairs } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
@@ -84,7 +84,7 @@ export function load() {
 
       const signer = await getBot(hre);
 
-      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, signer)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed;
       await (await oracleBtcEth.updateOracleWithVerification(to_d12(btceth))).wait();
       console.log("updated RSK BTC/ETH (same on both networks)");
     });
@@ -96,7 +96,7 @@ export function load() {
         throw new Error("RSK only task");
       }
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
       console.log("updated EUR / USD");
     });
@@ -113,7 +113,7 @@ export function load() {
       }
 
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
       await (await oracleEurUsd.connect(deployer).setMaxDayChange_d12(to_d12(change))).wait();
       console.log("updated EUR / USD max day change");
     });
@@ -171,21 +171,21 @@ export function load() {
       console.log(`set:owner ${owner} on ${hre.network.name}`);
       const deployer = await getDeployer(hre);
       if (hre.network.name == "rsk") {
-        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)) as SovrynSwapPriceFeed;
+        const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
         if (!(await isSameOwner(owner, oracleEthUsd))) {
-          console.log(`transfer ownership on contract ${PriceFeedContractNames.priceFeedETHUsdName} to ${owner}`);
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.ETH_USD} to ${owner}`);
           await (await oracleEthUsd.transferOwnership(owner)).wait();
         }
 
-        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)) as SovrynSwapPriceFeed;
+        const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
         if (!(await isSameOwner(owner, oracleBtcEth))) {
-          console.log(`transfer ownership on contract ${PriceFeedContractNames.BtcToEthOracle} to ${owner}`);
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.BTC_ETH} to ${owner}`);
           await (await oracleBtcEth.transferOwnership(owner)).wait();
         }
 
-        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
+        const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
         if (!(await isSameOwner(owner, oracleEurUsd))) {
-          console.log(`transfer ownership on contract ${PriceFeedContractNames.priceFeedEurUsdName} to ${owner}`);
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.EUR_USD} to ${owner}`);
           await (await oracleEurUsd.transferOwnership(owner)).wait();
         }
       }
@@ -256,9 +256,9 @@ export function load() {
 
       const networkName = hre.network.name;
       const deployer = await getDeployer(hre);
-      const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedETHUsdName, deployer)) as SovrynSwapPriceFeed;
-      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle, deployer)) as SovrynSwapPriceFeed;
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
 
       if (networkName == "rsk") {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
@@ -365,7 +365,7 @@ export function load() {
 
       console.log("Setting EUR/USD: " + newPrice);
 
-      const feed = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName)) as FiatToFiatPseudoOracleFeed;
+      const feed = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as FiatToFiatPseudoOracleFeed;
       await (await feed.connect(bot).setPrice(to_d12(newPrice))).wait();
     });
 
@@ -517,13 +517,13 @@ export function load() {
   });
 
   async function show_ethEur(hre: HardhatRuntimeEnvironment) {
-    const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthEurName)) as IOracleBasedCryptoFiatFeed;
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.ETH_EUR)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
     console.log(`${constants.NATIVE_TOKEN_NAME[hre.network.name]}/EUR: ${price}`);
   }
 
   async function show_ethUsd(hre: HardhatRuntimeEnvironment) {
-    const feed = (await hre.ethers.getContract(PriceFeedContractNames.oracleEthUsdName)) as IOracleBasedCryptoFiatFeed;
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD_ADAPTER)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
     console.log(`${constants.NATIVE_TOKEN_NAME[hre.network.name]}/USD: ${price}`);
   }
@@ -531,10 +531,10 @@ export function load() {
   async function show_btcEth(hre: HardhatRuntimeEnvironment) {
     let price;
     if (hre.network.name == "rsk") {
-      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as IPriceFeed;
+      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as IPriceFeed;
       price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     } else {
-      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BtcToEthOracle)) as BtcToEthOracleChinlink;
+      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as BtcToEthOracleChinlink;
       price = d12_ToNumber(await feed.getPrice_1e12());
     }
 
@@ -542,7 +542,7 @@ export function load() {
   }
 
   async function show_eurUsd(hre: HardhatRuntimeEnvironment) {
-    const feed = (await hre.ethers.getContract(PriceFeedContractNames.priceFeedEurUsdName)) as IPriceFeed;
+    const feed = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     let lastUpdateTimestamp = 0;
     if (hre.network.name == "rsk") {
