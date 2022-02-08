@@ -14,7 +14,7 @@ import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 
 export function load() {
-  task("bdx:show:circulating-supply").setAction(async (args, hre) => {
+  task("bdx:show:diagnostics").setAction(async (args, hre) => {
     const bdx = await getBdx(hre);
     let bdxTotalSupply = await bdx.totalSupply();
     console.log("BDX Total Supply:", bigNumberToDecimal(bdxTotalSupply, 18).toLocaleString());
