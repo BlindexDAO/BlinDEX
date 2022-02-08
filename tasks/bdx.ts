@@ -1,7 +1,7 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BDXShares } from "../typechain/BDXShares";
-import { bdxLockingContractAddressRSK, rskOperationalTreasuryAddress } from "../utils/Constants";
+import { bdxLockingContractAddressRSK, rskOperationalTreasuryAddress, rskTreasuryAddress } from "../utils/Constants";
 import {
   getAllBDStables,
   getBdUs,
@@ -19,8 +19,9 @@ export function load() {
     let bdxTotalSupply = await bdx.totalSupply();
     console.log("BDX Total Supply:", bigNumberToDecimal(bdxTotalSupply, 18).toLocaleString());
 
-    const [treasury, srd, stables] = await Promise.all([getTreasury(hre), getStakingRewardsDistribution(hre), getAllBDStables(hre)]);
+    const [srd, stables] = await Promise.all([getStakingRewardsDistribution(hre), getAllBDStables(hre)]);
     const operationalTreasuryAddress = hre.network.name === "rsk" ? rskOperationalTreasuryAddress : (await getOperationalTreasury(hre)).address;
+    const treasuryAddress = hre.network.name === "rsk" ? rskTreasuryAddress : (await getTreasury(hre)).address;
 
     for (const stable of stables) {
       console.log(`${await stable.symbol()}: -${bigNumberToDecimal(await bdx.balanceOf(stable.address), 18).toLocaleString()}`);
@@ -28,7 +29,7 @@ export function load() {
     }
 
     const [treasuryBalance, srdBalance, operationalTreasuryBalance] = await Promise.all([
-      bdx.balanceOf(treasury.address),
+      bdx.balanceOf(treasuryAddress),
       bdx.balanceOf(srd.address),
       bdx.balanceOf(operationalTreasuryAddress)
     ]);
