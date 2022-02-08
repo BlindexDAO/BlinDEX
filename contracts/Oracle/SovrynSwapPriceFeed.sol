@@ -53,7 +53,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     // IPriceFeed
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external view override(IPriceFeed, ICryptoPairOracle) returns (uint8) {
         return 12;
     }
 

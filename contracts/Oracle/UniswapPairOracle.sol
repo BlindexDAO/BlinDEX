@@ -13,6 +13,7 @@ import "./ICryptoPairOracle.sol";
 contract UniswapPairOracle is Ownable, ICryptoPairOracle {
     using FixedPoint for *;
 
+    uint8 private constant DECIMALS = 18;
     uint256 public period = 3600; // 1 hour TWAP (time-weighted average price)
     uint256 public consult_leniency = 60 * 15; // Used for being able to consult past the period end
     bool public allow_stale_consults = false; // If false, consult() will fail if the TWAP is stale
@@ -112,6 +113,10 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
             require(token == token1, "UniswapPairOracle: INVALID_TOKEN");
             amountOut = price1Average.mul(amountIn).decode144();
         }
+    }
+
+    function decimals() external view override returns (uint8) {
+        return DECIMALS;
     }
 
     event PeriodSet(uint256 period);
