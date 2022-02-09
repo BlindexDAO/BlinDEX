@@ -26,6 +26,7 @@ import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 import { readFileSync, readdirSync } from "fs";
 import type { Contract } from "ethers";
+import { NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME } from "../utils/Constants";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -169,11 +170,23 @@ export function load() {
     }[] = [];
     for (const poolPair of pools) {
       let pairSymbol = getPoolKey(poolPair[0].token.address, poolPair[1].token.address, poolPair[0].name, poolPair[1].name);
+      let token0Symbol = poolPair[0].name;
+      let token1Symbol = poolPair[1].name;
       const pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
       const oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
+      const networkWhichWeBasedOurPoolsConfig = "mainnetFork";
 
-      if (hre.network.name.toLowerCase() == "rsk") {
-        pairSymbol = pairSymbol.replace("ETH", "RBTC").replace("WBTC", "ETHs");
+      // Our uniswap contracts were deployed with the names WETH & WBTC instead of RSK's names (WRBTC & ETHs)
+      if (hre.network.name !== networkWhichWeBasedOurPoolsConfig) {
+        pairSymbol = pairSymbol
+          .replace(NATIVE_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig], NATIVE_TOKEN_NAME[hre.network.name])
+          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+        token0Symbol = token0Symbol
+          .replace(NATIVE_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig], NATIVE_TOKEN_NAME[hre.network.name])
+          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+        token1Symbol = token1Symbol
+          .replace(NATIVE_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig], NATIVE_TOKEN_NAME[hre.network.name])
+          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
       }
 
       pairInfos.push({
@@ -181,8 +194,8 @@ export function load() {
           address: pairAddress,
           token0: poolPair[0].token.address,
           token1: poolPair[1].token.address,
-          token0Symbol: poolPair[0].name,
-          token1Symbol: poolPair[1].name
+          token0Symbol,
+          token1Symbol
         },
         pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress },
         symbol: pairSymbol
