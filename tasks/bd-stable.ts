@@ -48,4 +48,24 @@ export function load() {
       console.log(`${await stable.symbol()} CR is: ${await stable.global_collateral_ratio_d12()}`);
     }
   });
+
+  task("bds:show:all:crPriceBand").setAction(async (args, hre) => {
+    const stables = await getAllBDStables(hre);
+    for (const stable of stables) {
+      console.log(`${await stable.symbol()} CR price band is ${await stable.price_band_d12()}`);
+    }
+  });
+
+  task("bds:all:setCrPriceBand")
+    .addPositionalParam("newPriceBand", "The desired CR price band")
+    .setAction(async ({ newPriceBand }, hre) => {
+      const stables = await getAllBDStables(hre);
+      for (const stable of stables) {
+        const symbol = await stable.symbol();
+        console.log(`\n${symbol} CR price band is ${await stable.price_band_d12()}`);
+        console.log(`Changing CR price band to ${newPriceBand}`);
+        await (await stable.set_price_band_d12(newPriceBand)).wait();
+        console.log(`CR price band is now ${await stable.price_band_d12()}`);
+      }
+    });
 }
