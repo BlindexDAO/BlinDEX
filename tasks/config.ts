@@ -174,19 +174,19 @@ export function load() {
       let token1Symbol = poolPair[1].name;
       const pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
       const oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
-      const networkWhichWeBasedOurPoolsConfig = "mainnetFork";
+      const etherOriginalTokenNamesNetworks = ["mainnetFork", "ethereum"];
 
       // Our uniswap contracts were deployed with the names WETH & WBTC instead of RSK's names (WRBTC & ETHs)
-      if (hre.network.name !== networkWhichWeBasedOurPoolsConfig) {
+      if (!etherOriginalTokenNamesNetworks.includes(hre.network.name)) {
         pairSymbol = pairSymbol
-          .replace(NATIVE_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig], NATIVE_TOKEN_NAME[hre.network.name])
-          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+          .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
+          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
         token0Symbol = token0Symbol
-          .replace(NATIVE_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig], NATIVE_TOKEN_NAME[hre.network.name])
-          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+          .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
+          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
         token1Symbol = token1Symbol
-          .replace(NATIVE_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig], NATIVE_TOKEN_NAME[hre.network.name])
-          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME[networkWhichWeBasedOurPoolsConfig]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+          .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
+          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
       }
 
       pairInfos.push({
