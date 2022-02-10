@@ -7,4 +7,6 @@ interface ICryptoPairOracle {
     function updateOracle() external;
 
     function shouldUpdateOracle() external view returns (bool);
+
+    function decimals() external view returns (uint8);
 }
