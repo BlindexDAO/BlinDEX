@@ -128,7 +128,7 @@ describe("Swaps", () => {
       let amountsOut;
       try {
         amountsOut = await router.getAmountsOut(amountIn, path);
-      } catch (_) {
+      } catch {
         continue; // handle unsupported paths like [wrbtc -> eths -> bdx]
       }
 
