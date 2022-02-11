@@ -22,7 +22,7 @@ export function load() {
   });
 
   task("lp:all:show", "Showing information for all the liquidity pools in the system").setAction(async (_args, hre) =>
-    console.log(getAllUniswapPairsData(hre))
+    console.log(await getAllUniswapPairsData(hre))
   );
 }
 
