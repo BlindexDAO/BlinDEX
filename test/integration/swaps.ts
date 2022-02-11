@@ -74,7 +74,7 @@ describe("Swaps", () => {
     await router.swapExactTokensForTokens(amountIn, 0, bestPath.path, deployer.address, currentBlock.timestamp + 1e5);
   });
 
-  it("Should choose best path (lenght 3)", async () => {
+  it("Should choose best path (length 3)", async () => {
     const deployer = await getDeployer(hre);
 
     const bdx = await getBdx(hre);
