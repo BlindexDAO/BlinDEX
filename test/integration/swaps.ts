@@ -3,9 +3,10 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d18_ToNumber, to_d18 } from "../../utils/NumbersHelpers";
-import { getAllBDStables, getBdEu, getBdx, getDeployer, getUniswapRouter, getWbtc, getWeth } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { BigNumber } from "ethers";
+import { getPools } from "../../utils/UniswapPoolsHelpers";
 
 chai.use(cap);
 
@@ -48,32 +49,6 @@ describe("Swaps", () => {
     await router.swapExactTokensForTokens(amountIn, 0, path, deployer.address, currentBlock.timestamp + 1e5);
   });
 
-  it("Should choose best path (lenght 2)", async () => {
-    const deployer = await getDeployer(hre);
-
-    const bdx = await getBdx(hre);
-    const weth = await getWeth(hre);
-    const router = await getUniswapRouter(hre);
-
-    const amountIn = to_d18(0.0001);
-
-    const pathsPrices = await generatePaths(amountIn, weth.address, bdx.address);
-    console.log(
-      pathsPrices.map(x => ({
-        path: x.path,
-        amountOut: d18_ToNumber(x.amountOut)
-      }))
-    );
-
-    const bestPath = await chooseBestPath(pathsPrices);
-    console.log(d18_ToNumber(bestPath.amountOut));
-    expect(bestPath.path.length).to.eq(2);
-
-    weth.approve(router.address, amountIn);
-    const currentBlock = await hre.ethers.provider.getBlock("latest");
-    await router.swapExactTokensForTokens(amountIn, 0, bestPath.path, deployer.address, currentBlock.timestamp + 1e5);
-  });
-
   it("Should choose best path (length 3)", async () => {
     const deployer = await getDeployer(hre);
 
@@ -107,18 +82,40 @@ describe("Swaps", () => {
     await router.swapExactTokensForTokens(amountIn, 0, bestPath.path, deployer.address, currentBlock.timestamp + 1e5);
   });
 
-  async function getTokensAvailebleForSwap() {
-    return [
-      ...(await getAllBDStables(hre)).map(x => x.address),
-      (await getBdx(hre)).address,
-      (await getWbtc(hre)).address,
-      (await getWeth(hre)).address
-    ];
+  async function getAvailableSwapLinks() {
+    const pools = await getPools(hre);
+
+    const availableLinks = [];
+
+    for (const pool of pools) {
+      availableLinks.push({ from: pool[0].token.address, to: pool[1].token.address });
+      availableLinks.push({ from: pool[1].token.address, to: pool[0].token.address });
+    }
+
+    return availableLinks;
   }
 
   async function generatePaths(amountIn: BigNumber, addressIn: string, addressOut: string): Promise<{ path: string[]; amountOut: BigNumber }[]> {
-    const availableTokens = await getTokensAvailebleForSwap();
-    const midTokens = availableTokens.filter(x => x !== addressIn && x != addressOut);
+    const availableSwapLinks = await getAvailableSwapLinks();
+
+    const midTokens = [];
+
+    for (const link1 of availableSwapLinks) {
+      if (link1.from !== addressIn) {
+        continue;
+      }
+      for (const link2 of availableSwapLinks) {
+        if (link1.to !== link2.from) {
+          continue;
+        }
+        if (link2.to !== addressOut) {
+          continue;
+        }
+
+        midTokens.push(link1.to);
+      }
+    }
+
     const paths = [[addressIn, addressOut], ...midTokens.map(x => [addressIn, x, addressOut])];
 
     const router = await getUniswapRouter(hre);
