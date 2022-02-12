@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getAllUniswaPairs, getOperationalTreasury, getTokenData, getUniswapFactory } from "../utils/DeployedContractsHelpers";
+import { formatAddress, getAllUniswaPairs, getBdx, getOperationalTreasury, getTokenData, getUniswapFactory } from "../utils/DeployedContractsHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 
 export function load() {
@@ -21,11 +21,14 @@ export function load() {
     console.log("Current 'feeTo' address:", await factory.feeTo());
   });
 
-  task("lp:all:show", "Showing information for all the liquidity pools in the system").setAction(async (_args, hre) => showAllUniswapPairs(hre));
+  task("lp:all:show", "Showing information for all the liquidity pools in the system").setAction(async (_args, hre) =>
+    console.log(await getAllUniswapPairsData(hre))
+  );
 }
 
-export async function showAllUniswapPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false) {
+export async function getAllUniswapPairsData(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false) {
   const pairs = await getAllUniswaPairs(hre, onlyWhitelistedTokens);
+  const bdxAddress = formatAddress(hre, (await getBdx(hre)).address);
 
   const fullData = await Promise.all(
     pairs.map(async pair => {
@@ -35,6 +38,7 @@ export async function showAllUniswapPairs(hre: HardhatRuntimeEnvironment, onlyWh
       return {
         pairName: `${token0Data.symbol}_${token1Data.symbol}`,
         address: pair.address,
+        isBdxPool: bdxAddress === formatAddress(hre, token0) || bdxAddress === formatAddress(hre, token1),
         [token0Data.symbol]: {
           address: token0,
           decimals: token0Data.decimals,
@@ -49,5 +53,5 @@ export async function showAllUniswapPairs(hre: HardhatRuntimeEnvironment, onlyWh
     })
   );
 
-  console.log(fullData);
+  return fullData;
 }

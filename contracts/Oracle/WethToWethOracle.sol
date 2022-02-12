@@ -8,6 +8,8 @@ import "./ICryptoPairOracle.sol";
 contract WethToWethOracle is ICryptoPairOracle {
     address internal wethAddress;
 
+    uint8 private constant DECIMALS = 18;
+
     constructor(address _wethAddress) public {
         require(_wethAddress != address(0), "Weth address cannot be 0");
 
@@ -26,5 +28,9 @@ contract WethToWethOracle is ICryptoPairOracle {
 
     function shouldUpdateOracle() external view override returns (bool) {
         return false;
+    }
+
+    function decimals() external view override returns (uint8) {
+        return DECIMALS;
     }
 }
