@@ -74,9 +74,12 @@ export function load() {
     console.log(`BDX Price $${bdxPriceUSD.toLocaleString()}`);
     console.log(`BDX Marketcap $${(bdxPriceUSD * bdxTotalSupply).toLocaleString()}`);
     console.log(`BDX Circulating Supply: ${bdxTotalSupply.toLocaleString()}`);
-    console.log("\nOut of that amount, we have this amount of BDX in the uniswap pools:");
     const bdxInPools = await getBdxInUniswapPools(hre, bdx);
-    console.log(`\n- And outside of the pools: ${(bdxTotalSupply - bdxInPools).toLocaleString()}`);
+    console.log(
+      `\nOut of that amount, we have this amount of BDX in the uniswap pools: ${bdxInPools} (${((bdxInPools / bdxTotalSupply) * 100).toFixed(2)}%)`
+    );
+    const bdxOutsidePools = bdxTotalSupply - bdxInPools;
+    console.log(`\n- And outside of the pools: ${bdxOutsidePools.toLocaleString()} (${((bdxOutsidePools / bdxTotalSupply) * 100).toFixed(2)}%)`);
     console.log("=========================================================================");
   });
 }
