@@ -36,6 +36,7 @@ export function load() {
         pairAddress: reward.stakingTokenAddress,
         stakingRewardAddress: reward.address,
         isTrueBdPool: reward.isTrueBdPool,
+        isPaused: reward.isPaused,
         token0Address: reward.token0Address,
         token1Address: reward.token1Address,
         token0Symbol: reward.token0Symbol,
@@ -226,6 +227,7 @@ export function load() {
         const lpAddress = await stakingRewards.stakingToken();
         const stakingTokenDecimals = (await stakingRewards.stakingDecimals()).toNumber();
         const isTrueBdPool = await stakingRewards.isTrueBdPool();
+        const isPaused = await stakingRewards.paused();
         const rewardForDuration = (await stakingRewards.getRewardForDuration()).toString();
         const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
         const token0Address = await lp.token0();
@@ -237,6 +239,7 @@ export function load() {
           address,
           stakingTokenDecimals,
           isTrueBdPool,
+          isPaused,
           rewardForDuration,
           stakingTokenAddress: stakingTokenAddress,
           token0Address: token0.address,
