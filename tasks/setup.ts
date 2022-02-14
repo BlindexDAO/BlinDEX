@@ -1,6 +1,7 @@
 import { task } from "hardhat/config";
 import { getAllBDStableStakingRewards, getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
+import { getUsdcFor } from "../utils/LocalHelpers";
 import { setupProductionReadySystem } from "../utils/SystemSetup";
 import { types } from "hardhat/config";
 
@@ -44,6 +45,8 @@ export function load() {
 
       // mint inital WBTC
       await mintWbtc(hre, treasury, to_d8(10), 1000);
+
+      await getUsdcFor(hre, treasury.address, 1000);
 
       await setupProductionReadySystem(hre, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
 

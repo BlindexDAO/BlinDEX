@@ -1,7 +1,8 @@
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getBdUs } from "./DeployedContractsHelpers";
+import * as constants from "../utils/Constants";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("starting updating oracles");
@@ -112,6 +113,14 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
       }
     }
   }
+
+  const bdus = await getBdUs(hre);
+
+  const supplementaryUsdStableAddress = constants.SUPPLEMENTARY_USD_STABLE_ADDRESS(hre.network.name);
+  const supplementaryUsdStableName = constants.SUPPLEMENTARY_USD_STABLE_NAME(hre.network.name);
+  const usdc = (await hre.ethers.getContractAt("IERC20", supplementaryUsdStableAddress)) as IERC20;
+
+  registerPool({ name: "BDUS", token: bdus }, { name: supplementaryUsdStableName, token: usdc });
 
   return pools;
 }

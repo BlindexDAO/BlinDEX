@@ -1,50 +1,8 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import * as constants from "../utils/Constants";
-import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import { formatAddress, getBdEu, getBdUs, getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
-import { getPoolKey } from "../utils/UniswapPoolsHelpers";
-
-async function setupStakingContract(
-  hre: HardhatRuntimeEnvironment,
-  addressA: string,
-  addressB: string,
-  nameA: string,
-  nameB: string,
-  isTrueBdPool: boolean
-) {
-  const poolKey = getPoolKey(addressA, addressB, nameA, nameB);
-
-  console.log(`Setting up staking: ${poolKey}`);
-
-  const deployer = await getDeployer(hre);
-  const uniswapFactoryContract = (await hre.ethers.getContract("UniswapV2Factory")) as UniswapV2Factory;
-  const pairAddress = await uniswapFactoryContract.getPair(addressA, addressB);
-
-  const stakingRewardsContractName = `StakingRewards_${poolKey}`;
-  const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
-
-  const stakingRewards_ProxyDeployment = await hre.deployments.deploy(stakingRewardsContractName, {
-    from: deployer.address,
-    proxy: {
-      proxyContract: "OptimizedTransparentProxy",
-      execute: {
-        init: {
-          methodName: "initialize",
-          args: [pairAddress, stakingRewardsDistribution.address, isTrueBdPool]
-        }
-      }
-    },
-    contract: "StakingRewards",
-    args: []
-  });
-
-  console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
-
-  await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [1e6])).wait();
-  console.log("redistered staking rewards pool to staking rewards distribution");
-}
+import { formatAddress, getBdEu, getBdUs, getBdx } from "../utils/DeployedContractsHelpers";
+import { setupStakingContract } from "../utils/DeploymentHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;

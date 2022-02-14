@@ -20,6 +20,7 @@ import {
 import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
+import type { IERC20 } from "../typechain/IERC20";
 
 export async function setupProductionReadySystem(
   hre: HardhatRuntimeEnvironment,
@@ -111,6 +112,15 @@ export async function setUpFunctionalSystem(
 
     usdInitialWethPrice = await getOnChainWethUsdPrice(hre);
     usdInitialWbtcPrice = await getOnChainWbtcUsdPrice(hre);
+  }
+
+  if (hre.network.name == "mainnetFork") {
+    verboseLog(verbose, "provide liquidity bdus/usdc");
+
+    const usdc = (await hre.ethers.getContractAt("IERC20", constants.SUPPLEMENTARY_USD_STABLE_ADDRESS(hre.network.name))) as IERC20;
+    const amount = 100;
+
+    await provideLiquidity(hre, treasury, bdUs, usdc, to_d18(amount), numberToBigNumberFixed(amount, 6), verbose);
   }
 
   verboseLog(verbose, "provide liquidity bdeu/weth");

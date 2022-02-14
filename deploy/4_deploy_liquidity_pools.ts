@@ -1,23 +1,7 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import { getWeth, getWbtc, getBdx, getDeployer, getUniswapFactory, getBdEu, getBdUs } from "../utils/DeployedContractsHelpers";
-import { getPoolKey, sortUniswapPairTokens } from "../utils/UniswapPoolsHelpers";
-
-async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string, addressA: string, addressB: string) {
-  const deployer = await getDeployer(hre);
-  const uniswapFactory = await getUniswapFactory(hre);
-
-  const sortedTokens = sortUniswapPairTokens(addressA, addressB, nameA, nameB);
-  const poolKey = getPoolKey(addressA, addressB, nameA, nameB);
-
-  await hre.deployments.deploy(`UniswapPairOracle_${poolKey}`, {
-    from: deployer.address,
-    contract: "UniswapPairOracle",
-    args: [uniswapFactory.address, sortedTokens.token0Address, sortedTokens.token1Address]
-  });
-
-  console.log(`Created ${poolKey} liquidity pool pair`);
-}
+import { getWeth, getWbtc, getBdx, getUniswapFactory, getBdEu, getBdUs } from "../utils/DeployedContractsHelpers";
+import { deployPairOracle } from "../utils/DeploymentHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Starting deployment: liquidity pools");

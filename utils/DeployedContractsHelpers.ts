@@ -379,6 +379,10 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
     return constants.wETH_address[hre.network.name];
   } else if (contractName === "WBTC") {
     return constants.wBTC_address[hre.network.name];
+  } else if (contractName === "XUSD" && hre.network.name == "rsk") {
+    return constants.RSK_XUSD_ADDRESS;
+  } else if (contractName === "USDC" && hre.network.name == "mainnetFork") {
+    return constants.ETH_USDC_ADDRESS;
   } else {
     return (await hre.ethers.getContract(contractName)).address;
   }
