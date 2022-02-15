@@ -15,10 +15,7 @@ export async function getUsdcFor(hre: HardhatRuntimeEnvironment, receiverAddress
 
   const usdc = (await hre.ethers.getContractAt("ERC20", constants.EXTERNAL_USD_STABLE[hre.network.name].address, usdcHolderSigner)) as ERC20;
 
-  await hre.network.provider.send("hardhat_setBalance", [
-    usdcHolder,
-    "0x" + to_d18(1).toString()
-  ]);
+  await hre.network.provider.send("hardhat_setBalance", [usdcHolder, "0x" + to_d18(1).toString()]);
 
   await usdc.transfer(receiverAddress, numberToBigNumberFixed(amount, 6));
 }
