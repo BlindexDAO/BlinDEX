@@ -13,12 +13,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const factory = await getUniswapFactory(hre);
   const bdus = await getBdUs(hre);
-  const externalUsdStableAddress = constants.SUPPLEMENTARY_USD_STABLE_ADDRESS(hre.network.name);
-  const externalUsdStableName = constants.SUPPLEMENTARY_USD_STABLE_NAME(hre.network.name);
+  const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
 
-  await (await factory.createPair(bdus.address, externalUsdStableAddress)).wait();
-  await deployPairOracle(hre, "BDUS", externalUsdStableName, bdus.address, externalUsdStableAddress);
-  await setupStakingContract(hre, bdus.address, formatAddress(hre, externalUsdStableAddress), "BDUS", externalUsdStableName, false, 1.1e6);
+  await (await factory.createPair(bdus.address, externalUsdStable.address)).wait();
+  await deployPairOracle(hre, "BDUS", externalUsdStable.symbol, bdus.address, externalUsdStable.address);
+  await setupStakingContract(hre, bdus.address, formatAddress(hre, externalUsdStable.address), "BDUS", externalUsdStable.symbol, false, 1.1e6);
 
   console.log("finished deployment: BDUS-XUSD");
 

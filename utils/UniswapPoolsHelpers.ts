@@ -116,11 +116,10 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
 
   const bdus = await getBdUs(hre);
 
-  const supplementaryUsdStableAddress = constants.SUPPLEMENTARY_USD_STABLE_ADDRESS(hre.network.name);
-  const supplementaryUsdStableName = constants.SUPPLEMENTARY_USD_STABLE_NAME(hre.network.name);
-  const usdc = (await hre.ethers.getContractAt("IERC20", supplementaryUsdStableAddress)) as IERC20;
+  const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
+  const externalUsdStableContract = (await hre.ethers.getContractAt("IERC20", externalUsdStable.address)) as IERC20;
 
-  registerPool({ name: "BDUS", token: bdus }, { name: supplementaryUsdStableName, token: usdc });
+  registerPool({ name: "BDUS", token: bdus }, { name: externalUsdStable.symbol, token: externalUsdStableContract });
 
   return pools;
 }

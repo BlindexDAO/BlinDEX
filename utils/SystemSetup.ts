@@ -21,6 +21,7 @@ import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 import type { IERC20 } from "../typechain/IERC20";
+import { getUsdcFor } from "./LocalHelpers";
 
 export async function setupProductionReadySystem(
   hre: HardhatRuntimeEnvironment,
@@ -78,13 +79,18 @@ export async function setUpFunctionalSystem(
   if (forIntegrationTests) {
     // mint initial WETH
     await mintWeth(hre, deployer, to_d18(100));
+
     // mint inital WBTC
     await mintWbtc(hre, deployer, to_d8(10), 100);
 
     // mint initial WETH
     await mintWeth(hre, treasury, to_d18(100));
+
     // mint inital WBTC
     await mintWbtc(hre, treasury, to_d8(10), 100);
+
+    // transfer some usdc to treasury
+    await getUsdcFor(hre, treasury.address, 1000);
   }
 
   let wethDecimals;
@@ -117,7 +123,7 @@ export async function setUpFunctionalSystem(
   if (hre.network.name == "mainnetFork") {
     verboseLog(verbose, "provide liquidity bdus/usdc");
 
-    const usdc = (await hre.ethers.getContractAt("IERC20", constants.SUPPLEMENTARY_USD_STABLE_ADDRESS(hre.network.name))) as IERC20;
+    const usdc = (await hre.ethers.getContractAt("IERC20", constants.EXTERNAL_USD_STABLE[hre.network.name].address)) as IERC20;
     const amount = 100;
 
     await provideLiquidity(hre, treasury, bdUs, usdc, to_d18(amount), numberToBigNumberFixed(amount, 6), verbose);

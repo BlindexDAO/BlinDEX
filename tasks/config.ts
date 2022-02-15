@@ -26,7 +26,7 @@ import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 import { readFileSync, readdirSync } from "fs";
 import type { Contract } from "ethers";
-import { NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME, SUPPLEMENTARY_USD_STABLE_ADDRESS } from "../utils/Constants";
+import { NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME, EXTERNAL_USD_STABLE } from "../utils/Constants";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -302,7 +302,7 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      SUPPLEMENTARY_USD_STABLE_ADDRESS(hre.network.name),
+      EXTERNAL_USD_STABLE[hre.network.name].address,
       ...stablesAddresses,
       ...swapsAddresses
     ];
