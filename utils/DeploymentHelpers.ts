@@ -58,5 +58,5 @@ export async function setupStakingContract(
   console.log(`${stakingRewardsContractName} deployed to proxy:`, stakingRewards_ProxyDeployment.address);
 
   await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [poolWeight])).wait();
-  console.log("redistered staking rewards pool to staking rewards distribution");
+  console.log("registered staking rewards pool to staking rewards distribution");
 }
