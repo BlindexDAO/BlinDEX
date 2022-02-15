@@ -17,7 +17,7 @@ export async function getUsdcFor(hre: HardhatRuntimeEnvironment, receiverAddress
 
   await hre.network.provider.send("hardhat_setBalance", [
     usdcHolder,
-    "0x" + to_d18(1).toString() // some eth for gas
+    "0x" + to_d18(1).toString()
   ]);
 
   await usdc.transfer(receiverAddress, numberToBigNumberFixed(amount, 6));
