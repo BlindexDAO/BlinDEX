@@ -26,7 +26,7 @@ import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 import { readFileSync, readdirSync } from "fs";
 import type { Contract } from "ethers";
-import { NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME } from "../utils/Constants";
+import { NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME, EXTERNAL_USD_STABLE } from "../utils/Constants";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -298,7 +298,14 @@ export function load() {
     const wbtc = await getWbtc(hre);
     const bdx = await getBdx(hre);
 
-    const addresses = [bdx.address, weth.address, wbtc.address, ...stablesAddresses, ...swapsAddresses];
+    const addresses = [
+      bdx.address,
+      weth.address,
+      wbtc.address,
+      EXTERNAL_USD_STABLE[hre.network.name].address,
+      ...stablesAddresses,
+      ...swapsAddresses
+    ];
 
     const contractsData = await Promise.all(
       addresses.map(async address => {

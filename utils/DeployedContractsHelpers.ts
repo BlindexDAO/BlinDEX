@@ -24,7 +24,7 @@ import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { wBTC_address, wETH_address } from "./Constants";
+import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE } from "./Constants";
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
@@ -134,6 +134,12 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
       }
     }
   }
+
+  const bdus = await getBdUs(hre);
+  const externalUsdStable = EXTERNAL_USD_STABLE[hre.network.name];
+  const poolKey = getPoolKey(bdus.address, externalUsdStable.address, await bdus.symbol(), externalUsdStable.symbol);
+  stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
+  stakingRewardsBdStablesMap.add(poolKey);
 
   return stakingRewards;
 }
@@ -379,6 +385,8 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
     return constants.wETH_address[hre.network.name];
   } else if (contractName === "WBTC") {
     return constants.wBTC_address[hre.network.name];
+  } else if (contractName === EXTERNAL_USD_STABLE[hre.network.name].symbol) {
+    return EXTERNAL_USD_STABLE[hre.network.name].address;
   } else {
     return (await hre.ethers.getContract(contractName)).address;
   }
