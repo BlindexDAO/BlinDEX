@@ -415,6 +415,23 @@ export function load() {
     }
   });
 
+  task("show:stakings:weights").setAction(async (args, hre) => {
+    const srd = await getStakingRewardsDistribution(hre);
+    const stakings = await getAllBDStableStakingRewards(hre);
+
+    for (const staking of stakings) {
+      console.log(`staking: ${staking.address} weight: `, await (await srd.stakingRewardsWeights(staking.address)).toString());
+    }
+  });
+
+  task("update:stakings:weight")
+    .addPositionalParam("poolAddress", "Pool to update addresss")
+    .addPositionalParam("newWeight", "New pool weight")
+    .setAction(async ({ poolAddress, newWeight }, hre) => {
+      const srd = await getStakingRewardsDistribution(hre);
+      await (await srd.registerPools([poolAddress], [newWeight])).wait();
+    });
+
   task("show:rewards:earned")
     .addPositionalParam("address", "The address to check the rewards for")
     .setAction(async ({ address }, hre) => {
