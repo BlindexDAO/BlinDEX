@@ -17,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await (await factory.createPair(bdus.address, externalUsdStable.address)).wait();
   await deployPairOracle(hre, "BDUS", externalUsdStable.symbol, bdus.address, externalUsdStable.address);
-  await setupStakingContract(hre, bdus.address, formatAddress(hre, externalUsdStable.address), "BDUS", externalUsdStable.symbol, false, 1.1e6);
+  await setupStakingContract(hre, bdus.address, formatAddress(hre, externalUsdStable.address), "BDUS", externalUsdStable.symbol, false, 0);
 
   console.log("finished deployment: BDUS-XUSD");
 
