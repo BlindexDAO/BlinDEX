@@ -420,7 +420,7 @@ export function load() {
     const stakings = await getAllBDStableStakingRewards(hre);
 
     for (const staking of stakings) {
-      console.log(`staking: ${staking.address} weight: `, await (await srd.stakingRewardsWeights(staking.address)).toString());
+      console.log(`staking: ${staking.address} weight: `, (await srd.stakingRewardsWeights(staking.address)).toString());
     }
   });
 
