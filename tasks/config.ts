@@ -11,7 +11,8 @@ import {
   getBDStableWbtcPool,
   getBDStableFiat,
   getAllBDStables,
-  getWbtc
+  getWbtc,
+  formatAddress
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -302,7 +303,7 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      EXTERNAL_USD_STABLE[hre.network.name].address,
+      formatAddress(hre, EXTERNAL_USD_STABLE[hre.network.name].address),
       ...stablesAddresses,
       ...swapsAddresses
     ];
