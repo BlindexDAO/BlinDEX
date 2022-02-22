@@ -479,7 +479,7 @@ export function load() {
     }
   });
 
-  task("update:stakings:weights")
+  task("update:stakings:weight")
     .addPositionalParam("poolAddress", "Pool to update addresss")
     .addPositionalParam("newWeight", "New pool weight")
     .setAction(async ({ poolAddress, newWeight }, hre) => {
