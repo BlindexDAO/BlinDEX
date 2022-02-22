@@ -110,7 +110,7 @@ export function load() {
 
       const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
       const numberOfStakingPools = rewardsBeforeCollect.length;
-      await (await stakingRewardsDistribution.collectAllRewards(0, numberOfStakingPools)).wait();
+      await (await stakingRewardsDistribution.collectAllRewards(0, numberOfStakingPools - 1)).wait();
 
       const rewardsAfterCollect = await getStakingPoolsRewardPerToken(hre);
       console.log("Rewards after sync", rewardsAfterCollect);
