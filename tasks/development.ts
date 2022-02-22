@@ -33,15 +33,24 @@ export function load() {
   });
 
   task("slow-down-mining", "Slows down mining on local fork", async (args, hre) => {
+    if (hre.network.name != "mainnetFork") {
+      throw new Error("this task can run only on mainnetFork");
+    }
     await hre.ethers.provider.send("evm_setAutomine", [false]);
     await hre.ethers.provider.send("evm_setIntervalMining", [60000]);
   });
 
   task("speed-up-mining", "Speeds up mining on local fork", async (args, hre) => {
+    if (hre.network.name != "mainnetFork") {
+      throw new Error("this task can run only on mainnetFork");
+    }
     await hre.ethers.provider.send("evm_setAutomine", [true]);
   });
 
   task("mine-one-block", "Mine one block on local fork", async (args, hre) => {
+    if (hre.network.name != "mainnetFork") {
+      throw new Error("this task can run only on mainnetFork");
+    }
     console.log("blockNumber before mine", await hre.ethers.provider.getBlockNumber());
     await hre.ethers.provider.send("evm_mine", []);
     console.log("blockNumber after mine", await hre.ethers.provider.getBlockNumber());
