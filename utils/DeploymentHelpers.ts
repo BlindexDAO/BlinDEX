@@ -27,7 +27,7 @@ export async function setupStakingContract(
   nameA: string,
   nameB: string,
   isTrueBdPool: boolean,
-  poolWeight = 1e6
+  poolWeight = 0
 ) {
   const poolKey = getPoolKey(addressA, addressB, nameA, nameB);
 

@@ -30,6 +30,7 @@ import type { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCrypto
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
 import type { IPriceFeed } from "../typechain/IPriceFeed";
+import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -382,7 +383,61 @@ export function load() {
       await (await pool.mintFractionalBdStable(btcIn, to_d18(1), to_d18(0.001), false)).wait();
     });
 
-  task("pause:staking").setAction(async (args, hre) => {
+  task("unlock:single:staking")
+    .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
+    .setAction(async ({ stakingRewardAddress }, hre) => {
+      const deployer = await getDeployer(hre);
+      const stakingRewardContract = (await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards;
+
+      const unlockStakes = await stakingRewardContract.unlockedStakes();
+      console.log(`Unlock stakes status before update: ${unlockStakes} (If true, all locked stakes are unlocked)`);
+      if (!unlockStakes) {
+        await (await stakingRewardContract.connect(deployer).toggleUnlockStakes()).wait();
+        console.log(`Unlock stakes status after update: ${await stakingRewardContract.unlockedStakes()}`);
+      }
+    });
+
+  task("lock:single:staking")
+    .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
+    .setAction(async ({ stakingRewardAddress }, hre) => {
+      const deployer = await getDeployer(hre);
+      const stakingRewardContract = (await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards;
+
+      const unlockStakes = await stakingRewardContract.unlockedStakes();
+      console.log(`Unlock stakes status before update: ${unlockStakes} (If true, all locked stakes are unlocked)`);
+      if (unlockStakes) {
+        await (await stakingRewardContract.connect(deployer).toggleUnlockStakes()).wait();
+        console.log(`Unlock stakes status after update: ${await stakingRewardContract.unlockedStakes()}`);
+      }
+    });
+
+  task("pause:single:staking")
+    .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
+    .setAction(async ({ stakingRewardAddress }, hre) => {
+      const deployer = await getDeployer(hre);
+      const stakingRewardContract = (await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards;
+      if (!(await stakingRewardContract.connect(deployer).paused())) {
+        await (await stakingRewardContract.pause()).wait();
+        console.log(`StakingPool ${stakingRewardAddress} is now paused!`);
+      } else {
+        console.log(`StakingPool ${stakingRewardAddress} is already paused`);
+      }
+    });
+
+  task("unpause:single:staking")
+    .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
+    .setAction(async ({ stakingRewardAddress }, hre) => {
+      const deployer = await getDeployer(hre);
+      const stakingRewardContract = (await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards;
+      if (await stakingRewardContract.connect(deployer).paused()) {
+        await (await stakingRewardContract.unpause()).wait();
+        console.log(`StakingPool ${stakingRewardAddress} is now unpaused!`);
+      } else {
+        console.log(`StakingPool ${stakingRewardAddress} is already unpaused`);
+      }
+    });
+
+  task("pause:all:staking").setAction(async (args, hre) => {
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
       if (!(await staking.paused())) {
@@ -394,7 +449,7 @@ export function load() {
     }
   });
 
-  task("unpause:staking").setAction(async (args, hre) => {
+  task("unpause:all:staking").setAction(async (args, hre) => {
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
       if (await staking.paused()) {
@@ -424,12 +479,26 @@ export function load() {
     }
   });
 
-  task("update:stakings:weight")
+  task("update:stakings:weights")
     .addPositionalParam("poolAddress", "Pool to update addresss")
     .addPositionalParam("newWeight", "New pool weight")
     .setAction(async ({ poolAddress, newWeight }, hre) => {
-      const srd = await getStakingRewardsDistribution(hre);
-      await (await srd.registerPools([poolAddress], [newWeight])).wait();
+      const rewardsBeforeCollect = await getStakingPoolsRewardPerToken(hre);
+      console.log("Rewards before sync", rewardsBeforeCollect);
+
+      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+      const numberOfStakingPools = rewardsBeforeCollect.length;
+      await (await stakingRewardsDistribution.collectAllRewards(0, numberOfStakingPools)).wait();
+
+      const rewardsAfterCollect = await getStakingPoolsRewardPerToken(hre);
+      console.log("Rewards after sync", rewardsAfterCollect);
+
+      const isStakingPoolsSynced = !rewardsAfterCollect.some((reward, i) => reward.lastUpdateTime <= rewardsBeforeCollect[i].lastUpdateTime);
+      console.log("Are all staking pools synced?", isStakingPoolsSynced);
+
+      if (isStakingPoolsSynced) {
+        await (await stakingRewardsDistribution.registerPools([poolAddress], [newWeight])).wait();
+      }
     });
 
   task("show:rewards:earned")
@@ -619,5 +688,18 @@ export function load() {
         console.log(`oracle ${pool[0].name} / ${pool[1].name} updated: ${humanizedUpdatedAgo}`);
       }
     }
+  }
+
+  async function getStakingPoolsRewardPerToken(
+    hre: HardhatRuntimeEnvironment
+  ): Promise<{ address: string; rewardPerTokenStored: string; lastUpdateTime: Date }[]> {
+    const stakingRewards = await getAllBDStableStakingRewards(hre);
+    return Promise.all(
+      stakingRewards.map(async stakingReward => ({
+        address: stakingReward.address,
+        rewardPerTokenStored: (await stakingReward.rewardPerTokenStored_REWARD_PRECISION()).toString(),
+        lastUpdateTime: new Date((await stakingReward.lastUpdateTime()).toNumber() * 1000)
+      }))
+    );
   }
 }

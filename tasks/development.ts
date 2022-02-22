@@ -41,6 +41,12 @@ export function load() {
     await hre.ethers.provider.send("evm_setAutomine", [true]);
   });
 
+  task("mine-one-block", "Speeds up mining on local fork", async (args, hre) => {
+    console.log("blockNumber before mine", await hre.ethers.provider.getBlockNumber());
+    await hre.ethers.provider.send("evm_mine", []);
+    console.log("blockNumber after mine", await hre.ethers.provider.getBlockNumber());
+  });
+
   task("accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 
