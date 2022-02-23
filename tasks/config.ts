@@ -11,7 +11,9 @@ import {
   getBDStableWbtcPool,
   getBDStableFiat,
   getAllBDStables,
-  getWbtc
+  getWbtc,
+  getTreasury,
+  getOperationalTreasury
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -26,7 +28,14 @@ import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
 import { readFileSync, readdirSync } from "fs";
 import type { Contract } from "ethers";
-import { NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME, EXTERNAL_USD_STABLE } from "../utils/Constants";
+import {
+  NATIVE_TOKEN_NAME,
+  SECONDARY_COLLATERAL_TOKEN_NAME,
+  EXTERNAL_USD_STABLE,
+  rskTreasuryAddress,
+  bdxLockingContractAddressRSK,
+  rskOperationalTreasuryAddress
+} from "../utils/Constants";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -76,6 +85,9 @@ export function load() {
         [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
         [`BDX_ADDRESS`]: (await getBdx(hre)).address,
         [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
+        [`TREASURY_ADDRESS`]: hre.network.name === "rsk" ? rskTreasuryAddress : (await getTreasury(hre)).address,
+        [`OPERATIONAL_TREASURY_ADDRESS`]: hre.network.name === "rsk" ? rskOperationalTreasuryAddress : (await getOperationalTreasury(hre)).address,
+        [`LOCKING_CONTRACT_ADDRESS`]: hre.network.name === "rsk" ? bdxLockingContractAddressRSK : undefined,
         [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
         [`AVAILABLE_PAIRS`]: swapPairs,
         [`STAKING_REWARDS`]: stakingRewards,
