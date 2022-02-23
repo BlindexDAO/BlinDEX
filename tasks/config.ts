@@ -141,7 +141,7 @@ export function load() {
 
   task("show:contracts-doc").setAction(async () => {
     readdirSync("./deployments/rsk").forEach((file: string) => {
-      const isContract = file.endsWith(".json") && !file.includes("_Proxy") && !file.includes("_Implementation") && file != ".migrations.json";
+      const isContract = file.endsWith(".json") && !file.includes("_Proxy") && !file.includes("_Implementation") && file !== ".migrations.json";
 
       if (isContract) {
         const contractObject = JSON.parse(readFileSync(`./deployments/rsk/${file}`, "utf8"));
