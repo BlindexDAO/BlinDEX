@@ -97,7 +97,7 @@ export async function setUpFunctionalSystem(
   let wbtcDecimals;
   const verbose = !forIntegrationTests;
 
-  if (hre.network.name == "rsk") {
+  if (hre.network.name === "rsk") {
     wethDecimals = 18;
     wbtcDecimals = 18;
 
@@ -120,7 +120,7 @@ export async function setUpFunctionalSystem(
     usdInitialWbtcPrice = await getOnChainWbtcUsdPrice(hre);
   }
 
-  if (hre.network.name == "mainnetFork") {
+  if (hre.network.name === "mainnetFork") {
     verboseLog(verbose, "provide liquidity bdus/usdc");
 
     const usdc = (await hre.ethers.getContractAt("IERC20", constants.EXTERNAL_USD_STABLE[hre.network.name].address)) as IERC20;

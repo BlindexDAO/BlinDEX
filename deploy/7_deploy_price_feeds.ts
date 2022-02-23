@@ -33,7 +33,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   let priceFeed_ETH_USD_Deployment: DeployResult;
   let btc_eth_oracle: DeployResult;
 
-  if (networkName == "rsk") {
+  if (networkName === "rsk") {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.EUR_USD, {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",

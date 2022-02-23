@@ -47,7 +47,7 @@ export function load() {
     .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
       const signer = await getBot(hre);
 
-      if (hre.network.name == "rsk") {
+      if (hre.network.name === "rsk") {
         console.log("starting sovryn swap price oracles updates");
         const oracleEthUsd = await getSovrynFeed_RbtcUsd(hre);
         await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
@@ -78,7 +78,7 @@ export function load() {
   task("update:btceth:rsk")
     .addParam("btceth", "BTCETH price")
     .setAction(async ({ btceth }, hre) => {
-      if (hre.network.name != "rsk") {
+      if (hre.network.name !== "rsk") {
         throw new Error("RSK only task");
       }
 
@@ -92,7 +92,7 @@ export function load() {
   task("update:eurusd:rsk")
     .addPositionalParam("eurusd", "EURUSD price")
     .setAction(async ({ eurusd }, hre) => {
-      if (hre.network.name != "rsk") {
+      if (hre.network.name !== "rsk") {
         throw new Error("RSK only task");
       }
       const deployer = await getDeployer(hre);
@@ -104,7 +104,7 @@ export function load() {
   task("update:eurusd:maxDayChange:rsk")
     .addPositionalParam("change", "Max day change")
     .setAction(async ({ change }, hre) => {
-      if (hre.network.name != "rsk") {
+      if (hre.network.name !== "rsk") {
         throw new Error("RSK only task");
       }
 
@@ -170,7 +170,7 @@ export function load() {
     .setAction(async ({ owner }, hre) => {
       console.log(`set:owner ${owner} on ${hre.network.name}`);
       const deployer = await getDeployer(hre);
-      if (hre.network.name == "rsk") {
+      if (hre.network.name === "rsk") {
         const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
         if (!(await isSameOwner(owner, oracleEthUsd))) {
           console.log(`transfer ownership on contract ${PriceFeedContractNames.ETH_USD} to ${owner}`);
@@ -260,7 +260,7 @@ export function load() {
       const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
       const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
 
-      if (networkName == "rsk") {
+      if (networkName === "rsk") {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
         console.log("updated oracleEthUsd");
 
@@ -323,7 +323,7 @@ export function load() {
       for (const pool of pools) {
         const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
 
-        await (await oracle.setAllowStaleConsults(enable == 0 ? false : true)).wait();
+        await (await oracle.setAllowStaleConsults(+enable === 0 ? false : true)).wait();
         console.log(`oracle ${pool[0].name} / ${pool[1].name} allow stale consults = ${enable}`);
       }
     });
@@ -354,7 +354,7 @@ export function load() {
   task("set:rsk-eur-usd")
     .addPositionalParam("newPrice", "new price")
     .setAction(async ({ newPrice }, hre) => {
-      if (hre.network.name != "rsk") {
+      if (hre.network.name !== "rsk") {
         throw new Error("RSK only task");
       }
       const bot = await hre.ethers.getNamedSigner("BOT");
@@ -380,71 +380,6 @@ export function load() {
       await (await weth.approve(pool.address, to_d18(0.001))).wait();
       await (await bdx.approve(pool.address, to_d18(100))).wait();
       await (await pool.mintFractionalBdStable(btcIn, to_d18(1), to_d18(0.001), false)).wait();
-    });
-
-  task("pause:staking").setAction(async (args, hre) => {
-    const stakings = await getAllBDStableStakingRewards(hre);
-    for (const staking of stakings) {
-      if (!(await staking.paused())) {
-        await staking.pause();
-        console.log("paused", staking.address);
-      } else {
-        console.log("already paused", staking.address);
-      }
-    }
-  });
-
-  task("unpause:staking").setAction(async (args, hre) => {
-    const stakings = await getAllBDStableStakingRewards(hre);
-    for (const staking of stakings) {
-      if (await staking.paused()) {
-        const transaction = await staking.unpause();
-        console.log(`Unpause transaction submitted: ${transaction.hash}. Waiting for it to finish.`);
-        await transaction.wait();
-        console.log("unpaused", staking.address);
-      } else {
-        console.log("already unpaused", staking.address);
-      }
-    }
-  });
-
-  task("show:stakings:paused").setAction(async (args, hre) => {
-    const stakings = await getAllBDStableStakingRewards(hre);
-    for (const staking of stakings) {
-      console.log(`staking: ${staking.address}`, await staking.paused());
-    }
-  });
-
-  task("show:stakings:weights").setAction(async (args, hre) => {
-    const srd = await getStakingRewardsDistribution(hre);
-    const stakings = await getAllBDStableStakingRewards(hre);
-
-    for (const staking of stakings) {
-      console.log(`staking: ${staking.address} weight: `, (await srd.stakingRewardsWeights(staking.address)).toString());
-    }
-  });
-
-  task("update:stakings:weight")
-    .addPositionalParam("poolAddress", "Pool to update addresss")
-    .addPositionalParam("newWeight", "New pool weight")
-    .setAction(async ({ poolAddress, newWeight }, hre) => {
-      const srd = await getStakingRewardsDistribution(hre);
-      await (await srd.registerPools([poolAddress], [newWeight])).wait();
-    });
-
-  task("show:rewards:earned")
-    .addPositionalParam("address", "The address to check the rewards for")
-    .setAction(async ({ address }, hre) => {
-      const stakings = await getAllBDStableStakingRewards(hre);
-
-      let totalBDXRewards = 0;
-      for (const staking of stakings) {
-        const rewards = bigNumberToDecimal(await staking.earned(formatAddress(hre, address)), 18);
-        totalBDXRewards += rewards;
-        console.log(`Pool - ${staking.address} - Rewards for address ${address}`, rewards);
-      }
-
-      console.log("Total rewards", totalBDXRewards);
     });
 
   // -------------------------- readonly
@@ -480,14 +415,14 @@ export function load() {
   });
 
   task("show:rsk-eur-usd").setAction(async (args, hre) => {
-    if (hre.network.name != "rsk") {
+    if (hre.network.name !== "rsk") {
       throw new Error("RSK only task");
     }
     await show_eurUsd(hre);
   });
 
   task("show:rsk-eth-usd").setAction(async (args, hre) => {
-    if (hre.network.name != "rsk") {
+    if (hre.network.name !== "rsk") {
       throw new Error("RSK only task");
     }
     await show_ethUsd(hre);
@@ -547,7 +482,7 @@ export function load() {
 
   async function show_btcEth(hre: HardhatRuntimeEnvironment) {
     let price;
-    if (hre.network.name == "rsk") {
+    if (hre.network.name === "rsk") {
       const feed = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as IPriceFeed;
       price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     } else {
@@ -562,7 +497,7 @@ export function load() {
     const feed = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     let lastUpdateTimestamp = 0;
-    if (hre.network.name == "rsk") {
+    if (hre.network.name === "rsk") {
       const feedConcrete = feed as FiatToFiatPseudoOracleFeed;
       lastUpdateTimestamp = await (await feedConcrete.lastUpdateTimestamp()).toNumber();
     }
