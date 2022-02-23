@@ -84,8 +84,8 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
     }
 
     const sortedTokens = sortUniswapPairTokens(dataA.token.address, dataB.token.address, dataA.name, dataB.name);
-    const data0 = dataA.name == sortedTokens.token0Symbol ? dataA : dataB;
-    const data1 = dataA.name == sortedTokens.token0Symbol ? dataB : dataA;
+    const data0 = dataA.name === sortedTokens.token0Symbol ? dataA : dataB;
+    const data1 = dataA.name === sortedTokens.token0Symbol ? dataB : dataA;
 
     pools.push([data0, data1]);
     registeredPools.add(poolKey);
