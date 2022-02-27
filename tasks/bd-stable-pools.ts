@@ -4,6 +4,15 @@ import { d12_ToNumber, d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
 import { utils } from "ethers";
 
 export function load() {
+  task("bdsp:all:show").setAction(async (args, hre) => {
+    const stablePools = await getAllBDStablePools(hre);
+
+    for (let index = 0; index < stablePools.length; index++) {
+      const stablePool = stablePools[index];
+      console.log(`\nBDStablePool address: ${stablePool.address}`);
+    }
+  });
+
   task("bdsp:buyback")
     .addPositionalParam("stablePoolAddress", "The address of the stable pool we'd like to buyback")
     .addPositionalParam("maxBdxAmount", "Maximum BDX amount to be paid for the buyback")
@@ -55,13 +64,13 @@ export function load() {
         await collateralToken.approve(stablePool.address, preciseMaxCollateralAmount);
       }
 
-      const res = await (
+      const tax = await (
         await stablePool.recollateralizeBdStable(preciseMaxCollateralAmount, to_d18(minExpectedBDX), useNativeToken, {
           value: useNativeToken ? preciseMaxCollateralAmount : 0
         })
       ).wait();
 
-      const recollateralizedEvent = res.events?.find(event => event.event === "Recollateralized");
+      const recollateralizedEvent = tax.events?.find(event => event.event === "Recollateralized");
       if (!recollateralizedEvent) {
         console.log("No tokens were recollateralized");
       } else if (recollateralizedEvent.args?.length) {
