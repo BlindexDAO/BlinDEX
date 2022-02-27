@@ -122,7 +122,7 @@ export function load() {
             newRecollateralizationFee
           )
         ).wait();
-        console.log("Fee before:", `${d12_ToNumber(await stablePool.recollat_fee()) * 100}%`);
+        console.log("Fee after:", `${d12_ToNumber(await stablePool.recollat_fee()) * 100}%`);
       }
     });
 
