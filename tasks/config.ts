@@ -280,15 +280,21 @@ export function load() {
 
       const stablePools = await Promise.all(
         pools.map(async pool => {
-          const mintingFee = await pool.minting_fee();
-          const redemptionFee = await pool.redemption_fee();
-          const collateralAddress = await pool.collateral_token();
+          const [mintingFee, redemptionFee, collateralAddress, recollateralizeFee, recollateralizeBonus] = await Promise.all([
+            pool.minting_fee(),
+            pool.redemption_fee(),
+            pool.collateral_token(),
+            pool.recollat_fee(),
+            pool.bonus_rate()
+          ]);
 
           return {
             address: pool.address,
             collateralAddress: collateralAddress.toString(),
             mintingFee: d12_ToNumber(mintingFee),
-            redemptionFee: d12_ToNumber(redemptionFee)
+            redemptionFee: d12_ToNumber(redemptionFee),
+            recollateralizeFee: d12_ToNumber(recollateralizeFee),
+            recollateralizeBonus: d12_ToNumber(recollateralizeBonus)
           };
         })
       );
