@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { getAllBDStablePools, getBdx, getCollateralContract, getTokenData } from "../utils/DeployedContractsHelpers";
-import { d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
+import { d12_ToNumber, d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
 import { utils } from "ethers";
 
 export function load() {
@@ -93,4 +93,68 @@ export function load() {
       console.log("After: recollateralizeOnlyForOwner:", await stablePool.recollateralizeOnlyForOwner());
     }
   });
+
+  task("bdsp:all:recollateralize:set:fee")
+    .addPositionalParam("newRecollateralizationFee", "The new recollateralization fee")
+    .setAction(async ({ newRecollateralizationFee }, hre) => {
+      const stablePools = await getAllBDStablePools(hre);
+
+      for (let index = 0; index < stablePools.length; index++) {
+        const stablePool = stablePools[index];
+        console.log("\nBDStablePool address:", stablePool.address);
+        console.log("Fee before:", `${d12_ToNumber(await stablePool.recollat_fee()) * 100}%`);
+        const [pool_ceiling, bonus_rate, redemption_delay, minting_fee, redemption_fee, buyback_fee] = await Promise.all([
+          stablePool.pool_ceiling(),
+          stablePool.bonus_rate(),
+          stablePool.redemption_delay(),
+          stablePool.minting_fee(),
+          stablePool.redemption_fee(),
+          stablePool.buyback_fee()
+        ]);
+        await (
+          await stablePool.setPoolParameters(
+            pool_ceiling,
+            bonus_rate,
+            redemption_delay,
+            minting_fee,
+            redemption_fee,
+            buyback_fee,
+            newRecollateralizationFee
+          )
+        ).wait();
+        console.log("Fee before:", `${d12_ToNumber(await stablePool.recollat_fee()) * 100}%`);
+      }
+    });
+
+  task("bdsp:all:recollateralize:set:bonus")
+    .addPositionalParam("newRecollateralizationBonusD12", "The new recollateralization bonus - d12")
+    .setAction(async ({ newRecollateralizationBonusD12 }, hre) => {
+      const stablePools = await getAllBDStablePools(hre);
+
+      for (let index = 0; index < stablePools.length; index++) {
+        const stablePool = stablePools[index];
+        console.log("\nBDStablePool address:", stablePool.address);
+        console.log("Bonus before:", `${d12_ToNumber(await stablePool.bonus_rate()) * 100}%`);
+        const [pool_ceiling, redemption_delay, minting_fee, redemption_fee, buyback_fee, recollat_fee] = await Promise.all([
+          stablePool.pool_ceiling(),
+          stablePool.redemption_delay(),
+          stablePool.minting_fee(),
+          stablePool.redemption_fee(),
+          stablePool.buyback_fee(),
+          stablePool.recollat_fee()
+        ]);
+        await (
+          await stablePool.setPoolParameters(
+            pool_ceiling,
+            newRecollateralizationBonusD12,
+            redemption_delay,
+            minting_fee,
+            redemption_fee,
+            buyback_fee,
+            recollat_fee
+          )
+        ).wait();
+        console.log("Bonus before:", `${d12_ToNumber(await stablePool.bonus_rate()) * 100}%`);
+      }
+    });
 }
