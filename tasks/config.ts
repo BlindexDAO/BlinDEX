@@ -34,7 +34,8 @@ import {
   EXTERNAL_USD_STABLE,
   rskTreasuryAddress,
   bdxLockingContractAddressRSK,
-  rskOperationalTreasuryAddress
+  rskOperationalTreasuryAddress,
+  rskMultisigTreasuryAddress
 } from "../utils/Constants";
 
 export function load() {
@@ -85,10 +86,11 @@ export function load() {
         [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
         [`BDX_ADDRESS`]: (await getBdx(hre)).address,
         [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-        [`TREASURY_ADDRESS`]: hre.network.name === "rsk" ? rskTreasuryAddress : (await getTreasury(hre)).address,
-        [`OPERATIONAL_TREASURY_ADDRESS`]: hre.network.name === "rsk" ? rskOperationalTreasuryAddress : (await getOperationalTreasury(hre)).address,
-        [`LOCKING_CONTRACT_ADDRESS`]: hre.network.name === "rsk" ? bdxLockingContractAddressRSK : undefined,
         [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
+        [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
+          networkName === "RSK"
+            ? [rskTreasuryAddress, rskOperationalTreasuryAddress, rskMultisigTreasuryAddress, bdxLockingContractAddressRSK]
+            : [(await getTreasury(hre)).address, (await getOperationalTreasury(hre)).address],
         [`AVAILABLE_PAIRS`]: swapPairs,
         [`STAKING_REWARDS`]: stakingRewards,
         [`PAIR_ORACLES`]: mappedPairOracles,

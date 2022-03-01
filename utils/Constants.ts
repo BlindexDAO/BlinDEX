@@ -83,6 +83,7 @@ export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
 export const rskBotAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
 export const rskOperationalTreasuryAddress = "0x48e2B176dB179d81135052F4bee7fB1129f270DD";
 export const rskTreasuryAddress = "0xe14ea165e141442FB9580df677E00C7cb7b2aB1C";
+export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c";
 
 export const bdxLockAmount = to_d18(3150000);
 export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
