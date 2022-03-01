@@ -8,10 +8,7 @@ export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, 
   console.log("Starting tp update the Uniswap oracles");
 
   const pools = await getPools(hre);
-  const promises = [];
-  for (const pool of pools) {
-    promises.push(updateOracle(hre, pool[0].name, pool[1].name, signer));
-  }
+  const promises = pools.map(pool => updateOracle(hre, pool[0].name, pool[1].name, signer));
 
   await Promise.allSettled(promises);
 
