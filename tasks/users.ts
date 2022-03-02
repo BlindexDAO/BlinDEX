@@ -149,11 +149,17 @@ export function load() {
           console.log(`${await stable.name()} treasury set to ${treasury}`);
         }
       }
+    });
+
+  task("users:operational-treasury:set")
+    .addPositionalParam("operationalTreasury", "new operational treasury address")
+    .setAction(async ({ operationalTreasury }, hre) => {
+      console.log(`Setting the new operational treasury '${operationalTreasury}' on ${hre.network.name}`);
 
       const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-      if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
-        await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
-        console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
+      if (!(await isSameTreasury(operationalTreasury, stakingRewardsDistribution))) {
+        await (await stakingRewardsDistribution.setTreasury(operationalTreasury)).wait();
+        console.log(`StakingRewardsDistribution operational treasury set to ${operationalTreasury}`);
       }
     });
 }
