@@ -22,6 +22,7 @@ import { load as bdStablePoolsTasksLoad } from "./tasks/bd-stable-pools";
 import { load as bdStableTasksLoad } from "./tasks/bd-stable";
 import { load as bdxTasksLoad } from "./tasks/bdx";
 import { load as stakingTasksLoad } from "./tasks/staking";
+import { load as usersLoad } from "./tasks/users";
 import "hardhat-gas-reporter";
 import * as path from "path";
 
@@ -38,6 +39,7 @@ bdStablePoolsTasksLoad();
 bdStableTasksLoad();
 bdxTasksLoad();
 stakingTasksLoad();
+usersLoad();
 
 export const typechainOutDir = "typechain";
 

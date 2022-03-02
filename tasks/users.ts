@@ -146,7 +146,7 @@ export function load() {
       for (const stable of stables) {
         if (!(await isSameTreasury(treasury, stable))) {
           await (await stable.setTreasury(treasury)).wait();
-          console.log(`${await stable.name()} treasury set to ${treasury}`);
+          console.log(`${await stable.symbol()} treasury set to ${treasury}`);
         }
       }
     });
