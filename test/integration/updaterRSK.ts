@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import type { UpdaterRSK } from "../../typechain/UpdaterRSK";
-import { getBdEu, getBot, getUser, getDeployer, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBot, getUser1, getDeployer, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
 import { getPools } from "../../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../../typechain/BDStable";
 import type { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
@@ -86,7 +86,7 @@ describe("UpdaterRSK", () => {
 
   it("should set the updater correctly with setUpdater()", async () => {
     const deployer = await getDeployer(hre);
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
     const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
 
@@ -97,7 +97,7 @@ describe("UpdaterRSK", () => {
 
   it("should emit the UpdaterChanged event", async () => {
     const deployer = await getDeployer(hre);
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
     const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
 
@@ -106,7 +106,7 @@ describe("UpdaterRSK", () => {
   });
 
   it("should fail if not updater calls update()", async () => {
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
     const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
 

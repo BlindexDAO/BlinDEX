@@ -6,7 +6,7 @@ import cap from "chai-as-promised";
 import { provideLiquidity, swapWethFor, getWethOraclePrices } from "../helpers/swaps";
 import { diffPctN, to_d18 } from "../../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { getBdEu, getUser, getWeth, getUniswapPairOracle, mintWeth, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getUser1, getWeth, getUniswapPairOracle, mintWeth, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
 
@@ -28,7 +28,7 @@ describe("Uniswap Oracles", () => {
     const bdeu = await getBdEu(hre);
     const weth = await getWeth(hre);
 
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const deployer = await getDeployer(hre);
     const treasury = await getTreasury(hre);
 
@@ -76,7 +76,7 @@ describe("Uniswap Oracles", () => {
       const bdeu = await getBdEu(hre);
       const weth = await getWeth(hre);
 
-      const user = await getUser(hre);
+      const user = await getUser1(hre);
       const treasury = await getTreasury(hre);
       const deployer = await getDeployer(hre);
 
@@ -109,7 +109,7 @@ describe("Uniswap Oracles", () => {
     const bdeu = await getBdEu(hre);
     const weth = await getWeth(hre);
 
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const treasury = await getTreasury(hre);
 
     await mintWeth(hre, user, to_d18(20));

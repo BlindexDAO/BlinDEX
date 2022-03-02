@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { to_d12, to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
 import { provideBdx } from "../helpers/common";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser1 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdeuCrAt } from "../helpers/bdStable";
 
@@ -27,7 +27,7 @@ describe("BuyBack", () => {
 
     await lockBdeuCrAt(hre, 0.3); // CR
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const weth = await getWeth(hre);
     const bdx = await getBdx(hre);
@@ -83,7 +83,7 @@ describe("BuyBack", () => {
     await setUpFunctionalSystemForTests(hre, collateralizedFraction);
     await lockBdeuCrAt(hre, cr);
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const bdx = await getBdx(hre);
     const bdEu = await getBdEu(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
@@ -116,7 +116,7 @@ describe("BuyBack", () => {
     await setUpFunctionalSystemForTests(hre, collateralizedFraction);
     await lockBdeuCrAt(hre, cr);
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const bdx = await getBdx(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
     const weth = await getWeth(hre);
@@ -151,7 +151,7 @@ describe("BuyBack", () => {
 
     await lockBdeuCrAt(hre, cr); // CR
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const bdx = await getBdx(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
 
@@ -174,7 +174,7 @@ describe("BuyBack", () => {
   it("should throw if no excess collateral", async () => {
     await setUpFunctionalSystemForTests(hre, 0.3);
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const bdx = await getBdx(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
 

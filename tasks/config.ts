@@ -224,10 +224,18 @@ export function load() {
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stakingRewardsAddresses = [];
+    const stakingRewardsMap: { [key: string]: boolean } = {};
+
     for (let i = 0; i < 100; i++) {
       try {
         const address = await stakingRewardsDistribution.stakingRewardsAddresses(i);
-        stakingRewardsAddresses.push(address);
+
+        // Due to a problem with the XUSD-BDUS pool, the stakingRewardsAddresses array has this pool duplicated
+        // Therefore we'll add a protection aginst it now
+        if (!stakingRewardsMap[address]) {
+          stakingRewardsAddresses.push(address);
+          stakingRewardsMap[address] = true;
+        }
       } catch (ex) {
         break;
       }

@@ -65,7 +65,12 @@ export function getOperationalTreasury(hre: HardhatRuntimeEnvironment): Promise<
   return hre.ethers.getNamedSigner("OPERATIONAL_TREASURY");
 }
 
-export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+export async function getUser1(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  const user = await hre.ethers.getNamedSigner("TEST1");
+  return user;
+}
+
+export async function getUser2(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   const user = await hre.ethers.getNamedSigner("TEST2");
   return user;
 }
