@@ -13,7 +13,7 @@ chai.use(solidity);
 const { expect } = chai;
 
 async function GetTransactionRelay() {
-  const timelock = (await hre.ethers.getContract("TransactionRelay")) as TransactionRelay;
+  const transactionRelay = (await hre.ethers.getContract("TransactionRelay")) as TransactionRelay;
   return transactionRelay;
 }
 
