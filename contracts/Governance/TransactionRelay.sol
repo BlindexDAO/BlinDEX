@@ -41,7 +41,6 @@ contract TransactionRelay is Ownable {
         bytes data;
     }
 
-    constructor() public {}
 
     function createTransaction(
         address targetContractAddress,
