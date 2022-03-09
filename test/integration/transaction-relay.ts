@@ -14,7 +14,7 @@ const { expect } = chai;
 
 async function GetTransactionRelay() {
   const timelock = (await hre.ethers.getContract("TransactionRelay")) as TransactionRelay;
-  return timelock;
+  return transactionRelay;
 }
 
 async function CreateTransactionAs(creator: SignerWithAddress) {
