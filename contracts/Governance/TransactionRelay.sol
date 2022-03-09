@@ -41,7 +41,6 @@ contract TransactionRelay is Ownable {
         bytes data;
     }
 
-
     function createTransaction(
         address targetContractAddress,
         uint256 value,
