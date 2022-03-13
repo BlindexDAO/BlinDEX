@@ -33,7 +33,20 @@ export async function setupProductionReadySystem(
   ethUsd: number,
   usdEur: number
 ) {
-  await setUpFunctionalSystem(hre, 1, 0.001, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+  await setUpFunctionalSystem(hre, 1, 1, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+}
+
+export async function setupLocalSystem(
+  hre: HardhatRuntimeEnvironment,
+  btcEur: number,
+  btcUsd: number,
+  bdxEur: number,
+  bdxUsd: number,
+  ethEur: number,
+  ethUsd: number,
+  usdEur: number
+) {
+  await setUpFunctionalSystem(hre, 1, 1, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBDStableCollteralRatio: number) {
