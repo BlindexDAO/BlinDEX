@@ -90,7 +90,7 @@ export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A
 
 export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // usdc on eth
 
-export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string } } = {
-  mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS },
-  rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS }
+export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
+  mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
+  rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
 };
