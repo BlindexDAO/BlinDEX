@@ -13,8 +13,7 @@ import {
   getAllBDStables,
   getWbtc,
   getTreasury,
-  getOperationalTreasury,
-  getBdUs
+  getOperationalTreasury
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -86,7 +85,6 @@ export function load() {
       [`${networkName}`]: {
         [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
         [`BDX_ADDRESS`]: (await getBdx(hre)).address,
-        [`BDUS_ADDRESS`]: (await getBdUs(hre)).address,
         [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
         [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
         [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
