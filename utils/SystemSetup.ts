@@ -15,7 +15,8 @@ import {
   getBDStableWbtcPool,
   getBdUs,
   getOnChainWethUsdPrice,
-  getOnChainWbtcUsdPrice
+  getOnChainWbtcUsdPrice,
+  getAllBDStablePools
 } from "./DeployedContractsHelpers";
 import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
@@ -46,7 +47,7 @@ export async function setupLocalSystem(
   ethUsd: number,
   usdEur: number
 ) {
-  await setUpFunctionalSystem(hre, 1, 1, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+  await setUpFunctionalSystem(hre, 0.7, 1, false, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
 }
 
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBDStableCollteralRatio: number) {
@@ -140,6 +141,14 @@ export async function setUpFunctionalSystem(
     const amount = 100;
 
     await provideLiquidity(hre, treasury, bdUs, usdc, to_d18(amount), numberToBigNumberFixed(amount, 6), verbose);
+  }
+
+  if (hre.network.name === "mainnetFork") {
+    verboseLog(verbose, "enable recllateralization");
+    const pools = await getAllBDStablePools(hre);
+    for (const pool of pools) {
+      await (await pool.toggleRecollateralizeOnlyForOwner()).wait();
+    }
   }
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
