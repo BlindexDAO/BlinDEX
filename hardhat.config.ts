@@ -103,6 +103,7 @@ const config: HardhatUserConfig = {
     ]
   },
   external: {
+    // Part of the hardhat-deploy package
     contracts: [
       {
         artifacts: "node_modules/@uniswap/v2-core/build"
@@ -146,4 +147,5 @@ const config: HardhatUserConfig = {
 
 export default config;
 
-//Make hardhat runs faster by specifying TS_NODE_TRANSPILE_ONLY=1 (https://hardhat.org/guides/typescript.html#performance-optimizations)
+// Local development optimization suggestion:
+// Make hardhat run faster by specifying TS_NODE_TRANSPILE_ONLY = 1(https://hardhat.org/guides/typescript.html#performance-optimizations)
