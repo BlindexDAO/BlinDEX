@@ -13,7 +13,7 @@
     "initialize": "hardhat --network mainnetFork initialize:local",
     "update:oracles:fork": "hardhat --network mainnetFork update:oracles",
     "update:oracles:rsk": "hardhat --network rsk update:oracles",
-    "compile": "hardhat compile",
+    "compile": "hardhat compile --config hardhat.compile.config.ts",
     "solhint": "npx solhint 'contracts/**/*.sol' --y",
     "eslint": "npx eslint . --ext .js,.ts,.json --fix",
     "lint": "npm-run-all --parallel solhint eslint",
