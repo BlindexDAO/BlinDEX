@@ -25,6 +25,7 @@ import { load as stakingTasksLoad } from "./tasks/staking";
 import { load as usersLoad } from "./tasks/users";
 import "hardhat-gas-reporter";
 import * as path from "path";
+import hardhatCompileConfig from "./hardhat.compile.config";
 
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
@@ -41,10 +42,8 @@ bdxTasksLoad();
 stakingTasksLoad();
 usersLoad();
 
-export const typechainOutDir = "typechain";
-
 const config: HardhatUserConfig = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: hardhatCompileConfig.defaultNetwork,
   networks: {
     hardhat: {
       forking: {
@@ -74,44 +73,12 @@ const config: HardhatUserConfig = {
       chainId: 30
     }
   },
-  solidity: {
-    compilers: [
-      {
-        version: "0.6.12",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200
-          }
-        }
-      }
-    ]
-  },
+  solidity: hardhatCompileConfig.solidity,
   mocha: {
     timeout: 20000000
   },
-  typechain: {
-    outDir: typechainOutDir,
-    target: "ethers-v5",
-    externalArtifacts: [
-      "./node_modules/@uniswap/v2-core/build/UniswapV2Pair.json",
-      "./node_modules/@uniswap/v2-core/build/UniswapV2Pair__factory.json",
-      "./node_modules/@uniswap/v2-core/build/UniswapV2Factory.json",
-      "./node_modules/@uniswap/v2-core/build/UniswapV2Factory__factory.json",
-      "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02.json",
-      "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02__factors.json"
-    ]
-  },
-  external: {
-    contracts: [
-      {
-        artifacts: "node_modules/@uniswap/v2-core/build"
-      },
-      {
-        artifacts: "node_modules/@uniswap/v2-periphery/build"
-      }
-    ]
-  },
+  typechain: hardhatCompileConfig.typechain,
+  external: hardhatCompileConfig.external,
   gasReporter: {
     currency: "USD",
     coinmarketcap: process.env.CMC_TOKEN
@@ -146,4 +113,5 @@ const config: HardhatUserConfig = {
 
 export default config;
 
-//Make hardhat runs faster by specifying TS_NODE_TRANSPILE_ONLY=1 (https://hardhat.org/guides/typescript.html#performance-optimizations)
+// Local development optimization suggestion:
+// Make hardhat run faster by specifying TS_NODE_TRANSPILE_ONLY = 1(https://hardhat.org/guides/typescript.html#performance-optimizations)

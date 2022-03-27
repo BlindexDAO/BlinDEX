@@ -64,8 +64,13 @@ npm run node
 And on a second window run:
 
 ```bash
-npm run deploy:fork:reset
 npm test
+```
+
+If you also want to see the gas usage of your tests, run:
+
+```bash
+npm run test:gas
 ```
 
 ## @blindex/interfaces npm package
