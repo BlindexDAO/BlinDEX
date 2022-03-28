@@ -26,8 +26,6 @@ const { expect } = chai;
 describe("Recollateralization", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
-    const bdEuWethPool = await getBdEuWethPool(hre);
-    await bdEuWethPool.toggleRecollateralizeOnlyForOwner(); // now every user can recollateralize
   });
 
   it("should recollateralize when efCR < CR", async () => {
