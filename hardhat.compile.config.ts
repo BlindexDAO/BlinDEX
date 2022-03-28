@@ -2,8 +2,9 @@ import type { HardhatUserConfig } from "hardhat/types";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
-import "hardhat-dependency-compiler";
 import "hardhat-deploy";
+
+export const typechainOutDir = "typechain";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -21,7 +22,7 @@ const config: HardhatUserConfig = {
     ]
   },
   typechain: {
-    outDir: "typechain",
+    outDir: typechainOutDir,
     target: "ethers-v5",
     externalArtifacts: [
       "./node_modules/@uniswap/v2-core/build/UniswapV2Pair.json",
@@ -33,6 +34,7 @@ const config: HardhatUserConfig = {
     ]
   },
   external: {
+    // Part of the hardhat-deploy package
     contracts: [
       {
         artifacts: "node_modules/@uniswap/v2-core/build"
