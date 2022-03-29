@@ -94,3 +94,12 @@ export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: st
   mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
   rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
 };
+
+export const tokenLogoUrl: { [symbol: string]: string } = {
+  BDX: "https://blindex-static-assets.s3.filebase.com/bdx-symbol-white-stroke.svg",
+  BDEU: "https://blindex-static-assets.s3.filebase.com/BDEU.svg",
+  BDUS: "https://blindex-static-assets.s3.filebase.com/BDUS.svg",
+  WRBTC: "https://blindex-static-assets.s3.filebase.com/BTC.svg",
+  ETHs: "https://blindex-static-assets.s3.filebase.com/ETH.svg",
+  XUSD: "https://blindex-static-assets.s3.filebase.com/XUSD.svg"
+};
