@@ -6,12 +6,23 @@ import "hardhat-deploy";
 
 export const typechainOutDir = "typechain";
 
+const solidity6Compiler = {
+  version: "0.6.12",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 200
+    }
+  }
+};
+
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
     compilers: [
+      solidity6Compiler,
       {
-        version: "0.6.12",
+        version: "0.8.13",
         settings: {
           optimizer: {
             enabled: true,
@@ -19,7 +30,17 @@ const config: HardhatUserConfig = {
           }
         }
       }
-    ]
+    ],
+    overrides: {
+      "contracts/UniswapPairOracle.sol": solidity6Compiler,
+      "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol": solidity6Compiler,
+      "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol": solidity6Compiler,
+      "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol": solidity6Compiler,
+      "@uniswap/lib/contracts/libraries/FixedPoint.sol": solidity6Compiler,
+      "@uniswap/lib/contracts/libraries/BitMath.sol": solidity6Compiler,
+      "@uniswap/lib/contracts/libraries/FullMath.sol": solidity6Compiler,
+      "@uniswap/lib/contracts/libraries/Babylonian.sol": solidity6Compiler
+    }
   },
   typechain: {
     outDir: typechainOutDir,
