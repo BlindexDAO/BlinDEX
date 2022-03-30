@@ -95,11 +95,15 @@ export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: st
   rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
 };
 
+export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
+export const BlindexStaticAssetsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
+
+export const BlindexLogoUrl = `${BlindexFileBaseUrl}/blindex-symbol-white-stroke.svg`;
 export const tokenLogoUrl: { [symbol: string]: string } = {
-  BDX: "https://blindex-static-assets.s3.filebase.com/bdx-symbol-white-stroke.svg",
-  BDEU: "https://blindex-static-assets.s3.filebase.com/BDEU.svg",
-  BDUS: "https://blindex-static-assets.s3.filebase.com/BDUS.svg",
-  WRBTC: "https://blindex-static-assets.s3.filebase.com/BTC.svg",
-  ETHs: "https://blindex-static-assets.s3.filebase.com/ETH.svg",
-  XUSD: "https://blindex-static-assets.s3.filebase.com/XUSD.svg"
+  BDX: `${BlindexStaticAssetsFileBaseUrl}/BDX.svg`,
+  BDEU: `${BlindexStaticAssetsFileBaseUrl}/BDEU.svg`,
+  BDUS: `${BlindexStaticAssetsFileBaseUrl}/BDUS.svg`,
+  WRBTC: `${BlindexStaticAssetsFileBaseUrl}/BTC.svg`,
+  ETHs: `${BlindexStaticAssetsFileBaseUrl}/ETH.svg`,
+  XUSD: `${BlindexStaticAssetsFileBaseUrl}/XUSD.svg`
 };

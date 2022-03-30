@@ -4,8 +4,8 @@ import addFormats from "ajv-formats";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ERC20 } from "../typechain/ERC20";
-import { EXTERNAL_USD_STABLE, tokenLogoUrl, wBTC_address, wETH_address } from "../utils/Constants";
-import { getBdEu, getBdUs, getBdx, getERC20 } from "../utils/DeployedContractsHelpers";
+import { BlindexLogoUrl, EXTERNAL_USD_STABLE, tokenLogoUrl, wBTC_address, wETH_address } from "../utils/Constants";
+import { getAllBDStables, getBdx, getERC20 } from "../utils/DeployedContractsHelpers";
 
 export function load() {
   task("print:tokenList").setAction(async (args, hre) => {
@@ -43,9 +43,8 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
   }
   const chainId = hre.network.config.chainId;
 
-  const [bdeu, bdus, bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable] = await Promise.all([
-    getBdEu(hre),
-    getBdUs(hre),
+  const bdStables = await getAllBDStables(hre);
+  const [bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable] = await Promise.all([
     getBdx(hre),
     getERC20(hre, wETH_address[hre.network.name]),
     getERC20(hre, wBTC_address[hre.network.name]),
@@ -53,7 +52,7 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
   ]);
 
   const [bdeuTokenInfo, bdusTokenInfo, bdxTokenInfo, wrappedNativeTokenInfo, wrappedSecondaryTokenInfo, externalUsdStableInfo] = await Promise.all(
-    [bdeu, bdus, bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable].map(token => getTokenInfo(token, chainId))
+    [...bdStables, bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable].map(token => getTokenInfo(token, chainId))
   );
 
   const tokenList: TokenList = {
@@ -61,7 +60,7 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
     timestamp: new Date().toISOString(),
     version: getVersion(),
     tokens: [bdeuTokenInfo, bdusTokenInfo, bdxTokenInfo, wrappedNativeTokenInfo, wrappedSecondaryTokenInfo, externalUsdStableInfo],
-    logoURI: tokenLogoUrl.BDX
+    logoURI: BlindexLogoUrl
   };
 
   return tokenList;
