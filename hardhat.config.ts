@@ -23,6 +23,7 @@ import { load as bdStableTasksLoad } from "./tasks/bd-stable";
 import { load as bdxTasksLoad } from "./tasks/bdx";
 import { load as stakingTasksLoad } from "./tasks/staking";
 import { load as usersLoad } from "./tasks/users";
+import { load as tokenListLoad } from "./tasks/token-list";
 import "hardhat-gas-reporter";
 import * as path from "path";
 import hardhatCompileConfig from "./hardhat.compile.config";
@@ -41,6 +42,7 @@ bdStableTasksLoad();
 bdxTasksLoad();
 stakingTasksLoad();
 usersLoad();
+tokenListLoad();
 
 const config: HardhatUserConfig = {
   defaultNetwork: hardhatCompileConfig.defaultNetwork,

@@ -94,3 +94,16 @@ export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: st
   mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
   rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
 };
+
+export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
+export const BlindexTokensIconsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
+
+export const BlindexLogoUrl = `${BlindexFileBaseUrl}/blindex-symbol-white-stroke.svg`;
+export const tokenLogoUrl: { [symbol: string]: string } = {
+  BDX: `${BlindexFileBaseUrl}/BDX.svg`,
+  BDEU: `${BlindexFileBaseUrl}/BDEU.svg`,
+  BDUS: `${BlindexFileBaseUrl}/BDUS.svg`,
+  WRBTC: `${BlindexFileBaseUrl}/BTC.svg`,
+  ETHs: `${BlindexFileBaseUrl}/ETH.svg`,
+  XUSD: `${BlindexFileBaseUrl}/XUSD.svg`
+};
