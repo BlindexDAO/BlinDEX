@@ -96,7 +96,7 @@ export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: st
 };
 
 export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
-export const BlindexStaticAssetsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
+export const BlindexTokensIconsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
 
 export const BlindexLogoUrl = `${BlindexFileBaseUrl}/blindex-symbol-white-stroke.svg`;
 export const tokenLogoUrl: { [symbol: string]: string } = {
