@@ -100,10 +100,10 @@ export const BlindexTokensIconsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons
 
 export const BlindexLogoUrl = `${BlindexFileBaseUrl}/blindex-symbol-white-stroke.svg`;
 export const tokenLogoUrl: { [symbol: string]: string } = {
-  BDX: `${BlindexStaticAssetsFileBaseUrl}/BDX.svg`,
-  BDEU: `${BlindexStaticAssetsFileBaseUrl}/BDEU.svg`,
-  BDUS: `${BlindexStaticAssetsFileBaseUrl}/BDUS.svg`,
-  WRBTC: `${BlindexStaticAssetsFileBaseUrl}/BTC.svg`,
-  ETHs: `${BlindexStaticAssetsFileBaseUrl}/ETH.svg`,
-  XUSD: `${BlindexStaticAssetsFileBaseUrl}/XUSD.svg`
+  BDX: `${BlindexFileBaseUrl}/BDX.svg`,
+  BDEU: `${BlindexFileBaseUrl}/BDEU.svg`,
+  BDUS: `${BlindexFileBaseUrl}/BDUS.svg`,
+  WRBTC: `${BlindexFileBaseUrl}/BTC.svg`,
+  ETHs: `${BlindexFileBaseUrl}/ETH.svg`,
+  XUSD: `${BlindexFileBaseUrl}/XUSD.svg`
 };
