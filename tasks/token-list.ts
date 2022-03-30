@@ -8,7 +8,7 @@ import { EXTERNAL_USD_STABLE, tokenLogoUrl, wBTC_address, wETH_address } from ".
 import { getBdEu, getBdUs, getBdx, getERC20 } from "../utils/DeployedContractsHelpers";
 
 export function load() {
-  task("print:tokenList").setAction(async (args, hre) => {
+  task("print:amm:tokenList").setAction(async (args, hre) => {
     const tokenList: TokenList = await generateTokenList(hre);
     const { isValid, errors } = validateTokenList(tokenList);
 
