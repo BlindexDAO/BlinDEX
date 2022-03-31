@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 
 import "./IPriceFeed.sol";
 import "./IOracleBasedCryptoFiatFeed.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
     using SafeMath for uint256;

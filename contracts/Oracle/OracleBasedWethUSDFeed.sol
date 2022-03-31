@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 
 import "./IPriceFeed.sol";
 import "./IOracleBasedCryptoFiatFeed.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
 @dev A contract that will be used ONLY by BDUS as we're using USD as out base fiat currency
