@@ -34,7 +34,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         address _updater,
         uint256 _timeBeforeShouldUpdate,
         uint256 _timeBeforeMustUpdate
-    ) public {
+    ) {
         require(_sovrynNetworkAddress != address(0), "SovrynNetwork address cannot be 0");
         require(_tokenSource != address(0), "TokenSource address cannot be 0");
         require(_tokenTarget != address(0), "TokenTarget address cannot be 0");
@@ -53,7 +53,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     // IPriceFeed
 
-    function decimals() external view override(IPriceFeed, ICryptoPairOracle) returns (uint8) {
+    function decimals() external pure override(IPriceFeed, ICryptoPairOracle) returns (uint8) {
         return 12;
     }
 
@@ -72,11 +72,11 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         return oraclePrice.mul(amountIn).div(PRECISION);
     }
 
-    function updateOracle() external override {
+    function updateOracle() external pure override {
         revert("use updateOracleWithVerification() instead");
     }
 
-    function shouldUpdateOracle() external view override returns (bool) {
+    function shouldUpdateOracle() external pure override returns (bool) {
         return false;
     }
 

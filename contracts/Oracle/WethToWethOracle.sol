@@ -10,7 +10,7 @@ contract WethToWethOracle is ICryptoPairOracle {
 
     uint8 private constant DECIMALS = 18;
 
-    constructor(address _wethAddress) public {
+    constructor(address _wethAddress) {
         require(_wethAddress != address(0), "Weth address cannot be 0");
 
         wethAddress = _wethAddress;
@@ -22,15 +22,15 @@ contract WethToWethOracle is ICryptoPairOracle {
         return amountIn;
     }
 
-    function updateOracle() external override {
+    function updateOracle() external pure override {
         revert("This oracle doesn't need updates");
     }
 
-    function shouldUpdateOracle() external view override returns (bool) {
+    function shouldUpdateOracle() external pure override returns (bool) {
         return false;
     }
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         return DECIMALS;
     }
 }

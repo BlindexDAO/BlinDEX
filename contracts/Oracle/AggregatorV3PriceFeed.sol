@@ -7,7 +7,7 @@ import "./AggregatorV3Interface.sol";
 contract AggregatorV3PriceFeed is IPriceFeed {
     AggregatorV3Interface private feed;
 
-    constructor(address _feedAddress) public {
+    constructor(address _feedAddress) {
         require(_feedAddress != address(0), "Feed address cannot be 0");
 
         feed = AggregatorV3Interface(_feedAddress);

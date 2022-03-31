@@ -15,7 +15,7 @@ contract UpdaterRSK is Ownable {
 
     uint256 private _status;
 
-    constructor(address _updater) public {
+    constructor(address _updater) {
         updater = _updater;
     }
 

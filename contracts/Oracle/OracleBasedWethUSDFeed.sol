@@ -14,7 +14,7 @@ contract OracleBasedWethUSDFeed is IOracleBasedCryptoFiatFeed {
     IPriceFeed internal wethUsdFeed;
     using SafeMath for uint256;
 
-    constructor(address _wethUsdFeedAddress) public {
+    constructor(address _wethUsdFeedAddress) {
         require(_wethUsdFeedAddress != address(0), "WethUsdFeed address cannot be 0");
 
         wethUsdFeed = IPriceFeed(_wethUsdFeedAddress);
@@ -32,7 +32,7 @@ contract OracleBasedWethUSDFeed is IOracleBasedCryptoFiatFeed {
         }
     }
 
-    function getDecimals() public view override returns (uint8) {
+    function getDecimals() public pure override returns (uint8) {
         return DECIMALS;
     }
 }

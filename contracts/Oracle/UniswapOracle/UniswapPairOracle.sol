@@ -36,7 +36,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         address factoryAddress,
         address tokenA,
         address tokenB
-    ) public {
+    ) {
         require(factoryAddress != address(0), "Factory address cannot be 0");
         require(tokenA != address(0), "TokenA address cannot be 0");
         require(tokenB != address(0), "TokenB address cannot be 0");
@@ -130,7 +130,7 @@ contract UniswapPairOracle is Ownable, ICryptoPairOracle {
         }
     }
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         return DECIMALS;
     }
 

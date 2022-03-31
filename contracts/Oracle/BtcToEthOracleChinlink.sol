@@ -11,7 +11,7 @@ contract BtcToEthOracleChinlink is ICryptoPairOracle {
     AggregatorV3Interface internal feed;
     address internal wethAddress;
 
-    constructor(address _btcEthFeedAddress, address _wethAddress) public {
+    constructor(address _btcEthFeedAddress, address _wethAddress) {
         require(_btcEthFeedAddress != address(0), "BtcEthFeed address cannot be 0");
         require(_wethAddress != address(0), "Weth address cannot be 0");
 
@@ -36,11 +36,11 @@ contract BtcToEthOracleChinlink is ICryptoPairOracle {
         return uint256(price);
     }
 
-    function updateOracle() external override {
+    function updateOracle() external pure override {
         revert("This oracle doesn't need updates");
     }
 
-    function shouldUpdateOracle() external view override returns (bool) {
+    function shouldUpdateOracle() external pure override returns (bool) {
         return false;
     }
 

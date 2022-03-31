@@ -11,7 +11,7 @@ contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
     IPriceFeed internal fiatToUsdFeed;
     IPriceFeed internal cryptoToUsdFeed;
 
-    constructor(address _fiatToUsdFeedAddress, address _cryptoUsdFeedAddress) public {
+    constructor(address _fiatToUsdFeedAddress, address _cryptoUsdFeedAddress) {
         require(_fiatToUsdFeedAddress != address(0), "FiatToUsdFeed address cannot be 0");
         require(_cryptoUsdFeedAddress != address(0), "CryptoUsdFeed address cannot be 0");
 
@@ -29,7 +29,7 @@ contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
             );
     }
 
-    function getDecimals() public view override returns (uint8) {
+    function getDecimals() public pure override returns (uint8) {
         return 12;
     }
 }

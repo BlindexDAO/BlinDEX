@@ -20,7 +20,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
 
     address private updater;
 
-    constructor(address _updater, uint256 _recentPrice) public {
+    constructor(address _updater, uint256 _recentPrice) {
         require(_updater != address(0), "Updater address cannot be 0");
 
         updater = _updater;
@@ -28,7 +28,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
         lastUpdateTimestamp = block.timestamp;
     }
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         return DECIMALS;
     }
 
