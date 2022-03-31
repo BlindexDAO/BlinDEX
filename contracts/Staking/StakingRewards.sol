@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.13;
+pragma abicoder v2;
 
 // Modified from Synthetixio
 // https://raw.githubusercontent.com/Synthetixio/synthetix/develop/contracts/StakingRewards.sol
@@ -72,7 +72,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         address _stakingToken,
         address _stakingRewardsDistribution,
         bool _isTrueBdPool
-    ) external initializer {
+    ) external onlyInitializing {
         require(_stakingToken != address(0), "Staking address cannot be 0");
         require(_stakingRewardsDistribution != address(0), "StakingRewardsDistribution address cannot be 0");
 

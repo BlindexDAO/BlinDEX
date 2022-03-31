@@ -12,9 +12,8 @@ import {
   mintWbtc,
   mintWeth
 } from "../utils/DeployedContractsHelpers";
-import { d12_ToNumber, d18_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
+import { d12_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
-import type { IMoCBaseOracle } from "../typechain/IMoCBaseOracle";
 import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
@@ -163,17 +162,6 @@ export function load() {
 
   task("simulateTimeElapse").setAction(async () => {
     await simulateTimeElapseInSeconds(3600 * 24 * 365 * 6);
-  });
-
-  task("show:moc-feeds").setAction(async (args, hre) => {
-    async function showFor(address: string, priceName: string) {
-      const feed = (await hre.ethers.getContractAt("IMoCBaseOracle", formatAddress(hre, address))) as IMoCBaseOracle;
-      const [price_d18_str] = await feed.peek();
-      console.log(priceName + ": " + d18_ToNumber(BigNumber.from(price_d18_str)));
-    }
-
-    await showFor("0x972a21C61B436354C0F35836195D7B67f54E482C", "BTC/USD");
-    await showFor("0x84c260568cFE148dBcFb4C8cc62C4e0b6d998F91", "ETH/USD");
   });
 
   task("show:sovryn-swap-prices").setAction(async (args, hre) => {

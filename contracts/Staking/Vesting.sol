@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.13;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
-
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract Vesting is OwnableUpgradeable {
@@ -33,7 +31,7 @@ contract Vesting is OwnableUpgradeable {
         address _vestingScheduler,
         address _fundsProvider,
         uint256 _vestingTimeInSeconds
-    ) external initializer {
+    ) external onlyInitializing {
         require(_vestedTokenAddress != address(0), "Vesting address cannot be 0");
         require(_vestingScheduler != address(0), "VestingScheduler address cannot be 0");
         require(_fundsProvider != address(0), "FundsProvider address cannot be 0");

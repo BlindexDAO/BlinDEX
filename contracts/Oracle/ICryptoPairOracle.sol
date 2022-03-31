@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.13;
 
 interface ICryptoPairOracle {
     function consult(address tokenIn, uint256 amountIn) external view returns (uint256 amountOut);

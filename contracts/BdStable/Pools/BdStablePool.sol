@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.13;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -80,7 +80,7 @@ contract BdStablePool is OwnableUpgradeable {
         address _collateral_address,
         uint256 _collateral_decimals,
         bool _is_collateral_wrapping_native_token
-    ) external initializer {
+    ) external onlyInitializing {
         require(_bdstable_contract_address != address(0), "BdStable address cannot be 0");
         require(_bdx_contract_address != address(0), "BDX address cannot be 0");
         require(_collateral_address != address(0), "Collateral address cannot be 0");

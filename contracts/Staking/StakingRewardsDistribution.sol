@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -51,7 +51,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         address _vesting,
         address _treasury,
         uint256 _vestingRewardRatio_percent
-    ) external initializer {
+    ) external onlyInitializing {
         require(_rewardsToken != address(0), "Rewards address cannot be 0");
         require(_vesting != address(0), "Vesting address cannot be 0");
         require(_treasury != address(0), "Treasury address cannot be 0");
