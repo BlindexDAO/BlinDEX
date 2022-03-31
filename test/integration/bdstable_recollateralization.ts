@@ -17,6 +17,7 @@ import {
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { lockBdeuCrAt } from "../helpers/bdStable";
 import * as constants from "../../utils/Constants";
+import { subtractionOverflowExceptionMessage } from "../helpers/common";
 
 chai.use(cap);
 
@@ -126,7 +127,7 @@ describe("Recollateralization", () => {
       (async () => {
         await bdEuWethPool.connect(testUser).recollateralizeBdStable(toRecollatInEth_d18, 1, false, {});
       })()
-    ).to.be.rejectedWith("subtraction overflow");
+    ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
   });
 
   it("recollateralize should reward bdx in BDX CR amount", async () => {
