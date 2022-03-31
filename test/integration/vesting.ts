@@ -133,6 +133,43 @@ describe("Vesting", () => {
     expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(2));
   });
 
+  it("claim should transfer multiple vested schedules at once while the 'to' index is exactly up until the number of vested schedules", async () => {
+    const amount = 1;
+    const amount_d18 = to_d18(amount);
+    const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
+
+    await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
+    await vesting.connect(testScheduler).schedule(testUser1.address, amount_d18);
+
+    await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
+    await vesting.connect(testScheduler).schedule(testUser1.address, amount_d18);
+
+    await moveTimeForwardBy(vestingTimeSeconds);
+
+    const balanceBeforeClaim = await bdx.balanceOf(testUser1.address);
+    await vesting.connect(testUser1).claim(0, 1);
+    const balanceAfterClaim = await bdx.balanceOf(testUser1.address);
+
+    expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(2));
+  });
+
+  it("Fail when trying to claim while the 'from' index is equal to the 'to' index", async () => {
+    const amount = 1;
+    const amount_d18 = to_d18(amount);
+    const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
+
+    await bdx.connect(testRewardProvider).approve(vesting.address, amount_d18);
+    await vesting.connect(testScheduler).schedule(testUser1.address, amount_d18);
+
+    await moveTimeForwardBy(vestingTimeSeconds);
+
+    await expect(
+      (async () => {
+        await vesting.connect(testUser1).claim(0, 0);
+      })()
+    ).to.be.rejectedWith("Vesting: 'to' must be larger than 'from'");
+  });
+
   it("claim should transfer partial amount after vesting is partly done", async () => {
     const amount = 1;
     const amount_d18 = to_d18(amount);

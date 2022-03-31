@@ -58,22 +58,27 @@ contract Vesting is OwnableUpgradeable {
     }
 
     function claim(uint256 from, uint256 to) external {
+        require(from < to, "Vesting: 'to' must be larger than 'from'");
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
 
         uint256 rewardsToClaim = 0;
         uint256 userVestingSchedulesLength = userVestingSchedules.length;
-        for (uint256 i = from; i < to && i < userVestingSchedulesLength; i++) {
-            if (isFullyVested(userVestingSchedules[i])) {
-                rewardsToClaim = rewardsToClaim.add(userVestingSchedules[i].totalVestedAmount_d18.sub(userVestingSchedules[i].releasedAmount_d18));
 
-                userVestingSchedulesLength--;
-                userVestingSchedules[i] = userVestingSchedules[userVestingSchedulesLength];
+        for (uint256 index = from + 1; index <= to && index <= userVestingSchedulesLength; ++index) {
+            if (isFullyVested(userVestingSchedules[index - 1])) {
+                rewardsToClaim = rewardsToClaim.add(
+                    userVestingSchedules[index - 1].totalVestedAmount_d18.sub(userVestingSchedules[index - 1].releasedAmount_d18)
+                );
+
+                --userVestingSchedulesLength;
+                userVestingSchedules[index - 1] = userVestingSchedules[userVestingSchedulesLength];
                 userVestingSchedules.pop();
-                i--;
+
+                --index;
             } else {
-                uint256 proprtionalReward = getAvailableReward(userVestingSchedules[i]);
+                uint256 proprtionalReward = getAvailableReward(userVestingSchedules[index - 1]);
                 rewardsToClaim = rewardsToClaim.add(proprtionalReward);
-                userVestingSchedules[i].releasedAmount_d18 = userVestingSchedules[i].releasedAmount_d18.add(proprtionalReward);
+                userVestingSchedules[index - 1].releasedAmount_d18 = userVestingSchedules[index - 1].releasedAmount_d18.add(proprtionalReward);
             }
         }
 

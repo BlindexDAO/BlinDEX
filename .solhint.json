@@ -15,6 +15,7 @@
     "avoid-low-level-calls": "off",
     "no-empty-blocks": "off",
     "contract-name-camelcase": "off",
-    "func-visibility": ["warn", { "ignoreConstructors": true }]
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "no-unused-vars": "error"
   }
 }
