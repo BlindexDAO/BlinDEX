@@ -51,7 +51,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         address _vesting,
         address _treasury,
         uint256 _vestingRewardRatio_percent
-    ) external onlyInitializing {
+    ) external initializer {
         require(_rewardsToken != address(0), "Rewards address cannot be 0");
         require(_vesting != address(0), "Vesting address cannot be 0");
         require(_treasury != address(0), "Treasury address cannot be 0");

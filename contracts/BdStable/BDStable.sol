@@ -76,7 +76,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         address _treasury,
         address _bdx_address,
         uint256 _initalBdStableToTreasury_d18
-    ) external onlyInitializing {
+    ) external initializer {
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_symbol).length > 0, "Symbol cannot be empty");
         require(_bdx_address != address(0), "BDX address cannot be 0");

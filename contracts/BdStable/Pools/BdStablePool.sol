@@ -79,7 +79,7 @@ contract BdStablePool is OwnableUpgradeable {
         address _collateral_address,
         uint256 _collateral_decimals,
         bool _is_collateral_wrapping_native_token
-    ) external onlyInitializing {
+    ) external initializer {
         require(_bdstable_contract_address != address(0), "BdStable address cannot be 0");
         require(_bdx_contract_address != address(0), "BDX address cannot be 0");
         require(_collateral_address != address(0), "Collateral address cannot be 0");

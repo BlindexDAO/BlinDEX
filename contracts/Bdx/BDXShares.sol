@@ -15,7 +15,7 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable {
 
     /* ========== CONSTRUCTOR ========== */
 
-    function initialize(string memory _name, string memory _symbol) external onlyInitializing {
+    function initialize(string memory _name, string memory _symbol) external initializer {
         require(bytes(_name).length > 0, "Name cannot be empty");
         require(bytes(_symbol).length > 0, "Symbol cannot be empty");
 
