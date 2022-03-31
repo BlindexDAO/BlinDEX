@@ -42,7 +42,7 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable {
         address to,
         uint256 amount
     ) public onlyOwner {
-        require(totalSupply() + amount <= MAX_TOTAL_SUPPLY, "BDX limit reached");
+        require((totalSupply() + amount) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
         _mint(to, amount);
 
