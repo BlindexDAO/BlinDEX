@@ -32,7 +32,7 @@ const config: HardhatUserConfig = {
       }
     ],
     overrides: {
-      "contracts/UniswapPairOracle.sol": solidity6Compiler,
+      "contracts/Oracle/UniswapPairOracle.sol": solidity6Compiler,
       "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol": solidity6Compiler,
       "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol": solidity6Compiler,
       "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol": solidity6Compiler,
