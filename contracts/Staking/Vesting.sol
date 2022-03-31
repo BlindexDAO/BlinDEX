@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
-pragma abicoder v2;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -62,13 +61,13 @@ contract Vesting is OwnableUpgradeable {
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
 
         uint256 rewardsToClaim = 0;
-        uint256 userVestingSchedulesCount = userVestingSchedules.length;
-        for (uint256 i = from; i < to && i < userVestingSchedulesCount; i++) {
+        uint256 userVestingSchedulesLength = userVestingSchedules.length;
+        for (uint256 i = from; i < to && i < userVestingSchedulesLength; i++) {
             if (isFullyVested(userVestingSchedules[i])) {
                 rewardsToClaim = rewardsToClaim.add(userVestingSchedules[i].totalVestedAmount_d18.sub(userVestingSchedules[i].releasedAmount_d18));
 
-                userVestingSchedulesCount--;
-                userVestingSchedules[i] = userVestingSchedules[userVestingSchedulesCount];
+                userVestingSchedulesLength--;
+                userVestingSchedules[i] = userVestingSchedules[userVestingSchedulesLength];
                 userVestingSchedules.pop();
                 i--;
             } else {

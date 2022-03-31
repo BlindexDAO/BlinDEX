@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import "../Oracle/SovrynSwapPriceFeed.sol";
 import "../Oracle/FiatToFiatPseudoOracleFeed.sol";
-import "../Oracle/UniswapPairOracle.sol";
+import "../Oracle/UniswapOracle/UniswapPairOracle.sol";
 import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 

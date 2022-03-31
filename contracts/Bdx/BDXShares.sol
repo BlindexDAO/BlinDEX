@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
-pragma abicoder v2;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -43,7 +42,7 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable {
         address to,
         uint256 amount
     ) public onlyOwner {
-        require(totalSupply().add(amount) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
+        require(totalSupply() + amount <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
         _mint(to, amount);
 

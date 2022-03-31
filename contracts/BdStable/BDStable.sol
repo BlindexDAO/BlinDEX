@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
-pragma abicoder v2;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -89,10 +88,10 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
         BDX = IERC20(_bdx_address);
 
-        bdStable_step_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(25).div(10000); // 12 decimals of precision, equal to 0.25%
+        bdStable_step_d12 = (uint256(BdPoolLibrary.PRICE_PRECISION) * 25) / 10000; // 12 decimals of precision, equal to 0.25%
         global_collateral_ratio_d12 = uint256(BdPoolLibrary.COLLATERAL_RATIO_MAX); // Bdstable system starts off fully collateralized (12 decimals of precision)
         price_target_d12 = uint256(BdPoolLibrary.PRICE_PRECISION); // Collateral ratio will adjust according to the 1 <fiat> price target at genesis
-        price_band_d12 = uint256(BdPoolLibrary.PRICE_PRECISION).mul(50).div(10000); // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
+        price_band_d12 = (uint256(BdPoolLibrary.PRICE_PRECISION) * 50) / 10000; // Collateral ratio will not adjust if between 0.995<fiat> and 1.005<fiat> at genesis
         refresh_cooldown = 3600; // Refresh cooldown period is set to 1 hour (3600 seconds) at genesis
 
         if (_initalBdStableToTreasury_d18 > 0) {
