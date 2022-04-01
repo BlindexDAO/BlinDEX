@@ -51,8 +51,7 @@ npm run node
 And on a second window run:
 
 ```bash
-npm run deploy:fork:reset
-npm run initialize
+npm start
 ```
 
 ## Running tests
