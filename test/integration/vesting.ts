@@ -133,7 +133,7 @@ describe("Vesting", () => {
     expect(balanceAfterClaim.sub(balanceBeforeClaim)).to.be.eq(amount_d18.mul(2));
   });
 
-  it("claim should transfer multiple vested schedules at once while the 'to' index is exactly up until the number of vested schedules", async () => {
+  it("Claiming also the last vested schedule, while using a 'to' index that is exactly equal to the last index of the vested schedules list", async () => {
     const amount = 1;
     const amount_d18 = to_d18(amount);
     const vestingTimeSeconds = await vesting.vestingTimeInSeconds();
