@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./StakingRewardsDistribution.sol";
@@ -9,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract Vesting is OwnableUpgradeable {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
 
     struct VestingSchedule {
         uint256 vestingStartedTimeStamp;
@@ -50,7 +48,7 @@ contract Vesting is OwnableUpgradeable {
         // to prevent melicious users form cloging user's schedules
         require(msg.sender == vestingScheduler, "Only vesting scheduler can create vesting schedules");
 
-        vestingSchedules[_receiver].push(VestingSchedule(block.timestamp, block.timestamp.add(vestingTimeInSeconds), _amount_d18, 0));
+        vestingSchedules[_receiver].push(VestingSchedule(block.timestamp, block.timestamp + vestingTimeInSeconds, _amount_d18, 0));
 
         vestedToken.safeTransferFrom(fundsProvider, address(this), _amount_d18);
 
@@ -66,9 +64,10 @@ contract Vesting is OwnableUpgradeable {
 
         for (uint256 index = from + 1; index <= to && index <= userVestingSchedulesLength; ++index) {
             if (isFullyVested(userVestingSchedules[index - 1])) {
-                rewardsToClaim = rewardsToClaim.add(
-                    userVestingSchedules[index - 1].totalVestedAmount_d18.sub(userVestingSchedules[index - 1].releasedAmount_d18)
-                );
+                rewardsToClaim =
+                    rewardsToClaim +
+                    userVestingSchedules[index - 1].totalVestedAmount_d18 -
+                    userVestingSchedules[index - 1].releasedAmount_d18;
 
                 --userVestingSchedulesLength;
                 userVestingSchedules[index - 1] = userVestingSchedules[userVestingSchedulesLength];
@@ -77,8 +76,8 @@ contract Vesting is OwnableUpgradeable {
                 --index;
             } else {
                 uint256 proprtionalReward = getAvailableReward(userVestingSchedules[index - 1]);
-                rewardsToClaim = rewardsToClaim.add(proprtionalReward);
-                userVestingSchedules[index - 1].releasedAmount_d18 = userVestingSchedules[index - 1].releasedAmount_d18.add(proprtionalReward);
+                rewardsToClaim = rewardsToClaim + proprtionalReward;
+                userVestingSchedules[index - 1].releasedAmount_d18 = userVestingSchedules[index - 1].releasedAmount_d18 + proprtionalReward;
             }
         }
 
@@ -99,12 +98,11 @@ contract Vesting is OwnableUpgradeable {
 
     function getAvailableReward(VestingSchedule memory _schedule) public view returns (uint256) {
         if (isFullyVested(_schedule)) {
-            return _schedule.totalVestedAmount_d18.sub(_schedule.releasedAmount_d18);
+            return _schedule.totalVestedAmount_d18 - _schedule.releasedAmount_d18;
         }
         return
-            (_schedule.totalVestedAmount_d18.mul(block.timestamp.sub(_schedule.vestingStartedTimeStamp)).div(vestingTimeInSeconds)).sub(
-                _schedule.releasedAmount_d18
-            );
+            ((_schedule.totalVestedAmount_d18 * (block.timestamp - _schedule.vestingStartedTimeStamp)) / vestingTimeInSeconds) -
+            _schedule.releasedAmount_d18;
     }
 
     function vestingSchedulesOf(address account) external view returns (VestingSchedule[] memory) {
