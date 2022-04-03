@@ -3,11 +3,8 @@ pragma solidity 0.8.13;
 
 import "./IPriceFeed.sol";
 import "./IOracleBasedCryptoFiatFeed.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
-    using SafeMath for uint256;
-
     IPriceFeed internal fiatToUsdFeed;
     IPriceFeed internal cryptoToUsdFeed;
 
@@ -23,10 +20,7 @@ contract OracleBasedCryptoFiatFeed is IOracleBasedCryptoFiatFeed {
         uint256 fiatUsdPrice = fiatToUsdFeed.price();
         uint256 cryptoUsdPrice = cryptoToUsdFeed.price();
 
-        return
-            uint256(1e12).mul(cryptoUsdPrice).mul(uint256(10)**fiatToUsdFeed.decimals()).div(fiatUsdPrice).div(
-                uint256(10)**cryptoToUsdFeed.decimals()
-            );
+        return (uint256(1e12) * cryptoUsdPrice * (uint256(10)**fiatToUsdFeed.decimals())) / fiatUsdPrice / (uint256(10)**cryptoToUsdFeed.decimals());
     }
 
     function getDecimals() public pure override returns (uint8) {

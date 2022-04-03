@@ -3,7 +3,6 @@ pragma solidity 0.8.13;
 
 import "./IPriceFeed.sol";
 import "./IOracleBasedCryptoFiatFeed.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
 @dev A contract that will be used ONLY by BDUS as we're using USD as out base fiat currency
@@ -12,7 +11,6 @@ contract OracleBasedWethUSDFeed is IOracleBasedCryptoFiatFeed {
     uint8 private constant DECIMALS = 12;
 
     IPriceFeed internal wethUsdFeed;
-    using SafeMath for uint256;
 
     constructor(address _wethUsdFeedAddress) {
         require(_wethUsdFeedAddress != address(0), "WethUsdFeed address cannot be 0");
@@ -25,10 +23,10 @@ contract OracleBasedWethUSDFeed is IOracleBasedCryptoFiatFeed {
 
         if (wethUsdDecimals > 12) {
             uint256 excessiveDecimals = wethUsdDecimals - DECIMALS;
-            return wethUsdFeed.price().div(10**(excessiveDecimals));
+            return wethUsdFeed.price() / (10**(excessiveDecimals));
         } else {
             uint256 missingDecimals = DECIMALS - wethUsdDecimals;
-            return wethUsdFeed.price().mul(10**(missingDecimals));
+            return wethUsdFeed.price() * (10**(missingDecimals));
         }
     }
 

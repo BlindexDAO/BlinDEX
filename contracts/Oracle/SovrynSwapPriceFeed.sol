@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IPriceFeed.sol";
 import "./ICryptoPairOracle.sol";
@@ -12,8 +11,6 @@ import "../Utils/Sovryn/ISovrynSwapNetwork.sol";
 // We need feeds with fiats prices. For now on RSK chain there are no such feeds.
 // We populate our own feeds
 contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
-    using SafeMath for uint256;
-
     uint256 private constant PRECISION = 1e12;
 
     ISovrynSwapNetwork public sovrynNetwork;
@@ -59,7 +56,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
 
     function price() external view override returns (uint256) {
         require(oraclePrice != 0, "Oracle not yet initiated");
-        require(block.timestamp < updateTimestamp.add(timeBeforeMustUpdate), "Price is stale. Update oracle");
+        require(block.timestamp < (updateTimestamp + timeBeforeMustUpdate), "Price is stale. Update oracle");
         return oraclePrice;
     }
 
@@ -68,8 +65,8 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     function consult(address tokenIn, uint256 amountIn) external view override returns (uint256) {
         require(tokenIn == tokenSource, "This oracle only accepts consulting source token input");
         require(oraclePrice != 0, "Oracle not yet initiated");
-        require(block.timestamp < updateTimestamp.add(timeBeforeMustUpdate), "Price is stale. Update oracle");
-        return oraclePrice.mul(amountIn).div(PRECISION);
+        require(block.timestamp < (updateTimestamp + timeBeforeMustUpdate), "Price is stale. Update oracle");
+        return (oraclePrice * amountIn) / PRECISION;
     }
 
     function updateOracle() external pure override {
@@ -83,7 +80,7 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     // Own methods
 
     function shouldUpdateOracleWithVerification() external view returns (bool) {
-        return block.timestamp > updateTimestamp.add(timeBeforeShouldUpdate);
+        return block.timestamp > (updateTimestamp + timeBeforeShouldUpdate);
     }
 
     function updateOracleWithVerification(uint256 verificationPrice_d12) external onlyUpdater {
@@ -94,9 +91,9 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
         ISovrynLiquidityPoolV1Converter sovrynConverter = ISovrynLiquidityPoolV1Converter(anchor.owner());
 
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);
-        uint256 newPrice = amountMinusFee.add(fee);
-        uint256 priceDifference = verificationPrice_d12 > newPrice ? verificationPrice_d12.sub(newPrice) : newPrice.sub(verificationPrice_d12);
-        require(priceDifference.mul(PRECISION).div(newPrice) < priceDisparityTolerance_d12, "Price disparity too big");
+        uint256 newPrice = amountMinusFee + fee;
+        uint256 priceDifference = verificationPrice_d12 > newPrice ? verificationPrice_d12 - newPrice : newPrice - verificationPrice_d12;
+        require((priceDifference * PRECISION) / newPrice < priceDisparityTolerance_d12, "Price disparity too big");
         oraclePrice = newPrice;
         updateTimestamp = block.timestamp;
         emit PriceChanged(oraclePrice);
