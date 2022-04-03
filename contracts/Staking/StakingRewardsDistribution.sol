@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -11,7 +10,6 @@ import "./Vesting.sol";
 import "./StakingRewards.sol";
 
 contract StakingRewardsDistribution is OwnableUpgradeable {
-    using SafeMath for uint256;
     using SafeERC20Upgradeable for BDXShares;
 
     uint256 public TOTAL_BDX_SUPPLY;
@@ -64,11 +62,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         treasury = _treasury;
         TOTAL_BDX_SUPPLY = rewardsToken.MAX_TOTAL_SUPPLY();
 
-        BDX_MINTING_SCHEDULE_YEAR_1 = TOTAL_BDX_SUPPLY.mul(200).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_2 = TOTAL_BDX_SUPPLY.mul(125).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_3 = TOTAL_BDX_SUPPLY.mul(100).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_4 = TOTAL_BDX_SUPPLY.mul(50).div(BDX_MINTING_SCHEDULE_PRECISON);
-        BDX_MINTING_SCHEDULE_YEAR_5 = TOTAL_BDX_SUPPLY.mul(25).div(BDX_MINTING_SCHEDULE_PRECISON);
+        BDX_MINTING_SCHEDULE_YEAR_1 = (TOTAL_BDX_SUPPLY * 200) / BDX_MINTING_SCHEDULE_PRECISON;
+        BDX_MINTING_SCHEDULE_YEAR_2 = (TOTAL_BDX_SUPPLY * 125) / BDX_MINTING_SCHEDULE_PRECISON;
+        BDX_MINTING_SCHEDULE_YEAR_3 = (TOTAL_BDX_SUPPLY * 100) / BDX_MINTING_SCHEDULE_PRECISON;
+        BDX_MINTING_SCHEDULE_YEAR_4 = (TOTAL_BDX_SUPPLY * 50) / BDX_MINTING_SCHEDULE_PRECISON;
+        BDX_MINTING_SCHEDULE_YEAR_5 = (TOTAL_BDX_SUPPLY * 25) / BDX_MINTING_SCHEDULE_PRECISON;
 
         EndOfYear_1 = block.timestamp + 365 days;
         EndOfYear_2 = block.timestamp + 2 * 365 days;
@@ -98,9 +96,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             yearSchedule = 0;
         }
 
-        uint256 bdxPerSecond = yearSchedule.mul(stakingRewardsWeights[_stakingRewardsAddress]).div(365 * 24 * 60 * 60).div(
-            stakingRewardsWeightsTotal
-        );
+        uint256 bdxPerSecond = (yearSchedule * stakingRewardsWeights[_stakingRewardsAddress]) / (365 * 24 * 60 * 60) / stakingRewardsWeightsTotal;
 
         return bdxPerSecond;
     }
@@ -155,15 +151,15 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             uint256 poolReward = stakingRewards.rewards(msg.sender);
 
             if (poolReward > 0) {
-                uint256 rewardFee = poolReward.mul(rewardFee_d12).div(MAX_REWARD_FEE);
-                uint256 userReward = poolReward.sub(rewardFee);
+                uint256 rewardFee = (poolReward * rewardFee_d12) / MAX_REWARD_FEE;
+                uint256 userReward = poolReward - rewardFee;
 
                 uint256 immediatelyReleasedReward = calculateImmediateReward(userReward);
-                uint256 vestedReward = userReward.sub(immediatelyReleasedReward);
+                uint256 vestedReward = userReward - immediatelyReleasedReward;
 
-                totalFee = totalFee.add(rewardFee);
-                totalRewardToRelease = totalRewardToRelease.add(immediatelyReleasedReward);
-                totalRewardToVest = totalRewardToVest.add(vestedReward);
+                totalFee = totalFee + rewardFee;
+                totalRewardToRelease = totalRewardToRelease + immediatelyReleasedReward;
+                totalRewardToVest = totalRewardToVest + vestedReward;
 
                 stakingRewards.releaseReward(msg.sender, immediatelyReleasedReward, vestedReward);
             }
@@ -183,7 +179,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function calculateImmediateReward(uint256 reward) private view returns (uint256) {
-        return reward.mul(HUNDRED_PERCENT.sub(vestingRewardRatio_percent)).div(HUNDRED_PERCENT);
+        return (reward * (HUNDRED_PERCENT - vestingRewardRatio_percent)) / HUNDRED_PERCENT;
     }
 
     function releaseReward(
