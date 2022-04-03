@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
 library BdPoolLibrary {
     // Constants for various precisions
     uint256 public constant PRICE_PRECISION = 1e12;

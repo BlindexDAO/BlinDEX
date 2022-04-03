@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -11,7 +10,6 @@ import "./BdPoolLibrary.sol";
 import "../../Utils/IWETH.sol";
 
 contract BdStablePool is OwnableUpgradeable {
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
@@ -92,7 +90,7 @@ contract BdStablePool is OwnableUpgradeable {
             NativeTokenWrapper = IWETH(_collateral_address);
         }
         collateral_token = IERC20(_collateral_address);
-        missing_decimals = uint256(18).sub(_collateral_decimals);
+        missing_decimals = uint256(18) - _collateral_decimals;
 
         is_collateral_wrapping_native_token = _is_collateral_wrapping_native_token;
 
@@ -116,7 +114,7 @@ contract BdStablePool is OwnableUpgradeable {
             uint256 eth_fiat_price_d12 = BDSTABLE.weth_fiat_price();
             uint256 collat_eth_price = collatWEthOracle.consult(weth_address, BdPoolLibrary.PRICE_PRECISION);
 
-            return eth_fiat_price_d12.mul(BdPoolLibrary.PRICE_PRECISION).div(collat_eth_price);
+            return (eth_fiat_price_d12 * BdPoolLibrary.PRICE_PRECISION) / collat_eth_price;
         }
     }
 
@@ -125,14 +123,12 @@ contract BdStablePool is OwnableUpgradeable {
         //Expressed in collateral token decimals
         if (collateralPricePaused == true) {
             return
-                collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral).mul(10**missing_decimals).mul(pausedPrice).div(
-                    BdPoolLibrary.PRICE_PRECISION
-                );
+                ((collateral_token.balanceOf(address(this)) - unclaimedPoolCollateral) * (10**missing_decimals) * pausedPrice) /
+                BdPoolLibrary.PRICE_PRECISION;
         } else {
             return
-                collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral).mul(10**missing_decimals).mul(getCollateralPrice_d12()).div(
-                    BdPoolLibrary.PRICE_PRECISION
-                );
+                ((collateral_token.balanceOf(address(this)) - unclaimedPoolCollateral) * (10**missing_decimals) * getCollateralPrice_d12()) /
+                BdPoolLibrary.PRICE_PRECISION;
         }
     }
 
@@ -169,7 +165,7 @@ contract BdStablePool is OwnableUpgradeable {
         }
 
         require(
-            collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral).add(collateral_amount_in_max) <= pool_ceiling,
+            (collateral_token.balanceOf(address(this)) - unclaimedPoolCollateral + collateral_amount_in_max) <= pool_ceiling,
             "Pool ceiling reached, no more BdStable can be minted with this collateral"
         );
 
@@ -192,7 +188,7 @@ contract BdStablePool is OwnableUpgradeable {
             );
         }
 
-        mint_amount = (mint_amount.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(minting_fee))).div(BdPoolLibrary.PRICE_PRECISION);
+        mint_amount = (mint_amount * (uint256(BdPoolLibrary.PRICE_PRECISION) - minting_fee)) / BdPoolLibrary.PRICE_PRECISION;
 
         require(bdStable_out_min <= mint_amount, "Slippage limit reached");
         require(bdx_needed <= bdx_in_max, "Not enough BDX inputted");
@@ -229,36 +225,35 @@ contract BdStablePool is OwnableUpgradeable {
             ? effective_global_collateral_ratio_d12
             : global_collateral_ratio_d12;
 
-        uint256 BdStable_amount_post_fee = (BdStable_amount.mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(redemption_fee))).div(
-            BdPoolLibrary.PRICE_PRECISION
-        );
+        uint256 BdStable_amount_post_fee = (BdStable_amount * (uint256(BdPoolLibrary.PRICE_PRECISION) - redemption_fee)) /
+            BdPoolLibrary.PRICE_PRECISION;
 
-        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee.sub(BdStable_amount_post_fee.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION));
+        uint256 bdx_fiat_value_d18 = BdStable_amount_post_fee - ((BdStable_amount_post_fee * cr_d12) / BdPoolLibrary.PRICE_PRECISION);
 
-        uint256 bdx_amount = bdx_fiat_value_d18.mul(BdPoolLibrary.PRICE_PRECISION).div(BDSTABLE.BDX_price_d12());
+        uint256 bdx_amount = (bdx_fiat_value_d18 * BdPoolLibrary.PRICE_PRECISION) / BDSTABLE.BDX_price_d12();
         uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
-        bdx_amount = bdx_amount.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+        bdx_amount = (bdx_amount * bdx_coverage_ratio) / BdPoolLibrary.COLLATERAL_RATIO_PRECISION;
 
         // Need to adjust for decimals of collateral
-        uint256 BdStable_amount_precision = BdStable_amount_post_fee.div(10**missing_decimals);
-        uint256 collateral_fiat_value = BdStable_amount_precision.mul(cr_d12).div(BdPoolLibrary.PRICE_PRECISION);
-        uint256 collateral_needed = collateral_fiat_value.mul(BdPoolLibrary.PRICE_PRECISION).div(getCollateralPrice_d12());
+        uint256 BdStable_amount_precision = BdStable_amount_post_fee / (10**missing_decimals);
+        uint256 collateral_fiat_value = (BdStable_amount_precision * cr_d12) / BdPoolLibrary.PRICE_PRECISION;
+        uint256 collateral_needed = (collateral_fiat_value * BdPoolLibrary.PRICE_PRECISION) / getCollateralPrice_d12();
 
-        require(collateral_needed <= collateral_token.balanceOf(address(this)).sub(unclaimedPoolCollateral), "Not enough collateral in pool");
+        require(collateral_needed <= collateral_token.balanceOf(address(this)) - unclaimedPoolCollateral, "Not enough collateral in pool");
         require(COLLATERAL_out_min <= collateral_needed, "Slippage limit reached [collateral]");
         require(BDX_out_min <= bdx_amount, "Slippage limit reached [BDX]");
         require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
 
-        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender].add(collateral_needed);
+        redeemCollateralBalances[msg.sender] = redeemCollateralBalances[msg.sender] + collateral_needed;
 
-        unclaimedPoolCollateral = unclaimedPoolCollateral.add(collateral_needed);
+        unclaimedPoolCollateral = unclaimedPoolCollateral + collateral_needed;
 
         BDSTABLE.refreshCollateralRatio();
 
         if (bdx_amount > 0) {
             require(BDSTABLE.canLegallyRedeem(msg.sender), "Cannot legally redeem");
 
-            redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender].add(bdx_amount);
+            redeemBDXBalances[msg.sender] = redeemBDXBalances[msg.sender] + bdx_amount;
 
             BDSTABLE.pool_claim_bdx(bdx_amount);
         }
@@ -273,10 +268,7 @@ contract BdStablePool is OwnableUpgradeable {
     // contract to the user. Redemption is split into two functions to prevent flash loans from being able
     // to take out BdStable/collateral from the system, use an AMM to trade the new price, and then mint back into the system.
     function collectRedemption(bool useNativeToken) external {
-        require(
-            (lastRedeemed[msg.sender].add(redemption_delay)) <= block.number,
-            "Must wait for redemption_delay blocks before collecting redemption"
-        );
+        require((lastRedeemed[msg.sender] + redemption_delay) <= block.number, "Must wait for redemption_delay blocks before collecting redemption");
         bool sendBDX = false;
         bool sendCollateral = false;
         uint256 BDXAmount;
@@ -293,7 +285,7 @@ contract BdStablePool is OwnableUpgradeable {
         if (redeemCollateralBalances[msg.sender] > 0) {
             CollateralAmount = redeemCollateralBalances[msg.sender];
             redeemCollateralBalances[msg.sender] = 0;
-            unclaimedPoolCollateral = unclaimedPoolCollateral.sub(CollateralAmount);
+            unclaimedPoolCollateral = unclaimedPoolCollateral - CollateralAmount;
 
             sendCollateral = true;
         }
@@ -346,11 +338,11 @@ contract BdStablePool is OwnableUpgradeable {
             global_collateral_ratio_d12
         );
 
-        uint256 collateral_units_precision = collateral_units.div(10**missing_decimals);
+        uint256 collateral_units_precision = collateral_units / (10**missing_decimals);
 
-        uint256 bdx_paid_back = amount_to_recollat.mul(uint256(BdPoolLibrary.PRICE_PRECISION).add(bonus_rate).sub(recollat_fee)).div(bdx_price);
+        uint256 bdx_paid_back = (amount_to_recollat * (uint256(BdPoolLibrary.PRICE_PRECISION) + bonus_rate - recollat_fee)) / bdx_price;
         uint256 bdx_coverage_ratio = BDSTABLE.get_effective_bdx_coverage_ratio();
-        bdx_paid_back = bdx_paid_back.mul(bdx_coverage_ratio).div(BdPoolLibrary.COLLATERAL_RATIO_PRECISION);
+        bdx_paid_back = (bdx_paid_back * bdx_coverage_ratio) / BdPoolLibrary.COLLATERAL_RATIO_PRECISION;
 
         require(BDX_out_min <= bdx_paid_back, "Slippage limit reached");
 
@@ -363,7 +355,7 @@ contract BdStablePool is OwnableUpgradeable {
 
             // refund remaining native token, if any left
             if (msg.value > collateral_units_precision) {
-                safeTransferETH(msg.sender, msg.value.sub(collateral_units_precision));
+                safeTransferETH(msg.sender, msg.value - collateral_units_precision);
             }
         } else {
             collateral_token.safeTransferFrom(msg.sender, address(this), collateral_units_precision);
@@ -393,12 +385,14 @@ contract BdStablePool is OwnableUpgradeable {
 
         uint256 bdx_price = BDSTABLE.BDX_price_d12();
 
-        uint256 collateral_equivalent_d18 = BdPoolLibrary
-            .calcBuyBackBDX(BDSTABLE.availableExcessCollatDV(), bdx_price, getCollateralPrice_d12(), BDX_amount)
-            .mul(uint256(BdPoolLibrary.PRICE_PRECISION).sub(buyback_fee))
-            .div(BdPoolLibrary.PRICE_PRECISION);
+        uint256 collateral_equivalent_d18 = (BdPoolLibrary.calcBuyBackBDX(
+            BDSTABLE.availableExcessCollatDV(),
+            bdx_price,
+            getCollateralPrice_d12(),
+            BDX_amount
+        ) * (uint256(BdPoolLibrary.PRICE_PRECISION) - buyback_fee)) / BdPoolLibrary.PRICE_PRECISION;
 
-        uint256 collateral_precision = collateral_equivalent_d18.div(10**missing_decimals);
+        uint256 collateral_precision = collateral_equivalent_d18 / (10**missing_decimals);
 
         require(COLLATERAL_out_min <= collateral_precision, "Slippage limit reached");
 
