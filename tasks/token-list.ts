@@ -51,7 +51,7 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
     getERC20(hre, EXTERNAL_USD_STABLE[hre.network.name].address)
   ]);
 
-  const [bdeuTokenInfo, bdusTokenInfo, bdxTokenInfo, wrappedNativeTokenInfo, wrappedSecondaryTokenInfo, externalUsdStableInfo] = await Promise.all(
+  const tokens = await Promise.all(
     [...bdStables, bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable].map(token => getTokenInfo(token, chainId))
   );
 
@@ -59,7 +59,7 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
     name: "Blindex Token List",
     timestamp: new Date().toISOString(),
     version: getVersion(),
-    tokens: [bdeuTokenInfo, bdusTokenInfo, bdxTokenInfo, wrappedNativeTokenInfo, wrappedSecondaryTokenInfo, externalUsdStableInfo],
+    tokens,
     logoURI: BlindexLogoUrl
   };
 

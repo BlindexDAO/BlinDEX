@@ -315,7 +315,7 @@ export function load() {
         decimals: await stable.decimals(),
         address: stable.address,
         fiat: getBDStableFiat(symbol),
-        pools: await stablePools
+        pools: stablePools
       });
     }
 
