@@ -381,7 +381,7 @@ export async function getWhitelistedTokensAddresses(hre: HardhatRuntimeEnvironme
   return [bdx.address, nativeToken.address, secondaryCollateral.address, ...bdstables.map(stable => stable.address)];
 }
 
-export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false): Promise<UniswapV2Pair[]> {
+export async function getAllUniswapPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false): Promise<UniswapV2Pair[]> {
   const uniswapPairs: UniswapV2Pair[] = [];
   const factory = await getUniswapFactory(hre);
   const amountOfPairs = (await factory.allPairsLength()).toNumber();
