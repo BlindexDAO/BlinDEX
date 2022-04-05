@@ -64,17 +64,17 @@ async function initialize() {
   bdEu = await getBdEu(hre);
   bdx = await getBdx(hre);
 
-  let contract = await getStakingRewardsWithWeth(hre, await bdEu.symbol());
-  if (!contract) {
+  const wethBdeuStakingRewardContract = await getStakingRewardsWithWeth(hre, await bdEu.symbol());
+  if (!wethBdeuStakingRewardContract) {
     throw new Error(`StakingRewads contract BDEU-WETH doesn't exist`);
   }
-  stakingRewards_BDEU_WETH = contract;
+  stakingRewards_BDEU_WETH = wethBdeuStakingRewardContract;
 
-  contract = await getStakingRewardsWithWbtc(hre, await bdEu.symbol());
-  if (!contract) {
+  const wbtcBdeuStakingRewardContract = await getStakingRewardsWithWbtc(hre, await bdEu.symbol());
+  if (!wbtcBdeuStakingRewardContract) {
     throw new Error(`StakingRewads contract BDEU-WBTC doesn't exist`);
   }
-  stakingRewards_BDEU_WBTC = contract;
+  stakingRewards_BDEU_WBTC = wbtcBdeuStakingRewardContract;
 
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);

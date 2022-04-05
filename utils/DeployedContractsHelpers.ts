@@ -24,7 +24,6 @@ import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE } from "./Constants";
-import { Contract } from "ethers";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -131,15 +130,15 @@ export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol
   return (await hre.ethers.getContract(bdStablesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
 }
 
-export async function getStakingRewardsWithWeth(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | undefined> {
+export async function getStakingRewardsWithWeth(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
   return await getBDStableCollateralStakingRewards(hre, symbol, "WETH");
 }
 
-export async function getStakingRewardsWithWbtc(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | undefined> {
+export async function getStakingRewardsWithWbtc(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
   return await getBDStableCollateralStakingRewards(hre, symbol, "WBTC");
 }
 
-export async function getStakingRewardsWithBdx(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | undefined> {
+export async function getStakingRewardsWithBdx(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
   return await getBDStableCollateralStakingRewards(hre, symbol, "BDX");
 }
 
@@ -147,22 +146,14 @@ async function getBDStableCollateralStakingRewards(
   hre: HardhatRuntimeEnvironment,
   stableSymbol: string,
   collateralSymbol: string
-): Promise<StakingRewards | undefined> {
+): Promise<StakingRewards | null> {
   const collateralAddress = await getContratAddress(hre, collateralSymbol);
   const stableAddress = await getContratAddress(hre, stableSymbol);
   const poolKey = getPoolKey(collateralAddress, stableAddress, collateralSymbol, stableSymbol);
 
-  const stakingRewardsContract = await getContractOrUndefined(hre, `StakingRewards_${poolKey}`);
+  const deployer = await getDeployer(hre);
+  const stakingRewardsContract = await hre.ethers.getContractOrNull(`StakingRewards_${poolKey}`, deployer);
   return stakingRewardsContract && (stakingRewardsContract as StakingRewards);
-}
-
-async function getContractOrUndefined(hre: HardhatRuntimeEnvironment, contractName: string): Promise<Contract | undefined> {
-  try {
-    const deployer = await getDeployer(hre);
-    return hre.ethers.getContract(contractName, deployer);
-  } catch {
-    return undefined;
-  }
 }
 
 export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironment): Promise<StakingRewards[]> {
@@ -174,12 +165,12 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
 
   const bdxWethStakingRewards = await getStakingRewardsWithWeth(hre, await bdx.symbol());
   if (bdxWethStakingRewards) {
-    stakingRewards.push(bdxWethStakingRewards);
+    throw new Error("BDX-WETH staking reward is missing");
   }
 
   const bdxWbtcStakingRewards = await getStakingRewardsWithWbtc(hre, await bdx.symbol());
   if (bdxWbtcStakingRewards) {
-    stakingRewards.push(bdxWbtcStakingRewards);
+    throw new Error("BDX-WBTC staking reward is missing");
   }
 
   for (const symbolA of bdstablesSymbols) {
@@ -205,7 +196,7 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
 
       // Do not repeat the same staking rewards twice
       if (symbolA !== symbolB && !stakingRewardsBdStablesMap.has(poolKey)) {
-        const stablesStakingRewards = await getContractOrUndefined(hre, `StakingRewards_${poolKey}`);
+        const stablesStakingRewards = await hre.ethers.getContractOrNull(`StakingRewards_${poolKey}`, deployer);
         if (stablesStakingRewards) {
           stakingRewards.push(stablesStakingRewards as StakingRewards);
           stakingRewardsBdStablesMap.add(poolKey);
