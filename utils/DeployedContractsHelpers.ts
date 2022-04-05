@@ -30,6 +30,7 @@ interface BDStableContractDetail {
     symbol: string;
     name: string;
     fiat: string;
+    ehereumChainlinkPriceFeed?: string;
     pools: {
       weth: { name: string };
       wbtc: { name: string };
@@ -42,7 +43,8 @@ function prepareBDStablesContractsDetails() {
     {
       symbol: "BDEU",
       name: "Blindex Euro",
-      fiat: "EUR"
+      fiat: "EUR",
+      ehereumChainlinkPriceFeed: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
     },
     {
       symbol: "BDUS",
@@ -220,6 +222,10 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
 
 export function getBDStableFiat(symbol: string): string {
   return bdStablesContractsDetails[symbol].fiat;
+}
+
+export function getBDStableChainlinkPriceFeed(symbol: string): string | undefined {
+  return bdStablesContractsDetails[symbol].ehereumChainlinkPriceFeed;
 }
 
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
