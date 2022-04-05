@@ -1,6 +1,13 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import { formatAddress, getAllUniswaPairs, getBdx, getOperationalTreasury, getTokenData, getUniswapFactory } from "../utils/DeployedContractsHelpers";
+import {
+  formatAddress,
+  getAllUniswapPairs,
+  getBdx,
+  getOperationalTreasury,
+  getTokenData,
+  getUniswapFactory
+} from "../utils/DeployedContractsHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 
 export function load() {
@@ -27,7 +34,7 @@ export function load() {
 }
 
 export async function getAllUniswapPairsData(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false) {
-  const pairs = await getAllUniswaPairs(hre, onlyWhitelistedTokens);
+  const pairs = await getAllUniswapPairs(hre, onlyWhitelistedTokens);
   const bdxAddress = formatAddress(hre, (await getBdx(hre)).address);
 
   const fullData = await Promise.all(
