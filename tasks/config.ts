@@ -316,7 +316,7 @@ export function load() {
         decimals: await stable.decimals(),
         address: stable.address,
         fiat: getBDStableFiat(symbol),
-        chainlinkPriceFeedAddress: getBDStableChainlinkPriceFeed(symbol),
+        ehereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
         pools: stablePools
       });
     }
