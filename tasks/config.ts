@@ -13,7 +13,8 @@ import {
   getAllBDStables,
   getWbtc,
   getTreasury,
-  getOperationalTreasury
+  getOperationalTreasury,
+  getBDStableChainlinkPriceFeed
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -315,7 +316,8 @@ export function load() {
         decimals: await stable.decimals(),
         address: stable.address,
         fiat: getBDStableFiat(symbol),
-        pools: await stablePools
+        ehereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
+        pools: stablePools
       });
     }
 
