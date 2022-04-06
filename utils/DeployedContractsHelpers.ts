@@ -166,14 +166,16 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
   const stakingRewardsBdStablesMap = new Set<string>();
 
   const bdxWethStakingRewards = await getStakingRewardsWithWeth(hre, await bdx.symbol());
-  if (bdxWethStakingRewards) {
+  if (!bdxWethStakingRewards) {
     throw new Error("BDX-WETH staking reward is missing");
   }
+  stakingRewards.push(bdxWethStakingRewards);
 
   const bdxWbtcStakingRewards = await getStakingRewardsWithWbtc(hre, await bdx.symbol());
-  if (bdxWbtcStakingRewards) {
+  if (!bdxWbtcStakingRewards) {
     throw new Error("BDX-WBTC staking reward is missing");
   }
+  stakingRewards.push(bdxWbtcStakingRewards);
 
   for (const symbolA of bdstablesSymbols) {
     const wethStakingRewards = await getStakingRewardsWithWeth(hre, symbolA);
