@@ -1,34 +1,26 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.13;
 
 // Modified from Synthetixio
 // https://raw.githubusercontent.com/Synthetixio/synthetix/develop/contracts/StakingRewards.sol
 // Then modified from FRAX
 // https://github.com/blindexgit/BlinDEX/blob/551b521/contracts/Staking/StakingRewards.sol
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./StakingRewardsDistribution.sol";
 
-contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
+contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
     using SafeERC20 for ERC20;
-    using SafeMath for uint256;
 
     // Constant for various precisions
     uint256 public constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
     uint256 public constant REWARD_PRECISION = 1e18;
-
-    uint256 private constant _REENTRY_GUARD_NOT_ENTERED = 1;
-    uint256 private constant _REENTRY_GUARD_ENTERED = 2;
-
-    // uint256 is cheaper than bool
-    uint256 private _reentry_guard_status;
 
     /* ========== STATE VARIABLES ========== */
 
@@ -87,9 +79,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         unlockedStakes = false;
 
         lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp.add(rewardsDurationSeconds);
-
-        _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
+        periodFinish = block.timestamp + rewardsDurationSeconds;
         _pause();
     }
 
@@ -121,7 +111,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
 
     // Total unlocked and locked liquidity tokens
     function balanceOf(address account) external view returns (uint256) {
-        return (_unlocked_balances[account]).add(_locked_balances[account]);
+        return _unlocked_balances[account] + _locked_balances[account];
     }
 
     // Total unlocked liquidity tokens
@@ -157,26 +147,22 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
             return rewardPerTokenStored_REWARD_PRECISION;
         } else {
             return
-                rewardPerTokenStored_REWARD_PRECISION.add(
-                    lastTimeRewardApplicable()
-                        .sub(lastUpdateTime)
-                        .mul(stakingRewardsDistribution.getRewardRatePerSecond(address(this)))
-                        .mul(REWARD_PRECISION)
-                        .div(_staking_token_boosted_supply)
-                );
+                rewardPerTokenStored_REWARD_PRECISION +
+                (((lastTimeRewardApplicable() - lastUpdateTime) *
+                    stakingRewardsDistribution.getRewardRatePerSecond(address(this)) *
+                    REWARD_PRECISION) / _staking_token_boosted_supply);
         }
     }
 
     function earned(address account) public view returns (uint256) {
         return
-            _boosted_balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid_REWARD_PRECISION[account])).div(REWARD_PRECISION).add(
-                rewards[account]
-            );
+            ((_boosted_balances[account] * (rewardPerToken() - userRewardPerTokenPaid_REWARD_PRECISION[account])) / (REWARD_PRECISION)) +
+            rewards[account];
     }
 
     // Precision 1e18 for compatibility with ERC20 token
     function getRewardForDuration() external view returns (uint256) {
-        return stakingRewardsDistribution.getRewardRatePerSecond(address(this)).mul(rewardsDurationSeconds);
+        return stakingRewardsDistribution.getRewardRatePerSecond(address(this)) * rewardsDurationSeconds;
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -186,12 +172,12 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         require(greylist[msg.sender] == false, "address has been greylisted");
 
         // Staking token supply and boosted supply
-        _staking_token_supply = _staking_token_supply.add(amount);
-        _staking_token_boosted_supply = _staking_token_boosted_supply.add(amount);
+        _staking_token_supply = _staking_token_supply + amount;
+        _staking_token_boosted_supply = _staking_token_boosted_supply + amount;
 
         // Staking token balance and boosted balance
-        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender].add(amount);
-        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(amount);
+        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender] + amount;
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender] + amount;
 
         // Pull the tokens from the staker
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -214,24 +200,18 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         uint256 secs = yearsNo * 365 * 24 * 60 * 60;
 
         uint256 multiplier = lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(yearsNo);
-        uint256 boostedAmount = amount.mul(multiplier).div(LOCK_MULTIPLIER_PRECISION);
+        uint256 boostedAmount = (amount * multiplier) / LOCK_MULTIPLIER_PRECISION;
         lockedStakes[msg.sender].push(
-            LockedStake(
-                keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
-                block.timestamp,
-                amount,
-                block.timestamp.add(secs),
-                multiplier
-            )
+            LockedStake(keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)), block.timestamp, amount, block.timestamp + secs, multiplier)
         );
 
         // Staking token supply and boosted supply
-        _staking_token_supply = _staking_token_supply.add(amount);
-        _staking_token_boosted_supply = _staking_token_boosted_supply.add(boostedAmount);
+        _staking_token_supply = _staking_token_supply + amount;
+        _staking_token_boosted_supply = _staking_token_boosted_supply + boostedAmount;
 
         // Staking token balance and boosted balance
-        _locked_balances[msg.sender] = _locked_balances[msg.sender].add(amount);
-        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
+        _locked_balances[msg.sender] = _locked_balances[msg.sender] + amount;
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender] + boostedAmount;
 
         // Pull the tokens from the staker
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -243,12 +223,12 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         require(amount > 0, "Cannot withdraw 0");
 
         // Staking token balance and boosted balance
-        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender].sub(amount);
-        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].sub(amount);
+        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender] - amount;
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender] - amount;
 
         // Staking token supply and boosted supply
-        _staking_token_supply = _staking_token_supply.sub(amount);
-        _staking_token_boosted_supply = _staking_token_boosted_supply.sub(amount);
+        _staking_token_supply = _staking_token_supply - amount;
+        _staking_token_boosted_supply = _staking_token_boosted_supply - amount;
 
         // Give the tokens to the withdrawer
         stakingToken.safeTransfer(msg.sender, amount);
@@ -281,16 +261,16 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         require(block.timestamp >= thisStake.ending_timestamp || unlockedStakes == true, "Stake is still locked!");
 
         uint256 theAmount = thisStake.amount;
-        uint256 boostedAmount = theAmount.mul(thisStake.multiplier_LOCK_MULTIPLIER_PRECISION).div(LOCK_MULTIPLIER_PRECISION);
+        uint256 boostedAmount = (theAmount * thisStake.multiplier_LOCK_MULTIPLIER_PRECISION) / LOCK_MULTIPLIER_PRECISION;
 
         if (theAmount > 0) {
             // Staking token balance and boosted balance
-            _locked_balances[msg.sender] = _locked_balances[msg.sender].sub(theAmount);
-            _boosted_balances[msg.sender] = _boosted_balances[msg.sender].sub(boostedAmount);
+            _locked_balances[msg.sender] = _locked_balances[msg.sender] - theAmount;
+            _boosted_balances[msg.sender] = _boosted_balances[msg.sender] - boostedAmount;
 
             // Staking token supply and boosted supply
-            _staking_token_supply = _staking_token_supply.sub(theAmount);
-            _staking_token_boosted_supply = _staking_token_boosted_supply.sub(boostedAmount);
+            _staking_token_supply = _staking_token_supply - theAmount;
+            _staking_token_boosted_supply = _staking_token_boosted_supply - boostedAmount;
 
             // Give the tokens to the withdrawer
             stakingToken.safeTransfer(msg.sender, theAmount);
@@ -317,12 +297,12 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         //
 
         // Staking token balance and boosted balance
-        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender].sub(amount);
-        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].sub(amount);
+        _unlocked_balances[msg.sender] = _unlocked_balances[msg.sender] - amount;
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender] - amount;
 
         // Staking token supply and boosted supply
-        _staking_token_supply = _staking_token_supply.sub(amount);
-        _staking_token_boosted_supply = _staking_token_boosted_supply.sub(amount);
+        _staking_token_supply = _staking_token_supply - amount;
+        _staking_token_boosted_supply = _staking_token_boosted_supply - amount;
 
         //
         //  stake (locked) the part of the unstaked pard of the unlocked stake
@@ -331,24 +311,18 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         uint256 secs = yearsNo * 365 * 24 * 60 * 60;
 
         uint256 multiplier = lockedStakingMultiplier_LOCK_MULTIPLIER_PRECISION(yearsNo);
-        uint256 boostedAmount = amount.mul(multiplier).div(LOCK_MULTIPLIER_PRECISION);
+        uint256 boostedAmount = (amount * multiplier) / LOCK_MULTIPLIER_PRECISION;
         lockedStakes[msg.sender].push(
-            LockedStake(
-                keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)),
-                block.timestamp,
-                amount,
-                block.timestamp.add(secs),
-                multiplier
-            )
+            LockedStake(keccak256(abi.encodePacked(msg.sender, block.timestamp, amount)), block.timestamp, amount, block.timestamp + secs, multiplier)
         );
 
         // Staking token supply and boosted supply
-        _staking_token_supply = _staking_token_supply.add(amount);
-        _staking_token_boosted_supply = _staking_token_boosted_supply.add(boostedAmount);
+        _staking_token_supply = _staking_token_supply + amount;
+        _staking_token_boosted_supply = _staking_token_boosted_supply + boostedAmount;
 
         // Staking token balance and boosted balance
-        _locked_balances[msg.sender] = _locked_balances[msg.sender].add(amount);
-        _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
+        _locked_balances[msg.sender] = _locked_balances[msg.sender] + amount;
+        _boosted_balances[msg.sender] = _boosted_balances[msg.sender] + boostedAmount;
 
         emit ExistingStakeLocked(msg.sender, amount, secs);
     }
@@ -375,9 +349,9 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         // Failsafe check
         require(block.timestamp > periodFinish, "Period has not expired yet!");
 
-        uint256 num_periods_elapsed = uint256(block.timestamp.sub(periodFinish)) / rewardsDurationSeconds; // Floor division to the nearest period
+        uint256 num_periods_elapsed = uint256(block.timestamp - periodFinish) / rewardsDurationSeconds; // Floor division to the nearest period
 
-        periodFinish = periodFinish.add((num_periods_elapsed.add(1)).mul(rewardsDurationSeconds));
+        periodFinish = periodFinish + ((num_periods_elapsed + 1) * rewardsDurationSeconds);
 
         rewardPerTokenStored_REWARD_PRECISION = rewardPerToken();
 
@@ -451,20 +425,6 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
     modifier onlyStakingRewardsDistribution() {
         require(msg.sender == address(stakingRewardsDistribution), "Only staking rewards distribution allowed");
         _;
-    }
-
-    modifier nonReentrant() {
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_reentry_guard_status != _REENTRY_GUARD_ENTERED, "ReentrancyGuard: reentrant call");
-
-        // Any calls to nonReentrant after this point will fail
-        _reentry_guard_status = _REENTRY_GUARD_ENTERED;
-
-        _;
-
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
     }
 
     /* ========== EVENTS ========== */

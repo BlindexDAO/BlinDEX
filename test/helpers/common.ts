@@ -23,3 +23,6 @@ export async function provideBdEu(hre: HardhatRuntimeEnvironment, to: string, am
   const bdEu = await getBdEu(hre);
   await bdEu.connect(treasury).transfer(to, amount);
 }
+
+export const subtractionOverflowExceptionMessage =
+  "Error: VM Exception while processing transaction: reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)";

@@ -27,8 +27,9 @@ describe("Swaps", () => {
     const weth = await getWeth(hre);
     const router = await getUniswapRouter(hre);
 
-    weth.approve(router.address, to_d18(1));
-    await router.swapExactTokensForTokens(to_d18(1), 0, [weth.address, bdx.address], deployer.address, currentBlock.timestamp + 1e5);
+    const amountIn = to_d18(1);
+    await weth.approve(router.address, amountIn);
+    await router.swapExactTokensForTokens(amountIn, 0, [weth.address, bdx.address], deployer.address, currentBlock.timestamp + 1e5);
   });
 
   it("Should swap indirect path", async () => {
@@ -44,7 +45,7 @@ describe("Swaps", () => {
 
     const path = [weth.address, bdeu.address, bdx.address];
 
-    weth.approve(router.address, amountIn);
+    await weth.approve(router.address, amountIn);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     await router.swapExactTokensForTokens(amountIn, 0, path, deployer.address, currentBlock.timestamp + 1e5);
   });
@@ -78,7 +79,7 @@ describe("Swaps", () => {
     console.log(d18_ToNumber(bestPath.amountOut));
     expect(bestPath.path.length).to.eq(3);
 
-    weth.approve(router.address, amountIn);
+    await weth.approve(router.address, amountIn);
     await router.swapExactTokensForTokens(amountIn, 0, bestPath.path, deployer.address, currentBlock.timestamp + 1e5);
   });
 

@@ -1,21 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.6.12;
+pragma solidity 0.8.13;
 
 import "../Oracle/SovrynSwapPriceFeed.sol";
 import "../Oracle/FiatToFiatPseudoOracleFeed.sol";
-import "../Oracle/UniswapPairOracle.sol";
+import "../Oracle/UniswapOracle/UniswapPairOracle.sol";
 import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract UpdaterRSK is Ownable {
+contract UpdaterRSK is Ownable, ReentrancyGuard {
     address public updater;
 
-    uint256 private constant _NOT_ENTERED = 1;
-    uint256 private constant _ENTERED = 2;
-
-    uint256 private _status;
-
-    constructor(address _updater) public {
+    constructor(address _updater) {
         updater = _updater;
     }
 
@@ -66,20 +62,6 @@ contract UpdaterRSK is Ownable {
     modifier onlyUpdater() {
         require(msg.sender == updater, "You're not the updater");
         _;
-    }
-
-    modifier nonReentrant() {
-        // On the first call to nonReentrant, _notEntered will be true
-        require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
-
-        // Any calls to nonReentrant after this point will fail
-        _status = _ENTERED;
-
-        _;
-
-        // By storing the original value once again, a refund is triggered (see
-        // https://eips.ethereum.org/EIPS/eip-2200)
-        _status = _NOT_ENTERED;
     }
 
     event UpdaterChanged(address indexed oldUpdater, address indexed newUpdater);

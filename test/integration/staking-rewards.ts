@@ -29,7 +29,7 @@ import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { Vesting } from "../../typechain/Vesting";
 import type { StakingRewards } from "../../typechain/StakingRewards";
 import type { IERC20 } from "../../typechain/IERC20";
-import { provideBdEu } from "../helpers/common";
+import { provideBdEu, subtractionOverflowExceptionMessage } from "../helpers/common";
 
 chai.use(cap);
 
@@ -216,13 +216,13 @@ describe("StakingRewards", () => {
         (async () => {
           await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(1);
         })()
-      ).to.be.rejectedWith("subtraction overflow");
+      ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
 
       await expect(
         (async () => {
           await stakingRewards_BDEU_WETH.connect(testUser2).withdraw(1);
         })()
-      ).to.be.rejectedWith("subtraction overflow");
+      ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
     });
   });
 
@@ -327,7 +327,7 @@ describe("StakingRewards", () => {
         (async () => {
           await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(1);
         })()
-      ).to.be.rejectedWith("subtraction overflow");
+      ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
     });
 
     it("should be able to withdraw (withdrawLocked) LP tokens", async () => {
