@@ -6,7 +6,7 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const initialDeployBDStables = Object.values(bdStablesContractsDetails).filter(stableDetails => ["BDEU", "BDUS"].includes(stableDetails.symbol));
+  const initialDeployBDStables = Object.values(bdStablesContractsDetails).filter(stableDetails => ["bXAU", "bGBP"].includes(stableDetails.symbol));
   for (const stableDetails of initialDeployBDStables) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
@@ -23,13 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         execute: {
           init: {
             methodName: "initialize",
-            args: [
-              stableDetails.name,
-              stableDetails.symbol,
-              treasury.address,
-              bdx.address,
-              constants.initialBdstableMintingAmount(hre.network.name, stableDetails.symbol)
-            ]
+            args: [stableDetails.name, stableDetails.symbol, treasury.address, bdx.address, constants.initialBdstableMintingAmount(hre.network.name)]
           }
         }
       },
@@ -115,6 +109,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 func.id = __filename;
-func.tags = ["BDEU", "BDUS"];
+func.tags = ["BDEU", "BDUS", "bXAU", "bGBP"];
 func.dependencies = ["BDX", "BdPoolLibrary"];
 export default func;

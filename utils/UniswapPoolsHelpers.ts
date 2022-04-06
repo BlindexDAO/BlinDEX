@@ -1,7 +1,7 @@
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getBdUs } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getBdUs, getBdEu } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
@@ -71,6 +71,10 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
+  const bdus = await getBdUs(hre);
+  const bdusSymbol = await bdus.symbol();
+  const bdueu = await getBdEu(hre);
+  const bdueuSymbol = await bdueu.symbol();
   const bdStables = await getAllBDStables(hre);
   const bdxPoolData = { name: await bdx.symbol(), token: bdx };
   const wethPoolData = { name: "WETH", token: weth };
@@ -102,29 +106,23 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   for (const stableA of bdStables) {
     const symbol = await stableA.symbol();
 
-    pools.push([bdxPoolData, { name: symbol, token: stableA }]);
-
     const stabl1Data = { name: symbol, token: stableA };
-
     registerPool(stabl1Data, wethPoolData);
-    registerPool(stabl1Data, wbtcPoolData);
 
-    // Add stable-stable pools
-    for (const stableB of bdStables) {
-      const stableASymbol = await stableA.symbol();
-      const stableBSymbol = await stableB.symbol();
-      if (stableA !== stableB && !registeredPools.has(getPoolKey(stableA.address, stableB.address, stableASymbol, stableBSymbol))) {
-        registerPool({ name: stableASymbol, token: stableA }, { name: stableBSymbol, token: stableB });
-      }
+    // Only BDUS and BDEU have pools with BDX and WBTC
+    if ([bdusSymbol, bdueuSymbol].includes(symbol)) {
+      pools.push([bdxPoolData, { name: symbol, token: stableA }]);
+      registerPool(stabl1Data, wbtcPoolData);
     }
   }
 
-  const bdus = await getBdUs(hre);
+  // Add BDUS-BDEU pool
+  registerPool({ name: bdusSymbol, token: bdus }, { name: bdueuSymbol, token: bdueu });
 
   const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
   const externalUsdStableContract = (await hre.ethers.getContractAt("IERC20", hre.ethers.utils.getAddress(externalUsdStable.address))) as IERC20;
 
-  registerPool({ name: "BDUS", token: bdus }, { name: externalUsdStable.symbol, token: externalUsdStableContract });
+  registerPool({ name: bdusSymbol, token: bdus }, { name: externalUsdStable.symbol, token: externalUsdStableContract });
 
   return pools;
 }

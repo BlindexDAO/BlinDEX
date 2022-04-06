@@ -50,6 +50,18 @@ function prepareBDStablesContractsDetails() {
       symbol: "BDUS",
       name: "Blindex USD",
       fiat: "USD"
+    },
+    {
+      symbol: "bXAU",
+      name: "Blindex Gold",
+      fiat: "XAU",
+      ehereumChainlinkPriceFeed: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
+    },
+    {
+      symbol: "bGBP",
+      name: "Blindex GBP",
+      fiat: "GBP",
+      ehereumChainlinkPriceFeed: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
     }
   ];
 
@@ -236,6 +248,14 @@ export async function getBdEu(hre: HardhatRuntimeEnvironment) {
 
 export async function getBdUs(hre: HardhatRuntimeEnvironment) {
   return getBDStable(hre, "BDUS");
+}
+
+export async function getBxau(hre: HardhatRuntimeEnvironment) {
+  return getBDStable(hre, "bXAU");
+}
+
+export async function getBgbp(hre: HardhatRuntimeEnvironment) {
+  return getBDStable(hre, "bGBP");
 }
 
 export async function getBdEuWethPool(hre: HardhatRuntimeEnvironment): Promise<BdStablePool> {

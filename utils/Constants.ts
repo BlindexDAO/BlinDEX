@@ -1,4 +1,5 @@
 import type { BigNumber } from "ethers";
+import _ from "lodash";
 import { to_d18 } from "./NumbersHelpers";
 
 export const wETH_address: { [key: string]: string } = {
@@ -23,6 +24,14 @@ export const wBTC_precision: { [key: string]: number } = {
 
 export const EUR_USD_FEED_ADDRESS: { [key: string]: string } = {
   mainnetFork: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
+};
+
+export const XAU_USD_FEED_ADDRESS: { [key: string]: string } = {
+  mainnetFork: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
+};
+
+export const GBP_USD_FEED_ADDRESS: { [key: string]: string } = {
+  mainnetFork: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
 };
 
 export const ETH_USD_FEED_ADDRESS: { [key: string]: string } = {
@@ -50,17 +59,23 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
 
 export const numberOfLPs = 11;
 
-export const initialBdstableMintingAmount = (networkName = "mainnetFork"): BigNumber => {
-  switch (networkName) {
-    case "rsk": {
-      return to_d18(15e3);
-    }
-    case "mainnetFork": {
-      return to_d18(30e3);
-    }
-    default: {
-      return to_d18(15e3);
-    }
+const initalBDStablePerSymbol = {
+  rsk: {
+    XAU: to_d18(8),
+    GBP: to_d18(11.5e3)
+  }
+};
+
+export const initialBdstableMintingAmount = (networkName = "mainnetFork", symbol?: string): BigNumber => {
+  const initalAmountPerSymbol = symbol && _.get(initalBDStablePerSymbol, [networkName, symbol]);
+  if (initalAmountPerSymbol) {
+    return initalAmountPerSymbol;
+  } else if (networkName === "rsk") {
+    return to_d18(15e3);
+  } else if (networkName === "mainnetFork") {
+    return to_d18(30e3);
+  } else {
+    return to_d18(15e3);
   }
 };
 
