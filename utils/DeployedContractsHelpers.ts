@@ -17,7 +17,6 @@ import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDist
 import type { Vesting } from "../typechain/Vesting";
 import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import type { IWETH } from "../typechain/IWETH";
-import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
@@ -26,8 +25,56 @@ import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE } from "./Constants";
 
+interface BDStableContractDetail {
+  [key: string]: {
+    symbol: string;
+    name: string;
+    fiat: string;
+    ehereumChainlinkPriceFeed?: string;
+    pools: {
+      weth: { name: string };
+      wbtc: { name: string };
+    };
+  };
+}
+
+function prepareBDStablesContractsDetails() {
+  const bdstablesDetails = [
+    {
+      symbol: "BDEU",
+      name: "Blindex Euro",
+      fiat: "EUR",
+      ehereumChainlinkPriceFeed: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
+    },
+    {
+      symbol: "BDUS",
+      name: "Blindex USD",
+      fiat: "USD"
+    }
+  ];
+
+  const stables: BDStableContractDetail = {};
+
+  for (const bdstable of bdstablesDetails) {
+    const pools = {
+      weth: {
+        name: `${bdstable.symbol}_WETH_POOL`
+      },
+      wbtc: {
+        name: `${bdstable.symbol}_WBTC_POOL`
+      }
+    };
+
+    stables[bdstable.symbol] = Object.assign(bdstable, { pools });
+  }
+
+  return stables;
+}
+
+export const bdStablesContractsDetails: BDStableContractDetail = prepareBDStablesContractsDetails();
+
 export function getAllBDStablesSymbols(): string[] {
-  return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);
+  return Object.values(bdStablesContractsDetails).map(stable => stable.symbol);
 }
 
 export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
@@ -80,52 +127,76 @@ export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<Signe
   return user;
 }
 
-export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string) {
+export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string): Promise<BdStablePool> {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract(bdstablesContractsDetails[symbol].pools.wbtc.name, deployer)) as BdStablePool;
+  return (await hre.ethers.getContract(bdStablesContractsDetails[symbol].pools.wbtc.name, deployer)) as BdStablePool;
 }
 
-export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol: string) {
+export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol: string): Promise<BdStablePool> {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract(bdstablesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
+  return (await hre.ethers.getContract(bdStablesContractsDetails[symbol].pools.weth.name, deployer)) as BdStablePool;
 }
 
-export async function getBDStableWethStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
-  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "WETH");
+export async function getStakingRewardsWithWeth(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
+  return await getBDStableCollateralStakingRewards(hre, symbol, "WETH");
 }
 
-export async function getBDStableWbtcStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
-  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "WBTC");
+export async function getStakingRewardsWithWbtc(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
+  return await getBDStableCollateralStakingRewards(hre, symbol, "WBTC");
 }
 
-export async function getBDStableBdxStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
-  return await getBDStableCollateralStakingRewards(hre, stableSymbol, "BDX");
+export async function getStakingRewardsWithBdx(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
+  return await getBDStableCollateralStakingRewards(hre, symbol, "BDX");
 }
 
-async function getBDStableCollateralStakingRewards(hre: HardhatRuntimeEnvironment, stableSymbol: string, collateralSymbol: string) {
-  const deployer = await getDeployer(hre);
-
+async function getBDStableCollateralStakingRewards(
+  hre: HardhatRuntimeEnvironment,
+  stableSymbol: string,
+  collateralSymbol: string
+): Promise<StakingRewards | null> {
   const collateralAddress = await getContratAddress(hre, collateralSymbol);
   const stableAddress = await getContratAddress(hre, stableSymbol);
   const poolKey = getPoolKey(collateralAddress, stableAddress, collateralSymbol, stableSymbol);
 
-  return (await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards;
+  const deployer = await getDeployer(hre);
+  const stakingRewardsContract = await hre.ethers.getContractOrNull(`StakingRewards_${poolKey}`, deployer);
+  return stakingRewardsContract && (stakingRewardsContract as StakingRewards);
 }
 
-export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironment) {
+export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironment): Promise<StakingRewards[]> {
   const deployer = await getDeployer(hre);
   const bdstablesSymbols = getAllBDStablesSymbols();
   const bdx = await getBdx(hre);
-  const stakingRewards = [];
+  const stakingRewards: StakingRewards[] = [];
   const stakingRewardsBdStablesMap = new Set<string>();
 
-  stakingRewards.push(await getBDStableWethStakingRewards(hre, await bdx.symbol()));
-  stakingRewards.push(await getBDStableWbtcStakingRewards(hre, await bdx.symbol()));
+  const bdxWethStakingRewards = await getStakingRewardsWithWeth(hre, await bdx.symbol());
+  if (!bdxWethStakingRewards) {
+    throw new Error("BDX-WETH staking reward is missing");
+  }
+  stakingRewards.push(bdxWethStakingRewards);
+
+  const bdxWbtcStakingRewards = await getStakingRewardsWithWbtc(hre, await bdx.symbol());
+  if (!bdxWbtcStakingRewards) {
+    throw new Error("BDX-WBTC staking reward is missing");
+  }
+  stakingRewards.push(bdxWbtcStakingRewards);
 
   for (const symbolA of bdstablesSymbols) {
-    stakingRewards.push(await getBDStableWethStakingRewards(hre, symbolA));
-    stakingRewards.push(await getBDStableWbtcStakingRewards(hre, symbolA));
-    stakingRewards.push(await getBDStableBdxStakingRewards(hre, symbolA));
+    const wethStakingRewards = await getStakingRewardsWithWeth(hre, symbolA);
+    if (wethStakingRewards) {
+      stakingRewards.push(wethStakingRewards);
+    }
+
+    const wbtcStakingRewards = await getStakingRewardsWithWbtc(hre, symbolA);
+    if (wbtcStakingRewards) {
+      stakingRewards.push(wbtcStakingRewards);
+    }
+
+    const bdxStakingRewards = await getStakingRewardsWithBdx(hre, symbolA);
+    if (bdxStakingRewards) {
+      stakingRewards.push(bdxStakingRewards);
+    }
 
     for (const symbolB of bdstablesSymbols) {
       const stableAddress = await getContratAddress(hre, symbolA);
@@ -134,8 +205,11 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
 
       // Do not repeat the same staking rewards twice
       if (symbolA !== symbolB && !stakingRewardsBdStablesMap.has(poolKey)) {
-        stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
-        stakingRewardsBdStablesMap.add(poolKey);
+        const stablesStakingRewards = await hre.ethers.getContractOrNull(`StakingRewards_${poolKey}`, deployer);
+        if (stablesStakingRewards) {
+          stakingRewards.push(stablesStakingRewards as StakingRewards);
+          stakingRewardsBdStablesMap.add(poolKey);
+        }
       }
     }
   }
@@ -143,14 +217,22 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
   const bdus = await getBdUs(hre);
   const externalUsdStable = EXTERNAL_USD_STABLE[hre.network.name];
   const poolKey = getPoolKey(bdus.address, externalUsdStable.address, await bdus.symbol(), externalUsdStable.symbol);
-  stakingRewards.push((await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer)) as StakingRewards);
+  const bdusExternalUsdStableStakingRewards = await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer);
+  if (!bdusExternalUsdStableStakingRewards) {
+    throw new Error(`Couldn't find ${poolKey} staking rewards contract`);
+  }
+  stakingRewards.push(bdusExternalUsdStableStakingRewards as StakingRewards);
   stakingRewardsBdStablesMap.add(poolKey);
 
   return stakingRewards;
 }
 
-export function getBDStableFiat(symbol: string) {
-  return bdstablesContractsDetails[symbol].fiat;
+export function getBDStableFiat(symbol: string): string {
+  return bdStablesContractsDetails[symbol].fiat;
+}
+
+export function getBDStableChainlinkPriceFeed(symbol: string): string | undefined {
+  return bdStablesContractsDetails[symbol].ehereumChainlinkPriceFeed;
 }
 
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
@@ -303,7 +385,7 @@ export async function getWhitelistedTokensAddresses(hre: HardhatRuntimeEnvironme
   return [bdx.address, nativeToken.address, secondaryCollateral.address, ...bdstables.map(stable => stable.address)];
 }
 
-export async function getAllUniswaPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false): Promise<UniswapV2Pair[]> {
+export async function getAllUniswapPairs(hre: HardhatRuntimeEnvironment, onlyWhitelistedTokens = false): Promise<UniswapV2Pair[]> {
   const uniswapPairs: UniswapV2Pair[] = [];
   const factory = await getUniswapFactory(hre);
   const amountOfPairs = (await factory.allPairsLength()).toNumber();

@@ -8,8 +8,8 @@ import cap from "chai-as-promised";
 import { to_d18, d18_ToNumber, to_d8 } from "../../utils/NumbersHelpers";
 import {
   getBdEu,
-  getBDStableWbtcStakingRewards,
-  getBDStableWethStakingRewards,
+  getStakingRewardsWithWbtc,
+  getStakingRewardsWithWeth,
   getBdx,
   getDeployer,
   getOperationalTreasury,
@@ -29,7 +29,7 @@ import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { Vesting } from "../../typechain/Vesting";
 import type { StakingRewards } from "../../typechain/StakingRewards";
 import type { IERC20 } from "../../typechain/IERC20";
-import { provideBdEu } from "../helpers/common";
+import { provideBdEu, subtractionOverflowExceptionMessage } from "../helpers/common";
 
 chai.use(cap);
 
@@ -64,8 +64,17 @@ async function initialize() {
   bdEu = await getBdEu(hre);
   bdx = await getBdx(hre);
 
-  stakingRewards_BDEU_WETH = await getBDStableWethStakingRewards(hre, await bdEu.symbol());
-  stakingRewards_BDEU_WBTC = await getBDStableWbtcStakingRewards(hre, await bdEu.symbol());
+  const wethBdeuStakingRewardContract = await getStakingRewardsWithWeth(hre, await bdEu.symbol());
+  if (!wethBdeuStakingRewardContract) {
+    throw new Error(`StakingRewads contract BDEU-WETH doesn't exist`);
+  }
+  stakingRewards_BDEU_WETH = wethBdeuStakingRewardContract;
+
+  const wbtcBdeuStakingRewardContract = await getStakingRewardsWithWbtc(hre, await bdEu.symbol());
+  if (!wbtcBdeuStakingRewardContract) {
+    throw new Error(`StakingRewads contract BDEU-WBTC doesn't exist`);
+  }
+  stakingRewards_BDEU_WBTC = wbtcBdeuStakingRewardContract;
 
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
@@ -207,13 +216,13 @@ describe("StakingRewards", () => {
         (async () => {
           await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(1);
         })()
-      ).to.be.rejectedWith("subtraction overflow");
+      ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
 
       await expect(
         (async () => {
           await stakingRewards_BDEU_WETH.connect(testUser2).withdraw(1);
         })()
-      ).to.be.rejectedWith("subtraction overflow");
+      ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
     });
   });
 
@@ -318,7 +327,7 @@ describe("StakingRewards", () => {
         (async () => {
           await stakingRewards_BDEU_WETH.connect(testUser1).withdraw(1);
         })()
-      ).to.be.rejectedWith("subtraction overflow");
+      ).to.be.rejectedWith(subtractionOverflowExceptionMessage);
     });
 
     it("should be able to withdraw (withdrawLocked) LP tokens", async () => {

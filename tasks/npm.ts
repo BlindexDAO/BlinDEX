@@ -4,7 +4,7 @@ import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
 import semver from "semver";
-import { typechainOutDir } from "../hardhat.config";
+import { typechainOutDir } from "../hardhat.compile.config";
 
 export function load() {
   task("blindex-npm-package", "Packages type definitions and abis into npm package")

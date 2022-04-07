@@ -3,56 +3,11 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
 import type { BdStablePool } from "../typechain/BdStablePool";
-import { formatAddress, getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
-
-interface BDStableContractDetail {
-  [key: string]: {
-    symbol: string;
-    name: string;
-    fiat: string;
-    pools: {
-      weth: { name: string };
-      wbtc: { name: string };
-    };
-  };
-}
-
-function prepareStablesContractsDetails() {
-  const bdstablesDetails = [
-    {
-      symbol: "BDEU",
-      name: "Blindex Euro",
-      fiat: "EUR"
-    },
-    {
-      symbol: "BDUS",
-      name: "Blindex USD",
-      fiat: "USD"
-    }
-  ];
-
-  const stables: BDStableContractDetail = {};
-
-  for (const bdstable of bdstablesDetails) {
-    const pools = {
-      weth: {
-        name: `${bdstable.symbol}_WETH_POOL`
-      },
-      wbtc: {
-        name: `${bdstable.symbol}_WBTC_POOL`
-      }
-    };
-
-    stables[bdstable.symbol] = Object.assign(bdstable, { pools });
-  }
-
-  return stables;
-}
-
-export const ContractsDetails: BDStableContractDetail = prepareStablesContractsDetails();
+import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  for (const stableDetails of Object.values(ContractsDetails)) {
+  const initialDeployBDStables = Object.values(bdStablesContractsDetails).filter(stableDetails => ["BDEU", "BDUS"].includes(stableDetails.symbol));
+  for (const stableDetails of initialDeployBDStables) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
     const deployer = await getDeployer(hre);

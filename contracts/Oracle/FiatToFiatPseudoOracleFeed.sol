@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.12;
+pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./IPriceFeed.sol";
 
 // We need feeds with fiats prices. For now on RSK chain there are no such feeds.
 // We populate our own feeds
 contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
-    using SafeMath for uint256;
-
     uint8 private constant DECIMALS = 12;
     uint256 private constant PRICE_PRECISION = 1e12;
     uint256 private constant SECONDS_IN_DAY = 60 * 60 * 24;
@@ -20,7 +17,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
 
     address private updater;
 
-    constructor(address _updater, uint256 _recentPrice) public {
+    constructor(address _updater, uint256 _recentPrice) {
         require(_updater != address(0), "Updater address cannot be 0");
 
         updater = _updater;
@@ -28,7 +25,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
         lastUpdateTimestamp = block.timestamp;
     }
 
-    function decimals() external view override returns (uint8) {
+    function decimals() external pure override returns (uint8) {
         return DECIMALS;
     }
 
@@ -46,9 +43,9 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
 
     function setPrice(uint256 _price) external onlyUpdaterOrOwner {
         if (_msgSender() != owner()) {
-            uint256 diff = _price > recentPrice ? _price.sub(recentPrice) : recentPrice.sub(_price);
+            uint256 diff = _price > recentPrice ? _price - recentPrice : recentPrice - _price;
 
-            uint256 dayChange_d12 = PRICE_PRECISION.mul(diff).mul(SECONDS_IN_DAY).div(recentPrice).div(block.timestamp.sub(lastUpdateTimestamp));
+            uint256 dayChange_d12 = (PRICE_PRECISION * diff * SECONDS_IN_DAY) / recentPrice / (block.timestamp - lastUpdateTimestamp);
 
             require(dayChange_d12 <= maxDayChange_d12, "Price change too big");
         }
