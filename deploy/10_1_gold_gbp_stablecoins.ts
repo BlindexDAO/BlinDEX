@@ -4,6 +4,7 @@ import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../utils/Constants";
 import type { BdStablePool } from "../typechain/BdStablePool";
 import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
+import { to_d12 } from "../utils/NumbersHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const initialDeployBDStables = Object.values(bdStablesContractsDetails).filter(stableDetails => ["bXAU", "bGBP"].includes(stableDetails.symbol));
@@ -61,6 +62,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bdstable_weth_BdStablePool = (await hre.ethers.getContract(stableDetails.pools.weth.name)) as BdStablePool;
     console.log(`${stableDetails.pools.weth.name} pool deployed to:`, bdstable_weth_BdStablePool.address);
 
+    console.log(`Set ${stableDetails.pools.weth.name} pool parameters`);
+    const [weth_pool_ceiling, weth_redemption_delay, weth_minting_fee, weth_redemption_fee, weth_buyback_fee, weth_recollat_fee] = await Promise.all([
+      bdstable_weth_BdStablePool.pool_ceiling(),
+      bdstable_weth_BdStablePool.redemption_delay(),
+      bdstable_weth_BdStablePool.minting_fee(),
+      bdstable_weth_BdStablePool.redemption_fee(),
+      bdstable_weth_BdStablePool.buyback_fee(),
+      bdstable_weth_BdStablePool.recollat_fee()
+    ]);
+    await (
+      await bdstable_weth_BdStablePool.setPoolParameters(
+        weth_pool_ceiling,
+        to_d12(0.03), // 3% Bonus rate
+        weth_redemption_delay,
+        weth_minting_fee,
+        weth_redemption_fee,
+        weth_buyback_fee,
+        weth_recollat_fee
+      )
+    ).wait();
+
     await hre.deployments.deploy(stableDetails.pools.wbtc.name, {
       from: deployer.address,
       proxy: {
@@ -88,6 +110,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const bdstable_wbtc_BdStablePool = (await hre.ethers.getContract(stableDetails.pools.wbtc.name)) as BdStablePool;
     console.log(`${stableDetails.pools.wbtc.name} pool deployed to:`, bdstable_wbtc_BdStablePool.address);
 
+    console.log(`Set ${stableDetails.pools.wbtc.name} pool parameters`);
+    const [wbtc_pool_ceiling, wbtc_redemption_delay, wbtc_minting_fee, wbtc_redemption_fee, wbtc_buyback_fee, wbtc_recollat_fee] = await Promise.all([
+      bdstable_wbtc_BdStablePool.pool_ceiling(),
+      bdstable_wbtc_BdStablePool.redemption_delay(),
+      bdstable_wbtc_BdStablePool.minting_fee(),
+      bdstable_wbtc_BdStablePool.redemption_fee(),
+      bdstable_wbtc_BdStablePool.buyback_fee(),
+      bdstable_wbtc_BdStablePool.recollat_fee()
+    ]);
+    await (
+      await bdstable_wbtc_BdStablePool.setPoolParameters(
+        wbtc_pool_ceiling,
+        to_d12(0.03), // 3% Bonus rate
+        wbtc_redemption_delay,
+        wbtc_minting_fee,
+        wbtc_redemption_fee,
+        wbtc_buyback_fee,
+        wbtc_recollat_fee
+      )
+    ).wait();
+
     await (await bdx.connect(treasury).transfer(bdstable.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE)).wait();
 
     console.log(`${stableDetails.symbol} provided with BDX`);
@@ -109,6 +152,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 func.id = __filename;
-func.tags = ["BDEU", "BDUS", "bXAU", "bGBP"];
-func.dependencies = ["BDX", "BdPoolLibrary"];
+func.tags = ["bXAU", "bGBP"];
+func.dependencies = ["BDX", "BdPoolLibrary", "BDUS_XUSD_POOL"];
 export default func;

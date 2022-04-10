@@ -1,3 +1,4 @@
+import _ from "lodash";
 import type { IERC20 } from "../typechain/IERC20";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BDStable } from "../typechain/BDStable";
@@ -30,11 +31,13 @@ interface BDStableContractDetail {
     symbol: string;
     name: string;
     fiat: string;
+    fiatSymbol: string;
     ehereumChainlinkPriceFeed?: string;
     pools: {
       weth: { name: string };
       wbtc: { name: string };
     };
+    isCurrency: boolean;
   };
 }
 
@@ -44,24 +47,32 @@ function prepareBDStablesContractsDetails() {
       symbol: "BDEU",
       name: "Blindex Euro",
       fiat: "EUR",
-      ehereumChainlinkPriceFeed: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
+      fiatSymbol: "€",
+      ehereumChainlinkPriceFeed: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1",
+      isCurrency: true
     },
     {
       symbol: "BDUS",
       name: "Blindex USD",
-      fiat: "USD"
+      fiat: "USD",
+      fiatSymbol: "$",
+      isCurrency: true
     },
     {
       symbol: "bXAU",
       name: "Blindex Gold",
       fiat: "XAU",
-      ehereumChainlinkPriceFeed: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
+      fiatSymbol: "$",
+      ehereumChainlinkPriceFeed: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6",
+      isCurrency: false
     },
     {
       symbol: "bGBP",
       name: "Blindex GBP",
       fiat: "GBP",
-      ehereumChainlinkPriceFeed: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
+      fiatSymbol: "£",
+      ehereumChainlinkPriceFeed: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5",
+      isCurrency: true
     }
   ];
 
@@ -87,6 +98,10 @@ export const bdStablesContractsDetails: BDStableContractDetail = prepareBDStable
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdStablesContractsDetails).map(stable => stable.symbol);
+}
+
+export function getAllBDStablesFiatSymbols(): string[] {
+  return Object.values(bdStablesContractsDetails).map(stable => stable.fiat);
 }
 
 export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<BDStable[]> {
@@ -234,10 +249,6 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
   return stakingRewards;
 }
 
-export function getBDStableFiat(symbol: string): string {
-  return bdStablesContractsDetails[symbol].fiat;
-}
-
 export function getBDStableChainlinkPriceFeed(symbol: string): string | undefined {
   return bdStablesContractsDetails[symbol].ehereumChainlinkPriceFeed;
 }
@@ -348,45 +359,52 @@ export async function mintWeth(hre: HardhatRuntimeEnvironment, user: SignerWithA
   await weth.connect(user).deposit({ value: amount });
 }
 
-export async function getOnChainBtcEurPrice(hre: HardhatRuntimeEnvironment) {
-  const networkName = hre.network.name;
-
-  return getOnChainCryptoFiatPrice(hre, constants.EUR_USD_FEED_ADDRESS[networkName], constants.BTC_USD_FEED_ADDRESS[networkName]);
+export async function getOnChainBtcStablePrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+  return getOnChainCryptoFiatPrice(hre, stableSymbol, "BTC");
 }
 
-export async function getOnChainEthEurPrice(hre: HardhatRuntimeEnvironment) {
-  const networkName = hre.network.name;
-
-  return getOnChainCryptoFiatPrice(hre, constants.EUR_USD_FEED_ADDRESS[networkName], constants.ETH_USD_FEED_ADDRESS[networkName]);
+export async function getOnChainEthStablePrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+  return getOnChainCryptoFiatPrice(hre, stableSymbol, "ETH");
 }
 
 export async function getOnChainWethUsdPrice(hre: HardhatRuntimeEnvironment) {
-  const networkName = hre.network.name;
-
-  return getOnChainCryptoUSDPrice(hre, constants.ETH_USD_FEED_ADDRESS[networkName]);
+  return getOnChainCryptoUSDPrice(hre, "ETH");
 }
 
 export async function getOnChainWbtcUsdPrice(hre: HardhatRuntimeEnvironment) {
-  const networkName = hre.network.name;
-
-  return getOnChainCryptoUSDPrice(hre, constants.BTC_USD_FEED_ADDRESS[networkName]);
+  return getOnChainCryptoUSDPrice(hre, "BTC");
 }
 
-export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, cryptoUsdFeedAddress: string) {
-  const cryptoUsdFeed = (await hre.ethers.getContractAt("AggregatorV3Interface", formatAddress(hre, cryptoUsdFeedAddress))) as AggregatorV3Interface;
+export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, cryptoSymbol: "ETH" | "BTC") {
+  const networkName = hre.network.name;
+  const cryptoToUsdFeedAddress = _.get(constants, [`${cryptoSymbol}_USD_FEED_ADDRESS`, networkName]);
+  if (!cryptoToUsdFeedAddress) {
+    throw new Error(`There is no field to usd feed address "${cryptoSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
+  }
+
+  const cryptoUsdFeed = (await hre.ethers.getContractAt(
+    "AggregatorV3Interface",
+    formatAddress(hre, cryptoToUsdFeedAddress)
+  )) as AggregatorV3Interface;
   const crypto_usd_data = await cryptoUsdFeed.latestRoundData();
   const price_crypto_usd_decimlas = await cryptoUsdFeed.decimals();
   return bigNumberToDecimal(crypto_usd_data.answer, price_crypto_usd_decimlas);
 }
 
-export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, fiat_usd_feed_addres: string, crypto_usd_feed_address: string) {
-  const fiat_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", formatAddress(hre, fiat_usd_feed_addres))) as AggregatorV3Interface;
+export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, fiatSymbol: string, cryptoSymbol: "ETH" | "BTC") {
+  const networkName = hre.network.name;
+  const fiatToUsdFeedAddress = _.get(constants, [`${fiatSymbol}_USD_FEED_ADDRESS`, networkName]);
+  if (!fiatToUsdFeedAddress) {
+    throw new Error(`There is no field to usd feed address "${fiatSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
+  }
+
+  const fiat_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", formatAddress(hre, fiatToUsdFeedAddress))) as AggregatorV3Interface;
 
   const fiat_usd_data = await fiat_usd_feed.latestRoundData();
   const price_fiat_usd_decimlas = await fiat_usd_feed.decimals();
   const price_fiat_usd = bigNumberToDecimal(fiat_usd_data.answer, price_fiat_usd_decimlas);
 
-  const price_crypto_usd = await getOnChainCryptoUSDPrice(hre, crypto_usd_feed_address);
+  const price_crypto_usd = await getOnChainCryptoUSDPrice(hre, cryptoSymbol);
 
   const cryptoInFiatPrice = price_crypto_usd / price_fiat_usd;
   const cryptoInFiatPrice_1e12 = to_d12(cryptoInFiatPrice);

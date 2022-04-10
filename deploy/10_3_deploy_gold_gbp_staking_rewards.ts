@@ -26,6 +26,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   return true;
 };
 func.id = __filename;
-func.tags = ["StakingRewards"];
-func.dependencies = ["LiquidityPools", "StakingRewardsDistribution", "Vesting"];
+func.tags = ["bXAU_Staking_Pools", "bGBP_Staking_Pools"];
+func.dependencies = ["bXAU_Liquidity_Pools", "bGBP_Liquidity_Pools"];
 export default func;

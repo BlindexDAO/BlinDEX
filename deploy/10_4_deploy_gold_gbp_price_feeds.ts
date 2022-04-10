@@ -119,6 +119,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 func.id = __filename;
-func.tags = ["PriceFeeds"];
-func.dependencies = ["StakingRewards"];
+func.tags = ["bXAU_Price_Feeds", "bGBP_Price_Feeds"];
+func.dependencies = ["bXAU_Staking_Pools", "bGBP_Staking_Pools"];
 export default func;

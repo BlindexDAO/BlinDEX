@@ -163,7 +163,7 @@ export function load() {
             recollat_fee
           )
         ).wait();
-        console.log("Bonus before:", `${d12_ToNumber(await stablePool.bonus_rate()) * 100}%`);
+        console.log("Bonus after:", `${d12_ToNumber(await stablePool.bonus_rate()) * 100}%`);
       }
     });
 }

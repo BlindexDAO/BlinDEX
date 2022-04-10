@@ -57,12 +57,21 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   rsk: "ETHs"
 };
 
-export const numberOfLPs = 11;
+export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
+export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
+export const INITIAL_BXAU_UNISWAP_XAU_AMOUNT = 0.3;
+export const INITIAL_BGBP_UNISWAP_GBP_AMOUNT = 500;
+export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
+export const INITIAL_BDX_UNISWAP_USD_AMOUNT = 10000;
+export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 const initalBDStablePerSymbol = {
   rsk: {
-    XAU: to_d18(8),
-    GBP: to_d18(11.5e3)
+    XAU: to_d18(INITIAL_BXAU_UNISWAP_XAU_AMOUNT), // TODO: Define amount
+    GBP: to_d18(INITIAL_BGBP_UNISWAP_GBP_AMOUNT) // TODO: Define amount
+  },
+  mainnetFork: {
+    XAU: to_d18(10)
   }
 };
 
@@ -78,12 +87,6 @@ export const initialBdstableMintingAmount = (networkName = "mainnetFork", symbol
     return to_d18(15e3);
   }
 };
-
-export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
-export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
-export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
-export const INITIAL_BDX_UNISWAP_USD_AMOUNT = 10000;
-export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
 
 // original uniswap addresss on ETH
 export const ETH_uniswapRouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
