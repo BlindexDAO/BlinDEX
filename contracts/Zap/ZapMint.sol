@@ -5,13 +5,9 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../BdStable/Pools/BdStablePool.sol";
 import "../BSM/Investors/AMM/interfaces/ISovrynNetwork.sol";
-import "../Utils/IWETH.sol";
 import "../BSM/Investors/AMM/AMMInvestorsHelper.sol";
 
-// TODO: What to do with price impacts and slippage??
-
 contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
-    IWETH private nativeTokenWrapper;
     bool public zapMintPaused;
 
     AMMInvestorsHelper ammInvestorsHelper;
@@ -21,15 +17,13 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
 
     /* ========== INITIALIZER ========== */
 
-    function initialize(address _nativeTokenWrapper, address _ammInvestorsHelper) external initializer {
+    function initialize(address _ammInvestorsHelper) external initializer {
         __Ownable_init();
 
         require(owner() != address(0), "ZapMint: owner must be set");
-        zapMintPaused = true;
+        zapMintPaused = false;
 
         ammInvestorsHelper = AMMInvestorsHelper(_ammInvestorsHelper);
-
-        nativeTokenWrapper = IWETH(_nativeTokenWrapper);
     }
 
     /* ========== View Functions ========== */
@@ -44,29 +38,24 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
 
     /* ========== External Functions ========== */
 
-    // TODO: Do I need it??
-    receive() external payable {
-        require(msg.sender == address(nativeTokenWrapper), "Only the native token wrapper is allowed to send native token to this contract");
-    }
+    // TODO: Handle native token
 
-    // TODO: Do I need the payable?? Or should I have another function to perform the mint with native token?
     function mint(
         uint256 collateral_amount_in_max,
         uint256 bdx_in_max,
         uint256 bdStableOutMin,
-        bool useNativeToken, // True if the native token should be used after all the swaps occured
+        bool useNativeToken,
         address _bdstablePool,
-        address[] memory tokens, // Length = Number of swaps + 1
+        address[] memory paths, // Length = Number of swaps + 1
         uint256[] memory amounts, // Length = Number of swaps + 1
         address[] memory routers, // Length = Number of swaps
         AMMInvestorsHelper.RouterTypes[] memory routersTypes, // Length = Number of swaps
         uint256 deadline
     ) external payable nonReentrant {
-        require(zapMintPaused == false, "ZapMinting is paused");
-        require(mapZapMintSupportedTokens[tokens[0]], "Token not supported for zap minting");
+        require(zapMintPaused == false, "ZapMint: status is paused");
+        require(mapZapMintSupportedTokens[paths[0]], "ZapMint: Token not supported for zap minting");
 
-        // TODO - maybe change the parameters to: paths[], amounts[], routers[], routersTypes[]
-        ammInvestorsHelper.performBestSwap(tokens, amounts, routers, routersTypes, deadline);
+        ammInvestorsHelper.performBestSwap(paths, amounts, routers, routersTypes, deadline);
 
         BdStablePool bdstablePool = BdStablePool(payable(_bdstablePool));
         bdstablePool.mintFractionalBdStable(collateral_amount_in_max, bdx_in_max, bdStableOutMin, useNativeToken);
