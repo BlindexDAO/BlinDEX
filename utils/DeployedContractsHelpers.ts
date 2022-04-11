@@ -32,7 +32,7 @@ interface BDStableContractDetail {
     name: string;
     fiat: string;
     fiatSymbol: string;
-    ehereumChainlinkPriceFeed?: string;
+    ethereumChainlinkPriceFeed?: string;
     pools: {
       weth: { name: string };
       wbtc: { name: string };
@@ -48,7 +48,7 @@ function prepareBDStablesContractsDetails() {
       name: "Blindex Euro",
       fiat: "EUR",
       fiatSymbol: "€",
-      ehereumChainlinkPriceFeed: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1",
+      ethereumChainlinkPriceFeed: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1",
       isCurrency: true
     },
     {
@@ -63,7 +63,7 @@ function prepareBDStablesContractsDetails() {
       name: "Blindex Gold",
       fiat: "XAU",
       fiatSymbol: "$",
-      ehereumChainlinkPriceFeed: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6",
+      ethereumChainlinkPriceFeed: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6",
       isCurrency: false
     },
     {
@@ -71,7 +71,7 @@ function prepareBDStablesContractsDetails() {
       name: "Blindex GBP",
       fiat: "GBP",
       fiatSymbol: "£",
-      ehereumChainlinkPriceFeed: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5",
+      ethereumChainlinkPriceFeed: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5",
       isCurrency: true
     }
   ];
@@ -250,7 +250,7 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
 }
 
 export function getBDStableChainlinkPriceFeed(symbol: string): string | undefined {
-  return bdStablesContractsDetails[symbol].ehereumChainlinkPriceFeed;
+  return bdStablesContractsDetails[symbol].ethereumChainlinkPriceFeed;
 }
 
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {

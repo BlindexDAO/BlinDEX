@@ -320,7 +320,7 @@ export function load() {
         address: stable.address,
         fiat,
         fiatSymbol,
-        ehereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
+        ethereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
         pools: stablePools,
         isCurrency
       });
