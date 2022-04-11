@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../BdStable/Pools/BdStablePool.sol";
-import "../BSM/Investors/AMM/interfaces/ISovrynNetwork.sol";
 import "../BSM/Investors/AMM/AMMInvestorsHelper.sol";
 
 contract ZapMint is OwnableUpgradeable, ReentrancyGuard {

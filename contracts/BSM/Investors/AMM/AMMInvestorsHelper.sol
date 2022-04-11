@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-import "./interfaces/ISovrynNetwork.sol";
+import "./interfaces/ISovrynSwapNetwork.sol";
 
 contract AMMInvestorsHelper is OwnableUpgradeable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -62,7 +62,7 @@ contract AMMInvestorsHelper is OwnableUpgradeable, ReentrancyGuard {
 
                 amounts[swapIndex + 1] = swapAmounts[swapAmounts.length - 1];
             } else if (routersTypes[swapIndex] == RouterTypes.Sovryn) {
-                ISovrynNetwork router = ISovrynNetwork(routers[swapIndex]);
+                ISovrynSwapNetwork router = ISovrynSwapNetwork(routers[swapIndex]);
 
                 IERC20[] memory conversionPath = router.conversionPath(IERC20(paths[swapIndex]), IERC20(paths[swapIndex + 1]));
 
