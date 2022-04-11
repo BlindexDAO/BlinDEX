@@ -11,7 +11,7 @@ import {
   getBdEuWethPool,
   getDeployer,
   getUser,
-  getOnChainEthEurPrice,
+  getOnChainEthStablePrice,
   mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
@@ -144,7 +144,7 @@ describe("Recollateralization", () => {
     const cr = 0.9;
     await lockBdeuCrAt(hre, cr); // CR
 
-    const wethPrice = (await getOnChainEthEurPrice(hre)).price;
+    const wethPrice = (await getOnChainEthStablePrice(hre, "EUR")).price;
     const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
 
     const bdxLeftInBdEu_d18 = to_d18(6);
