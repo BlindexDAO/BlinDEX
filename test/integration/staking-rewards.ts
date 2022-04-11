@@ -66,13 +66,13 @@ async function initialize() {
 
   const wethBdeuStakingRewardContract = await getStakingRewardsWithWeth(hre, await bdEu.symbol());
   if (!wethBdeuStakingRewardContract) {
-    throw new Error(`StakingRewads contract BDEU-WETH doesn't exist`);
+    throw new Error(`StakingRewards contract BDEU-WETH doesn't exist`);
   }
   stakingRewards_BDEU_WETH = wethBdeuStakingRewardContract;
 
   const wbtcBdeuStakingRewardContract = await getStakingRewardsWithWbtc(hre, await bdEu.symbol());
   if (!wbtcBdeuStakingRewardContract) {
-    throw new Error(`StakingRewads contract BDEU-WBTC doesn't exist`);
+    throw new Error(`StakingRewards contract BDEU-WBTC doesn't exist`);
   }
   stakingRewards_BDEU_WBTC = wbtcBdeuStakingRewardContract;
 
@@ -495,7 +495,7 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
-    const numberOfStakingPools = 10;
+    const numberOfStakingPools = await getStakingRewardsCount();
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
     const poolIndexToRemove = 2;
     const thirdPoolAddress = poolsAddresses[poolIndexToRemove];
@@ -624,4 +624,20 @@ async function getUsersCurrentLpBalance() {
   const totalDepositedLpTokens_d18 = depositedLPTokenUser1_d18.add(depositedLPTokenUser2_d18);
 
   return { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 };
+}
+
+async function getStakingRewardsCount(): Promise<number> {
+  const srd = await getStakingRewardsDistribution(hre);
+
+  let poolsCount = 0;
+  let noMorePools = false;
+  while (!noMorePools) {
+    try {
+      await srd.stakingRewardsAddresses(poolsCount);
+      poolsCount++;
+    } catch {
+      noMorePools = true;
+    }
+  }
+  return poolsCount;
 }
