@@ -10,7 +10,7 @@ import "../BSM/Investors/AMM/AMMInvestorsHelper.sol";
 contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
     bool public zapMintPaused;
 
-    AMMInvestorsHelper ammInvestorsHelper;
+    AMMInvestorsHelper private ammInvestorsHelper;
 
     mapping(address => bool) private mapZapMintSupportedTokens;
     address[] public zapMintSupportedTokens;
