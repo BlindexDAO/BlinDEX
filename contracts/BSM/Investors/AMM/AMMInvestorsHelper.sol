@@ -21,7 +21,6 @@ contract AMMInvestorsHelper is OwnableUpgradeable, ReentrancyGuard {
     function initialize() external initializer {
         __Ownable_init();
 
-        require(owner() != address(0), "AMMInvestorsHelper: owner must be set");
     }
 
     /* ========== External FUNCTIONS ========== */
