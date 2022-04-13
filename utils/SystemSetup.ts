@@ -309,11 +309,12 @@ export async function setUpFunctionalSystem(
     // We'll NOT use the recallateralize funciton in this case so we won't lock BDX in the deployer address for no reason
 
     const initialBDStableColltFraction_d12 = to_d12(initialBDStableCollteralRatio);
-    const initialBdstableMinting = constants.initialBdstableMintingAmount(hre.network.name);
+    const initialBdeuMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "BDEU");
+    const initialBdusMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "BDUS");
 
     const WETH_RATIO = 5; // Represents 50%
     const WRBTC_RATIO = 5; // Represents 50%
-    const euroCollateralWeth = initialBdstableMinting
+    const euroCollateralWeth = initialBdeuMintingAmount
       .mul(to_d12(scale))
       .div(1e12)
       .mul(WETH_RATIO)
@@ -322,7 +323,7 @@ export async function setUpFunctionalSystem(
       .mul(1e12)
       .div(to_d12(initialCollateralPrices.ETH.EUR))
       .div(1e12);
-    const euroCollateralWbtc = initialBdstableMinting
+    const euroCollateralWbtc = initialBdeuMintingAmount
       .mul(to_d12(scale))
       .div(1e12)
       .mul(WRBTC_RATIO)
@@ -332,7 +333,7 @@ export async function setUpFunctionalSystem(
       .div(to_d12(initialCollateralPrices.BTC.EUR))
       .div(1e10)
       .div(1e12);
-    const usdCollateralWeth = initialBdstableMinting
+    const usdCollateralWeth = initialBdusMintingAmount
       .mul(to_d12(scale))
       .div(1e12)
       .mul(WETH_RATIO)
@@ -341,7 +342,7 @@ export async function setUpFunctionalSystem(
       .mul(1e12)
       .div(to_d12(initialCollateralPrices.ETH.EUR))
       .div(1e12);
-    const usdCollateralWbtc = initialBdstableMinting
+    const usdCollateralWbtc = initialBdusMintingAmount
       .mul(to_d12(scale))
       .div(1e12)
       .mul(WRBTC_RATIO)

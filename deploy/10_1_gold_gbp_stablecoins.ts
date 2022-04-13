@@ -24,7 +24,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         execute: {
           init: {
             methodName: "initialize",
-            args: [stableDetails.name, stableDetails.symbol, treasury.address, bdx.address, constants.initialBdstableMintingAmount(hre.network.name)]
+            args: [
+              stableDetails.name,
+              stableDetails.symbol,
+              treasury.address,
+              bdx.address,
+              constants.initialBdstableMintingAmount(hre.network.name, stableDetails.symbol)
+            ]
           }
         }
       },

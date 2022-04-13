@@ -50,7 +50,11 @@ describe("Recollateralization", () => {
     const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
     const bdEuCollatrValue_d18 = await bdEu.globalCollateralValue();
-    const maxPossibleRecollateralInEur_d18 = constants.initialBdstableMintingAmount().sub(bdEuCollatrValue_d18).mul(1e12).div(wethInEurPrice_d12);
+    const maxPossibleRecollateralInEur_d18 = constants
+      .initialBdstableMintingAmount(hre.network.name, "BDEU")
+      .sub(bdEuCollatrValue_d18)
+      .mul(1e12)
+      .div(wethInEurPrice_d12);
 
     // recollateralization
     const toRecollatInEur_d18 = maxPossibleRecollateralInEur_d18.div(2);

@@ -68,20 +68,20 @@ export const INITIAL_USDC_UNISWAP_USD_AMOUNT = 100;
 
 const initalBDStablePerSymbol = {
   rsk: {
-    BDUS: to_d18(15e3),
+    USD: to_d18(15e3),
     BDEU: to_d18(15e3),
-    XAU: to_d18(INITIAL_BXAU_UNISWAP_XAU_AMOUNT),
-    GBP: to_d18(INITIAL_BGBP_UNISWAP_GBP_AMOUNT)
+    bXAU: to_d18(INITIAL_BXAU_UNISWAP_XAU_AMOUNT),
+    bGBP: to_d18(INITIAL_BGBP_UNISWAP_GBP_AMOUNT)
   },
   mainnetFork: {
     BDUS: to_d18(30e3),
     BDEU: to_d18(30e3),
-    XAU: to_d18(10),
-    GBP: to_d18(30e3)
+    bXAU: to_d18(10),
+    bGBP: to_d18(30e3)
   }
 };
 
-export const initialBdstableMintingAmount = (networkName = "mainnetFork", symbol?: string): BigNumber => {
+export const initialBdstableMintingAmount = (networkName: string, symbol: string): BigNumber => {
   const initalAmountPerSymbol = symbol && _.get(initalBDStablePerSymbol, [networkName, symbol]);
   if (!initalAmountPerSymbol) {
     throw new Error(`Missing initial BDStable minting amount for ${symbol} on network ${networkName}`);
