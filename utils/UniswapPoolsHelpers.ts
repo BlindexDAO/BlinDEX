@@ -1,8 +1,9 @@
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getBdUs, getBdEu } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
+import { getListOfSupportedLiquidityPools } from "../utils/Constants";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("Starting tp update the Uniswap oracles");
@@ -67,23 +68,39 @@ export function getPoolKey(tokenAAddress: string, tokenBAddress: string, tokenAS
   return `${sortedTokens.token0Symbol}_${sortedTokens.token1Symbol}`;
 }
 
+export type PoolTokenData = { name: string; token: IERC20 };
+
 export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: string; token: IERC20 }[][]> {
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
-  const bdus = await getBdUs(hre);
-  const bdusSymbol = await bdus.symbol();
-  const bdueu = await getBdEu(hre);
-  const bdueuSymbol = await bdueu.symbol();
   const bdStables = await getAllBDStables(hre);
-  const bdxPoolData = { name: await bdx.symbol(), token: bdx };
+  const bdxSymbol = await bdx.symbol();
+  const bdxPoolData = { name: bdxSymbol, token: bdx };
   const wethPoolData = { name: "WETH", token: weth };
   const wbtcPoolData = { name: "WBTC", token: wbtc };
+  const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
+  const externalUsdStableContract = (await hre.ethers.getContractAt("IERC20", hre.ethers.utils.getAddress(externalUsdStable.address))) as IERC20;
+  const externalUsdStablePoolData = { name: externalUsdStable.symbol, token: externalUsdStableContract };
+
+  const tokenToPoolTokenData: { [symbol: string]: PoolTokenData } = {
+    ["WETH"]: wethPoolData,
+    ["WBTC"]: wbtcPoolData,
+    [externalUsdStable.symbol]: externalUsdStablePoolData,
+    [bdxSymbol]: bdxPoolData
+  };
+
+  await Promise.all(
+    bdStables.map(async bdStable => {
+      const symbol = await bdStable.symbol();
+      tokenToPoolTokenData[symbol] = { name: symbol, token: bdStable };
+    })
+  );
 
   // In each sub array, the order of the first object matters.
   // BDX should always come first in any sub array, then BDStable and only then the collateral (WBTC/WETH)
   // This is important when providing liquidity in the SystemSetup.ts file
-  const pools: { name: string; token: IERC20 }[][] = [];
+  const pools: PoolTokenData[][] = [];
   const registeredPools = new Set<string>();
 
   function registerPool(dataA: { name: string; token: IERC20 }, dataB: { name: string; token: IERC20 }) {
@@ -100,29 +117,8 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
     registeredPools.add(poolKey);
   }
 
-  registerPool(bdxPoolData, wethPoolData);
-  registerPool(bdxPoolData, wbtcPoolData);
-
-  for (const stableA of bdStables) {
-    const symbol = await stableA.symbol();
-
-    const stabl1Data = { name: symbol, token: stableA };
-    registerPool(stabl1Data, wethPoolData);
-
-    // Only BDUS and BDEU have pools with BDX and WBTC
-    if ([bdusSymbol, bdueuSymbol].includes(symbol)) {
-      pools.push([bdxPoolData, { name: symbol, token: stableA }]);
-      registerPool(stabl1Data, wbtcPoolData);
-    }
-  }
-
-  // Add BDUS-BDEU pool
-  registerPool({ name: bdusSymbol, token: bdus }, { name: bdueuSymbol, token: bdueu });
-
-  const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
-  const externalUsdStableContract = (await hre.ethers.getContractAt("IERC20", hre.ethers.utils.getAddress(externalUsdStable.address))) as IERC20;
-
-  registerPool({ name: bdusSymbol, token: bdus }, { name: externalUsdStable.symbol, token: externalUsdStableContract });
+  const supportedLiquidityPools = getListOfSupportedLiquidityPools(hre.network.name);
+  supportedLiquidityPools.forEach(({ tokenA, tokenB }) => registerPool(tokenToPoolTokenData[tokenA], tokenToPoolTokenData[tokenB]));
 
   return pools;
 }

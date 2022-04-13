@@ -138,3 +138,33 @@ export const PriceFeedContractNames = {
   ETH_EUR: "OracleBasedCryptoFiatFeed_ETH_EUR",
   ETH_USD_ADAPTER: "OracleBasedWethUSDFeed_ETH_USD"
 };
+
+export function getListOfSupportedLiquidityPools(networkName: string): {
+  tokenA: string;
+  tokenB: string;
+}[] {
+  const externalUsdStable = EXTERNAL_USD_STABLE[networkName];
+  return [
+    { tokenA: "BDX", tokenB: "WETH" },
+    { tokenA: "BDX", tokenB: "WBTC" },
+
+    // BDUS
+    { tokenA: "BDUS", tokenB: "WETH" },
+    { tokenA: "BDUS", tokenB: "WBTC" },
+    { tokenA: "BDX", tokenB: "BDUS" },
+    { tokenA: "BDUS", tokenB: externalUsdStable.symbol },
+
+    // BDEU
+    { tokenA: "BDEU", tokenB: "WETH" },
+    { tokenA: "BDEU", tokenB: "WBTC" },
+    { tokenA: "BDX", tokenB: "BDEU" },
+
+    // bXAU
+    { tokenA: "bXAU", tokenB: "WETH" },
+    { tokenA: "BDX", tokenB: "bXAU" },
+
+    // bGBP
+    { tokenA: "bGBP", tokenB: "WETH" },
+    { tokenA: "BDX", tokenB: "bGBP" }
+  ];
+}
