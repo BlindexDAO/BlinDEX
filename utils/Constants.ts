@@ -79,7 +79,7 @@ export const initialLiquidityForPoolsWithBDX = {
   }
 };
 
-const initalBDStable = {
+const initalBDStableForMinitng = {
   rsk: {
     BDUS: to_d18(15e3),
     BDEU: to_d18(15e3),
@@ -95,7 +95,7 @@ const initalBDStable = {
 };
 
 export const initialBdstableMintingAmount = (networkName: string, symbol: string): BigNumber => {
-  const initalAmountPerSymbol = symbol && _.get(initalBDStable, [networkName, symbol]);
+  const initalAmountPerSymbol = symbol && _.get(initalBDStableForMinitng, [networkName, symbol]);
   if (!initalAmountPerSymbol) {
     throw new Error(`Missing initial BDStable minting amount for ${symbol} on network ${networkName}`);
   }
