@@ -1,92 +1,86 @@
-// import hre from "hardhat";
-// import chai from "chai";
-// import { solidity } from "ethereum-waffle";
-// import cap from "chai-as-promised";
-// import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-// import type { Timelock } from "../../typechain/Timelock";
-// import { getDeployer, getStakingRewardsDistribution } from "../../utils/DeployedContractsHelpers";
+import hre from "hardhat";
+import chai from "chai";
+import { solidity } from "ethereum-waffle";
+import cap from "chai-as-promised";
+import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
+import type { Timelock } from "../../typechain/Timelock";
+import { getDeployer, getStakingRewardsDistribution, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
+import { BigNumber } from "ethers";
+import { expectToFail } from "../helpers/common";
+import { extractDataHashAndTxHash } from "../../utils/TimelockHelpers";
 
-// chai.use(cap);
+chai.use(cap);
 
-// chai.use(solidity);
-// const { expect } = chai;
+chai.use(solidity);
+const { expect } = chai;
 
-// const day = 60 * 60 * 24;
+const day = 60 * 60 * 24;
 
-// async function GetTimelock(): Promise<Timelock> {
-//   const deployer = await getDeployer(hre);
-//   const timelock = (await hre.ethers.getContract("Timelock", deployer)) as Timelock;
-//   return timelock;
-// }
-//todo ag restore
-// async function ExecuteTranasactionWithTimelock(executionEta: number, elapseTime: number) {
-//   const timelock = await GetTimelock();
+async function GetTimelock(): Promise<Timelock> {
+  const deployer = await getDeployer(hre);
+  const timelock = (await hre.ethers.getContract("Timelock", deployer)) as Timelock;
+  return timelock;
+}
 
-//   const now = (await hre.ethers.provider.getBlock("latest")).timestamp;
+describe("Execute with timelock", () => {
+  beforeEach(async () => {
+    await hre.deployments.fixture();
 
-//   const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-//   await timelock.queueTransaction(
-//     stakingRewardsDistribution.address,
-//     0,
-//     "",
-//     stakingRewardsDistribution.interface.encodeFunctionData("setVestingRewardRatio", [13]),
-//     now + executionEta
-//   );
+    const timelock = await GetTimelock();
+    const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+    stakingRewardsDistribution.transferOwnership(timelock.address);
+  });
 
-//   simulateTimeElapseInSeconds(elapseTime);
+  it("transaction should be executed after eta, within grace period", async () => {
+    const delay = day * 15;
+    const timeBetweenEtaAndExecution = day * 2;
+    const expectedVestingRewardRatio = 13;
 
-//   await timelock.executeTransaction(
-//     stakingRewardsDistribution.address,
-//     0,
-//     "",
-//     stakingRewardsDistribution.interface.encodeFunctionData("setVestingRewardRatio", [13]),
-//     now + executionEta
-//   );
-// }
+    const timelock = await GetTimelock();
+    const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+    const admin = await getUser1(hre);
+    const randomUser = await getUser2(hre);
 
-// describe("Execute with timelock", () => {
-//   beforeEach(async () => {
-//     await hre.deployments.fixture();
+    await timelock.setAdmin(admin.address);
+    await timelock.setDelay(delay);
 
-//     const timelock = await GetTimelock();
-//     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-//     stakingRewardsDistribution.transferOwnership(timelock.address);
-//   });
+    expect((await stakingRewardsDistribution.vestingRewardRatio_percent()).toNumber()).to.not.eq(expectedVestingRewardRatio);
 
-//   it("transaction should be executed before eta, withing grace period", async () => {
-//     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+    const now = (await hre.ethers.provider.getBlock("latest")).timestamp;
 
-//     const pctBefore = await stakingRewardsDistribution.vestingRewardRatio_percent();
+    const queuedTransactions = [
+      {
+        target: stakingRewardsDistribution.address,
+        value: 0,
+        signature: "",
+        data: (await stakingRewardsDistribution.populateTransaction.setVestingRewardRatio(13)).data as string
+      }
+    ];
 
-//     await ExecuteTranasactionWithTimelock(day * (15 + 1), day * (15 + 1 + 1));
+    const etaBN = BigNumber.from(now).add(delay + 100);
 
-//     const pctAfter = await stakingRewardsDistribution.vestingRewardRatio_percent();
+    const receipt = await (await timelock.connect(admin).queueTransactionsBatch(queuedTransactions, etaBN)).wait();
+    const { txDataHash } = extractDataHashAndTxHash(receipt);
 
-//     expect(pctBefore).be.not.eq(13);
-//     expect(pctAfter).be.eq(13);
-//   });
+    await expectToFail(
+      () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: Transaction hasn't been approved."
+    );
+    await timelock.approveTransactionsBatch(txDataHash);
 
-//   it("transaction fail if executed before eta", async () => {
-//     await expect(
-//       (async () => {
-//         await await ExecuteTranasactionWithTimelock(day * (15 + 1), day * 7);
-//       })()
-//     ).to.be.rejectedWith("Transaction hasn't surpassed time lock.");
-//   });
+    await expectToFail(
+      () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: Transaction hasn't surpassed time lock."
+    );
+    await simulateTimeElapseInSeconds(delay + timeBetweenEtaAndExecution);
 
-//   it("transaction fail if executed after grace period", async () => {
-//     await expect(
-//       (async () => {
-//         await await ExecuteTranasactionWithTimelock(day * (15 + 1), day * 60);
-//       })()
-//     ).to.be.rejectedWith("Transaction is stale.");
-//   });
+    await expectToFail(
+      () => timelock.connect(randomUser).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: only admin can perform this action"
+    );
 
-//   it("transaction fail if cheduled before mininum eta", async () => {
-//     await expect(
-//       (async () => {
-//         await await ExecuteTranasactionWithTimelock(day * 2, day * 10);
-//       })()
-//     ).to.be.rejectedWith("Estimated execution block must satisfy delay.");
-//   });
-// });
+    await timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN);
+
+    expect((await stakingRewardsDistribution.vestingRewardRatio_percent()).toNumber()).to.eq(expectedVestingRewardRatio);
+  });
+});

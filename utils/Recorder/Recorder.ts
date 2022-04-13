@@ -1,12 +1,12 @@
-import { UnsignedTransaction } from "ethers";
-import { Strategy, StrategyReceipt } from "./strategies/Strategy.interface";
+import { ContractReceipt, UnsignedTransaction } from "ethers";
+import { Strategy } from "./strategies/Strategy.interface";
 
 // class responsible for recoding and executing transactions
 // construction:
 //  strategy - that will be used to execute transactions
 export class Recorder {
   recordedTransactions: UnsignedTransaction[] = [];
-  executedTransactions: StrategyReceipt[] = [];
+  executedTransactions: ContractReceipt[] = [];
   strategy: Strategy;
 
   constructor(strategy_: Strategy) {
@@ -20,8 +20,8 @@ export class Recorder {
 
   // execute all recorderTransaction in order using strategy and clears recordedTransaction
   /* eslint-disable  @typescript-eslint/no-explicit-any */
-  async execute(): Promise<StrategyReceipt> {
-    const response: StrategyReceipt = await this.strategy.strategyFunction(this.recordedTransactions);
+  async execute(): Promise<ContractReceipt> {
+    const response = await this.strategy.execute(this.recordedTransactions);
     this.recordedTransactions = [];
     this.executedTransactions.concat(response);
     return response;

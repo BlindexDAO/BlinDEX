@@ -1,7 +1,7 @@
-import { BigNumber } from "ethers";
+import { BigNumber, ContractReceipt } from "ethers";
 import { Result } from "ethers/lib/utils";
 import { ethers } from "hardhat";
-import { Timelock__factory } from "../typechain"
+import { Timelock__factory } from "../typechain";
 
 export type QueuedTransaction = {
   target: string;
@@ -11,9 +11,9 @@ export type QueuedTransaction = {
 };
 
 export enum TransactionStatus {
-	NonExistent,
-	Queued,
-	Approved
+  NonExistent,
+  Queued,
+  Approved
 }
 
 export function decodeQueueTransactionsBatchParams(decodedTxData: Result) {
@@ -30,4 +30,44 @@ export async function decodeTimelockQueuedTransactions(txHash: string) {
   const decodedEta = decodedTxData.eta as BigNumber;
 
   return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
+}
+
+export function extractDataHashAndTxHash(receipt: ContractReceipt) {
+  const queuedTransactionsBatchEventName = "QueuedTransactionsBatch";
+
+  if (!receipt.events) {
+    throw new Error("Missing events");
+  }
+
+  const queuedTransactionsBatchEvents = receipt.events.filter(x => {
+    return x.event === queuedTransactionsBatchEventName;
+  });
+
+  if (queuedTransactionsBatchEvents.length === 0) {
+    throw new Error(`Missing event: ${queuedTransactionsBatchEventName}`);
+  }
+
+  if (queuedTransactionsBatchEvents.length > 1) {
+    throw new Error(`More than 1 event: ${queuedTransactionsBatchEventName}`);
+  }
+
+  const theOnlyQueuedTransactionsBatchEvent = queuedTransactionsBatchEvents[0];
+
+  if (!theOnlyQueuedTransactionsBatchEvent.args) {
+    throw new Error(`Event: ${queuedTransactionsBatchEventName} is missing args`);
+  }
+
+  const txDataHash = theOnlyQueuedTransactionsBatchEvent.args.txDataHash as string;
+
+  if (!txDataHash) {
+    throw new Error(`Missing txDataHash`);
+  }
+
+  const txHash = receipt.events.filter(x => x.event === queuedTransactionsBatchEventName)[0].transactionHash as string;
+
+  if (!txHash) {
+    throw new Error(`Missing txHash`);
+  }
+
+  return { txDataHash, txHash };
 }

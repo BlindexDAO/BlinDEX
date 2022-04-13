@@ -1,4 +1,4 @@
-import { Strategy, StrategyReceipt } from "./Strategy.interface";
+import { Strategy } from "./Strategy.interface";
 import { ContractReceipt, ContractTransaction, UnsignedTransaction } from "ethers";
 import { Timelock } from "../../../typechain";
 
@@ -26,7 +26,7 @@ export class TimelockStrategy implements Strategy {
     this.params = params_;
   }
   /* eslint-disable  @typescript-eslint/no-explicit-any */
-  async strategyFunction(txsToExecute: UnsignedTransaction[]): Promise<StrategyReceipt> {
+  async execute(txsToExecute: UnsignedTransaction[]): Promise<ContractReceipt> {
     const toSend: QueuedTransaction[] = [];
     while (txsToExecute.length > 0) {
       const toAdd = txsToExecute.shift() as UnsignedTransaction;
@@ -40,6 +40,6 @@ export class TimelockStrategy implements Strategy {
     const tx: ContractTransaction = await this.params.timelock.queueTransactionsBatch(toSend, this.params.eta);
     const receipt: ContractReceipt = await tx.wait();
 
-    return [receipt];
+    return receipt;
   }
 }

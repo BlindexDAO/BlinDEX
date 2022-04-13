@@ -7,7 +7,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { decodeTimelockQueuedTransactions, QueuedTransaction, TransactionStatus } from "../../utils/TimelockHelpers";
+import { decodeTimelockQueuedTransactions, extractDataHashAndTxHash, QueuedTransaction, TransactionStatus } from "../../utils/TimelockHelpers";
 import { expectToFail } from "../helpers/common";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -18,7 +18,7 @@ chai.use(solidity);
 
 const DAY = 86400;
 
-describe.only("Timelock", () => {
+describe("Timelock", () => {
   let owner: SignerWithAddress;
   let admin: SignerWithAddress;
   let user: SignerWithAddress;
@@ -49,7 +49,7 @@ describe.only("Timelock", () => {
       const state2 = await flipper.state(2);
       const flipperOwner = await flipper.owner();
       const delay = await timelock.delay();
-      const timelockAdmin = await timelock.admin()
+      const timelockAdmin = await timelock.admin();
       const timelockOwner = await timelock.owner();
 
       expect(state0).to.equal(false);
@@ -71,7 +71,7 @@ describe.only("Timelock", () => {
     beforeEach("deploy contracts", async () => {
       await deploy();
     });
-    
+
     it("Queueing should fail when called not by admin", async () => {
       const populated = await flipper.populateTransaction.flip(0);
       const queued: QueuedTransaction = {
@@ -81,12 +81,8 @@ describe.only("Timelock", () => {
         data: populated.data as string
       };
 
-      const blockNumBefore = await ethers.provider.getBlockNumber();
-      const blockBefore = await ethers.provider.getBlock(blockNumBefore);
-      const timestamp = blockBefore.timestamp;
-      const eta = BigNumber.from(timestamp)
-        .add(BigNumber.from(3 * DAY))
-        .toString();
+      const now = await (await ethers.provider.getBlock("latest")).timestamp;
+      const eta = BigNumber.from(now).add(BigNumber.from(3 * DAY));
 
       await expectToFail(() => timelock.connect(user).queueTransactionsBatch([queued], eta), "Timelock: only admin can perform this action");
     });
@@ -137,9 +133,10 @@ describe.only("Timelock", () => {
     });
 
     it("Approvig transaction by owner should work", async () => {
-      const receipt = await (await timelock.connect(owner).approveTransactionsBatch(txDataHash)).wait()
+      const receipt = await (await timelock.connect(owner).approveTransactionsBatch(txDataHash)).wait();
 
-      const txDataHashFromReceipt = receipt.events?.filter(x => { // todo ag create a helper, validate the length
+      const txDataHashFromReceipt = receipt.events?.filter(x => {
+        // todo ag create a helper, validate the length
         return x.event === "ApprovedTransactionsBatch";
       })[0].args?.txDataHash;
 
@@ -154,7 +151,7 @@ describe.only("Timelock", () => {
 
     it("Executing two transaction by admin should work", async () => {
       await simulateTimeElapseInSeconds(3 * DAY + 100); // wait for ETA
-    
+
       const decodedTransaction = await decodeTimelockQueuedTransactions(txHash);
       await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
 
@@ -185,26 +182,27 @@ describe.only("Timelock", () => {
       const eta = (timestamp + 3 * DAY + 100).toString();
 
       // 2. initialize Recorder with a stratedy
-      const recorder: Recorder = new Recorder(new TimelockStrategy({
-        timelock: timelock,
-        eta: eta
-      }));
+      const recorder: Recorder = new Recorder(
+        new TimelockStrategy({
+          timelock: timelock,
+          eta: eta
+        })
+      );
 
       // To initialize RecordableContract
       // 1. have a initialized Recorder
       // 2. initialize Contract - already initialized
       // 3. initialize RecordableContract
       const flipperRecordable = new RecordableContract<Flipper>(flipper, recorder);
-      
+
       // Record transaction
       await flipperRecordable.record.flip("0");
       await flipperRecordable.record.flip("1");
 
-      const receipt = (await recorder.execute())![0] as ContractReceipt; // todo ag clean up the code here below
-      txDataHash = receipt.events?.filter(x => {
-        return x.event === "QueuedTransactionsBatch";
-      })[0].args?.txDataHash; //geting event argument [0] because Timelock strategy sends only one transaction
-      txHash = receipt.events?.filter(x => x.event === "QueuedTransactionsBatch")[0].transactionHash as string;
+      const receipt = await recorder.execute();
+      const hashes = extractDataHashAndTxHash(receipt);
+      txDataHash = hashes.txDataHash;
+      txHash = hashes.txHash;
 
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.Queued);
     });
@@ -216,7 +214,7 @@ describe.only("Timelock", () => {
 
     it("Executing using decoded data got from txHash", async () => {
       await simulateTimeElapseInSeconds(3 * DAY + 100);
-      
+
       const decodedTransaction = await decodeTimelockQueuedTransactions(txHash);
       await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
 
