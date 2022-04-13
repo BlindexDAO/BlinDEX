@@ -18,7 +18,9 @@ export function load() {
     .addParam("ethxau", "initial eth/xau Price")
     .addParam("btcgbp", "initial btc/gbp Price")
     .addParam("ethgbp", "initial eth/gbp Price")
-    .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur, btcxau, ethxau, btcgbp, ethgbp }, hre) => {
+    .addParam("bdxxau", "initial bdx/xau Price")
+    .addParam("bdxgbp", "initial bdx/gbp Price")
+    .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur, btcxau, ethxau, btcgbp, ethgbp, bdxxau, bdxgbp }, hre) => {
       const initialCollateralPrice: CollateralPrices = {
         ETH: {
           USD: ethusd,
@@ -33,7 +35,7 @@ export function load() {
           GBP: btcgbp
         }
       };
-      await setupProductionReadySystem(hre, bdxeur, bdxusd, usdeur, initialCollateralPrice);
+      await setupProductionReadySystem(hre, bdxeur, bdxusd, bdxxau, bdxgbp, usdeur, initialCollateralPrice);
     });
 
   task("initialize:local")
@@ -48,7 +50,9 @@ export function load() {
     .addOptionalParam("ethXau", "initial eth/xau Price", 2.1, types.float)
     .addOptionalParam("btcGbp", "initial btc/gbp Price", 52000, types.float)
     .addOptionalParam("ethGbp", "initial eth/gbp Price", 0.95, types.float)
-    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur, btcXau, ethXau, btcGbp, ethGbp }, hre) => {
+    .addOptionalParam("bdxXau", "initial bdx/xau Price", 0.00051, types.float)
+    .addOptionalParam("bdxGbp", "initial bdx/gbp Price", 0.75, types.float)
+    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur, btcXau, ethXau, btcGbp, ethGbp, bdxXau, bdxGbp }, hre) => {
       if (hre.network.name !== "mainnetFork") {
         throw new Error("Local only task");
       }
@@ -84,7 +88,7 @@ export function load() {
           GBP: btcGbp
         }
       };
-      await setupLocalSystem(hre, bdxEur, bdxUsd, usdEur, initialCollateralPrice);
+      await setupLocalSystem(hre, bdxEur, bdxUsd, bdxXau, bdxGbp, usdEur, initialCollateralPrice);
 
       // soft launch simulation
       const stakings = await getAllBDStableStakingRewards(hre);
