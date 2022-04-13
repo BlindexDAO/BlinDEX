@@ -8,7 +8,7 @@ export class RecordableContract<T extends Contract> extends Contract {
   record = {
     self: this
   } as unknown as T;
-  
+
   // Recorder that transactions are recorded on
   private recorder: Recorder;
 
