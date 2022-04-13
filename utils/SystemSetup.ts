@@ -147,7 +147,6 @@ export async function setUpFunctionalSystem(
 
   if (hre.network.name === "mainnetFork") {
     verboseLog(verbose, "provide liquidity bdus/usdc");
-
     const usdc = (await hre.ethers.getContractAt("IERC20", constants.EXTERNAL_USD_STABLE[hre.network.name].address)) as IERC20;
     await provideLiquidity(
       hre,

@@ -74,7 +74,7 @@ export const initialLiquidityForPoolsWithBDX = {
   mainnetFork: {
     BDEU: 9e3,
     BDUS: 10e3,
-    bXAU: 5,
+    bXAU: 2,
     bGBP: 9e3
   }
 };
@@ -89,7 +89,7 @@ const initalBDStableForMinitng = {
   mainnetFork: {
     BDUS: to_d18(30e3),
     BDEU: to_d18(30e3),
-    bXAU: to_d18(10),
+    bXAU: to_d18(20),
     bGBP: to_d18(30e3)
   }
 };
