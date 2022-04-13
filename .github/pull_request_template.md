@@ -5,6 +5,6 @@
 - [ ] Techdebt
 - [ ] General Task
 
-## What your PR is all about?
+## What is your PR all about?
 
 ## Any special instructions for the reviewer?
