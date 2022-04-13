@@ -83,8 +83,8 @@ const initalBDStable = {
   rsk: {
     BDUS: to_d18(15e3),
     BDEU: to_d18(15e3),
-    bXAU: to_d18(INITIAL_BXAU_UNISWAP_XAU_AMOUNT),
-    bGBP: to_d18(INITIAL_BGBP_UNISWAP_GBP_AMOUNT)
+    bXAU: to_d18(0.1),
+    bGBP: to_d18(100)
   },
   mainnetFork: {
     BDUS: to_d18(30e3),
