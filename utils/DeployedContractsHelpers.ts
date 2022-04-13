@@ -21,10 +21,9 @@ import type { IWETH } from "../typechain/IWETH";
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE } from "./Constants";
+import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE, PriceFeedContractNames } from "./Constants";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -359,11 +358,11 @@ export async function mintWeth(hre: HardhatRuntimeEnvironment, user: SignerWithA
   await weth.connect(user).deposit({ value: amount });
 }
 
-export async function getOnChainBtcStablePrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+export async function getOnChainBtcFiatPrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
   return getOnChainCryptoFiatPrice(hre, stableSymbol, "BTC");
 }
 
-export async function getOnChainEthStablePrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+export async function getOnChainEthFiatPrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
   return getOnChainCryptoFiatPrice(hre, stableSymbol, "ETH");
 }
 
@@ -379,7 +378,7 @@ export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, c
   const networkName = hre.network.name;
   const cryptoToUsdFeedAddress = _.get(constants, [`${cryptoSymbol}_USD_FEED_ADDRESS`, networkName]);
   if (!cryptoToUsdFeedAddress) {
-    throw new Error(`There is no field to usd feed address "${cryptoSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
+    throw new Error(`There is price feed address for "${cryptoSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
   }
 
   const cryptoUsdFeed = (await hre.ethers.getContractAt(
@@ -395,7 +394,7 @@ export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, 
   const networkName = hre.network.name;
   const fiatToUsdFeedAddress = _.get(constants, [`${fiatSymbol}_USD_FEED_ADDRESS`, networkName]);
   if (!fiatToUsdFeedAddress) {
-    throw new Error(`There is no field to usd feed address "${fiatSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
+    throw new Error(`There is price feed address for "${fiatSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
   }
 
   const fiat_usd_feed = (await hre.ethers.getContractAt("AggregatorV3Interface", formatAddress(hre, fiatToUsdFeedAddress))) as AggregatorV3Interface;
@@ -561,4 +560,20 @@ export async function getTokenData(tokenAddress: string, hre: HardhatRuntimeEnvi
       decimals
     };
   }
+}
+
+export async function getStakingRewardsCount(hre: HardhatRuntimeEnvironment): Promise<number> {
+  const srd = await getStakingRewardsDistribution(hre);
+
+  let poolsCount = 0;
+  let noMorePools = false;
+  while (!noMorePools) {
+    try {
+      await srd.stakingRewardsAddresses(poolsCount);
+      poolsCount++;
+    } catch {
+      noMorePools = true;
+    }
+  }
+  return poolsCount;
 }

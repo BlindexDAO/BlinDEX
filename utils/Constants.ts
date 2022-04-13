@@ -59,33 +59,34 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
 
 export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
 export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
-export const INITIAL_BXAU_UNISWAP_XAU_AMOUNT = 0.3;
-export const INITIAL_BGBP_UNISWAP_GBP_AMOUNT = 500;
+export const INITIAL_BXAU_UNISWAP_XAU_AMOUNT = 0.1;
+export const INITIAL_BGBP_UNISWAP_GBP_AMOUNT = 100;
 export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
 export const INITIAL_BDX_UNISWAP_USD_AMOUNT = 10000;
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
+export const INITIAL_USDC_UNISWAP_USD_AMOUNT = 100;
 
 const initalBDStablePerSymbol = {
   rsk: {
-    XAU: to_d18(INITIAL_BXAU_UNISWAP_XAU_AMOUNT), // TODO: Define amount
-    GBP: to_d18(INITIAL_BGBP_UNISWAP_GBP_AMOUNT) // TODO: Define amount
+    BDUS: to_d18(15e3),
+    BDEU: to_d18(15e3),
+    XAU: to_d18(INITIAL_BXAU_UNISWAP_XAU_AMOUNT),
+    GBP: to_d18(INITIAL_BGBP_UNISWAP_GBP_AMOUNT)
   },
   mainnetFork: {
-    XAU: to_d18(10)
+    BDUS: to_d18(30e3),
+    BDEU: to_d18(30e3),
+    XAU: to_d18(10),
+    GBP: to_d18(30e3)
   }
 };
 
 export const initialBdstableMintingAmount = (networkName = "mainnetFork", symbol?: string): BigNumber => {
   const initalAmountPerSymbol = symbol && _.get(initalBDStablePerSymbol, [networkName, symbol]);
-  if (initalAmountPerSymbol) {
-    return initalAmountPerSymbol;
-  } else if (networkName === "rsk") {
-    return to_d18(15e3);
-  } else if (networkName === "mainnetFork") {
-    return to_d18(30e3);
-  } else {
-    return to_d18(15e3);
+  if (!initalAmountPerSymbol) {
+    throw new Error(`Missing initial BDStable minting amount for ${symbol} on network ${networkName}`);
   }
+  return initalAmountPerSymbol;
 };
 
 // original uniswap addresss on ETH
@@ -124,4 +125,16 @@ export const tokenLogoUrl: { [symbol: string]: string } = {
   WRBTC: `${BlindexFileBaseUrl}/BTC.svg`,
   ETHs: `${BlindexFileBaseUrl}/ETH.svg`,
   XUSD: `${BlindexFileBaseUrl}/XUSD.svg`
+};
+
+export const PriceFeedContractNames = {
+  EUR_USD: "PriceFeed_EUR_USD",
+  XAU_USD: "PriceFeed_XAU_USD",
+  GBP_USD: "PriceFeed_GBP_USD",
+  ETH_USD: "PriceFeed_ETH_USD",
+  BTC_ETH: "BtcToEthOracle",
+  ETH_XAU: "OracleBasedCryptoFiatFeed_ETH_XAU",
+  ETH_GBP: "OracleBasedCryptoFiatFeed_ETH_GBP",
+  ETH_EUR: "OracleBasedCryptoFiatFeed_ETH_EUR",
+  ETH_USD_ADAPTER: "OracleBasedWethUSDFeed_ETH_USD"
 };

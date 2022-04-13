@@ -23,7 +23,6 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
@@ -36,7 +35,8 @@ import {
   rskTreasuryAddress,
   bdxLockingContractAddressRSK,
   rskOperationalTreasuryAddress,
-  rskMultisigTreasuryAddress
+  rskMultisigTreasuryAddress,
+  PriceFeedContractNames
 } from "../utils/Constants";
 
 export function load() {

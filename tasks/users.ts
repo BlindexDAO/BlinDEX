@@ -11,10 +11,10 @@ import {
   getVesting
 } from "../utils/DeployedContractsHelpers";
 import type { Contract } from "ethers";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { getPools } from "../utils/UniswapPoolsHelpers";
+import { PriceFeedContractNames } from "../utils/Constants";
 
 export function load() {
   async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {

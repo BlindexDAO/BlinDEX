@@ -19,7 +19,7 @@ export function load() {
     .addParam("btcgbp", "initial btc/gbp Price")
     .addParam("ethgbp", "initial eth/gbp Price")
     .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur, btcxau, ethxau, btcgbp, ethgbp }, hre) => {
-      const initialPrice: CollateralPrices = {
+      const initialCollateralPrice: CollateralPrices = {
         ETH: {
           USD: ethusd,
           EUR: etheur,
@@ -33,7 +33,7 @@ export function load() {
           GBP: btcgbp
         }
       };
-      await setupProductionReadySystem(hre, bdxeur, bdxusd, usdeur, initialPrice);
+      await setupProductionReadySystem(hre, bdxeur, bdxusd, usdeur, initialCollateralPrice);
     });
 
   task("initialize:local")
@@ -70,7 +70,7 @@ export function load() {
 
       await getUsdcFor(hre, treasury.address, 1000);
 
-      const initialPrice: CollateralPrices = {
+      const initialCollateralPrice: CollateralPrices = {
         ETH: {
           USD: ethUsd,
           EUR: ethEur,
@@ -84,7 +84,7 @@ export function load() {
           GBP: btcGbp
         }
       };
-      await setupLocalSystem(hre, bdxEur, bdxUsd, usdEur, initialPrice);
+      await setupLocalSystem(hre, bdxEur, bdxUsd, usdEur, initialCollateralPrice);
 
       // soft launch simulation
       const stakings = await getAllBDStableStakingRewards(hre);

@@ -14,15 +14,6 @@ import {
 import type { DeployResult } from "hardhat-deploy/dist/types";
 import { to_d12 } from "../utils/NumbersHelpers";
 
-export const PriceFeedContractNames = {
-  XAU_USD: "PriceFeed_XAU_USD",
-  GBP_USD: "PriceFeed_GBP_USD",
-  ETH_USD: "PriceFeed_ETH_USD",
-  BTC_ETH: "BtcToEthOracle",
-  ETH_XAU: "OracleBasedCryptoFiatFeed_ETH_XAU",
-  ETH_GBP: "OracleBasedCryptoFiatFeed_ETH_GBP"
-};
-
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: price feeds");
 
@@ -34,52 +25,52 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   let priceFeed_GBP_USD_Deployment: DeployResult;
 
   if (networkName === "rsk") {
-    priceFeed_XAU_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.XAU_USD, {
+    priceFeed_XAU_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.XAU_USD, {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
       args: [bot.address, to_d12(1922.78)]
     });
-    console.log(`deployed ${PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
+    console.log(`deployed ${constants.PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
 
-    priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.GBP_USD, {
+    priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.GBP_USD, {
       from: deployer.address,
       contract: "FiatToFiatPseudoOracleFeed",
       args: [bot.address, to_d12(1.31)]
     });
-    console.log(`deployed ${PriceFeedContractNames.GBP_USD} to: ${priceFeed_GBP_USD_Deployment.address}`);
+    console.log(`deployed ${constants.PriceFeedContractNames.GBP_USD} to: ${priceFeed_GBP_USD_Deployment.address}`);
   } else {
-    priceFeed_XAU_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.XAU_USD, {
+    priceFeed_XAU_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.XAU_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
       args: [constants.XAU_USD_FEED_ADDRESS[networkName]]
     });
-    console.log(`deployed ${PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
+    console.log(`deployed ${constants.PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
 
-    priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.GBP_USD, {
+    priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.GBP_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
       args: [constants.GBP_USD_FEED_ADDRESS[networkName]]
     });
-    console.log(`deployed ${PriceFeedContractNames.GBP_USD} to: ${priceFeed_GBP_USD_Deployment.address}`);
+    console.log(`deployed ${constants.PriceFeedContractNames.GBP_USD} to: ${priceFeed_GBP_USD_Deployment.address}`);
   }
 
-  console.log(`Get contract ${PriceFeedContractNames.ETH_USD}`);
-  const priceFeedEthUsd = await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer);
-  console.log(`Contract ${PriceFeedContractNames.ETH_USD} address is ${priceFeedEthUsd.address}`);
+  console.log(`Get contract ${constants.PriceFeedContractNames.ETH_USD}`);
+  const priceFeedEthUsd = await hre.ethers.getContract(constants.PriceFeedContractNames.ETH_USD, deployer);
+  console.log(`Contract ${constants.PriceFeedContractNames.ETH_USD} address is ${priceFeedEthUsd.address}`);
 
-  const ethXauOracleDeployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_XAU, {
+  const ethXauOracleDeployment = await hre.deployments.deploy(constants.PriceFeedContractNames.ETH_XAU, {
     from: deployer.address,
     contract: "OracleBasedCryptoFiatFeed",
     args: [priceFeed_XAU_USD_Deployment.address, priceFeedEthUsd.address]
   });
-  console.log(`deployed ${PriceFeedContractNames.ETH_XAU} to: ${ethXauOracleDeployment.address}`);
+  console.log(`deployed ${constants.PriceFeedContractNames.ETH_XAU} to: ${ethXauOracleDeployment.address}`);
 
-  const ethGbpOracleDeployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_GBP, {
+  const ethGbpOracleDeployment = await hre.deployments.deploy(constants.PriceFeedContractNames.ETH_GBP, {
     from: deployer.address,
     contract: "OracleBasedCryptoFiatFeed",
     args: [priceFeed_GBP_USD_Deployment.address, priceFeedEthUsd.address]
   });
-  console.log(`deployed ${PriceFeedContractNames.ETH_GBP} to: ${ethGbpOracleDeployment.address}`);
+  console.log(`deployed ${constants.PriceFeedContractNames.ETH_GBP} to: ${ethGbpOracleDeployment.address}`);
 
   const bdStablesWithWethOracles = [
     { stable: await getBxau(hre), ethFiatOracle: ethXauOracleDeployment.address },
@@ -88,7 +79,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const bdxWethOracle = await getWethPairOracle(hre, "BDX");
   const weth_to_weth_oracle = await hre.ethers.getContract("WethToWethOracle");
-  const btc_eth_oracle = await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH);
+  const btc_eth_oracle = await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH);
 
   for (const { stable, ethFiatOracle } of bdStablesWithWethOracles) {
     const symbol = await stable.symbol();

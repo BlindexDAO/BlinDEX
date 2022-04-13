@@ -14,7 +14,7 @@ import {
 import type { DeployResult } from "hardhat-deploy/dist/types";
 import { to_d12 } from "../utils/NumbersHelpers";
 
-export const PriceFeedContractNames = {
+const PriceFeedContractNames = {
   EUR_USD: "PriceFeed_EUR_USD",
   ETH_USD: "PriceFeed_ETH_USD",
   BTC_ETH: "BtcToEthOracle",

@@ -19,7 +19,8 @@ import {
   getWbtc,
   getWeth,
   mintWbtc,
-  mintWeth
+  mintWeth,
+  getStakingRewardsCount
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
@@ -495,7 +496,7 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
-    const numberOfStakingPools = await getStakingRewardsCount();
+    const numberOfStakingPools = await getStakingRewardsCount(hre);
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
     const poolIndexToRemove = 2;
     const thirdPoolAddress = poolsAddresses[poolIndexToRemove];
@@ -624,20 +625,4 @@ async function getUsersCurrentLpBalance() {
   const totalDepositedLpTokens_d18 = depositedLPTokenUser1_d18.add(depositedLPTokenUser2_d18);
 
   return { totalDepositedLpTokens_d18, depositedLPTokenUser1_d18, depositedLPTokenUser2_d18 };
-}
-
-async function getStakingRewardsCount(): Promise<number> {
-  const srd = await getStakingRewardsDistribution(hre);
-
-  let poolsCount = 0;
-  let noMorePools = false;
-  while (!noMorePools) {
-    try {
-      await srd.stakingRewardsAddresses(poolsCount);
-      poolsCount++;
-    } catch {
-      noMorePools = true;
-    }
-  }
-  return poolsCount;
 }
