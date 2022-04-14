@@ -71,7 +71,7 @@ export const initialLiquidityForPoolsWithCollateral = {
   mainnetFork: {
     BDUS: 500,
     BDEU: 500,
-    bXAU: 15,
+    bXAU: 1,
     bGBP: 500
   }
 };
