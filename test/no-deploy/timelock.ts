@@ -134,14 +134,9 @@ describe("Timelock", () => {
 
     it("Approvig transaction by owner should work", async () => {
       const receipt = await (await timelock.connect(owner).approveTransactionsBatch(txDataHash)).wait();
-
-      const txDataHashFromReceipt = receipt.events?.filter(x => {
-        // todo ag create a helper, validate the length
-        return x.event === "ApprovedTransactionsBatch";
-      })[0].args?.txDataHash;
+      const txDataHashFromReceipt = extractDataHashAndTxHash(receipt).txDataHash;
 
       expect(txDataHashFromReceipt).to.eq(txDataHash);
-
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.Approved);
     });
 
@@ -160,6 +155,59 @@ describe("Timelock", () => {
       expect(await flipper.state(2)).to.be.equal(false, "invalid state[2]");
 
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.NonExistent);
+    });
+  });
+
+  describe.only("Cancelling transaction", async () => {
+    let txDataHash: string;
+    let queuedTransactions: QueuedTransaction[] = [];
+
+    before("deploy contracts", async () => {
+      await deploy();
+      queuedTransactions = [
+        {
+          target: flipper.address,
+          value: 0,
+          signature: "",
+          data: (await flipper.populateTransaction.flip(0)).data as string
+        }
+      ];
+
+      const timestamp = (await ethers.provider.getBlock("latest")).timestamp;
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(3 * DAY));
+
+      const receipt = await (await timelock.queueTransactionsBatch(queuedTransactions, eta)).wait();
+      ({ txDataHash } = extractDataHashAndTxHash(receipt));
+    });
+
+    it("Queueing transaction by admin should work", async () => {
+      expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.Queued);
+    });
+
+    it("Canceling transactions by user should fail", async () => {
+      await expectToFail(
+        async () => await timelock.connect(user).cancelTransactionsBatch(txDataHash),
+        "Timelock: only admin can perform this action"
+      );
+    });
+
+    it("Canceling transactions by owner should fail", async () => {
+      await expectToFail(
+        async () => await timelock.connect(owner).cancelTransactionsBatch(txDataHash),
+        "Timelock: only admin can perform this action"
+      );
+    });
+
+    it("Canceling transactions by admin should work", async () => {
+      const receipt = await (await timelock.connect(admin).cancelTransactionsBatch(txDataHash)).wait();
+      const txDataHashFromReceipt = extractDataHashAndTxHash(receipt).txDataHash;
+
+      expect(txDataHashFromReceipt).to.eq(txDataHash);
+      expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.NonExistent);
+    });
+
+    it("Approvig a cancelled transaction by owner should fail", async () => {
+      await expectToFail(async () => await timelock.connect(owner).approveTransactionsBatch(txDataHash), "Timelock: transaction is not queued");
     });
   });
 
