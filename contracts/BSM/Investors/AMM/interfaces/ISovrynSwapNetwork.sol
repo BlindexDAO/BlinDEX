@@ -17,7 +17,7 @@ interface ISovrynSwapNetwork {
     ) external payable returns (uint256);
 
     /**
-    @return the rate of the swap
+    @return The swap rate
      */
     function rateByPath(IERC20[] calldata _path, uint256 _amount) external view returns (uint256);
 
