@@ -22,13 +22,13 @@ export function load() {
     .addParam("bdxgbp", "initial bdx/gbp Price")
     .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur, btcxau, ethxau, btcgbp, ethgbp, bdxxau, bdxgbp }, hre) => {
       const initialCollateralPrice: CollateralPrices = {
-        ETH: {
+        NativeToken: {
           USD: ethusd,
           EUR: etheur,
           XAU: ethxau,
           GBP: ethgbp
         },
-        BTC: {
+        SecondaryCollateralToken: {
           USD: btcusd,
           EUR: btceur,
           XAU: btcxau,
@@ -75,13 +75,13 @@ export function load() {
       await getUsdcFor(hre, treasury.address, 1000);
 
       const initialCollateralPrice: CollateralPrices = {
-        ETH: {
+        NativeToken: {
           USD: ethUsd,
           EUR: ethEur,
           XAU: ethXau,
           GBP: ethGbp
         },
-        BTC: {
+        SecondaryCollateralToken: {
           USD: btcUsd,
           EUR: btcEur,
           XAU: btcXau,

@@ -7,8 +7,8 @@ import {
   getWeth,
   getWbtc,
   mintWbtc,
-  getOnChainEthFiatPrice,
-  getOnChainBtcFiatPrice,
+  getOnChainWethFiatPrice,
+  getOnChainWbtcFiatPrice,
   getDeployer,
   getTreasury,
   mintWeth,
@@ -29,8 +29,8 @@ import type { IERC20 } from "../typechain/IERC20";
 import { getUsdcFor } from "./LocalHelpers";
 
 export type CollateralPrices = {
-  ETH: { [symbol: string]: number };
-  BTC: { [symbol: string]: number };
+  NativeToken: { [symbol: string]: number };
+  SecondaryCollateralToken: { [symbol: string]: number };
 };
 
 export async function setupProductionReadySystem(
@@ -60,11 +60,11 @@ export async function setupLocalSystem(
 export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironment, initialBDStableCollteralRatio: number) {
   // For tests we only need approximate prices
   const initialCollateralPrices: CollateralPrices = {
-    ETH: {
+    NativeToken: {
       USD: 3200,
       EUR: 2900
     },
-    BTC: {
+    SecondaryCollateralToken: {
       USD: 43500,
       EUR: 39000
     }
@@ -126,9 +126,9 @@ export async function setUpFunctionalSystem(
     wbtcDecimals = 18;
 
     // swap btc eth price
-    const oldInitialWethPrice = initialCollateralPrices.ETH;
-    initialCollateralPrices.ETH = initialCollateralPrices.BTC;
-    initialCollateralPrices.BTC = oldInitialWethPrice;
+    const oldInitialWethPrice = initialCollateralPrices.NativeToken;
+    initialCollateralPrices.NativeToken = initialCollateralPrices.SecondaryCollateralToken;
+    initialCollateralPrices.SecondaryCollateralToken = oldInitialWethPrice;
   } else {
     wethDecimals = 18;
     wbtcDecimals = 8;
@@ -136,11 +136,11 @@ export async function setUpFunctionalSystem(
     // Get stable prices from price feed
     await Promise.all(
       getAllBDStablesFiatSymbols().map(async symbol => {
-        const onChainEthStablePrice = symbol === "USD" ? await getOnChainWethUsdPrice(hre) : (await getOnChainEthFiatPrice(hre, symbol)).price;
-        _.set(initialCollateralPrices, ["ETH", symbol], onChainEthStablePrice);
+        const onChainEthStablePrice = symbol === "USD" ? await getOnChainWethUsdPrice(hre) : (await getOnChainWethFiatPrice(hre, symbol)).price;
+        _.set(initialCollateralPrices, ["NativeToken", symbol], onChainEthStablePrice);
 
-        const onChainBtcStablePrice = symbol === "USD" ? await getOnChainWbtcUsdPrice(hre) : (await getOnChainBtcFiatPrice(hre, symbol)).price;
-        _.set(initialCollateralPrices, ["BTC", symbol], onChainBtcStablePrice);
+        const onChainBtcStablePrice = symbol === "USD" ? await getOnChainWbtcUsdPrice(hre) : (await getOnChainWbtcFiatPrice(hre, symbol)).price;
+        _.set(initialCollateralPrices, ["SecondaryCollateralToken", symbol], onChainBtcStablePrice);
       })
     );
   }
@@ -165,7 +165,7 @@ export async function setUpFunctionalSystem(
       bxau,
       weth,
       to_d18(constants.INITIAL_BXAU_UNISWAP_XAU_AMOUNT),
-      numberToBigNumberFixed(constants.INITIAL_BXAU_UNISWAP_XAU_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.ETH.XAU)),
+      numberToBigNumberFixed(constants.INITIAL_BXAU_UNISWAP_XAU_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.XAU)),
       verbose
     );
 
@@ -176,7 +176,7 @@ export async function setUpFunctionalSystem(
       bgbp,
       weth,
       to_d18(constants.INITIAL_BGBP_UNISWAP_GBP_AMOUNT),
-      numberToBigNumberFixed(constants.INITIAL_BGBP_UNISWAP_GBP_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.ETH.GBP)),
+      numberToBigNumberFixed(constants.INITIAL_BGBP_UNISWAP_GBP_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.GBP)),
       verbose
     );
 
@@ -194,7 +194,7 @@ export async function setUpFunctionalSystem(
     bdEu,
     weth,
     to_d18(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.ETH.EUR)),
+    numberToBigNumberFixed(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.EUR)),
     verbose
   );
 
@@ -205,7 +205,7 @@ export async function setUpFunctionalSystem(
     bdUs,
     weth,
     to_d18(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.ETH.USD)),
+    numberToBigNumberFixed(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.USD)),
     verbose
   );
 
@@ -216,7 +216,9 @@ export async function setUpFunctionalSystem(
     bdEu,
     wbtc,
     to_d18(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT, wbtcDecimals).mul(1e12).div(to_d12(initialCollateralPrices.BTC.EUR)),
+    numberToBigNumberFixed(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT, wbtcDecimals)
+      .mul(1e12)
+      .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR)),
     verbose
   );
 
@@ -227,7 +229,9 @@ export async function setUpFunctionalSystem(
     bdUs,
     wbtc,
     to_d18(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT, wbtcDecimals).mul(1e12).div(to_d12(initialCollateralPrices.BTC.USD)),
+    numberToBigNumberFixed(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT, wbtcDecimals)
+      .mul(1e12)
+      .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.USD)),
     verbose
   );
 
@@ -239,7 +243,7 @@ export async function setUpFunctionalSystem(
     bdx,
     weth,
     to_d18(initialBdxAmountForBdeu / bdxEur),
-    numberToBigNumberFixed(initialBdxAmountForBdeu, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.ETH.EUR)),
+    numberToBigNumberFixed(initialBdxAmountForBdeu, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.EUR)),
     verbose
   );
 
@@ -250,7 +254,7 @@ export async function setUpFunctionalSystem(
     bdx,
     wbtc,
     to_d18(initialBdxAmountForBdeu / bdxEur),
-    numberToBigNumberFixed(initialBdxAmountForBdeu, wbtcDecimals).mul(1e12).div(to_d12(initialCollateralPrices.BTC.EUR)),
+    numberToBigNumberFixed(initialBdxAmountForBdeu, wbtcDecimals).mul(1e12).div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR)),
     verbose
   );
 
@@ -303,14 +307,14 @@ export async function setUpFunctionalSystem(
       .mul(initialBDStableColltFraction_d12)
       .div(10)
       .mul(1e12)
-      .div(to_d12(initialCollateralPrices.ETH.EUR))
+      .div(to_d12(initialCollateralPrices.NativeToken.EUR))
       .div(1e12);
     const euroCollateralWbtc = initialBdeuMintingAmount
       .mul(WRBTC_RATIO)
       .mul(initialBDStableColltFraction_d12)
       .div(10)
       .mul(1e12)
-      .div(to_d12(initialCollateralPrices.BTC.EUR))
+      .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR))
       .div(1e10)
       .div(1e12);
     const usdCollateralWeth = initialBdusMintingAmount
@@ -318,14 +322,14 @@ export async function setUpFunctionalSystem(
       .mul(initialBDStableColltFraction_d12)
       .div(10)
       .mul(1e12)
-      .div(to_d12(initialCollateralPrices.ETH.EUR))
+      .div(to_d12(initialCollateralPrices.NativeToken.EUR))
       .div(1e12);
     const usdCollateralWbtc = initialBdusMintingAmount
       .mul(WRBTC_RATIO)
       .mul(initialBDStableColltFraction_d12)
       .div(10)
       .mul(1e12)
-      .div(to_d12(initialCollateralPrices.BTC.EUR))
+      .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR))
       .div(1e10)
       .div(1e12);
 

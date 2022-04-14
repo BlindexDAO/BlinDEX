@@ -358,11 +358,11 @@ export async function mintWeth(hre: HardhatRuntimeEnvironment, user: SignerWithA
   await weth.connect(user).deposit({ value: amount });
 }
 
-export async function getOnChainBtcFiatPrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+export async function getOnChainWbtcFiatPrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
   return getOnChainCryptoFiatPrice(hre, stableSymbol, "BTC");
 }
 
-export async function getOnChainEthFiatPrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
+export async function getOnChainWethFiatPrice(hre: HardhatRuntimeEnvironment, stableSymbol: string) {
   return getOnChainCryptoFiatPrice(hre, stableSymbol, "ETH");
 }
 
