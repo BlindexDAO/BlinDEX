@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface ISovrynSwapNetwork {
     /**
-    @return The outAmount of the swap
+    @return The swap outAmount
     */
     function convertByPath(
         IERC20[] calldata _path,
