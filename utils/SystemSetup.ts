@@ -62,11 +62,15 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
   const initialCollateralPrices: CollateralPrices = {
     NativeToken: {
       USD: 3200,
-      EUR: 2900
+      EUR: 2900,
+      XAU: 1.6,
+      GBP: 2800
     },
     SecondaryCollateralToken: {
       USD: 43500,
-      EUR: 39000
+      EUR: 39000,
+      XAU: 22.3,
+      GBP: 38000
     }
   };
 
@@ -159,24 +163,26 @@ export async function setUpFunctionalSystem(
     );
 
     verboseLog(verbose, "provide liquidity bxau/weth");
+    const initialXauAmountForWeth = _.get(constants.initialLiquidityForPoolsWithCollateral, [hre.network.name, "bXAU"]);
     await provideLiquidity(
       hre,
       treasury,
       bxau,
       weth,
-      to_d18(constants.INITIAL_BXAU_UNISWAP_XAU_AMOUNT),
-      numberToBigNumberFixed(constants.INITIAL_BXAU_UNISWAP_XAU_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.XAU)),
+      to_d18(initialXauAmountForWeth),
+      numberToBigNumberFixed(initialXauAmountForWeth, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.XAU)),
       verbose
     );
 
     verboseLog(verbose, "provide liquidity bgbp/weth");
+    const initialGbpAmountForWeth = _.get(constants.initialLiquidityForPoolsWithCollateral, [hre.network.name, "bGBP"]);
     await provideLiquidity(
       hre,
       treasury,
       bgbp,
       weth,
-      to_d18(constants.INITIAL_BGBP_UNISWAP_GBP_AMOUNT),
-      numberToBigNumberFixed(constants.INITIAL_BGBP_UNISWAP_GBP_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.GBP)),
+      to_d18(initialGbpAmountForWeth),
+      numberToBigNumberFixed(initialGbpAmountForWeth, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.GBP)),
       verbose
     );
 
@@ -186,7 +192,7 @@ export async function setUpFunctionalSystem(
 
     verboseLog(verbose, "provide liquidity bdx/bgbp");
     const initialBdxAmountForBgbp = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "bGBP"]);
-    await provideLiquidity(hre, treasury, bdx, bgbp, to_d18(initialBdxAmountForBxau / bdxGbp), to_d18(initialBdxAmountForBgbp), verbose);
+    await provideLiquidity(hre, treasury, bdx, bgbp, to_d18(initialBdxAmountForBgbp / bdxGbp), to_d18(initialBdxAmountForBgbp), verbose);
 
     verboseLog(verbose, "enable recllateralization");
     const pools = await getAllBDStablePools(hre);
@@ -196,24 +202,26 @@ export async function setUpFunctionalSystem(
   }
 
   verboseLog(verbose, "provide liquidity bdeu/weth");
+  const initialBdeuAmountForPoolsWithCollateral = _.get(constants.initialLiquidityForPoolsWithCollateral, [hre.network.name, "BDEU"]);
   await provideLiquidity(
     hre,
     treasury,
     bdEu,
     weth,
-    to_d18(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.EUR)),
+    to_d18(initialBdeuAmountForPoolsWithCollateral),
+    numberToBigNumberFixed(initialBdeuAmountForPoolsWithCollateral, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.EUR)),
     verbose
   );
 
   verboseLog(verbose, "provide liquidity bdus/weth");
+  const initialBdusAmountForPoolsWithCollateral = _.get(constants.initialLiquidityForPoolsWithCollateral, [hre.network.name, "BDUS"]);
   await provideLiquidity(
     hre,
     treasury,
     bdUs,
     weth,
-    to_d18(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.USD)),
+    to_d18(initialBdusAmountForPoolsWithCollateral),
+    numberToBigNumberFixed(initialBdusAmountForPoolsWithCollateral, wethDecimals).mul(1e12).div(to_d12(initialCollateralPrices.NativeToken.USD)),
     verbose
   );
 
@@ -223,8 +231,8 @@ export async function setUpFunctionalSystem(
     treasury,
     bdEu,
     wbtc,
-    to_d18(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT, wbtcDecimals)
+    to_d18(initialBdeuAmountForPoolsWithCollateral),
+    numberToBigNumberFixed(initialBdeuAmountForPoolsWithCollateral, wbtcDecimals)
       .mul(1e12)
       .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR)),
     verbose
@@ -236,8 +244,8 @@ export async function setUpFunctionalSystem(
     treasury,
     bdUs,
     wbtc,
-    to_d18(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT),
-    numberToBigNumberFixed(constants.INITIAL_BDUS_UNISWAP_USD_AMOUNT, wbtcDecimals)
+    to_d18(initialBdusAmountForPoolsWithCollateral),
+    numberToBigNumberFixed(initialBdusAmountForPoolsWithCollateral, wbtcDecimals)
       .mul(1e12)
       .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.USD)),
     verbose
@@ -279,8 +287,8 @@ export async function setUpFunctionalSystem(
     treasury,
     bdUs,
     bdEu,
-    to_d18(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT / usdEur),
-    to_d18(constants.INITIAL_BDEU_UNISWAP_EUR_AMOUNT),
+    to_d18(constants.INITIAL_BDEU_AMOUNT_FOR_BDUS_POOL / usdEur),
+    to_d18(constants.INITIAL_BDEU_AMOUNT_FOR_BDUS_POOL),
     verbose
   );
 
@@ -295,13 +303,12 @@ export async function setUpFunctionalSystem(
     // Since we minted BDstable and sent it to the treasury, we're now missing collateral to cover for these minted tokens.
     // We'll overcome this by transffering collateral to the BDstable pools
     // We'll NOT use the recallateralize funciton in this case so we won't lock BDX in the deployer address for no reason
-
     const initialBDStableColltFraction_d12 = to_d12(initialBDStableCollteralRatio);
-    const initialBdeuMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "BDEU");
-    const initialBdusMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "BDUS");
-
     const WETH_RATIO = 5; // Represents 50%
     const WRBTC_RATIO = 5; // Represents 50%
+
+    // Recallateralize by just sending the tokens in order not to extract undeserved BDX
+    const initialBdeuMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "BDEU");
     const euroCollateralWeth = initialBdeuMintingAmount
       .mul(WETH_RATIO)
       .mul(initialBDStableColltFraction_d12)
@@ -317,6 +324,12 @@ export async function setUpFunctionalSystem(
       .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR))
       .div(1e10)
       .div(1e12);
+    const bdEuWethPool = await getBDStableWethPool(hre, await bdEu.symbol());
+    const bdEuWbtcPool = await getBDStableWbtcPool(hre, await bdEu.symbol());
+    await (await weth.connect(treasury).transfer(bdEuWethPool.address, euroCollateralWeth)).wait();
+    await (await wbtc.connect(treasury).transfer(bdEuWbtcPool.address, euroCollateralWbtc)).wait();
+
+    const initialBdusMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "BDUS");
     const usdCollateralWeth = initialBdusMintingAmount
       .mul(WETH_RATIO)
       .mul(initialBDStableColltFraction_d12)
@@ -332,17 +345,52 @@ export async function setUpFunctionalSystem(
       .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.EUR))
       .div(1e10)
       .div(1e12);
-
-    // Recallateralize by just sending the tokens in order not to extract undeserved BDX
-    const bdEuWethPool = await getBDStableWethPool(hre, await bdEu.symbol());
-    const bdEuWbtcPool = await getBDStableWbtcPool(hre, await bdEu.symbol());
-    await (await weth.connect(treasury).transfer(bdEuWethPool.address, euroCollateralWeth)).wait();
-    await (await wbtc.connect(treasury).transfer(bdEuWbtcPool.address, euroCollateralWbtc)).wait();
-
     const bdUSWethPool = await getBDStableWethPool(hre, await bdUs.symbol());
     const bdUSWbtcPool = await getBDStableWbtcPool(hre, await bdUs.symbol());
     await (await weth.connect(treasury).transfer(bdUSWethPool.address, usdCollateralWeth)).wait();
     await (await wbtc.connect(treasury).transfer(bdUSWbtcPool.address, usdCollateralWbtc)).wait();
+
+    const initialBxauMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "bXAU");
+    const xauCollateralWeth = initialBxauMintingAmount
+      .mul(WETH_RATIO)
+      .mul(initialBDStableColltFraction_d12)
+      .div(10)
+      .mul(1e12)
+      .div(to_d12(initialCollateralPrices.NativeToken.XAU))
+      .div(1e12);
+    const xauCollateralWbtc = initialBxauMintingAmount
+      .mul(WRBTC_RATIO)
+      .mul(initialBDStableColltFraction_d12)
+      .div(10)
+      .mul(1e12)
+      .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.XAU))
+      .div(1e10)
+      .div(1e12);
+    const bXauWethPool = await getBDStableWethPool(hre, await bxau.symbol());
+    const bXauWbtcPool = await getBDStableWbtcPool(hre, await bxau.symbol());
+    await (await weth.connect(treasury).transfer(bXauWethPool.address, xauCollateralWeth)).wait();
+    await (await wbtc.connect(treasury).transfer(bXauWbtcPool.address, xauCollateralWbtc)).wait();
+
+    const initialBgbpMintingAmount = constants.initialBdstableMintingAmount(hre.network.name, "bGBP");
+    const gbpCollateralWeth = initialBgbpMintingAmount
+      .mul(WETH_RATIO)
+      .mul(initialBDStableColltFraction_d12)
+      .div(10)
+      .mul(1e12)
+      .div(to_d12(initialCollateralPrices.NativeToken.GBP))
+      .div(1e12);
+    const gbpCollateralWbtc = initialBgbpMintingAmount
+      .mul(WRBTC_RATIO)
+      .mul(initialBDStableColltFraction_d12)
+      .div(10)
+      .mul(1e12)
+      .div(to_d12(initialCollateralPrices.SecondaryCollateralToken.GBP))
+      .div(1e10)
+      .div(1e12);
+    const bGbpWethPool = await getBDStableWethPool(hre, await bgbp.symbol());
+    const bGbpWbtcPool = await getBDStableWbtcPool(hre, await bgbp.symbol());
+    await (await weth.connect(treasury).transfer(bGbpWethPool.address, gbpCollateralWeth)).wait();
+    await (await wbtc.connect(treasury).transfer(bGbpWbtcPool.address, gbpCollateralWbtc)).wait();
 
     await (await bdEu.refreshCollateralRatio()).wait();
     await (await bdUs.refreshCollateralRatio()).wait();

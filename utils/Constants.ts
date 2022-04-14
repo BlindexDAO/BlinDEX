@@ -57,19 +57,31 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   rsk: "ETHs"
 };
 
-export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
-export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
-export const INITIAL_BXAU_UNISWAP_XAU_AMOUNT = 0.1;
-export const INITIAL_BGBP_UNISWAP_GBP_AMOUNT = 100;
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
+export const INITIAL_BDEU_AMOUNT_FOR_BDUS_POOL = 500;
 export const INITIAL_USDC_UNISWAP_USD_AMOUNT = 100;
+
+export const initialLiquidityForPoolsWithCollateral = {
+  rsk: {
+    BDUS: 500,
+    BDEU: 500,
+    bXAU: 0.05,
+    bGBP: 75
+  },
+  mainnetFork: {
+    BDUS: 500,
+    BDEU: 500,
+    bXAU: 15,
+    bGBP: 500
+  }
+};
 
 export const initialLiquidityForPoolsWithBDX = {
   rsk: {
     BDEU: 9e3,
     BDUS: 10e3,
-    bXAU: 0.1,
-    bGBP: 100
+    bXAU: 0.05,
+    bGBP: 75
   },
   mainnetFork: {
     BDEU: 9e3,
@@ -79,12 +91,12 @@ export const initialLiquidityForPoolsWithBDX = {
   }
 };
 
-const initalBDStableForMinitng = {
+const initalBbstableForMinting = {
   rsk: {
     BDUS: to_d18(15e3),
     BDEU: to_d18(15e3),
     bXAU: to_d18(0.1),
-    bGBP: to_d18(100)
+    bGBP: to_d18(150)
   },
   mainnetFork: {
     BDUS: to_d18(30e3),
@@ -95,7 +107,7 @@ const initalBDStableForMinitng = {
 };
 
 export const initialBdstableMintingAmount = (networkName: string, symbol: string): BigNumber => {
-  const initalAmountPerSymbol = symbol && _.get(initalBDStableForMinitng, [networkName, symbol]);
+  const initalAmountPerSymbol = symbol && _.get(initalBbstableForMinting, [networkName, symbol]);
   if (!initalAmountPerSymbol) {
     throw new Error(`Missing initial BDStable minting amount for ${symbol} on network ${networkName}`);
   }
