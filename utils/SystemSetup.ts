@@ -180,6 +180,14 @@ export async function setUpFunctionalSystem(
       verbose
     );
 
+    verboseLog(verbose, "provide liquidity bdx/bxau");
+    const initialBdxAmountForBxau = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "bXAU"]);
+    await provideLiquidity(hre, treasury, bdx, bxau, to_d18(initialBdxAmountForBxau / bdxXau), to_d18(initialBdxAmountForBxau), verbose);
+
+    verboseLog(verbose, "provide liquidity bdx/bgbp");
+    const initialBdxAmountForBgbp = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "bGBP"]);
+    await provideLiquidity(hre, treasury, bdx, bgbp, to_d18(initialBdxAmountForBxau / bdxGbp), to_d18(initialBdxAmountForBgbp), verbose);
+
     verboseLog(verbose, "enable recllateralization");
     const pools = await getAllBDStablePools(hre);
     for (const pool of pools) {
@@ -264,14 +272,6 @@ export async function setUpFunctionalSystem(
   verboseLog(verbose, "provide liquidity bdx/bdus");
   const initialBdxAmountForBdus = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "BDUS"]);
   await provideLiquidity(hre, treasury, bdx, bdUs, to_d18(initialBdxAmountForBdus / bdxUsd), to_d18(initialBdxAmountForBdus), verbose);
-
-  verboseLog(verbose, "provide liquidity bdx/bxau");
-  const initialBdxAmountForBxau = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "bXAU"]);
-  await provideLiquidity(hre, treasury, bdx, bxau, to_d18(initialBdxAmountForBxau / bdxXau), to_d18(initialBdxAmountForBxau), verbose);
-
-  verboseLog(verbose, "provide liquidity bdx/bgbp");
-  const initialBdxAmountForBgbp = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "bGBP"]);
-  await provideLiquidity(hre, treasury, bdx, bgbp, to_d18(initialBdxAmountForBxau / bdxGbp), to_d18(initialBdxAmountForBgbp), verbose);
 
   verboseLog(verbose, "provide liquidity bdeu/bdus");
   await provideLiquidity(
