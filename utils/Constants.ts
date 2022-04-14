@@ -101,7 +101,7 @@ const initalBbstableForMinting = {
   mainnetFork: {
     BDUS: to_d18(30e3),
     BDEU: to_d18(30e3),
-    bXAU: to_d18(20),
+    bXAU: to_d18(30),
     bGBP: to_d18(30e3)
   }
 };
