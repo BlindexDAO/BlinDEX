@@ -27,5 +27,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 func.id = __filename;
 func.tags = ["BDUS_XUSD_POOL"];
-func.dependencies = ["PriceFeeds", "LiquidityPools", "BDUS"];
+func.dependencies = ["PriceFeeds", "LiquidityPools", "BDUS", "UpdaterRSK"];
 export default func;
