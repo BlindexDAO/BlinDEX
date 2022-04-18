@@ -177,6 +177,7 @@ export function getListOfSupportedLiquidityPools(networkName: string): {
     { tokenA: "BDUS", tokenB: "WETH" },
     { tokenA: "BDUS", tokenB: "WBTC" },
     { tokenA: "BDX", tokenB: "BDUS" },
+    { tokenA: "BDUS", tokenB: "BDEU" },
     { tokenA: "BDUS", tokenB: externalUsdStable.symbol },
 
     // BDEU
