@@ -12,8 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
     const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
-
+    const treasuryAddress = hre.network.name === "rsk" ? constants.rskMultisigTreasuryAddress : (await getTreasury(hre)).address;
     const bdx = await getBdx(hre);
     const bdPoolLibraryDeployment = await hre.ethers.getContract("BdPoolLibrary");
 
@@ -27,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             args: [
               stableDetails.name,
               stableDetails.symbol,
-              treasury.address,
+              treasuryAddress,
               bdx.address,
               constants.initialBdstableMintingAmount(hre.network.name, stableDetails.symbol)
             ]
@@ -136,10 +135,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         wbtc_recollat_fee
       )
     ).wait();
-
-    await (await bdx.connect(treasury).transfer(bdstable.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE)).wait();
-
-    console.log(`${stableDetails.symbol} provided with BDX`);
 
     await (await bdstable.addPool(bdstable_weth_BdStablePool.address)).wait();
     console.log(`added ${stableDetails.pools.weth.name} pool`);
