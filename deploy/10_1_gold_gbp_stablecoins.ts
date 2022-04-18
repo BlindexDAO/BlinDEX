@@ -136,6 +136,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       )
     ).wait();
 
+    // TODO: Enable this on rsk once we have a solution for running multisig tasks
+    if (hre.network.name === "mainnetFork") {
+      const treasury = await getTreasury(hre);
+      await (await bdx.connect(treasury).transfer(bdstable.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE)).wait();
+      console.log(`${stableDetails.symbol} provided with BDX`);
+    }
+
     await (await bdstable.addPool(bdstable_weth_BdStablePool.address)).wait();
     console.log(`added ${stableDetails.pools.weth.name} pool`);
 
