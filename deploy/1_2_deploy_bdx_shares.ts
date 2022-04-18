@@ -30,5 +30,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename;
 func.tags = ["BDX"];
-func.dependencies = [];
+func.dependencies = ["Timelock"];
 export default func;

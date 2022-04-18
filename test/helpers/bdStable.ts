@@ -1,6 +1,6 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d12 } from "../../utils/NumbersHelpers";
-import { getBdEu, getBdUs } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdUs, getBgbp, getBxau } from "../../utils/DeployedContractsHelpers";
 import type { BDStable } from "../../typechain/BDStable";
 
 export async function lockBdeuCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
@@ -15,6 +15,20 @@ export async function lockBdusCrAt(hre: HardhatRuntimeEnvironment, targetCR: num
   const bdUs = await getBdUs(hre);
   await lockBdStableCrAt(targetCR, bdUs);
   console.log("Lock BDUS completed!");
+}
+
+export async function lockBxauCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+  console.log("Lock bXAU CR at", targetCR);
+  const bxau = await getBxau(hre);
+  await lockBdStableCrAt(targetCR, bxau);
+  console.log("Lock bXAU completed!");
+}
+
+export async function lockBgbpCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+  console.log("Lock bGBP CR at", targetCR);
+  const bgbp = await getBgbp(hre);
+  await lockBdStableCrAt(targetCR, bgbp);
+  console.log("Lock bGBP completed!");
 }
 
 async function lockBdStableCrAt(targetCR: number, bdStable: BDStable) {

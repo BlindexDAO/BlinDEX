@@ -19,7 +19,8 @@ import {
   getWbtc,
   getWeth,
   mintWbtc,
-  mintWeth
+  mintWeth,
+  getStakingRewardsCount
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
@@ -66,13 +67,13 @@ async function initialize() {
 
   const wethBdeuStakingRewardContract = await getStakingRewardsWithWeth(hre, await bdEu.symbol());
   if (!wethBdeuStakingRewardContract) {
-    throw new Error(`StakingRewads contract BDEU-WETH doesn't exist`);
+    throw new Error(`StakingRewards contract BDEU-WETH doesn't exist`);
   }
   stakingRewards_BDEU_WETH = wethBdeuStakingRewardContract;
 
   const wbtcBdeuStakingRewardContract = await getStakingRewardsWithWbtc(hre, await bdEu.symbol());
   if (!wbtcBdeuStakingRewardContract) {
-    throw new Error(`StakingRewads contract BDEU-WBTC doesn't exist`);
+    throw new Error(`StakingRewards contract BDEU-WBTC doesn't exist`);
   }
   stakingRewards_BDEU_WBTC = wbtcBdeuStakingRewardContract;
 
@@ -495,7 +496,7 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
-    const numberOfStakingPools = 10;
+    const numberOfStakingPools = await getStakingRewardsCount(hre);
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
     const poolIndexToRemove = 2;
     const thirdPoolAddress = poolsAddresses[poolIndexToRemove];

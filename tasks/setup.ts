@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import { getAllBDStableStakingRewards, getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { getUsdcFor } from "../utils/LocalHelpers";
-import { setupLocalSystem, setupProductionReadySystem } from "../utils/SystemSetup";
+import { CollateralPrices, setupLocalSystem, setupProductionReadySystem } from "../utils/SystemSetup";
 import { types } from "hardhat/config";
 
 export function load() {
@@ -14,8 +14,28 @@ export function load() {
     .addParam("btcusd", "initial btc/usd Price")
     .addParam("bdxusd", "initial bdx/usd Price")
     .addParam("usdeur", "initial usd/eur Price")
-    .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur }, hre) => {
-      await setupProductionReadySystem(hre, btceur, btcusd, bdxeur, bdxusd, etheur, ethusd, usdeur);
+    .addParam("btcxau", "initial btc/xau Price")
+    .addParam("ethxau", "initial eth/xau Price")
+    .addParam("btcgbp", "initial btc/gbp Price")
+    .addParam("ethgbp", "initial eth/gbp Price")
+    .addParam("bdxxau", "initial bdx/xau Price")
+    .addParam("bdxgbp", "initial bdx/gbp Price")
+    .setAction(async ({ btceur, bdxeur, etheur, ethusd, btcusd, bdxusd, usdeur, btcxau, ethxau, btcgbp, ethgbp, bdxxau, bdxgbp }, hre) => {
+      const initialCollateralPrice: CollateralPrices = {
+        NativeToken: {
+          USD: ethusd,
+          EUR: etheur,
+          XAU: ethxau,
+          GBP: ethgbp
+        },
+        SecondaryCollateralToken: {
+          USD: btcusd,
+          EUR: btceur,
+          XAU: btcxau,
+          GBP: btcgbp
+        }
+      };
+      await setupProductionReadySystem(hre, bdxeur, bdxusd, bdxxau, bdxgbp, usdeur, initialCollateralPrice);
     });
 
   task("initialize:local")
@@ -26,7 +46,13 @@ export function load() {
     .addOptionalParam("btcUsd", "initial btc/usd Price", 57000, types.float)
     .addOptionalParam("bdxUsd", "initial bdx/usd Price", 1, types.float)
     .addOptionalParam("usdEur", "initial usd/eur Price", 0.88, types.float)
-    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur }, hre) => {
+    .addOptionalParam("btcXau", "initial btc/xau Price", 29, types.float)
+    .addOptionalParam("ethXau", "initial eth/xau Price", 2.1, types.float)
+    .addOptionalParam("btcGbp", "initial btc/gbp Price", 52000, types.float)
+    .addOptionalParam("ethGbp", "initial eth/gbp Price", 0.95, types.float)
+    .addOptionalParam("bdxXau", "initial bdx/xau Price", 0.00051, types.float)
+    .addOptionalParam("bdxGbp", "initial bdx/gbp Price", 0.75, types.float)
+    .setAction(async ({ btcEur, bdxEur, ethEur, ethUsd, btcUsd, bdxUsd, usdEur, btcXau, ethXau, btcGbp, ethGbp, bdxXau, bdxGbp }, hre) => {
       if (hre.network.name !== "mainnetFork") {
         throw new Error("Local only task");
       }
@@ -48,7 +74,21 @@ export function load() {
 
       await getUsdcFor(hre, treasury.address, 1000);
 
-      await setupLocalSystem(hre, btcEur, btcUsd, bdxEur, bdxUsd, ethEur, ethUsd, usdEur);
+      const initialCollateralPrice: CollateralPrices = {
+        NativeToken: {
+          USD: ethUsd,
+          EUR: ethEur,
+          XAU: ethXau,
+          GBP: ethGbp
+        },
+        SecondaryCollateralToken: {
+          USD: btcUsd,
+          EUR: btcEur,
+          XAU: btcXau,
+          GBP: btcGbp
+        }
+      };
+      await setupLocalSystem(hre, bdxEur, bdxUsd, bdxXau, bdxGbp, usdEur, initialCollateralPrice);
 
       // soft launch simulation
       const stakings = await getAllBDStableStakingRewards(hre);
