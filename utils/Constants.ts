@@ -57,7 +57,7 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   rsk: "ETHs"
 };
 
-export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
+export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);
 export const INITIAL_BDEU_AMOUNT_FOR_BDUS_POOL = 500;
 export const INITIAL_USDC_UNISWAP_USD_AMOUNT = 100;
 
