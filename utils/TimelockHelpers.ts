@@ -32,7 +32,13 @@ export async function decodeTimelockQueuedTransactions(txHash: string) {
   return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
 }
 
-export function extractDataHashAndTxHash(receipt: ContractReceipt, eventName: string) {
+export function extractDataHashAndTxHashFromSingleTransaction(receipts: ContractReceipt[], eventName: string) {
+  if (receipts.length !== 0) {
+    throw new Error(`Unexpected amount of receipts. Received: ${receipts.length}, expected: 1`);
+  }
+
+  const receipt = receipts[0];
+
   if (!receipt.events) {
     throw new Error("Missing events");
   }

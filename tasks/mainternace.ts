@@ -18,7 +18,7 @@ import {
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, updateUniswapPairsOracles, resetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, updateUniswapPairsOracles, resetUniswapPairsOracles, recordUpdateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import type { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
@@ -32,6 +32,8 @@ import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
 import moment from "moment";
+import { defaultRecorder } from "../utils/Recorder/Recorder";
+import { toRc } from "../utils/Recorder/RecordableContract";
 
 export function load() {
   task("update:all")
@@ -41,32 +43,37 @@ export function load() {
     .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
       const signer = await getBot(hre);
 
+      const recorder = await defaultRecorder(hre, { etaDays: null, singer: signer });
+
       if (hre.network.name === "rsk") {
         console.log("starting sovryn swap price oracles updates");
-        const oracleEthUsd = await getSovrynFeed_RbtcUsd(hre);
-        await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
+        const oracleEthUsd = toRc(await getSovrynFeed_RbtcUsd(hre), recorder);
+        await oracleEthUsd.record.updateOracleWithVerification(to_d12(btcusd));
         console.log("updated ETH / USD (RSK BTC / USD)");
 
-        const oracleBtcEth = await getSovrynFeed_RbtcEths(hre);
-        await (await oracleBtcEth.updateOracleWithVerification(to_d12(btceth))).wait();
+        const oracleBtcEth = toRc(await getSovrynFeed_RbtcEths(hre), recorder);
+        await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
         console.log("updated BTC / ETH (same on both networks)");
 
         console.log("starting fiat to fiat oracles updates");
-        const oracleEurUsd = await getFiatToFiat_EurUsd(hre);
-        await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
+        const oracleEurUsd = toRc(await getFiatToFiat_EurUsd(hre), recorder);
+        await oracleEurUsd.record.setPrice(to_d12(eurusd));
         console.log("updated EUR / USD");
       }
 
       console.log("starting uniswap pairs oracles updates");
-      await updateUniswapPairsOracles(hre, signer);
+      await recordUpdateUniswapPairsOracles(hre, recorder);
 
       console.log("starting refresh collateral ratio");
       const stables = await getAllBDStables(hre);
 
       for (const stable of stables) {
-        await (await stable.connect(signer).refreshCollateralRatio()).wait();
-        console.log(`${await stable.symbol()} refreshed collateral ratio`);
+        const recordableStable = toRc(stable, recorder);
+        await recordableStable.record.refreshCollateralRatio();
+        console.log(`${await recordableStable.symbol()} refreshed collateral ratio`);
       }
+
+      await recorder.execute();
     });
 
   task("update:btceth:rsk")

@@ -1,9 +1,14 @@
 import { ContractReceipt, UnsignedTransaction } from "ethers";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { getDeployer, getTimelock } from "../DeployedContractsHelpers";
 import { Strategy } from "./strategies/Strategy.interface";
+import { TimelockStrategy } from "./strategies/TimelockStrategy";
+import { OneByOneStrategy } from "./strategies/OneByOneStrategy";
+import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 
 // class responsible for recoding and executing transactions
 // construction:
-//  strategy - that will be used to execute transactions
+// strategy - that will be used to execute transactions
 export class Recorder {
   recordedTransactions: UnsignedTransaction[] = [];
   executedTransactions: ContractReceipt[] = [];
@@ -19,15 +24,50 @@ export class Recorder {
   }
 
   // execute all recorderTransaction in order using strategy and clears recordedTransaction
-  /* eslint-disable  @typescript-eslint/no-explicit-any */
-  async execute(): Promise<ContractReceipt> {
+  async execute(): Promise<ContractReceipt[]> {
+    const transactionsToExecuteCount = this.recordedTransactions.length;
+
     const response = await this.strategy.execute(this.recordedTransactions);
     this.recordedTransactions = [];
     this.executedTransactions.concat(response);
+
+    console.log("Executed transactions:", transactionsToExecuteCount);
     return response;
   }
 
   print() {
     console.log(this.recordedTransactions);
+  }
+}
+
+type DefaultRecorderParams = {
+  etaDays: number | null;
+  singer: SignerWithAddress | null;
+};
+
+export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
+  const blockBefore = await hre.ethers.provider.getBlock("latest");
+  const timestamp = blockBefore.timestamp;
+  const days = params?.etaDays ?? 3;
+  const secondsInDay = 60 * 60 * 24;
+  const eta = timestamp + days * secondsInDay;
+
+  const timelockRecorder = new Recorder(
+    new TimelockStrategy({
+      timelock: await getTimelock(hre),
+      etaSeconds: eta
+    })
+  );
+
+  const oneByOneExecutionRecorder = new Recorder(
+    new OneByOneStrategy({
+      signer: params?.singer ?? (await getDeployer(hre))
+    })
+  );
+
+  if (hre.network.name === "mainnetFork") {
+    return oneByOneExecutionRecorder;
+  } else {
+    return timelockRecorder;
   }
 }

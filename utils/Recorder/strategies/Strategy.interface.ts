@@ -7,5 +7,5 @@ import { ContractReceipt } from "ethers";
 // @params?: additional object containing strategy specific parameters
 export interface Strategy {
   /* eslint-disable  @typescript-eslint/no-explicit-any */
-  execute(txsToExecute: UnsignedTransaction[], params?: object): Promise<ContractReceipt>;
+  execute(txsToExecute: UnsignedTransaction[], params?: object): Promise<ContractReceipt[]>;
 }

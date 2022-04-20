@@ -7,7 +7,7 @@ import type { Timelock } from "../../typechain/Timelock";
 import { getDeployer, getStakingRewardsDistribution, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { expectToFail } from "../helpers/common";
-import { extractDataHashAndTxHash } from "../../utils/TimelockHelpers";
+import { extractDataHashAndTxHashFromSingleTransaction } from "../../utils/TimelockHelpers";
 
 chai.use(cap);
 
@@ -60,7 +60,7 @@ describe("Execute with timelock", () => {
     const etaBN = BigNumber.from(now).add(delay + 100);
 
     const receipt = await (await timelock.connect(admin).queueTransactionsBatch(queuedTransactions, etaBN)).wait();
-    const { txDataHash } = extractDataHashAndTxHash(receipt, "QueuedTransactionsBatch");
+    const { txDataHash } = extractDataHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
 
     await expectToFail(
       () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),

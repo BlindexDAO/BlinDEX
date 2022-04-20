@@ -1,5 +1,5 @@
 import { ContractReceipt, ContractTransaction, Signer } from "ethers";
-import { Strategy, StrategyReceipt } from "./Strategy.interface";
+import { Strategy } from "./Strategy.interface";
 import { UnsignedTransaction } from "ethers";
 import { Deferrable } from "ethers/lib/utils";
 import { TransactionRequest } from "@ethersproject/abstract-provider";
@@ -19,7 +19,8 @@ export class OneByOneStrategy implements Strategy {
   constructor(params_: OneByOneStrategyParams) {
     this.params = { signer: params_.signer };
   }
-  async strategyFunction(txsToExecute: UnsignedTransaction[], params: OneByOneStrategyParams = this.params): Promise<StrategyReceipt> {
+
+  async execute(txsToExecute: UnsignedTransaction[], params: OneByOneStrategyParams = this.params): Promise<ContractReceipt[]> {
     const signer = params.signer;
     const responses: ContractReceipt[] = [];
     while (txsToExecute.length > 0) {
