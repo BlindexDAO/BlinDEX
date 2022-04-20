@@ -139,7 +139,7 @@ describe("Timelock", () => {
       const tx: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, eta);
       const receipt: ContractReceipt = await tx.wait();
       expectEvent(receipt, "QueuedTransactionsBatch");
-      const dataFromReceipt = extractDataHashAndTxHash(receipt, "QueuedTransactionsBatch");
+      const dataFromReceipt = extractDataHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
       expect(dataFromReceipt.txDataHash).to.be.ok;
       expect(dataFromReceipt.txHash).to.be.ok;
@@ -173,8 +173,7 @@ describe("Timelock", () => {
 
       const tx: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, eta);
       const receipt: ContractReceipt = await tx.wait();
-      ({ txDataHash } = extractDataHashAndTxHash(receipt, "QueuedTransactionsBatch"));
-      txHash = tx.hash;
+      ({ txDataHash } = extractDataHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch"));
     });
 
     it("Approving transaction by admin should fail", async () => {
@@ -189,7 +188,7 @@ describe("Timelock", () => {
       const tx: ContractTransaction = await timelock.connect(owner).approveTransactionsBatch(txDataHash);
       const receipt: ContractReceipt = await tx.wait();
       expectEvent(receipt, "ApprovedTransactionsBatch");
-      const dataFromReceipt = extractDataHashAndTxHashFromSingleTransaction(receipt, "ApprovedTransactionsBatch");
+      const dataFromReceipt = extractDataHashAndTxHashFromSingleTransaction([receipt], "ApprovedTransactionsBatch");
 
       expect(dataFromReceipt.txDataHash).to.be.ok;
       expect(dataFromReceipt.txHash).to.be.ok;
@@ -241,13 +240,13 @@ describe("Timelock", () => {
 
       const firstTransaction: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, firstTransactionEta);
       const firstReceipt: ContractReceipt = await firstTransaction.wait();
-      ({ txDataHash: firstTransactionDataHash } = extractDataHashAndTxHash(firstReceipt, "QueuedTransactionsBatch"));
+      ({ txDataHash: firstTransactionDataHash } = extractDataHashAndTxHashFromSingleTransaction([firstReceipt], "QueuedTransactionsBatch"));
       firstTransactionHash = firstTransaction.hash;
 
       secondTransactionEta = BigNumber.from(timestamp).add(BigNumber.from((firstEtaDaysFromNow + differenceBetweenFirstEtaAndSecond) * DAY));
       const secondTransaction: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, secondTransactionEta);
       const secondReceipt: ContractReceipt = await secondTransaction.wait();
-      ({ txDataHash: secondTransactionDataHash } = extractDataHashAndTxHash(secondReceipt, "QueuedTransactionsBatch"));
+      ({ txDataHash: secondTransactionDataHash } = extractDataHashAndTxHashFromSingleTransaction([secondReceipt], "QueuedTransactionsBatch"));
       secondTransactionHash = secondTransaction.hash;
 
       await (await timelock.connect(owner).approveTransactionsBatch(firstTransactionDataHash)).wait();
@@ -329,7 +328,7 @@ describe("Timelock", () => {
       const eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY));
 
       const receipt = await (await timelock.queueTransactionsBatch(queuedTransactions, eta)).wait();
-      ({ txDataHash } = extractDataHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch"));
+      ({ txDataHash } = extractDataHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch"));
     });
 
     it("Queueing transaction by admin should work", async () => {
@@ -355,7 +354,7 @@ describe("Timelock", () => {
       const receipt = await tx.wait();
 
       expectEvent(receipt, "CancelledTransactionsBatch");
-      const dataFromReceipt = extractDataHashAndTxHashFromSingleTransaction(receipt, "CancelledTransactionsBatch");
+      const dataFromReceipt = extractDataHashAndTxHashFromSingleTransaction([receipt], "CancelledTransactionsBatch");
       expect(dataFromReceipt.txDataHash).to.eq(txDataHash);
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.NonExistent);
     });
@@ -400,7 +399,7 @@ describe("Timelock", () => {
 
       const tx: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, eta);
       const receipt: ContractReceipt = await tx.wait();
-      ({ txDataHash } = extractDataHashAndTxHash(receipt, "QueuedTransactionsBatch"));
+      ({ txDataHash } = extractDataHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch"));
       txHash = tx.hash;
     });
 
@@ -417,7 +416,7 @@ describe("Timelock", () => {
       const receipt = await tx.wait();
 
       expectEvent(receipt, "ApprovedTransactionsBatch");
-      const dataFromReceipt = extractDataHashAndTxHash(receipt, "ApprovedTransactionsBatch");
+      const dataFromReceipt = extractDataHashAndTxHashFromSingleTransaction([receipt], "ApprovedTransactionsBatch");
       expect(dataFromReceipt.txDataHash).to.eq(txDataHash);
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.Approved);
     });
@@ -436,7 +435,7 @@ describe("Timelock", () => {
     });
   });
 
-  describe.only("Using Recorder to queue", async () => {
+  describe("Using Recorder to queue", async () => {
     let txDataHash: string;
     let txHash: string;
 
@@ -471,8 +470,8 @@ describe("Timelock", () => {
       await flipperRecordable.record.flip("0");
       await flipperRecordable.record.flip("1");
 
-      const receipt = await recorder.execute();
-      const hashes = extractDataHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
+      const receipts = await recorder.execute();
+      const hashes = extractDataHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
       txDataHash = hashes.txDataHash;
       txHash = hashes.txHash;
 

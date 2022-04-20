@@ -60,7 +60,7 @@ describe("Execute with timelock", () => {
     const etaBN = BigNumber.from(now).add(delay + 100);
 
     const receipt = await (await timelock.connect(admin).queueTransactionsBatch(queuedTransactions, etaBN)).wait();
-    const { txDataHash } = extractDataHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
+    const { txDataHash } = extractDataHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
     await expectToFail(
       () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),

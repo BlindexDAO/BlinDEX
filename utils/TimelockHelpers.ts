@@ -33,7 +33,7 @@ export async function decodeTimelockQueuedTransactions(txHash: string) {
 }
 
 export function extractDataHashAndTxHashFromSingleTransaction(receipts: ContractReceipt[], eventName: string) {
-  if (receipts.length !== 0) {
+  if (receipts.length !== 1) {
     throw new Error(`Unexpected amount of receipts. Received: ${receipts.length}, expected: 1`);
   }
 
