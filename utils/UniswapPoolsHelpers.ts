@@ -3,6 +3,20 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
 import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, getBdUs } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
+import { Recorder } from "./Recorder/Recorder";
+import { toRc } from "./Recorder/RecordableContract";
+
+export async function recordUpdateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, recorder: Recorder) {
+  const pools = await getPools(hre);
+  const promises = pools.map(pool => recordUpdateOracle(hre, pool[0].name, pool[1].name, recorder));
+
+  await Promise.allSettled(promises);
+}
+
+export async function recordUpdateOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, recorder: Recorder) {
+  const oracle = toRc(await getUniswapPairOracle(hre, symbol0, symbol1), recorder);
+  await oracle.record.updateOracle();
+}
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("Starting tp update the Uniswap oracles");

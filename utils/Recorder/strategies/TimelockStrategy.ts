@@ -12,7 +12,7 @@ type QueuedTransaction = {
 //Strategy specific params
 export type TimelockParams = {
   timelock: Timelock;
-  eta: string;
+  etaSeconds: number;
 };
 
 // Implementation of Strategy.interface
@@ -25,8 +25,8 @@ export class TimelockStrategy implements Strategy {
   constructor(params_: TimelockParams) {
     this.params = params_;
   }
-  /* eslint-disable  @typescript-eslint/no-explicit-any */
-  async execute(txsToExecute: UnsignedTransaction[]): Promise<ContractReceipt> {
+
+  async execute(txsToExecute: UnsignedTransaction[]): Promise<ContractReceipt[]> {
     const toSend: QueuedTransaction[] = [];
     while (txsToExecute.length > 0) {
       const toAdd = txsToExecute.shift() as UnsignedTransaction;
@@ -37,9 +37,9 @@ export class TimelockStrategy implements Strategy {
         data: toAdd.data as string
       });
     }
-    const tx: ContractTransaction = await this.params.timelock.queueTransactionsBatch(toSend, this.params.eta);
+    const tx: ContractTransaction = await this.params.timelock.queueTransactionsBatch(toSend, this.params.etaSeconds);
     const receipt: ContractReceipt = await tx.wait();
 
-    return receipt;
+    return [receipt];
   }
 }

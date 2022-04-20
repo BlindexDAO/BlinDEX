@@ -7,7 +7,12 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { decodeTimelockQueuedTransactions, extractDataHashAndTxHash, QueuedTransaction, TransactionStatus } from "../../utils/TimelockHelpers";
+import {
+  decodeTimelockQueuedTransactions,
+  extractDataHashAndTxHashFromSingleTransaction,
+  QueuedTransaction,
+  TransactionStatus
+} from "../../utils/TimelockHelpers";
 import { expectToFail } from "../helpers/common";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -134,7 +139,7 @@ describe("Timelock", () => {
 
     it("Approvig transaction by owner should work", async () => {
       const receipt = await (await timelock.connect(owner).approveTransactionsBatch(txDataHash)).wait();
-      const txDataHashFromReceipt = extractDataHashAndTxHash(receipt).txDataHash;
+      const txDataHashFromReceipt = extractDataHashAndTxHashFromSingleTransaction(receipt).txDataHash;
 
       expect(txDataHashFromReceipt).to.eq(txDataHash);
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.Approved);
@@ -158,7 +163,7 @@ describe("Timelock", () => {
     });
   });
 
-  describe.only("Cancelling transaction", async () => {
+  describe("Cancelling transaction", async () => {
     let txDataHash: string;
     let queuedTransactions: QueuedTransaction[] = [];
 
@@ -177,7 +182,7 @@ describe("Timelock", () => {
       const eta = BigNumber.from(timestamp).add(BigNumber.from(3 * DAY));
 
       const receipt = await (await timelock.queueTransactionsBatch(queuedTransactions, eta)).wait();
-      ({ txDataHash } = extractDataHashAndTxHash(receipt));
+      ({ txDataHash } = extractDataHashAndTxHashFromSingleTransaction(receipt));
     });
 
     it("Queueing transaction by admin should work", async () => {
@@ -200,7 +205,7 @@ describe("Timelock", () => {
 
     it("Canceling transactions by admin should work", async () => {
       const receipt = await (await timelock.connect(admin).cancelTransactionsBatch(txDataHash)).wait();
-      const txDataHashFromReceipt = extractDataHashAndTxHash(receipt).txDataHash;
+      const txDataHashFromReceipt = extractDataHashAndTxHashFromSingleTransaction(receipt).txDataHash;
 
       expect(txDataHashFromReceipt).to.eq(txDataHash);
       expect(await timelock.queuedTransactions(txDataHash)).to.be.equal(TransactionStatus.NonExistent);
@@ -211,7 +216,7 @@ describe("Timelock", () => {
     });
   });
 
-  describe("Using Recorder to queue", async () => {
+  describe.only("Using Recorder to queue", async () => {
     let txDataHash: string;
     let txHash: string;
 
@@ -224,16 +229,15 @@ describe("Timelock", () => {
       // to initialize  Recorder:
       // 1. initialize strategy
       // 1.1 speify strategy-speific params
-      const blockNumBefore = await ethers.provider.getBlockNumber();
-      const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+      const blockBefore = await ethers.provider.getBlock("latest");
       const timestamp = blockBefore.timestamp;
-      const eta = (timestamp + 3 * DAY + 100).toString();
+      const eta = timestamp + 3 * DAY + 100;
 
       // 2. initialize Recorder with a stratedy
       const recorder: Recorder = new Recorder(
         new TimelockStrategy({
           timelock: timelock,
-          eta: eta
+          etaSeconds: eta
         })
       );
 
@@ -248,7 +252,7 @@ describe("Timelock", () => {
       await flipperRecordable.record.flip("1");
 
       const receipt = await recorder.execute();
-      const hashes = extractDataHashAndTxHash(receipt);
+      const hashes = extractDataHashAndTxHashFromSingleTransaction(receipt);
       txDataHash = hashes.txDataHash;
       txHash = hashes.txHash;
 

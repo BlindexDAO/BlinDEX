@@ -24,6 +24,7 @@ import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE } from "./Constants";
+import { Timelock } from "../typechain";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -274,6 +275,12 @@ export async function getVesting(hre: HardhatRuntimeEnvironment) {
 export async function getBdx(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
   return (await hre.ethers.getContract("BDX", deployer)) as BDXShares;
+}
+
+export async function getTimelock(hre: HardhatRuntimeEnvironment): Promise<Timelock> {
+  const deployer = await getDeployer(hre);
+  const timelock = (await hre.ethers.getContract("Timelock", deployer)) as Timelock;
+  return timelock;
 }
 
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
