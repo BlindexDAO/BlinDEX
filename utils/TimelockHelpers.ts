@@ -32,38 +32,36 @@ export async function decodeTimelockQueuedTransactions(txHash: string) {
   return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
 }
 
-export function extractDataHashAndTxHash(receipt: ContractReceipt) {
-  const queuedTransactionsBatchEventName = "QueuedTransactionsBatch";
-
+export function extractDataHashAndTxHash(receipt: ContractReceipt, eventName: string) {
   if (!receipt.events) {
     throw new Error("Missing events");
   }
 
-  const queuedTransactionsBatchEvents = receipt.events.filter(x => {
-    return x.event === queuedTransactionsBatchEventName;
+  const transactionsBatchEvents = receipt.events.filter(x => {
+    return x.event === eventName;
   });
 
-  if (queuedTransactionsBatchEvents.length === 0) {
-    throw new Error(`Missing event: ${queuedTransactionsBatchEventName}`);
+  if (transactionsBatchEvents.length === 0) {
+    throw new Error(`Missing event: ${eventName}`);
   }
 
-  if (queuedTransactionsBatchEvents.length > 1) {
-    throw new Error(`More than 1 event: ${queuedTransactionsBatchEventName}`);
+  if (transactionsBatchEvents.length > 1) {
+    throw new Error(`More than 1 event: ${eventName}`);
   }
 
-  const theOnlyQueuedTransactionsBatchEvent = queuedTransactionsBatchEvents[0];
+  const theOnlyTransactionsBatchEvent = transactionsBatchEvents[0];
 
-  if (!theOnlyQueuedTransactionsBatchEvent.args) {
-    throw new Error(`Event: ${queuedTransactionsBatchEventName} is missing args`);
+  if (!theOnlyTransactionsBatchEvent.args) {
+    throw new Error(`Event: ${eventName} is missing args`);
   }
 
-  const txDataHash = theOnlyQueuedTransactionsBatchEvent.args.txDataHash as string;
+  const txDataHash = theOnlyTransactionsBatchEvent.args.txDataHash as string;
 
   if (!txDataHash) {
     throw new Error(`Missing txDataHash`);
   }
 
-  const txHash = receipt.events.filter(x => x.event === queuedTransactionsBatchEventName)[0].transactionHash as string;
+  const txHash = receipt.events.filter(x => x.event === eventName)[0].transactionHash as string;
 
   if (!txHash) {
     throw new Error(`Missing txHash`);
