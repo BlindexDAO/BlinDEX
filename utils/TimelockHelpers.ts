@@ -1,6 +1,6 @@
 import { BigNumber, ContractReceipt } from "ethers";
 import { Result } from "ethers/lib/utils";
-import { ethers } from "hardhat";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Timelock__factory } from "../typechain";
 
 export type QueuedTransaction = {
@@ -23,8 +23,8 @@ export function decodeQueueTransactionsBatchParams(decodedTxData: Result) {
   return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
 }
 
-export async function decodeTimelockQueuedTransactions(txHash: string) {
-  const txData = (await ethers.provider.getTransaction(txHash)).data;
+export async function decodeTimelockQueuedTransactions(hre: HardhatRuntimeEnvironment, txHash: string) {
+  const txData = (await hre.ethers.provider.getTransaction(txHash)).data;
   const decodedTxData = await Timelock__factory.createInterface().decodeFunctionData("queueTransactionsBatch", txData);
   const decodedQueuedTransactions = decodedTxData.transactions as QueuedTransaction[];
   const decodedEta = decodedTxData.eta as BigNumber;

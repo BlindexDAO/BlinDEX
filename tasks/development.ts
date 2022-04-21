@@ -13,7 +13,7 @@ import {
   mintWeth
 } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
-import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
+import { mineBlock, simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
@@ -24,7 +24,17 @@ import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
 
 export function load() {
-  task("mint-wrbtc-rsk", "", async (args, hre) => {
+  task("mine-block", "", async (args_, hre_) => {
+    await mineBlock();
+  });
+
+  task("move-time-by-days")
+    .addPositionalParam("days")
+    .setAction(async ({ days }, hre_) => {
+      await simulateTimeElapseInDays(days);
+    });
+
+  task("mint-wrbtc-rsk", "", async (args_, hre) => {
     const treasury = await getTreasury(hre);
     const wrbtc = await getWethConcrete(hre);
 

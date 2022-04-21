@@ -29,6 +29,19 @@ export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, 
   console.log("Finished updating the Uniswap oracles");
 }
 
+export async function recordResetUniswapPairsOracles(hre: HardhatRuntimeEnvironment, recorder: Recorder) {
+  console.log("starting recording reseting oracles");
+
+  const pools = await getPools(hre);
+
+  for (const pool of pools) {
+    await recordResetOracle(hre, pool[0].name, pool[1].name, recorder);
+    console.log(`record reset ${pool[0].name} / ${pool[1].name}`);
+  }
+
+  console.log("finished recording reseting oracles");
+}
+
 export async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
   console.log("starting reseting oracles");
 
@@ -55,6 +68,12 @@ export async function updateOracle(hre: HardhatRuntimeEnvironment, symbol0: stri
   } catch (e) {
     console.log(`Error while updating ${oracleName}`, e);
   }
+}
+
+export async function recordResetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, recorder: Recorder) {
+  const oracle = toRc(await getUniswapPairOracle(hre, symbol0, symbol1), recorder);
+
+  await oracle.record.reset();
 }
 
 export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string) {

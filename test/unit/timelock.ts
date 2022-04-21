@@ -4,7 +4,7 @@ import { RecordableContract } from "../../utils/Recorder/RecordableContract";
 import { BigNumber, ContractReceipt, ContractTransaction } from "ethers";
 import { Flipper, Timelock } from "../../typechain";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import hre from "hardhat";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import {
@@ -31,11 +31,11 @@ describe("Timelock", () => {
   let timelock: Timelock;
 
   async function deploy() {
-    [owner, admin, user] = await ethers.getSigners();
-    const Flipper = await ethers.getContractFactory("Flipper");
+    [owner, admin, user] = await hre.ethers.getSigners();
+    const Flipper = await hre.ethers.getContractFactory("Flipper");
     flipper = (await Flipper.deploy()) as Flipper;
     await flipper.deployed();
-    const TimeLockFactory = await ethers.getContractFactory("Timelock");
+    const TimeLockFactory = await hre.ethers.getContractFactory("Timelock");
     timelock = (await TimeLockFactory.deploy(admin.address, 2 * DAY)) as Timelock;
     timelock = timelock.connect(admin);
 
@@ -96,7 +96,7 @@ describe("Timelock", () => {
     });
 
     it("Queueing transaction by owner with proper ETA should fail", async () => {
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY));
 
       await expectToFail(
@@ -106,7 +106,7 @@ describe("Timelock", () => {
     });
 
     it("Queueing transaction by user with proper ETA should fail", async () => {
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY));
 
       await expectToFail(
@@ -116,14 +116,14 @@ describe("Timelock", () => {
     });
 
     it("Queueing transaction by admin with ETA before delay should fail", async () => {
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from((etaDaysFromNow - 1) * DAY));
 
       await expectToFail(() => timelock.queueTransactionsBatch(queuedTransactions, eta), "Timelock: Estimated execution time must satisfy delay.");
     });
 
     it("Queueing transaction by admin with ETA after delay and grace period should fail", async () => {
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY).add(BigNumber.from(gracePeriod * DAY)));
 
       await expectToFail(
@@ -133,7 +133,7 @@ describe("Timelock", () => {
     });
 
     it("Queueing transaction by admin with proper ETA should work", async () => {
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY));
 
       const tx: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, eta);
@@ -168,7 +168,7 @@ describe("Timelock", () => {
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
       ];
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from(3 * DAY));
 
       const tx: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, eta);
@@ -233,7 +233,7 @@ describe("Timelock", () => {
         }
       ];
 
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       // at least one from properties (queuedTransactions, eta) has to differ between transactions
       // because otherwise they end up having the same data hash and approve on either approves 1st one
       firstTransactionEta = BigNumber.from(timestamp).add(BigNumber.from(firstEtaDaysFromNow * DAY));
@@ -254,7 +254,7 @@ describe("Timelock", () => {
     });
 
     it("Executing approved transaction by user should fail", async () => {
-      const decodedTransaction = await decodeTimelockQueuedTransactions(firstTransactionHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
         () => timelock.connect(user).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: only admin can perform this action"
@@ -262,7 +262,7 @@ describe("Timelock", () => {
     });
 
     it("Executing approved transaction by owner should fail", async () => {
-      const decodedTransaction = await decodeTimelockQueuedTransactions(firstTransactionHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
         () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: only admin can perform this action"
@@ -270,7 +270,7 @@ describe("Timelock", () => {
     });
 
     it("Executing approved transaction by admin before ETA should fail", async () => {
-      const decodedTransaction = await decodeTimelockQueuedTransactions(firstTransactionHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
         () => timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: Transaction hasn't surpassed time lock."
@@ -279,7 +279,7 @@ describe("Timelock", () => {
 
     it("Executing approved transaction by admin should work", async () => {
       await simulateTimeElapseInSeconds(firstEtaDaysFromNow * DAY); // todo nie działa - transaction is stale - poprzednie wywołania przesunęły czas tak, że już ne przejdzie, moze osobny test? albo zmienic kolejnosc czy cos do tego testu z eta grace period pewnie trzeba bedzie stworzyc nowa transakcje z nowym eta
-      const decodedTransaction = await decodeTimelockQueuedTransactions(firstTransactionHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       const tx = await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
       const receipt: ContractReceipt = await tx.wait();
 
@@ -292,7 +292,7 @@ describe("Timelock", () => {
     });
 
     it("Admin cannot execute not approved transaction", async () => {
-      const decodedTransaction = await decodeTimelockQueuedTransactions(firstTransactionHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
         () => timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: Transaction hasn't been approved."
@@ -301,7 +301,7 @@ describe("Timelock", () => {
 
     it("Executing approved transaction by admin after ETA grace period should fail", async () => {
       await simulateTimeElapseInSeconds((gracePeriod + differenceBetweenFirstEtaAndSecond) * DAY); // wait for after ETA - blockchain time was already moved by firstEtaDaysFromNow in previous tests
-      const decodedTransaction = await decodeTimelockQueuedTransactions(secondTransactionHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, secondTransactionHash);
       await expectToFail(
         () => timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: Transaction is stale."
@@ -324,7 +324,7 @@ describe("Timelock", () => {
         }
       ];
 
-      const timestamp = (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = (await hre.ethers.provider.getBlock("latest")).timestamp;
       const eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY));
 
       const receipt = await (await timelock.queueTransactionsBatch(queuedTransactions, eta)).wait();
@@ -394,7 +394,7 @@ describe("Timelock", () => {
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
       ];
-      const timestamp = await (await ethers.provider.getBlock("latest")).timestamp;
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       eta = BigNumber.from(timestamp).add(BigNumber.from(etaDaysFromNow * DAY));
 
       const tx: ContractTransaction = await timelock.queueTransactionsBatch(queuedTransactions, eta);
@@ -424,7 +424,7 @@ describe("Timelock", () => {
     it("Admin can execute a transaction", async () => {
       await simulateTimeElapseInSeconds((etaDaysFromNow + 1) * DAY); // wait for ETA
 
-      const decodedTransaction = await decodeTimelockQueuedTransactions(txHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
       await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
 
       expect(await flipper.state(0)).to.be.equal(true, "invalid state[0]");
@@ -448,7 +448,7 @@ describe("Timelock", () => {
       // to initialize  Recorder:
       // 1. initialize strategy
       // 1.1 speify strategy-speific params
-      const blockBefore = await ethers.provider.getBlock("latest");
+      const blockBefore = await hre.ethers.provider.getBlock("latest");
       const timestamp = blockBefore.timestamp;
       const eta = timestamp + 3 * DAY + 100;
 
@@ -486,7 +486,7 @@ describe("Timelock", () => {
     it("Executing using decoded data got from txHash", async () => {
       await simulateTimeElapseInSeconds(3 * DAY + 100);
 
-      const decodedTransaction = await decodeTimelockQueuedTransactions(txHash);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
       await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
 
       expect(await flipper.state(0)).to.be.equal(true);

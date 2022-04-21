@@ -61,7 +61,7 @@ contract Timelock is Ownable {
     function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyAdmin returns (bytes32) {
         require(msg.sender == admin, "Timelock: Call must come from admin.");
 
-        //todo ag hmm... do we really want it this way?
+        //todo ag hmm... do we really want it this way? we definitely want 0 delay on local deployment
         require(eta >= block.timestamp + delay, "Timelock: Estimated execution time must satisfy delay."); //todo ag add test!
         require(eta < block.timestamp + delay + GRACE_PERIOD, "Timelock: Estimated execution time must satisfy delay and grace period."); //todo ag add test!
 

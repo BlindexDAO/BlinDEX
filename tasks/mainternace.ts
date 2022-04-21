@@ -14,11 +14,12 @@ import {
   getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
   getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
   getFiatToFiat_EurUsd,
-  getTokenData
+  getTokenData,
+  getTimelock
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, updateUniswapPairsOracles, resetUniswapPairsOracles, recordUpdateUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, recordUpdateUniswapPairsOracles, recordResetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import type { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
@@ -34,8 +35,61 @@ import * as constants from "../utils/Constants";
 import moment from "moment";
 import { defaultRecorder } from "../utils/Recorder/Recorder";
 import { toRc } from "../utils/Recorder/RecordableContract";
+import { decodeTimelockQueuedTransactions, extractDataHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
 
 export function load() {
+  task("change-owner-to-timelock").setAction(async (args, hre) => {
+    const timelock = await getTimelock(hre);
+
+    //todo ag change for all contracts? Or maybe add address parameter?
+
+    const deployer = await getDeployer(hre);
+
+    const pools = await getPools(hre);
+    for (const pool of pools) {
+      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+      await (await oracle.connect(deployer).transferOwnership(timelock.address)).wait();
+    }
+
+    console.log("owner changed to timelock");
+  });
+
+  task("queue-change-owner-to-deployer").setAction(async (args, hre) => {
+    //todo ag change for all contracts? Or maybe add address parameter?
+
+    const pools = await getPools(hre);
+
+    const deployer = await getDeployer(hre);
+    const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+    for (const pool of pools) {
+      const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
+      await oracle.record.transferOwnership(deployer.address);
+    }
+
+    const receipt = await recorder.execute();
+    const { txDataHash, txHash } = await extractDataHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
+
+    console.log("txDataHash:", txDataHash);
+    console.log("txHash:", txHash);
+  });
+
+  task("approve-timelock-transaction")
+    .addPositionalParam("txDataHash", "Transaction input data hash") //todo ag maybe reduce it all to just txHash and calculate txDataHash from tx params?A
+    .setAction(async ({ txDataHash }, hre) => {
+      //todo ag this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const timelock = await getTimelock(hre);
+      await (await timelock.approveTransactionsBatch(txDataHash)).wait();
+    });
+
+  task("execute-timelock-transaction")
+    .addPositionalParam("txHash", "Transaction blockchain hash")
+    .setAction(async ({ txHash }, hre) => {
+      const timelock = await getTimelock(hre);
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
+      await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
+    });
+
   task("update:all")
     .addParam("btcusd", "BTCUSD price")
     .addParam("btceth", "BTCETH price")
@@ -85,8 +139,13 @@ export function load() {
 
       const signer = await getBot(hre);
 
-      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed;
-      await (await oracleBtcEth.updateOracleWithVerification(to_d12(btceth))).wait();
+      const recorder = await defaultRecorder(hre, { etaDays: null, singer: signer });
+
+      const oracleBtcEth = toRc((await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed, recorder);
+      await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
+
+      await recorder.execute();
+
       console.log("updated RSK BTC/ETH (same on both networks)");
     });
 
@@ -96,9 +155,16 @@ export function load() {
       if (hre.network.name !== "rsk") {
         throw new Error("RSK only task");
       }
+
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
+
+      const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+
+      const oracleEurUsd = toRc((await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed, recorder);
+      await oracleEurUsd.record.setPrice(to_d12(eurusd));
+
+      await recorder.execute();
+
       console.log("updated EUR / USD");
     });
 
@@ -114,18 +180,33 @@ export function load() {
       }
 
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.connect(deployer).setMaxDayChange_d12(to_d12(change))).wait();
+
+      const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+
+      const oracleEurUsd = toRc((await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed, recorder);
+      await oracleEurUsd.record.setMaxDayChange_d12(to_d12(change));
+
+      await recorder.execute();
+
       console.log("updated EUR / USD max day change");
     });
 
   task("reset:uniswap-oracles").setAction(async (args, hre) => {
-    await resetUniswapPairsOracles(hre);
+    const deployer = await getDeployer(hre);
+    const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+
+    await recordResetUniswapPairsOracles(hre, recorder);
+
+    await recorder.execute();
   });
 
   task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    await updateUniswapPairsOracles(hre, deployer);
+    const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+
+    await recordUpdateUniswapPairsOracles(hre, recorder);
+
+    recorder.execute();
   });
 
   task("update:all-with-updater")
@@ -166,15 +247,20 @@ export function load() {
     .setAction(async ({ newVal }, hre) => {
       const pools = await getPools(hre);
 
+      const deployer = await getDeployer(hre);
+      const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+
       console.log("setting consultLeniency to: " + newVal);
 
       for (const pool of pools) {
-        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
         console.log(`starting for ${pool[0].name} / ${pool[1].name}`);
 
-        await (await oracle.setConsultLeniency(newVal)).wait();
+        await oracle.record.setConsultLeniency(newVal);
         console.log("pool done");
       }
+
+      await recorder.execute();
       console.log("all done");
     });
 
