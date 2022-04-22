@@ -35,7 +35,11 @@ import * as constants from "../utils/Constants";
 import moment from "moment";
 import { defaultRecorder } from "../utils/Recorder/Recorder";
 import { toRc } from "../utils/Recorder/RecordableContract";
-import { decodeTimelockQueuedTransactions, extractDataHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
+import {
+  decodeTimelockQueuedTransactions,
+  extractDataHashAndTxHashFromSingleTransaction,
+  extractTimelockQueuedTransactionsDataHash
+} from "../utils/TimelockHelpers";
 
 export function load() {
   task("change-owner-to-timelock").setAction(async (args, hre) => {
@@ -73,11 +77,21 @@ export function load() {
     console.log("txHash:", txHash);
   });
 
-  task("approve-timelock-transaction")
+  task("approve-timelock-transaction-by-txDataHash")
     .addPositionalParam("txDataHash", "Transaction input data hash") //todo ag maybe reduce it all to just txHash and calculate txDataHash from tx params?A
     .setAction(async ({ txDataHash }, hre) => {
       //todo ag this is dev only, normally done by multisig which is supposed to be the owner of the timelock
 
+      const timelock = await getTimelock(hre);
+      await (await timelock.approveTransactionsBatch(txDataHash)).wait();
+    });
+
+  task("approve-timelock-transaction-by-txHash")
+    .addPositionalParam("txHash", "Transaction input hash")
+    .setAction(async ({ txHash }, hre) => {
+      //todo ag this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const txDataHash = await extractTimelockQueuedTransactionsDataHash(hre, txHash);
       const timelock = await getTimelock(hre);
       await (await timelock.approveTransactionsBatch(txDataHash)).wait();
     });

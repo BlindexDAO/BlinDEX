@@ -79,7 +79,8 @@ Enjoy!
 
 # Technical documentation
 
-- [Upgrading contracts as a multi-sig owner](documentation/upgrading-contracts)
+- [Upgrading contracts as a multi-sig owner](documentation/upgrading-contracts.md)
+- [Running tasks with multisig](documentation/running-tasks-with-multisig.md)
 
 # Accounts
 

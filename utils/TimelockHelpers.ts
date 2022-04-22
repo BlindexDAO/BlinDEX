@@ -1,11 +1,11 @@
 import { BigNumber, ContractReceipt } from "ethers";
-import { Result } from "ethers/lib/utils";
+import { AbiCoder, ParamType, Result } from "ethers/lib/utils";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Timelock__factory } from "../typechain";
 
 export type QueuedTransaction = {
   target: string;
-  value: number | string;
+  value: number;
   signature: string;
   data: string;
 };
@@ -30,6 +30,29 @@ export async function decodeTimelockQueuedTransactions(hre: HardhatRuntimeEnviro
   const decodedEta = decodedTxData.eta as BigNumber;
 
   return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
+}
+
+export async function extractTimelockQueuedTransactionsDataHash(hre: HardhatRuntimeEnvironment, txHash: string) {
+  const txData = (await hre.ethers.provider.getTransaction(txHash)).data;
+  const contractInterface = await Timelock__factory.createInterface();
+  const decodedTxData = contractInterface.decodeFunctionData("queueTransactionsBatch", txData);
+  const decodedQueuedTransactions = (decodedTxData.transactions as QueuedTransaction[]).map(x => ({
+    target: x.target,
+    value: x.value,
+    signature: x.signature,
+    data: x.data
+  }));
+  const decodedEta = decodedTxData.eta as BigNumber;
+
+  const encoder = new AbiCoder();
+  const txDataHash = hre.ethers.utils.keccak256(
+    encoder.encode(
+      [ParamType.from("Transaction(address target, uint256 value, string signature, bytes data)[]"), "uint"],
+      [decodedQueuedTransactions, decodedEta]
+    )
+  );
+
+  return txDataHash;
 }
 
 export function extractDataHashAndTxHashFromSingleTransaction(receipts: ContractReceipt[], eventName: string) {
