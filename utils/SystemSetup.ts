@@ -194,10 +194,13 @@ export async function setUpFunctionalSystem(
     const initialBdxAmountForBgbp = _.get(constants.initialLiquidityForPoolsWithBDX, [hre.network.name, "bGBP"]);
     await provideLiquidity(hre, treasury, bdx, bgbp, to_d18(initialBdxAmountForBgbp / bdxGbp), to_d18(initialBdxAmountForBgbp), verbose);
 
-    verboseLog(verbose, "enable recllateralization");
+    verboseLog(verbose, "disable recllateralization only for owner");
     const pools = await getAllBDStablePools(hre);
     for (const pool of pools) {
-      await (await pool.toggleRecollateralizeOnlyForOwner()).wait();
+      const recollateralizeOnlyForOwner = await pool.recollateralizeOnlyForOwner();
+      if (recollateralizeOnlyForOwner) {
+        await (await pool.toggleRecollateralizeOnlyForOwner()).wait();
+      }
     }
   }
 
