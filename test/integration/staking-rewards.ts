@@ -80,8 +80,11 @@ async function initialize() {
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
 
-  await stakingRewards_BDEU_WETH.unpause();
-  await stakingRewards_BDEU_WBTC.unpause();
+  [stakingRewards_BDEU_WETH, stakingRewards_BDEU_WBTC].forEach(async stakingRewards => {
+    if (await stakingRewards.paused()) {
+      await stakingRewards.unpause();
+    }
+  });
 }
 
 async function get_BDEU_WETH_poolWeight() {
@@ -101,7 +104,7 @@ async function setVestingRewardsRatio(contract: StakingRewardsDistribution, rati
   await contract.connect(deployer).setVestingRewardRatio(ratio);
 }
 
-describe("StakingRewards", () => {
+describe.only("StakingRewards", () => {
   beforeEach(async () => {
     await setVestingRewardsRatio(stakingRewardsDistribution, 0);
   });

@@ -80,7 +80,6 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + rewardsDurationSeconds;
-        _pause();
     }
 
     /* ========== VIEWS ========== */
