@@ -93,7 +93,9 @@ export function load() {
       // soft launch simulation
       const stakings = await getAllBDStableStakingRewards(hre);
       for (const staking of stakings) {
-        await staking.unpause();
+        if (await staking.paused()) {
+          await staking.unpause();
+        }
       }
     });
 }
