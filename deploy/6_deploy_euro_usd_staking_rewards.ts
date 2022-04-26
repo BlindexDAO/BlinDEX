@@ -11,8 +11,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Setting up staking contracts");
 
-  await setupStakingContract(hre, bdx.address, formatAddress(hre, constants.wETH_address[networkName]), "BDX", "WETH", false, 1e6);
-  await setupStakingContract(hre, bdx.address, formatAddress(hre, constants.wBTC_address[networkName]), "BDX", "WBTC", false, 1e6);
+  await setupStakingContract(
+    hre,
+    bdx.address,
+    formatAddress(hre, constants.wETH_address[networkName]),
+    "BDX",
+    "WETH",
+    false,
+    constants.BASE_STAKING_MULTIPLIER
+  );
+  await setupStakingContract(
+    hre,
+    bdx.address,
+    formatAddress(hre, constants.wBTC_address[networkName]),
+    "BDX",
+    "WBTC",
+    false,
+    constants.BASE_STAKING_MULTIPLIER
+  );
 
   const bdEu = await getBdEu(hre);
   const bdUs = await getBdUs(hre);
@@ -22,14 +38,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const symbol = await stable.symbol();
     console.log(`Starting deployment of ${symbol} staking contracts`);
 
-    await setupStakingContract(hre, bdx.address, stable.address, "BDX", symbol, true, 1e6);
-    await setupStakingContract(hre, stable.address, formatAddress(hre, constants.wETH_address[networkName]), symbol, "WETH", false, 1e6);
-    await setupStakingContract(hre, stable.address, formatAddress(hre, constants.wBTC_address[networkName]), symbol, "WBTC", false, 1e6);
+    await setupStakingContract(hre, bdx.address, stable.address, "BDX", symbol, true, constants.BASE_STAKING_MULTIPLIER);
+    await setupStakingContract(
+      hre,
+      stable.address,
+      formatAddress(hre, constants.wETH_address[networkName]),
+      symbol,
+      "WETH",
+      false,
+      constants.BASE_STAKING_MULTIPLIER
+    );
+    await setupStakingContract(
+      hre,
+      stable.address,
+      formatAddress(hre, constants.wBTC_address[networkName]),
+      symbol,
+      "WBTC",
+      false,
+      constants.BASE_STAKING_MULTIPLIER
+    );
 
     console.log(`Finished deployment of ${symbol} staking contracts`);
   }
 
-  await setupStakingContract(hre, bdEu.address, bdUs.address, "BDEU", "BDUS", true, 1e6);
+  await setupStakingContract(hre, bdEu.address, bdUs.address, "BDEU", "BDUS", true, constants.BASE_STAKING_MULTIPLIER);
   console.log(`Finished deployment of BDEU/BDUS staking contracts`);
 
   console.log("Finished deployment of all the staking contracts");
