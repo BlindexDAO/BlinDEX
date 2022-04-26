@@ -121,6 +121,7 @@ export const RSK_RUSDT_ADDRESS = "0xEf213441a85DF4d7acBdAe0Cf78004E1e486BB96";
 export const RSK_WRBTC_ADDRESS = "0x542FDA317318eBf1d3DeAF76E0B632741a7e677d";
 export const RSK_ETHS_ADDRESS = "0x1D931BF8656D795e50Ef6d639562C5bD8AC2b78F";
 export const RSK_XUSD_ADDRESS = "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F";
+export const RSK_DOC_ADDRESS = "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB";
 
 export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
 
@@ -132,11 +133,16 @@ export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2
 export const bdxLockAmount = to_d18(3150000);
 export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
 
-export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // usdc on eth
-
+export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC on eth
 export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
   mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
   rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
+};
+
+export const ETH_DAI_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI on eth
+export const SECONDARY_EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
+  mainnetFork: { symbol: "DAI", address: ETH_DAI_ADDRESS, decimals: 18 },
+  rsk: { symbol: "DOC", address: RSK_DOC_ADDRESS, decimals: 18 }
 };
 
 export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
@@ -149,7 +155,8 @@ export const tokenLogoUrl: { [symbol: string]: string } = {
   BDUS: `${BlindexFileBaseUrl}/BDUS.svg`,
   WRBTC: `${BlindexFileBaseUrl}/BTC.svg`,
   ETHs: `${BlindexFileBaseUrl}/ETH.svg`,
-  XUSD: `${BlindexFileBaseUrl}/XUSD.svg`
+  XUSD: `${BlindexFileBaseUrl}/XUSD.svg`,
+  DOC: `${BlindexFileBaseUrl}/DOC.svg`
 };
 
 export const PriceFeedContractNames = {
