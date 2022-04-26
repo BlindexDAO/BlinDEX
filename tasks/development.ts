@@ -22,6 +22,12 @@ import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
+import { Timelock } from "../typechain/Timelock";
+import { Flipper } from "../typechain/Flipper";
+import { Recorder } from "../utils/Recorder/Recorder";
+import { TimelockStrategy } from "../utils/Recorder/strategies/TimelockStrategy";
+import { toRc } from "../utils/Recorder/RecordableContract";
+import { extractDataHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
 
 export function load() {
   task("mine-block", "", async (args_, hre_) => {
@@ -215,4 +221,114 @@ export function load() {
     await run(ethsAddress, wrbtcAddress, "eth", "btc");
     await run(rusdtAddress, wrbtcAddress, "usd", "btc");
   });
+
+  task("deploy-timelock")
+    .addParam("admin", "admin address")
+    .addParam("owner", "destinination owner address (usually multi-sig)")
+    .setAction(async ({ admin, owner }, hre) => {
+      const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
+      const deployer = await getDeployer(hre);
+
+      const day = 3600 * 24;
+
+      const timelock = (await timeLockFactory.connect(deployer).deploy(
+        admin,
+        0,
+        30 * day,
+        14 * day,
+        5 * 60 // 5 min initial delay
+      )) as Timelock;
+
+      await timelock.deployed();
+
+      console.log("Timelock deployed to:", timelock.address);
+
+      await (await timelock.transferOwnership(owner)).wait();
+
+      console.log("Timelock admin:", await timelock.admin());
+      console.log("Timelock ownership transferred to:", await timelock.owner());
+    });
+
+  task("dev:deploy-flipper")
+    .addParam("owner", "destinination owner address (usually timelock)")
+    .setAction(async ({ owner }, hre) => {
+      const deployer = await getDeployer(hre);
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = (await flipperFactory.connect(deployer).deploy()) as Flipper;
+      await flipper.deployed();
+
+      console.log("Flipper deployed to:", flipper.address);
+
+      await (await flipper.transferOwnership(owner)).wait();
+
+      console.log("Flipper ownership transferred to:", await flipper.owner());
+    });
+
+  task("dev:flipper-flip-0")
+    .addPositionalParam("flipperAddress")
+    .setAction(async ({ flipperAddress }, hre) => {
+      const deployer = await getDeployer(hre);
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = (await flipperFactory.attach(flipperAddress).connect(deployer)) as Flipper;
+
+      console.log("Flipper state[0] before:", await flipper.state(0));
+
+      await (await flipper.flip(0)).wait();
+
+      console.log("Flipper state[0] after:", await flipper.state(0));
+    });
+
+  task("dev:flipper-flip-0-1-timelock")
+    .addParam("timelockaddress")
+    .addParam("flipperaddress")
+    .setAction(async ({ timelockaddress, flipperaddress }, hre) => {
+      const timelockAdmin = await getDeployer(hre);
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = (await flipperFactory.attach(flipperaddress).connect(timelockAdmin)) as Flipper;
+
+      const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timeLockFactory.attach(timelockaddress).connect(timelockAdmin) as Timelock;
+
+      const blockBefore = await hre.ethers.provider.getBlock("latest");
+      const timestamp = blockBefore.timestamp;
+
+      const eta = timestamp + 60 * 60; // now + 1h
+
+      const recorder = new Recorder(
+        new TimelockStrategy({
+          timelock: timelock,
+          etaSeconds: eta
+        })
+      );
+
+      const recordableFlipper = toRc(flipper, recorder);
+
+      console.log("timelockAdmin:", timelockAdmin.address);
+      console.log("timelock.address:", timelock.address);
+      console.log("timelock.admin():", await timelock.admin());
+
+      console.log("Flipper state[0] before:", await recordableFlipper.state(0));
+      console.log("Flipper state[1] before:", await recordableFlipper.state(1));
+      console.log("Flipper state[2] before:", await recordableFlipper.state(2));
+
+      await recordableFlipper.record.flip(0);
+      await recordableFlipper.record.flip(1);
+
+      const receipts = await recorder.execute();
+      const { txDataHash, txHash } = await extractDataHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
+
+      console.log("txDataHash:", txDataHash);
+      console.log("txHash:", txHash);
+    });
+
+  task("dev:flipper-show")
+    .addPositionalParam("flipperaddress")
+    .setAction(async ({ flipperaddress }, hre) => {
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = (await flipperFactory.attach(flipperaddress)) as Flipper;
+
+      console.log("Flipper state[0] before:", await flipper.state(0));
+      console.log("Flipper state[1] before:", await flipper.state(1));
+      console.log("Flipper state[2] before:", await flipper.state(2));
+    });
 }

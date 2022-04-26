@@ -18,9 +18,9 @@ contract Timelock is Ownable {
         bytes data;
     }
 
-    uint256 public constant GRACE_PERIOD = 14 days;
-    uint256 public constant MINIMUM_DELAY = 2 days;
-    uint256 public constant MAXIMUM_DELAY = 30 days;
+    uint256 public minimumDelay;
+    uint256 public maximumDelay;
+    uint256 public gracePeriod;
 
     mapping(bytes32 => TrnasactionStatus) public queuedTransactions;
 
@@ -34,8 +34,20 @@ contract Timelock is Ownable {
     event NewAdminSet(address indexed newAdmin);
     event NewDelaySet(uint256 indexed delay);
 
-    constructor(address _admin, uint256 _delay) {
+    constructor(
+        address _admin,
+        uint256 _minimumDelay,
+        uint256 _maximumDelay,
+        uint256 _gracePeriod,
+        uint256 _delay
+    ) {
         require(_admin != address(0), "Admin address cannot be 0");
+        require(_minimumDelay <= _maximumDelay, "Minimum delay cannot be larger than maximum delay");
+
+        minimumDelay = _minimumDelay;
+        maximumDelay = _maximumDelay;
+        gracePeriod = _gracePeriod;
+
         setDelay(_delay);
 
         admin = _admin;
@@ -50,20 +62,18 @@ contract Timelock is Ownable {
     }
 
     function setDelay(uint256 _delay) public onlyOwner {
-        require(_delay >= MINIMUM_DELAY, "Timelock: Delay must exceed minimum delay.");
-        require(_delay <= MAXIMUM_DELAY, "Timelock: Delay must not exceed maximum delay.");
+        require(_delay >= minimumDelay, "Timelock: Delay must exceed minimum delay.");
+        require(_delay <= maximumDelay, "Timelock: Delay must not exceed maximum delay.");
 
         delay = _delay;
 
         emit NewDelaySet(delay);
     }
 
-    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyAdmin returns (bytes32) {
-        require(msg.sender == admin, "Timelock: Call must come from admin.");
-
+    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyAdminOrOwner returns (bytes32) {
         //todo ag hmm... do we really want it this way? we definitely want 0 delay on local deployment
-        require(eta >= block.timestamp + delay, "Timelock: Estimated execution time must satisfy delay."); //todo ag add test!
-        require(eta < block.timestamp + delay + GRACE_PERIOD, "Timelock: Estimated execution time must satisfy delay and grace period."); //todo ag add test!
+        require(eta >= block.timestamp + delay, "Timelock: Estimated execution time must satisfy delay.");
+        require(eta <= block.timestamp + delay + gracePeriod, "Timelock: Estimated execution time must satisfy delay and grace period.");
 
         bytes32 txDataHash = keccak256(abi.encode(transactions, eta));
         queuedTransactions[txDataHash] = TrnasactionStatus.Queued;
@@ -72,8 +82,8 @@ contract Timelock is Ownable {
         return txDataHash;
     }
 
-    function cancelTransactionsBatch(bytes32 txDataHash) external onlyAdmin {
-        require(queuedTransactions[txDataHash] != TrnasactionStatus.NonExistent, "Timelock: transaction is not queued"); //todo ag add test!
+    function cancelTransactionsBatch(bytes32 txDataHash) external onlyAdminOrOwner {
+        require(queuedTransactions[txDataHash] != TrnasactionStatus.NonExistent, "Timelock: transaction is not queued");
 
         delete queuedTransactions[txDataHash];
 
@@ -81,6 +91,21 @@ contract Timelock is Ownable {
     }
 
     function approveTransactionsBatch(bytes32 txDataHash) external onlyOwner {
+        _approveTransactionsBatchInternal(txDataHash);
+    }
+
+    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyAdminOrOwner {
+        _executeTransactionsBatchInternal(transactions, eta);
+    }
+
+    function approveAndExecuteTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
+        bytes32 txDataHash = keccak256(abi.encode(transactions, eta));
+        _approveTransactionsBatchInternal(txDataHash);
+
+        _executeTransactionsBatchInternal(transactions, eta);
+    }
+
+    function _approveTransactionsBatchInternal(bytes32 txDataHash) internal onlyOwner {
         require(queuedTransactions[txDataHash] == TrnasactionStatus.Queued, "Timelock: transaction is not queued");
 
         queuedTransactions[txDataHash] = TrnasactionStatus.Approved;
@@ -88,11 +113,12 @@ contract Timelock is Ownable {
         emit ApprovedTransactionsBatch(txDataHash);
     }
 
-    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyAdmin returns (bool) {
+    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal {
         bytes32 txDataHash = keccak256(abi.encode(transactions, eta));
+
         require(queuedTransactions[txDataHash] == TrnasactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
         require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed time lock.");
-        require(block.timestamp <= eta + GRACE_PERIOD, "Timelock: Transaction is stale.");
+        require(block.timestamp <= eta + gracePeriod, "Timelock: Transaction is stale.");
 
         delete queuedTransactions[txDataHash];
 
@@ -110,12 +136,10 @@ contract Timelock is Ownable {
 
             emit ExecutedTransaction(txDataHash, transactions[i].target, transactions[i].value, transactions[i].signature, transactions[i].data, eta);
         }
-
-        return true;
     }
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Timelock: only admin can perform this action");
+    modifier onlyAdminOrOwner() {
+        require(msg.sender == admin || msg.sender == owner(), "Timelock: only admin or owner can perform this action");
         _;
     }
 }

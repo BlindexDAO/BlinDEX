@@ -46,6 +46,18 @@ type DefaultRecorderParams = {
 };
 
 export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
+  if (hre.network.name === "mainnetFork") {
+    return new Recorder(
+      new OneByOneStrategy({
+        signer: params?.singer ?? (await getDeployer(hre))
+      })
+    );
+  } else {
+    return defaultTimelockRecorder(hre, params);
+  }
+}
+
+export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
   const days = params?.etaDays ?? 14;
@@ -60,16 +72,5 @@ export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: De
     })
   );
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  const oneByOneExecutionRecorder = new Recorder(
-    new OneByOneStrategy({
-      signer: params?.singer ?? (await getDeployer(hre))
-    })
-  );
-
-  if (hre.network.name === "mainnetFork") {
-    return timelockRecorder; //oneByOneExecutionRecorder; todo ag
-  } else {
-    return timelockRecorder;
-  }
+  return timelockRecorder;
 }

@@ -4,12 +4,17 @@ import type { DeployFunction } from "hardhat-deploy/types";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: Timelock");
 
+  const day = 3600 * 24;
+
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
   const timelock = await hre.deployments.deploy("Timelock", {
     from: deployer,
     args: [
       deployer,
-      60 * 60 * 24 * 14 // 2 weeks delay
+      day * 2, // min delay
+      day * 30, // max delay
+      day * 14, // grace period
+      day * 14 // delay
     ]
   });
 

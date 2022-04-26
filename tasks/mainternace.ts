@@ -33,7 +33,7 @@ import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
 import moment from "moment";
-import { defaultRecorder } from "../utils/Recorder/Recorder";
+import { defaultRecorder, defaultTimelockRecorder } from "../utils/Recorder/Recorder";
 import { toRc } from "../utils/Recorder/RecordableContract";
 import {
   decodeTimelockQueuedTransactions,
@@ -64,7 +64,7 @@ export function load() {
     const pools = await getPools(hre);
 
     const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+    const recorder = await defaultTimelockRecorder(hre, { etaDays: null, singer: deployer });
     for (const pool of pools) {
       const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
       await oracle.record.transferOwnership(deployer.address);
@@ -77,10 +77,17 @@ export function load() {
     console.log("txHash:", txHash);
   });
 
-  task("approve-timelock-transaction-by-txDataHash")
-    .addPositionalParam("txDataHash", "Transaction input data hash") //todo ag maybe reduce it all to just txHash and calculate txDataHash from tx params?A
+  task("get-timelock-transaction-status")
+    .addPositionalParam("txDataHash", "Transaction input data hash")
     .setAction(async ({ txDataHash }, hre) => {
-      //todo ag this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+      const timelock = await getTimelock(hre);
+      console.log("TX status:", await timelock.queuedTransactions(txDataHash));
+    });
+
+  task("approve-timelock-transaction-by-txDataHash")
+    .addPositionalParam("txDataHash", "Transaction input data hash")
+    .setAction(async ({ txDataHash }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
 
       const timelock = await getTimelock(hre);
       await (await timelock.approveTransactionsBatch(txDataHash)).wait();
@@ -89,9 +96,11 @@ export function load() {
   task("approve-timelock-transaction-by-txHash")
     .addPositionalParam("txHash", "Transaction input hash")
     .setAction(async ({ txHash }, hre) => {
-      //todo ag this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
 
       const txDataHash = await extractTimelockQueuedTransactionsDataHash(hre, txHash);
+      console.log("txDataHash", txDataHash);
+
       const timelock = await getTimelock(hre);
       await (await timelock.approveTransactionsBatch(txDataHash)).wait();
     });
@@ -101,7 +110,7 @@ export function load() {
     .setAction(async ({ txHash }, hre) => {
       const timelock = await getTimelock(hre);
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
+      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
 
   task("update:all")
