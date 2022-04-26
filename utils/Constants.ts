@@ -194,3 +194,5 @@ export function getListOfSupportedLiquidityPools(networkName: string): {
     { tokenA: "BDX", tokenB: "bGBP" }
   ];
 }
+
+export const BASE_STAKING_MULTIPLIER = 1e6;
