@@ -37,7 +37,8 @@ import {
   rskOperationalTreasuryAddress,
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
-  BASE_STAKING_MULTIPLIER
+  BASE_STAKING_MULTIPLIER,
+  chainIds
 } from "../utils/Constants";
 
 export function load() {
@@ -71,6 +72,7 @@ export function load() {
 
     const mappedPairOracles = pairOracles.map(pairOracle => {
       return {
+        symbol: pairOracle.symbol,
         pairAddress: pairOracle.pair.address,
         oracleAddress: pairOracle.pairOracle.oracleAddress,
         token0Address: pairOracle.pair.token0,
@@ -80,34 +82,32 @@ export function load() {
       };
     });
 
-    const pairSymbols = pairOracles.map(po => po.symbol);
-
     const networkName = hre.network.name.toUpperCase();
+    const chainId = +(await hre.getChainId());
 
     const blockchainConfig = {
-      [`${networkName}`]: {
-        [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
-        [`BDX_ADDRESS`]: (await getBdx(hre)).address,
-        ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
-        [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
-        [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-        [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
-        [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
-          networkName === "RSK"
-            ? [rskTreasuryAddress, rskOperationalTreasuryAddress, rskMultisigTreasuryAddress, bdxLockingContractAddressRSK]
-            : [(await getTreasury(hre)).address, (await getOperationalTreasury(hre)).address],
-        [`AVAILABLE_PAIRS`]: swapPairs,
-        [`STAKING_REWARDS`]: stakingRewards,
-        [`PAIR_ORACLES`]: mappedPairOracles,
-        [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
-        [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
-        [`BDSTABLES`]: await getStablesConfig(hre)
-      }
+      [`BDX_ADDRESS`]: (await getBdx(hre)).address,
+      ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
+      [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
+      [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
+      [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
+        chainId === chainIds.rsk
+          ? [rskTreasuryAddress, rskOperationalTreasuryAddress, rskMultisigTreasuryAddress, bdxLockingContractAddressRSK]
+          : [(await getTreasury(hre)).address, (await getOperationalTreasury(hre)).address],
+      [`AVAILABLE_PAIRS`]: swapPairs,
+      [`STAKING_REWARDS`]: stakingRewards,
+      [`PAIR_ORACLES`]: mappedPairOracles,
+      [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
+      [`oraclesUpdaterAddress`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
+      [`BDSTABLES`]: await getStablesConfig(hre)
     };
 
     console.log(
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
     );
+    console.log("=================================================");
+    console.log(`Config for: ${networkName}, chainId: ${chainId}`);
+    console.log("=================================================\n");
     console.log(cleanStringify(blockchainConfig));
   });
 
