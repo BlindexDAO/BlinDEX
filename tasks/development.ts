@@ -27,7 +27,7 @@ import { Flipper } from "../typechain/Flipper";
 import { Recorder } from "../utils/Recorder/Recorder";
 import { TimelockStrategy } from "../utils/Recorder/strategies/TimelockStrategy";
 import { toRc } from "../utils/Recorder/RecordableContract";
-import { extractDataHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
+import { extractTimelockQueuedTransactionsBatchParamsDataAndHash, extractTxParamsHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
 
 export function load() {
   task("mine-block", "", async (args_, hre_) => {
@@ -223,16 +223,16 @@ export function load() {
   });
 
   task("deploy-timelock")
-    .addParam("admin", "admin address")
+    .addParam("proposer", "proposer address")
     .addParam("owner", "destinination owner address (usually multi-sig)")
-    .setAction(async ({ admin, owner }, hre) => {
+    .setAction(async ({ proposer, owner }, hre) => {
       const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
       const deployer = await getDeployer(hre);
 
       const day = 3600 * 24;
 
       const timelock = (await timeLockFactory.connect(deployer).deploy(
-        admin,
+        proposer,
         0,
         30 * day,
         14 * day,
@@ -245,7 +245,7 @@ export function load() {
 
       await (await timelock.transferOwnership(owner)).wait();
 
-      console.log("Timelock admin:", await timelock.admin());
+      console.log("Timelock proposer:", await timelock.proposer());
       console.log("Timelock ownership transferred to:", await timelock.owner());
     });
 
@@ -282,12 +282,14 @@ export function load() {
     .addParam("timelockaddress")
     .addParam("flipperaddress")
     .setAction(async ({ timelockaddress, flipperaddress }, hre) => {
-      const timelockAdmin = await getDeployer(hre);
+      const timelockProposer = await getDeployer(hre);
       const flipperFactory = await hre.ethers.getContractFactory("Flipper");
-      const flipper = (await flipperFactory.attach(flipperaddress).connect(timelockAdmin)) as Flipper;
+      const flipper = (await flipperFactory.attach(flipperaddress).connect(timelockProposer)) as Flipper;
+
+      console.log("timelockProposer", timelockProposer.address);
 
       const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
-      const timelock = timeLockFactory.attach(timelockaddress).connect(timelockAdmin) as Timelock;
+      const timelock = timeLockFactory.attach(timelockaddress).connect(timelockProposer) as Timelock;
 
       const blockBefore = await hre.ethers.provider.getBlock("latest");
       const timestamp = blockBefore.timestamp;
@@ -303,10 +305,6 @@ export function load() {
 
       const recordableFlipper = toRc(flipper, recorder);
 
-      console.log("timelockAdmin:", timelockAdmin.address);
-      console.log("timelock.address:", timelock.address);
-      console.log("timelock.admin():", await timelock.admin());
-
       console.log("Flipper state[0] before:", await recordableFlipper.state(0));
       console.log("Flipper state[1] before:", await recordableFlipper.state(1));
       console.log("Flipper state[2] before:", await recordableFlipper.state(2));
@@ -315,10 +313,51 @@ export function load() {
       await recordableFlipper.record.flip(1);
 
       const receipts = await recorder.execute();
-      const { txDataHash, txHash } = await extractDataHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
+      const { txParamsHash, txHash } = await extractTxParamsHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
+      const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
 
-      console.log("txDataHash:", txDataHash);
       console.log("txHash:", txHash);
+      console.log("txParamsHash:", txParamsHash);
+      console.log("txParamsData:", txParamsData);
+    });
+
+  task("dev:approve-timelock-transaction-by-txParamsHash")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txParamsHash", "Transaction input data hash")
+    .setAction(async ({ timelockaddress, txParamsHash }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+
+      await (await timelock.approveTransactionsBatch(txParamsHash)).wait();
+    });
+
+  task("dev:approve-timelock-transaction-by-txHash")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txHash", "Transaction input hash")
+    .setAction(async ({ timelockaddress, txHash }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const { txParamsHash } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
+      console.log("txParamsHash", txParamsHash);
+
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+
+      await (await timelock.approveTransactionsBatch(txParamsHash)).wait();
+    });
+
+  task("dev:approve-execute-timelock-transaction")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txRawParamsData")
+    .setAction(async ({ timelockaddress, txRawParamsData }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+
+      await (await timelock.approveAndExecuteTransactionsBatchRaw(txRawParamsData)).wait();
     });
 
   task("dev:flipper-show")
@@ -327,8 +366,20 @@ export function load() {
       const flipperFactory = await hre.ethers.getContractFactory("Flipper");
       const flipper = (await flipperFactory.attach(flipperaddress)) as Flipper;
 
+      console.log("Owner:", await flipper.owner());
       console.log("Flipper state[0] before:", await flipper.state(0));
       console.log("Flipper state[1] before:", await flipper.state(1));
       console.log("Flipper state[2] before:", await flipper.state(2));
+    });
+
+  task("timelock-show")
+    .addPositionalParam("timelockaddress")
+    .setAction(async ({ timelockaddress }, hre) => {
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+
+      console.log("Owner:", await timelock.owner());
+      console.log("Proposer:", await timelock.proposer());
+      console.log("Delay (s):", (await timelock.delay()).toNumber());
     });
 }

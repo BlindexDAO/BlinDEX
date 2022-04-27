@@ -32,7 +32,7 @@ export async function decodeTimelockQueuedTransactions(hre: HardhatRuntimeEnviro
   return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
 }
 
-export async function extractTimelockQueuedTransactionsDataHash(hre: HardhatRuntimeEnvironment, txHash: string) {
+export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre: HardhatRuntimeEnvironment, txHash: string) {
   const txData = (await hre.ethers.provider.getTransaction(txHash)).data;
   const contractInterface = await Timelock__factory.createInterface();
   const decodedTxData = contractInterface.decodeFunctionData("queueTransactionsBatch", txData);
@@ -45,17 +45,17 @@ export async function extractTimelockQueuedTransactionsDataHash(hre: HardhatRunt
   const decodedEta = decodedTxData.eta as BigNumber;
 
   const encoder = new AbiCoder();
-  const txDataHash = hre.ethers.utils.keccak256(
-    encoder.encode(
-      [ParamType.from("Transaction(address target, uint256 value, string signature, bytes data)[]"), "uint"],
-      [decodedQueuedTransactions, decodedEta]
-    )
+  const txParamsData = encoder.encode(
+    [ParamType.from("Transaction(address target, uint256 value, string signature, bytes data)[]"), "uint"],
+    [decodedQueuedTransactions, decodedEta]
   );
 
-  return txDataHash;
+  const txParamsHash = hre.ethers.utils.keccak256(txParamsData);
+
+  return { txParamsData, txParamsHash };
 }
 
-export function extractDataHashAndTxHashFromSingleTransaction(receipts: ContractReceipt[], eventName: string) {
+export function extractTxParamsHashAndTxHashFromSingleTransaction(receipts: ContractReceipt[], eventName: string) {
   if (receipts.length !== 1) {
     throw new Error(`Unexpected amount of receipts. Received: ${receipts.length}, expected: 1`);
   }
@@ -84,10 +84,10 @@ export function extractDataHashAndTxHashFromSingleTransaction(receipts: Contract
     throw new Error(`Event: ${eventName} is missing args`);
   }
 
-  const txDataHash = theOnlyTransactionsBatchEvent.args.txDataHash as string;
+  const txParamsHash = theOnlyTransactionsBatchEvent.args.txParamsHash as string;
 
-  if (!txDataHash) {
-    throw new Error(`Missing txDataHash`);
+  if (!txParamsHash) {
+    throw new Error(`Missing txParamsHash`);
   }
 
   const txHash = receipt.events.filter(x => x.event === eventName)[0].transactionHash as string;
@@ -96,5 +96,5 @@ export function extractDataHashAndTxHashFromSingleTransaction(receipts: Contract
     throw new Error(`Missing txHash`);
   }
 
-  return { txDataHash, txHash };
+  return { txParamsHash, txHash };
 }

@@ -24,24 +24,24 @@ contract Timelock is Ownable {
 
     mapping(bytes32 => TrnasactionStatus) public queuedTransactions;
 
-    address public admin;
+    address public proposer;
     uint256 public delay;
 
-    event QueuedTransactionsBatch(bytes32 indexed txDataHash, uint256 numberOfTransactions, uint256 eta);
-    event CancelledTransactionsBatch(bytes32 indexed txDataHash);
-    event ApprovedTransactionsBatch(bytes32 indexed txDataHash);
-    event ExecutedTransaction(bytes32 indexed txDataHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
-    event NewAdminSet(address indexed newAdmin);
+    event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
+    event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
+    event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
+    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
+    event NewProposerSet(address indexed newProposer);
     event NewDelaySet(uint256 indexed delay);
 
     constructor(
-        address _admin,
+        address _proposer,
         uint256 _minimumDelay,
         uint256 _maximumDelay,
         uint256 _gracePeriod,
         uint256 _delay
     ) {
-        require(_admin != address(0), "Admin address cannot be 0");
+        require(_proposer != address(0), "Proposer address cannot be 0");
         require(_minimumDelay <= _maximumDelay, "Minimum delay cannot be larger than maximum delay");
 
         minimumDelay = _minimumDelay;
@@ -50,15 +50,15 @@ contract Timelock is Ownable {
 
         setDelay(_delay);
 
-        admin = _admin;
+        proposer = _proposer;
     }
 
-    function setAdmin(address _admin) external onlyOwner {
-        require(_admin != address(0), "Admin address cannot be 0");
+    function setProposer(address _proposer) external onlyOwner {
+        require(_proposer != address(0), "Proposer address cannot be 0");
 
-        admin = _admin;
+        proposer = _proposer;
 
-        emit NewAdminSet(admin);
+        emit NewProposerSet(proposer);
     }
 
     function setDelay(uint256 _delay) public onlyOwner {
@@ -70,57 +70,65 @@ contract Timelock is Ownable {
         emit NewDelaySet(delay);
     }
 
-    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyAdminOrOwner returns (bytes32) {
+    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyProposerOrOwner returns (bytes32) {
         //todo ag hmm... do we really want it this way? we definitely want 0 delay on local deployment
         require(eta >= block.timestamp + delay, "Timelock: Estimated execution time must satisfy delay.");
         require(eta <= block.timestamp + delay + gracePeriod, "Timelock: Estimated execution time must satisfy delay and grace period.");
 
-        bytes32 txDataHash = keccak256(abi.encode(transactions, eta));
-        queuedTransactions[txDataHash] = TrnasactionStatus.Queued;
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+        queuedTransactions[txParamsHash] = TrnasactionStatus.Queued;
 
-        emit QueuedTransactionsBatch(txDataHash, transactions.length, eta);
-        return txDataHash;
+        emit QueuedTransactionsBatch(txParamsHash, transactions.length, eta);
+        return txParamsHash;
     }
 
-    function cancelTransactionsBatch(bytes32 txDataHash) external onlyAdminOrOwner {
-        require(queuedTransactions[txDataHash] != TrnasactionStatus.NonExistent, "Timelock: transaction is not queued");
+    function cancelTransactionsBatch(bytes32 txParamsHash) external onlyProposerOrOwner {
+        require(queuedTransactions[txParamsHash] != TrnasactionStatus.NonExistent, "Timelock: transaction is not queued");
 
-        delete queuedTransactions[txDataHash];
+        delete queuedTransactions[txParamsHash];
 
-        emit CancelledTransactionsBatch(txDataHash);
+        emit CancelledTransactionsBatch(txParamsHash);
     }
 
-    function approveTransactionsBatch(bytes32 txDataHash) external onlyOwner {
-        _approveTransactionsBatchInternal(txDataHash);
+    function approveTransactionsBatch(bytes32 txParamsHash) external onlyOwner {
+        _approveTransactionsBatchInternal(txParamsHash);
     }
 
-    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyAdminOrOwner {
+    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyProposerOrOwner {
         _executeTransactionsBatchInternal(transactions, eta);
     }
 
     function approveAndExecuteTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
-        bytes32 txDataHash = keccak256(abi.encode(transactions, eta));
-        _approveTransactionsBatchInternal(txDataHash);
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
+        _approveTransactionsBatchInternal(txParamsHash);
         _executeTransactionsBatchInternal(transactions, eta);
     }
 
-    function _approveTransactionsBatchInternal(bytes32 txDataHash) internal onlyOwner {
-        require(queuedTransactions[txDataHash] == TrnasactionStatus.Queued, "Timelock: transaction is not queued");
+    function approveAndExecuteTransactionsBatchRaw(bytes calldata txParamsData) external payable onlyOwner {
+        bytes32 txParamsHash = keccak256(txParamsData);
+        (Transaction[] memory transactions, uint256 eta) = abi.decode(txParamsData, (Transaction[], uint256));
 
-        queuedTransactions[txDataHash] = TrnasactionStatus.Approved;
+        _approveTransactionsBatchInternal(txParamsHash);
+        _executeTransactionsBatchInternal(transactions, eta);
+    }
 
-        emit ApprovedTransactionsBatch(txDataHash);
+    function _approveTransactionsBatchInternal(bytes32 txParamsHash) internal onlyOwner {
+        require(queuedTransactions[txParamsHash] == TrnasactionStatus.Queued, "Timelock: transaction is not queued");
+
+        queuedTransactions[txParamsHash] = TrnasactionStatus.Approved;
+
+        emit ApprovedTransactionsBatch(txParamsHash);
     }
 
     function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal {
-        bytes32 txDataHash = keccak256(abi.encode(transactions, eta));
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
-        require(queuedTransactions[txDataHash] == TrnasactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
+        require(queuedTransactions[txParamsHash] == TrnasactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
         require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed time lock.");
         require(block.timestamp <= eta + gracePeriod, "Timelock: Transaction is stale.");
 
-        delete queuedTransactions[txDataHash];
+        delete queuedTransactions[txParamsHash];
 
         for (uint256 i = 0; i < transactions.length; i++) {
             bytes memory callData = bytes(transactions[i].signature).length == 0
@@ -134,12 +142,19 @@ contract Timelock is Ownable {
             ) = transactions[i].target.call{value: transactions[i].value}(callData);
             require(success, "Timelock: Transaction execution reverted.");
 
-            emit ExecutedTransaction(txDataHash, transactions[i].target, transactions[i].value, transactions[i].signature, transactions[i].data, eta);
+            emit ExecutedTransaction(
+                txParamsHash,
+                transactions[i].target,
+                transactions[i].value,
+                transactions[i].signature,
+                transactions[i].data,
+                eta
+            );
         }
     }
 
-    modifier onlyAdminOrOwner() {
-        require(msg.sender == admin || msg.sender == owner(), "Timelock: only admin or owner can perform this action");
+    modifier onlyProposerOrOwner() {
+        require(msg.sender == proposer || msg.sender == owner(), "Timelock: only proposer or owner can perform this action");
         _;
     }
 }
