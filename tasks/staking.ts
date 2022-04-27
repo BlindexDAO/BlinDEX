@@ -92,13 +92,19 @@ export function load() {
     }
   });
 
-  task("stakings:show-weights").setAction(async (args, hre) => {
+  task("staking:show-weights").setAction(async (args, hre) => {
     const srd = await getStakingRewardsDistribution(hre);
     const stakings = await getAllBDStableStakingRewards(hre);
 
     for (const staking of stakings) {
-      console.log(`staking: ${staking.address} weight: `, (await srd.stakingRewardsWeights(staking.address)).toString());
+      const weight = (await srd.stakingRewardsWeights(staking.address)).toString();
+      console.log(`staking: ${staking.address} weight: ${weight}`);
     }
+  });
+
+  task("staking:show-total-weight").setAction(async (args, hre) => {
+    const srd = await getStakingRewardsDistribution(hre);
+    console.log("Total rewards", (await srd.stakingRewardsWeightsTotal()).toString());
   });
 
   task("staking:update-weight")
@@ -115,7 +121,10 @@ export function load() {
       const rewardsAfterCollect = await getStakingPoolsRewardPerToken(hre);
       console.log("Rewards after sync", rewardsAfterCollect);
 
-      const isStakingPoolsSynced = !rewardsAfterCollect.some((reward, i) => reward.lastUpdateTime <= rewardsBeforeCollect[i].lastUpdateTime);
+      // Verify that all the enabled staking pools' rewards have updated on collectAllRewards()
+      const isStakingPoolsSynced = !rewardsAfterCollect.some(
+        (reward, i) => +reward.rewardPerTokenStored > 0 && reward.lastUpdateTime <= rewardsBeforeCollect[i].lastUpdateTime
+      );
       console.log("Are all staking pools synced?", isStakingPoolsSynced);
 
       if (isStakingPoolsSynced) {
