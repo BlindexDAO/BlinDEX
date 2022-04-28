@@ -46,6 +46,7 @@ export function load() {
     const deployer = await getDeployer(hre);
     const stakingRewards = (await getStakingsConfig(hre)).map(reward => {
       return {
+        multiplier: reward.multiplier,
         pairAddress: reward.stakingTokenAddress,
         stakingRewardAddress: reward.address,
         isTrueBdPool: reward.isTrueBdPool,
@@ -118,7 +119,20 @@ export function load() {
 
     const stables = await getStablesConfig(hre);
     const swaps = await getSwapsConfig(hre, deployer);
-    const stakings = await getStakingsConfig(hre);
+    const stakingRewards = (await getStakingsConfig(hre)).map(reward => {
+      return {
+        address: reward.address,
+        stakingTokenDecimals: reward.stakingTokenDecimals,
+        isTrueBdPool: reward.isTrueBdPool,
+        isPaused: reward.isPaused,
+        stakingTokenAddress: reward.stakingTokenAddress,
+        token0Address: reward.token0Address,
+        token1Address: reward.token1Address,
+        token0Symbol: reward.token0Symbol,
+        token1Symbol: reward.token1Symbol
+      };
+    });
+
     const weth = await getWeth(hre);
     const bdx = await getBdx(hre);
     const erc20Info = await getErc20Info(
@@ -130,7 +144,7 @@ export function load() {
     const blockchainConfig = {
       STABLES: stables,
       SWAPS: swaps,
-      STAKING_REWARDS: stakings,
+      STAKING_REWARDS: stakingRewards,
       WETH: weth.address,
       BDX: bdx.address,
       SWAP_ROUTER: (await getUniswapRouter(hre)).address,
