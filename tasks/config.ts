@@ -118,7 +118,6 @@ export function load() {
     const stables = await getStablesConfig(hre);
     const swaps = await getSwapsConfig(hre, deployer);
     const stakings = await getStakingsConfig(hre);
-
     const weth = await getWeth(hre);
     const bdx = await getBdx(hre);
     const erc20Info = await getErc20Info(
