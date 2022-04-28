@@ -37,7 +37,6 @@ import {
   rskOperationalTreasuryAddress,
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
-  BASE_STAKING_MULTIPLIER,
   chainIds
 } from "../utils/Constants";
 
@@ -46,7 +45,6 @@ export function load() {
     const deployer = await getDeployer(hre);
     const stakingRewards = (await getStakingsConfig(hre)).map(reward => {
       return {
-        multiplier: reward.multiplier,
         pairAddress: reward.stakingTokenAddress,
         stakingRewardAddress: reward.address,
         isTrueBdPool: reward.isTrueBdPool,
@@ -269,7 +267,6 @@ export function load() {
         const stakingTokenDecimals = (await stakingRewards.stakingDecimals()).toNumber();
         const isTrueBdPool = await stakingRewards.isTrueBdPool();
         const isPaused = await stakingRewards.paused();
-        const multiplier = (await stakingRewardsDistribution.stakingRewardsWeights(address)).toNumber() / BASE_STAKING_MULTIPLIER;
         const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
         const token0Address = await lp.token0();
         const token1Address = await lp.token1();
@@ -281,7 +278,6 @@ export function load() {
           stakingTokenDecimals,
           isTrueBdPool,
           isPaused,
-          multiplier,
           stakingTokenAddress: stakingTokenAddress,
           token0Address: token0.address,
           token1Address: token1.address,
