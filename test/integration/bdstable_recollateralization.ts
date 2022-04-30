@@ -11,7 +11,7 @@ import {
   getBdEuWethPool,
   getDeployer,
   getUser1,
-  getOnChainEthEurPrice,
+  getOnChainWethFiatPrice,
   mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
@@ -50,7 +50,11 @@ describe("Recollateralization", () => {
     const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
     const bdEuCollatrValue_d18 = await bdEu.globalCollateralValue();
-    const maxPossibleRecollateralInEur_d18 = constants.initialBdstableMintingAmount().sub(bdEuCollatrValue_d18).mul(1e12).div(wethInEurPrice_d12);
+    const maxPossibleRecollateralInEur_d18 = constants
+      .initialBdstableMintingAmount(hre.network.name, "BDEU")
+      .sub(bdEuCollatrValue_d18)
+      .mul(1e12)
+      .div(wethInEurPrice_d12);
 
     // recollateralization
     const toRecollatInEur_d18 = maxPossibleRecollateralInEur_d18.div(2);
@@ -144,7 +148,7 @@ describe("Recollateralization", () => {
     const cr = 0.9;
     await lockBdeuCrAt(hre, cr); // CR
 
-    const wethPrice = (await getOnChainEthEurPrice(hre)).price;
+    const wethPrice = (await getOnChainWethFiatPrice(hre, "EUR")).price;
     const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
 
     const bdxLeftInBdEu_d18 = to_d18(6);

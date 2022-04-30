@@ -29,5 +29,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 func.id = __filename;
 func.tags = ["UniswapHelpers"];
-func.dependencies = [];
+func.dependencies = ["BDEU", "BDUS"];
 export default func;

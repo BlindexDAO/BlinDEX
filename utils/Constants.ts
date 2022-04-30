@@ -1,4 +1,5 @@
 import type { BigNumber } from "ethers";
+import _ from "lodash";
 import { to_d18 } from "./NumbersHelpers";
 
 export const wETH_address: { [key: string]: string } = {
@@ -25,6 +26,14 @@ export const EUR_USD_FEED_ADDRESS: { [key: string]: string } = {
   mainnetFork: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
 };
 
+export const XAU_USD_FEED_ADDRESS: { [key: string]: string } = {
+  mainnetFork: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
+};
+
+export const GBP_USD_FEED_ADDRESS: { [key: string]: string } = {
+  mainnetFork: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
+};
+
 export const ETH_USD_FEED_ADDRESS: { [key: string]: string } = {
   mainnetFork: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
 };
@@ -48,27 +57,62 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   rsk: "ETHs"
 };
 
-export const numberOfLPs = 11;
+export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);
+export const INITIAL_BDEU_AMOUNT_FOR_BDUS_POOL = 500;
+export const INITIAL_USDC_UNISWAP_USD_AMOUNT = 100;
 
-export const initialBdstableMintingAmount = (networkName = "mainnetFork"): BigNumber => {
-  switch (networkName) {
-    case "rsk": {
-      return to_d18(15e3);
-    }
-    case "mainnetFork": {
-      return to_d18(30e3);
-    }
-    default: {
-      return to_d18(15e3);
-    }
+export const initialLiquidityForPoolsWithCollateral = {
+  rsk: {
+    BDUS: 500,
+    BDEU: 500,
+    bXAU: 0.05,
+    bGBP: 75
+  },
+  mainnetFork: {
+    BDUS: 500,
+    BDEU: 500,
+    bXAU: 1,
+    bGBP: 500
   }
 };
 
-export const INITIAL_BDEU_UNISWAP_EUR_AMOUNT = 500;
-export const INITIAL_BDUS_UNISWAP_USD_AMOUNT = 500;
-export const INITIAL_BDX_UNISWAP_EUR_AMOUNT = 9000;
-export const INITIAL_BDX_UNISWAP_USD_AMOUNT = 10000;
-export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(1e5);
+export const initialLiquidityForPoolsWithBDX = {
+  rsk: {
+    BDEU: 9e3,
+    BDUS: 10e3,
+    bXAU: 0.05,
+    bGBP: 75
+  },
+  mainnetFork: {
+    BDEU: 9e3,
+    BDUS: 10e3,
+    bXAU: 2,
+    bGBP: 9e3
+  }
+};
+
+const initalBbstableForMinting = {
+  rsk: {
+    BDUS: to_d18(15e3),
+    BDEU: to_d18(15e3),
+    bXAU: to_d18(0.1),
+    bGBP: to_d18(150)
+  },
+  mainnetFork: {
+    BDUS: to_d18(30e3),
+    BDEU: to_d18(30e3),
+    bXAU: to_d18(30),
+    bGBP: to_d18(30e3)
+  }
+};
+
+export const initialBdstableMintingAmount = (networkName: string, symbol: string): BigNumber => {
+  const initalAmountPerSymbol = symbol && _.get(initalBbstableForMinting, [networkName, symbol]);
+  if (!initalAmountPerSymbol) {
+    throw new Error(`Missing initial BDStable minting amount for ${symbol} on network ${networkName}`);
+  }
+  return initalAmountPerSymbol;
+};
 
 // original uniswap addresss on ETH
 export const ETH_uniswapRouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
@@ -107,3 +151,48 @@ export const tokenLogoUrl: { [symbol: string]: string } = {
   ETHs: `${BlindexFileBaseUrl}/ETH.svg`,
   XUSD: `${BlindexFileBaseUrl}/XUSD.svg`
 };
+
+export const PriceFeedContractNames = {
+  EUR_USD: "PriceFeed_EUR_USD",
+  XAU_USD: "PriceFeed_XAU_USD",
+  GBP_USD: "PriceFeed_GBP_USD",
+  ETH_USD: "PriceFeed_ETH_USD",
+  BTC_ETH: "BtcToEthOracle",
+  ETH_XAU: "OracleBasedCryptoFiatFeed_ETH_XAU",
+  ETH_GBP: "OracleBasedCryptoFiatFeed_ETH_GBP",
+  ETH_EUR: "OracleBasedCryptoFiatFeed_ETH_EUR",
+  ETH_USD_ADAPTER: "OracleBasedWethUSDFeed_ETH_USD"
+};
+
+export function getListOfSupportedLiquidityPools(networkName: string): {
+  tokenA: string;
+  tokenB: string;
+}[] {
+  const externalUsdStable = EXTERNAL_USD_STABLE[networkName];
+  return [
+    { tokenA: "BDX", tokenB: "WETH" },
+    { tokenA: "BDX", tokenB: "WBTC" },
+
+    // BDUS
+    { tokenA: "BDUS", tokenB: "WETH" },
+    { tokenA: "BDUS", tokenB: "WBTC" },
+    { tokenA: "BDX", tokenB: "BDUS" },
+    { tokenA: "BDUS", tokenB: "BDEU" },
+    { tokenA: "BDUS", tokenB: externalUsdStable.symbol },
+
+    // BDEU
+    { tokenA: "BDEU", tokenB: "WETH" },
+    { tokenA: "BDEU", tokenB: "WBTC" },
+    { tokenA: "BDX", tokenB: "BDEU" },
+
+    // bXAU
+    { tokenA: "bXAU", tokenB: "WETH" },
+    { tokenA: "BDX", tokenB: "bXAU" },
+
+    // bGBP
+    { tokenA: "bGBP", tokenB: "WETH" },
+    { tokenA: "BDX", tokenB: "bGBP" }
+  ];
+}
+
+export const BASE_STAKING_MULTIPLIER = 1e6;

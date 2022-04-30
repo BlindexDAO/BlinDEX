@@ -15,7 +15,7 @@ contract FiatToFiatPseudoOracleFeed is IPriceFeed, Ownable {
     uint256 public lastUpdateTimestamp;
     uint256 public maxDayChange_d12 = 1e11; // 10%
 
-    address private updater;
+    address public updater;
 
     constructor(address _updater, uint256 _recentPrice) {
         require(_updater != address(0), "Updater address cannot be 0");

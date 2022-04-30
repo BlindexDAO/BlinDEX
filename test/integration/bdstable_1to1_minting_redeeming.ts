@@ -9,9 +9,9 @@ import {
   getBdEu,
   getBdEuWbtcPool,
   getBdEuWethPool,
-  getOnChainBtcEurPrice,
-  getOnChainEthEurPrice,
   getUser1,
+  getOnChainWbtcFiatPrice,
+  getOnChainWethFiatPrice,
   getWbtc,
   getWeth,
   mintWbtc,
@@ -38,7 +38,7 @@ describe("BDStable 1to1", () => {
     const mintingFee_d12 = await bdEuPool.minting_fee();
     const weth = await getWeth(hre);
 
-    const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
+    const ethInEurPrice_1e12 = (await getOnChainWethFiatPrice(hre, "EUR")).price_1e12;
 
     const testUser = await getUser1(hre);
     const collateralAmount = 10;
@@ -75,7 +75,7 @@ describe("BDStable 1to1", () => {
     const mintingFee_d12 = await bdEuPool.minting_fee();
     const weth = await getWeth(hre);
 
-    const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
+    const ethInEurPrice_1e12 = (await getOnChainWethFiatPrice(hre, "EUR")).price_1e12;
 
     const testUser = await getUser1(hre);
     const collateralAmount = 10;
@@ -109,7 +109,7 @@ describe("BDStable 1to1", () => {
   it("should mint bdeu when CR = 1 [for WBTC]", async () => {
     const bdEu = await getBdEu(hre);
 
-    const btcInEurPrice_1e12 = (await getOnChainBtcEurPrice(hre)).price_1e12;
+    const btcInEurPrice_1e12 = (await getOnChainWbtcFiatPrice(hre, "EUR")).price_1e12;
 
     const testUser = await getUser1(hre);
     const collateralAmount = 0.5;
@@ -152,7 +152,7 @@ describe("BDStable 1to1", () => {
 
     await lockBdeuCrAt(hre, 1);
 
-    const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
+    const ethInEurPrice_1e12 = (await getOnChainWethFiatPrice(hre, "EUR")).price_1e12;
 
     const bdEu = await getBdEu(hre);
 
@@ -208,7 +208,7 @@ describe("BDStable 1to1", () => {
 
     await lockBdeuCrAt(hre, 1);
 
-    const ethInEurPrice_1e12 = (await getOnChainEthEurPrice(hre)).price_1e12;
+    const ethInEurPrice_1e12 = (await getOnChainWethFiatPrice(hre, "EUR")).price_1e12;
 
     const bdEu = await getBdEu(hre);
 

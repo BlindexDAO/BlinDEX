@@ -11,10 +11,10 @@ import {
   getVesting
 } from "../utils/DeployedContractsHelpers";
 import type { Contract } from "ethers";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { getPools } from "../utils/UniswapPoolsHelpers";
+import { PriceFeedContractNames } from "../utils/Constants";
 
 export function load() {
   async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {
@@ -116,6 +116,8 @@ export function load() {
       const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
       const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
       const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD, deployer)) as FiatToFiatPseudoOracleFeed;
 
       if (networkName === "rsk") {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
@@ -126,6 +128,12 @@ export function load() {
 
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
         console.log("updated oracleEurUsd");
+
+        await (await oracleGbpUsd.setUpdater(newUpdater)).wait();
+        console.log("updated oracleGbpUsd");
+
+        await (await oracleXauUsd.setUpdater(newUpdater)).wait();
+        console.log("updated oracleXauUsd");
       }
 
       console.log("updaters set");

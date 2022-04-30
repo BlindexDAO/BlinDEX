@@ -9,12 +9,12 @@ import {
   getWeth,
   getBDStableWethPool,
   getBDStableWbtcPool,
-  getBDStableFiat,
   getAllBDStables,
   getWbtc,
   getTreasury,
   getOperationalTreasury,
-  getBDStableChainlinkPriceFeed
+  getBDStableChainlinkPriceFeed,
+  bdStablesContractsDetails
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -23,7 +23,6 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
@@ -36,7 +35,9 @@ import {
   rskTreasuryAddress,
   bdxLockingContractAddressRSK,
   rskOperationalTreasuryAddress,
-  rskMultisigTreasuryAddress
+  rskMultisigTreasuryAddress,
+  PriceFeedContractNames,
+  BASE_STAKING_MULTIPLIER
 } from "../utils/Constants";
 
 export function load() {
@@ -60,6 +61,7 @@ export function load() {
     const swapPairs = pairOracles.map(pairOracle => {
       return {
         pairAddress: pairOracle.pair.address,
+        pairSymbol: pairOracle.symbol,
         token0Address: pairOracle.pair.token0,
         token1Address: pairOracle.pair.token1,
         token0Symbol: pairOracle.pair.token0Symbol,
@@ -86,6 +88,7 @@ export function load() {
       [`${networkName}`]: {
         [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
         [`BDX_ADDRESS`]: (await getBdx(hre)).address,
+        ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
         [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
         [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
         [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
@@ -252,7 +255,7 @@ export function load() {
         const stakingTokenDecimals = (await stakingRewards.stakingDecimals()).toNumber();
         const isTrueBdPool = await stakingRewards.isTrueBdPool();
         const isPaused = await stakingRewards.paused();
-        const rewardForDuration = (await stakingRewards.getRewardForDuration()).toString();
+        const multiplier = (await stakingRewardsDistribution.stakingRewardsWeights(address)).toNumber() / BASE_STAKING_MULTIPLIER;
         const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
         const token0Address = await lp.token0();
         const token1Address = await lp.token1();
@@ -264,7 +267,7 @@ export function load() {
           stakingTokenDecimals,
           isTrueBdPool,
           isPaused,
-          rewardForDuration,
+          multiplier,
           stakingTokenAddress: stakingTokenAddress,
           token0Address: token0.address,
           token1Address: token1.address,
@@ -311,13 +314,16 @@ export function load() {
         })
       );
 
+      const { fiat, fiatSymbol, isCurrency } = bdStablesContractsDetails[symbol];
       stableConfigs.push({
         symbol: await stable.symbol(),
         decimals: await stable.decimals(),
         address: stable.address,
-        fiat: getBDStableFiat(symbol),
-        ehereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
-        pools: stablePools
+        fiat,
+        fiatSymbol,
+        ethereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
+        pools: stablePools,
+        isCurrency
       });
     }
 

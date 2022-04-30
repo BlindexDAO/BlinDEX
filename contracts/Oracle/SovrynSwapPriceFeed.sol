@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IPriceFeed.sol";
 import "./ICryptoPairOracle.sol";
 import "../Utils/Sovryn/ISovrynLiquidityPoolV1Converter.sol";
 import "../Utils/Sovryn/ISovrynAnchor.sol";
-import "../Utils/Sovryn/ISovrynSwapNetwork.sol";
+import "../BSM/Investors/AMM/interfaces/ISovrynSwapNetwork.sol";
 
 // We need feeds with fiats prices. For now on RSK chain there are no such feeds.
 // We populate our own feeds
@@ -84,10 +85,10 @@ contract SovrynSwapPriceFeed is IPriceFeed, ICryptoPairOracle, Ownable {
     }
 
     function updateOracleWithVerification(uint256 verificationPrice_d12) external onlyUpdater {
-        address[] memory conversionPath = sovrynNetwork.conversionPath(tokenSource, tokenTarget);
+        IERC20[] memory conversionPath = sovrynNetwork.conversionPath(IERC20(tokenSource), IERC20(tokenTarget));
 
         require(conversionPath.length == 3, "conversion path must be direct");
-        ISovrynAnchor anchor = ISovrynAnchor(conversionPath[1]);
+        ISovrynAnchor anchor = ISovrynAnchor(address(conversionPath[1]));
         ISovrynLiquidityPoolV1Converter sovrynConverter = ISovrynLiquidityPoolV1Converter(anchor.owner());
 
         (uint256 amountMinusFee, uint256 fee) = sovrynConverter.targetAmountAndFee(tokenSource, tokenTarget, PRECISION);

@@ -100,7 +100,7 @@ contract BdStablePool is OwnableUpgradeable {
         minting_fee = 3000000000; // d12 0.3%
         redemption_fee = 3000000000; // d12 0.3%
 
-        recollateralizeOnlyForOwner = true;
+        recollateralizeOnlyForOwner = false;
         buybackOnlyForOwner = true;
     }
 
