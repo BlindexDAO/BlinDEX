@@ -124,28 +124,20 @@ export async function getAllBDStablePools(hre: HardhatRuntimeEnvironment): Promi
   return allStablePools;
 }
 
-export async function getDeployer(hre: HardhatRuntimeEnvironment) {
-  const deployer = await hre.ethers.getNamedSigner("DEPLOYER");
-  return deployer;
+export function getDeployer(hre: HardhatRuntimeEnvironment) {
+  return hre.ethers.getNamedSigner("DEPLOYER");
 }
 
-export async function getBot(hre: HardhatRuntimeEnvironment) {
-  const bot = await hre.ethers.getNamedSigner("BOT");
-  return bot;
+export function getBot(hre: HardhatRuntimeEnvironment) {
+  return hre.ethers.getNamedSigner("BOT");
 }
 
-export function getOperationalTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
-  return hre.ethers.getNamedSigner("OPERATIONAL_TREASURY");
+export function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TEST2");
 }
 
-export async function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
-  const user = await hre.ethers.getNamedSigner("TEST2");
-  return user;
-}
-
-export async function getTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
-  const user = await hre.ethers.getNamedSigner("TREASURY");
-  return user;
+export function getTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TREASURY");
 }
 
 export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string): Promise<BdStablePool> {
