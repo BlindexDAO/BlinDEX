@@ -29,7 +29,6 @@ MNEMONIC_PHRASE=fashion night boss nature jelly resource mechanic faculty messag
 USER_DEPLOYER_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 USER_TREASURY_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 USER_BOT_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
-OPERATIONAL_TREASURY_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 CMC_TOKEN=your_coin_market_cap_token
 ```
 
@@ -83,7 +82,7 @@ Enjoy!
 
 # Accounts
 
-Blindex uses 4 accounts. Deployer, Treasury & Operational Treasury will be converted to multisig accounts after deployment.
+Blindex uses 3 accounts.
 
 ### Deployer account
 
@@ -96,10 +95,6 @@ The holder of BDX reserves.
 ### Bot account
 
 The account responsible for updating oracles and refreshing other parts of the system e.g. collateral ratio.
-
-### Operational treasury account
-
-The account which accumulates fees to finance Blindex operational expenses.
 
 # Audits
 

@@ -12,7 +12,6 @@ import {
   getAllBDStables,
   getWbtc,
   getTreasury,
-  getOperationalTreasury,
   getBDStableChainlinkPriceFeed,
   bdStablesContractsDetails
 } from "../utils/DeployedContractsHelpers";
@@ -31,13 +30,11 @@ import type { Contract } from "ethers";
 import {
   NATIVE_TOKEN_NAME,
   SECONDARY_COLLATERAL_TOKEN_NAME,
-  rskTreasuryAddress,
+  EXTERNAL_USD_STABLE,
   bdxLockingContractAddressRSK,
-  rskOperationalTreasuryAddress,
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
-  BASE_STAKING_MULTIPLIER,
-  EXTERNAL_SUPPORTED_TOKENS
+  chainIds
 } from "../utils/Constants";
 
 export function load() {
@@ -71,6 +68,7 @@ export function load() {
 
     const mappedPairOracles = pairOracles.map(pairOracle => {
       return {
+        symbol: pairOracle.symbol,
         pairAddress: pairOracle.pair.address,
         oracleAddress: pairOracle.pairOracle.oracleAddress,
         token0Address: pairOracle.pair.token0,
@@ -80,33 +78,30 @@ export function load() {
       };
     });
 
-    const pairSymbols = pairOracles.map(po => po.symbol);
-
     const networkName = hre.network.name.toUpperCase();
+    const chainId = +(await hre.getChainId());
 
     const blockchainConfig = {
-      [`${networkName}`]: {
-        [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
-        [`BDX_ADDRESS`]: (await getBdx(hre)).address,
-        ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
-        [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-        [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
-        [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
-          networkName === "RSK"
-            ? [rskTreasuryAddress, rskOperationalTreasuryAddress, rskMultisigTreasuryAddress, bdxLockingContractAddressRSK]
-            : [(await getTreasury(hre)).address, (await getOperationalTreasury(hre)).address],
-        [`AVAILABLE_PAIRS`]: swapPairs,
-        [`STAKING_REWARDS`]: stakingRewards,
-        [`PAIR_ORACLES`]: mappedPairOracles,
-        [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
-        [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
-        [`BDSTABLES`]: await getStablesConfig(hre)
-      }
+      [`BDX_ADDRESS`]: (await getBdx(hre)).address,
+      ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
+      [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
+      [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
+      [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
+        chainId === chainIds.rsk ? [rskMultisigTreasuryAddress, bdxLockingContractAddressRSK] : [(await getTreasury(hre)).address],
+      [`AVAILABLE_PAIRS`]: swapPairs,
+      [`STAKING_REWARDS`]: stakingRewards,
+      [`PAIR_ORACLES`]: mappedPairOracles,
+      [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
+      [`oraclesUpdaterAddress`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
+      [`BDSTABLES`]: await getStablesConfig(hre)
     };
 
     console.log(
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
     );
+    console.log("=================================================");
+    console.log(`Config for: ${networkName}, chainId: ${chainId}`);
+    console.log("=================================================\n");
     console.log(cleanStringify(blockchainConfig));
   });
 
@@ -254,7 +249,6 @@ export function load() {
         const stakingTokenDecimals = (await stakingRewards.stakingDecimals()).toNumber();
         const isTrueBdPool = await stakingRewards.isTrueBdPool();
         const isPaused = await stakingRewards.paused();
-        const multiplier = (await stakingRewardsDistribution.stakingRewardsWeights(address)).toNumber() / BASE_STAKING_MULTIPLIER;
         const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
         const token0Address = await lp.token0();
         const token1Address = await lp.token1();
@@ -266,7 +260,6 @@ export function load() {
           stakingTokenDecimals,
           isTrueBdPool,
           isPaused,
-          multiplier,
           stakingTokenAddress: stakingTokenAddress,
           token0Address: token0.address,
           token1Address: token1.address,
