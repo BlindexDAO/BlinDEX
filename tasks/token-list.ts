@@ -4,7 +4,7 @@ import addFormats from "ajv-formats";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ERC20 } from "../typechain/ERC20";
-import { BlindexLogoUrl, EXTERNAL_USD_STABLE, SECONDARY_EXTERNAL_USD_STABLE, tokenLogoUrl, wBTC_address, wETH_address } from "../utils/Constants";
+import { BlindexLogoUrl, EXTERNAL_SUPPORTED_TOKENS, tokenLogoUrl, wBTC_address, wETH_address } from "../utils/Constants";
 import { getAllBDStables, getBdx, getERC20 } from "../utils/DeployedContractsHelpers";
 
 export function load() {
@@ -48,8 +48,7 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
     getBdx(hre),
     getERC20(hre, wETH_address[hre.network.name]),
     getERC20(hre, wBTC_address[hre.network.name]),
-    getERC20(hre, EXTERNAL_USD_STABLE[hre.network.name].address),
-    getERC20(hre, SECONDARY_EXTERNAL_USD_STABLE[hre.network.name].address)
+    ...EXTERNAL_SUPPORTED_TOKENS.map(token => getERC20(hre, token[hre.network.name].address))
   ]);
 
   const tokens = await Promise.all(

@@ -31,13 +31,13 @@ import type { Contract } from "ethers";
 import {
   NATIVE_TOKEN_NAME,
   SECONDARY_COLLATERAL_TOKEN_NAME,
-  EXTERNAL_USD_STABLE,
   rskTreasuryAddress,
   bdxLockingContractAddressRSK,
   rskOperationalTreasuryAddress,
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
-  BASE_STAKING_MULTIPLIER
+  BASE_STAKING_MULTIPLIER,
+  EXTERNAL_SUPPORTED_TOKENS
 } from "../utils/Constants";
 
 export function load() {
@@ -89,7 +89,6 @@ export function load() {
         [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
         [`BDX_ADDRESS`]: (await getBdx(hre)).address,
         ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
-        [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
         [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
         [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
         [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
@@ -339,7 +338,7 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      EXTERNAL_USD_STABLE[hre.network.name].address,
+      ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
       ...stablesAddresses,
       ...swapsAddresses
     ];

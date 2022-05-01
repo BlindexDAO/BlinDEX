@@ -60,6 +60,7 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);
 export const INITIAL_BDEU_AMOUNT_FOR_BDUS_POOL = 500;
 export const INITIAL_USDC_UNISWAP_USD_AMOUNT = 100;
+export const INITIAL_DAI_UNISWAP_USD_AMOUNT = 100;
 
 export const initialLiquidityForPoolsWithCollateral = {
   rsk: {
@@ -133,17 +134,23 @@ export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2
 export const bdxLockAmount = to_d18(3150000);
 export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
 
+type SupportedToken = {
+  [key: string]: { symbol: string; address: string; decimals: number };
+};
+
 export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC on eth
-export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
+export const EXTERNAL_USD_STABLE: SupportedToken = {
   mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
   rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
 };
 
 export const ETH_DAI_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI on eth
-export const SECONDARY_EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
+export const SECONDARY_EXTERNAL_USD_STABLE: SupportedToken = {
   mainnetFork: { symbol: "DAI", address: ETH_DAI_ADDRESS, decimals: 18 },
   rsk: { symbol: "DOC", address: RSK_DOC_ADDRESS, decimals: 18 }
 };
+
+export const EXTERNAL_SUPPORTED_TOKENS = [EXTERNAL_USD_STABLE, SECONDARY_EXTERNAL_USD_STABLE];
 
 export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
 export const BlindexTokensIconsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
@@ -174,31 +181,32 @@ export const PriceFeedContractNames = {
 export function getListOfSupportedLiquidityPools(networkName: string): {
   tokenA: string;
   tokenB: string;
+  hasStakingPool: boolean;
 }[] {
-  const externalUsdStable = EXTERNAL_USD_STABLE[networkName];
   return [
-    { tokenA: "BDX", tokenB: "WETH" },
-    { tokenA: "BDX", tokenB: "WBTC" },
+    { tokenA: "BDX", tokenB: "WETH", hasStakingPool: true },
+    { tokenA: "BDX", tokenB: "WBTC", hasStakingPool: true },
 
     // BDUS
-    { tokenA: "BDUS", tokenB: "WETH" },
-    { tokenA: "BDUS", tokenB: "WBTC" },
-    { tokenA: "BDX", tokenB: "BDUS" },
-    { tokenA: "BDUS", tokenB: "BDEU" },
-    { tokenA: "BDUS", tokenB: externalUsdStable.symbol },
+    { tokenA: "BDUS", tokenB: "WETH", hasStakingPool: true },
+    { tokenA: "BDUS", tokenB: "WBTC", hasStakingPool: true },
+    { tokenA: "BDX", tokenB: "BDUS", hasStakingPool: true },
+    { tokenA: "BDUS", tokenB: "BDEU", hasStakingPool: true },
+    { tokenA: "BDUS", tokenB: EXTERNAL_USD_STABLE[networkName].symbol, hasStakingPool: true }, // XUSD on rsk, USDC on mainnetFork
+    { tokenA: "BDUS", tokenB: SECONDARY_EXTERNAL_USD_STABLE[networkName].symbol, hasStakingPool: true }, // DOC on rsk, DAI on mainnetFork
 
     // BDEU
-    { tokenA: "BDEU", tokenB: "WETH" },
-    { tokenA: "BDEU", tokenB: "WBTC" },
-    { tokenA: "BDX", tokenB: "BDEU" },
+    { tokenA: "BDEU", tokenB: "WETH", hasStakingPool: true },
+    { tokenA: "BDEU", tokenB: "WBTC", hasStakingPool: true },
+    { tokenA: "BDX", tokenB: "BDEU", hasStakingPool: true },
 
     // bXAU
-    { tokenA: "bXAU", tokenB: "WETH" },
-    { tokenA: "BDX", tokenB: "bXAU" },
+    { tokenA: "bXAU", tokenB: "WETH", hasStakingPool: true },
+    { tokenA: "BDX", tokenB: "bXAU", hasStakingPool: true },
 
     // bGBP
-    { tokenA: "bGBP", tokenB: "WETH" },
-    { tokenA: "BDX", tokenB: "bGBP" }
+    { tokenA: "bGBP", tokenB: "WETH", hasStakingPool: true },
+    { tokenA: "BDX", tokenB: "bGBP", hasStakingPool: true }
   ];
 }
 
