@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import {
+  formatAddress,
   getAllBDStablePools,
   getAllBDStables,
   getAllBDStableStakingRewards,
@@ -147,6 +148,7 @@ export function load() {
   task("users:treasury:set")
     .addPositionalParam("treasury", "new treasury address")
     .setAction(async ({ treasury }, hre) => {
+      treasury = formatAddress(hre, treasury);
       console.log(`Setting the new treasury '${treasury}' on ${hre.network.name}`);
 
       const stables = await getAllBDStables(hre);
@@ -162,19 +164,6 @@ export function load() {
       if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
         await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
         console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
-      }
-    });
-
-  // TODO: Delete this once we removed the operational treasury
-  task("users:operational-treasury:set")
-    .addPositionalParam("operationalTreasury", "new operational treasury address")
-    .setAction(async ({ operationalTreasury }, hre) => {
-      console.log(`Setting the new operational treasury '${operationalTreasury}' on ${hre.network.name}`);
-
-      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-      if (!(await isSameTreasury(operationalTreasury, stakingRewardsDistribution))) {
-        await (await stakingRewardsDistribution.setTreasury(operationalTreasury)).wait();
-        console.log(`StakingRewardsDistribution operational treasury set to ${operationalTreasury}`);
       }
     });
 }
