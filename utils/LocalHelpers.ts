@@ -34,5 +34,5 @@ export async function getDaiFor(hre: HardhatRuntimeEnvironment, receiverAddress:
 
   await hre.network.provider.send("hardhat_setBalance", [daiHolder, "0x" + to_d18(1).toString()]);
 
-  await dai.transfer(receiverAddress, numberToBigNumberFixed(amount, 6));
+  await dai.transfer(receiverAddress, numberToBigNumberFixed(amount, 18));
 }
