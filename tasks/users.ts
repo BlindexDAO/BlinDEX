@@ -157,8 +157,15 @@ export function load() {
           console.log(`${await stable.symbol()} treasury set to ${treasury}`);
         }
       }
+
+      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+      if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
+        await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
+        console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
+      }
     });
 
+  // TODO: Delete this once we removed the operational treasury
   task("users:operational-treasury:set")
     .addPositionalParam("operationalTreasury", "new operational treasury address")
     .setAction(async ({ operationalTreasury }, hre) => {

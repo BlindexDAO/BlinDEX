@@ -64,12 +64,7 @@ const config: HardhatUserConfig = {
     },
     rsk: {
       url: "https://public-node.rsk.co",
-      accounts: [
-        process.env.USER_DEPLOYER_PRIVATE_KEY!,
-        process.env.USER_TREASURY_PRIVATE_KEY!,
-        process.env.USER_BOT_PRIVATE_KEY!,
-        process.env.OPERATIONAL_TREASURY_PRIVATE_KEY!
-      ],
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 6_000_000,
       gasPrice: 79240000,
       chainId: 30
@@ -94,9 +89,6 @@ const config: HardhatUserConfig = {
     },
     BOT: {
       default: 2
-    },
-    OPERATIONAL_TREASURY: {
-      default: 3
     },
     TEST1: {
       default: 4

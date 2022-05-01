@@ -12,7 +12,6 @@ import {
   getAllBDStables,
   getWbtc,
   getTreasury,
-  getOperationalTreasury,
   getBDStableChainlinkPriceFeed,
   bdStablesContractsDetails
 } from "../utils/DeployedContractsHelpers";
@@ -32,9 +31,7 @@ import {
   NATIVE_TOKEN_NAME,
   SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
-  rskTreasuryAddress,
   bdxLockingContractAddressRSK,
-  rskOperationalTreasuryAddress,
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
   chainIds
@@ -90,9 +87,7 @@ export function load() {
       [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
       [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
       [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
-        chainId === chainIds.rsk
-          ? [rskTreasuryAddress, rskOperationalTreasuryAddress, rskMultisigTreasuryAddress, bdxLockingContractAddressRSK]
-          : [(await getTreasury(hre)).address, (await getOperationalTreasury(hre)).address],
+        chainId === chainIds.rsk ? [rskMultisigTreasuryAddress, bdxLockingContractAddressRSK] : [(await getTreasury(hre)).address],
       [`AVAILABLE_PAIRS`]: swapPairs,
       [`STAKING_REWARDS`]: stakingRewards,
       [`PAIR_ORACLES`]: mappedPairOracles,
