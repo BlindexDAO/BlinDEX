@@ -173,7 +173,7 @@ export async function setUpFunctionalSystem(
       bdUs,
       dai,
       to_d18(constants.INITIAL_DAI_UNISWAP_USD_AMOUNT),
-      numberToBigNumberFixed(constants.INITIAL_DAI_UNISWAP_USD_AMOUNT, 6),
+      numberToBigNumberFixed(constants.INITIAL_DAI_UNISWAP_USD_AMOUNT, 18),
       verbose
     );
 
