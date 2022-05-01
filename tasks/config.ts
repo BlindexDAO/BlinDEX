@@ -35,7 +35,8 @@ import {
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
   chainIds,
-  EXTERNAL_SUPPORTED_TOKENS
+  EXTERNAL_SUPPORTED_TOKENS,
+  SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
 
 export function load() {
@@ -86,6 +87,7 @@ export function load() {
       [`BDX_ADDRESS`]: (await getBdx(hre)).address,
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
+      [`SECONDARY_EXTERNAL_USD_STABLE`]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
       [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
       [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
         chainId === chainIds.rsk ? [rskMultisigTreasuryAddress, bdxLockingContractAddressRSK] : [(await getTreasury(hre)).address],
