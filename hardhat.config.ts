@@ -91,16 +91,16 @@ const config: HardhatUserConfig = {
       default: 2
     },
     TEST1: {
-      default: 4
+      default: 3
     },
     TEST2: {
-      default: 5
+      default: 4
     },
     TEST_VESTING_SCHEDULER: {
-      default: 6
+      default: 5
     },
     TEST_VESTING_REWARDS_PROVIDER: {
-      default: 7
+      default: 6
     }
   }
 };

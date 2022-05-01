@@ -20,11 +20,7 @@ export function load() {
       bdxTotalSupply_d18 = bdxTotalSupply_d18.sub(await bdx.balanceOf(stable.address));
     }
 
-    const [treasuryBalance, srdBalance] = await Promise.all([
-      bdx.balanceOf(treasuryAddress),
-      bdx.balanceOf(srd.address),
-      bdx.balanceOf(treasuryAddress)
-    ]);
+    const [treasuryBalance, srdBalance] = await Promise.all([bdx.balanceOf(treasuryAddress), bdx.balanceOf(srd.address)]);
 
     console.log(`Treasury: -${d18_ToNumber(treasuryBalance).toLocaleString()}`);
     console.log(`Staking Rewards Distribution (anything in staking/vesting): -${d18_ToNumber(srdBalance).toLocaleString()}`);
