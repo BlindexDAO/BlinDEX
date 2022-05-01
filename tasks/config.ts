@@ -34,7 +34,8 @@ import {
   bdxLockingContractAddressRSK,
   rskMultisigTreasuryAddress,
   PriceFeedContractNames,
-  chainIds
+  chainIds,
+  EXTERNAL_SUPPORTED_TOKENS
 } from "../utils/Constants";
 
 export function load() {
