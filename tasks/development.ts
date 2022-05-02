@@ -156,7 +156,7 @@ export function load() {
 
       await deployer.sendTransaction({ to: address, value: hre.ethers.utils.parseEther("7.5") });
       await mintWeth(hre, deployer, to_d18(200));
-      await mintWbtc(hre, deployer, to_d8(10), 100);
+      await mintWbtc(hre, deployer, to_d8(10));
 
       await (await weth.transfer(address, to_d18(1))).wait();
       await (await wbtc.transfer(address, to_d8(1))).wait();

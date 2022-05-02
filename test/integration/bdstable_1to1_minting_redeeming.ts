@@ -339,7 +339,7 @@ export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, 
   const bdEuPool = await getBdEuWbtcPool(hre);
   const wbtc = await getWbtc(hre);
 
-  await mintWbtc(hre, user, to_d8(wbtcAmount), 100);
+  await mintWbtc(hre, user, to_d8(wbtcAmount));
 
   await wbtc.connect(user).approve(bdEuPool.address, to_d8(wbtcAmount));
   await bdEuPool.connect(user).mintFractionalBdStable(to_d8(wbtcAmount), 0, to_d18(1), false, {});

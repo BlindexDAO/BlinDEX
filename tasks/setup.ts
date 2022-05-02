@@ -64,13 +64,13 @@ export function load() {
       await mintWeth(hre, deployer, to_d18(100));
 
       // mint inital WBTC
-      await mintWbtc(hre, deployer, to_d8(10), 1000);
+      await mintWbtc(hre, deployer, to_d8(10));
 
       // mint initial WETH
       await mintWeth(hre, treasury, to_d18(100));
 
       // mint inital WBTC
-      await mintWbtc(hre, treasury, to_d8(10), 1000);
+      await mintWbtc(hre, treasury, to_d8(10));
 
       await getUsdcFor(hre, treasury.address, 1000);
 

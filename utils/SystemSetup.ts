@@ -106,16 +106,16 @@ export async function setUpFunctionalSystem(
 
   if (forIntegrationTests) {
     // mint initial WETH
-    await mintWeth(hre, deployer, to_d18(100));
+    await mintWeth(hre, deployer, to_d18(200));
 
     // mint inital WBTC
-    await mintWbtc(hre, deployer, to_d8(10), 100);
+    await mintWbtc(hre, deployer, to_d8(10));
 
     // mint initial WETH
-    await mintWeth(hre, treasury, to_d18(100));
+    await mintWeth(hre, treasury, to_d18(200));
 
     // mint inital WBTC
-    await mintWbtc(hre, treasury, to_d8(10), 100);
+    await mintWbtc(hre, treasury, to_d8(10));
 
     // transfer some usdc to treasury
     await getUsdcFor(hre, treasury.address, 1000);
