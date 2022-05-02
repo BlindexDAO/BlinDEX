@@ -76,7 +76,7 @@ describe("Execute with timelock", () => {
 
     await expectToFail(
       () => timelock.connect(randomUser).executeTransactionsBatch(queuedTransactions, etaBN),
-      "Timelock: only admin can perform this action"
+      "Timelock: only proposer or owner can perform this action"
     );
 
     await timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN);
