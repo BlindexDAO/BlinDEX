@@ -1,15 +1,8 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BDXShares } from "../typechain/BDXShares";
-import { bdxLockingContractAddressRSK, rskOperationalTreasuryAddress, rskTreasuryAddress } from "../utils/Constants";
-import {
-  getAllBDStables,
-  getBdUs,
-  getBdx,
-  getOperationalTreasury,
-  getStakingRewardsDistribution,
-  getTreasury
-} from "../utils/DeployedContractsHelpers";
+import { bdxLockingContractAddressRSK, rskMultisigTreasuryAddress } from "../utils/Constants";
+import { getAllBDStables, getBdUs, getBdx, getStakingRewardsDistribution, getTreasury } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber } from "../utils/NumbersHelpers";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 
@@ -20,25 +13,19 @@ export function load() {
     console.log("BDX Total Supply:", d18_ToNumber(bdxTotalSupply_d18).toLocaleString());
 
     const [srd, stables] = await Promise.all([getStakingRewardsDistribution(hre), getAllBDStables(hre)]);
-    const operationalTreasuryAddress = hre.network.name === "rsk" ? rskOperationalTreasuryAddress : (await getOperationalTreasury(hre)).address;
-    const treasuryAddress = hre.network.name === "rsk" ? rskTreasuryAddress : (await getTreasury(hre)).address;
+    const treasuryAddress = hre.network.name === "rsk" ? rskMultisigTreasuryAddress : (await getTreasury(hre)).address;
 
     for (const stable of stables) {
       console.log(`${await stable.symbol()}: -${d18_ToNumber(await bdx.balanceOf(stable.address)).toLocaleString()}`);
       bdxTotalSupply_d18 = bdxTotalSupply_d18.sub(await bdx.balanceOf(stable.address));
     }
 
-    const [treasuryBalance, srdBalance, operationalTreasuryBalance] = await Promise.all([
-      bdx.balanceOf(treasuryAddress),
-      bdx.balanceOf(srd.address),
-      bdx.balanceOf(operationalTreasuryAddress)
-    ]);
+    const [treasuryBalance, srdBalance] = await Promise.all([bdx.balanceOf(treasuryAddress), bdx.balanceOf(srd.address)]);
 
     console.log(`Treasury: -${d18_ToNumber(treasuryBalance).toLocaleString()}`);
-    console.log(`Operational Treasury: -${d18_ToNumber(operationalTreasuryBalance).toLocaleString()}`);
     console.log(`Staking Rewards Distribution (anything in staking/vesting): -${d18_ToNumber(srdBalance).toLocaleString()}`);
 
-    bdxTotalSupply_d18 = bdxTotalSupply_d18.sub(treasuryBalance).sub(srdBalance).sub(operationalTreasuryBalance);
+    bdxTotalSupply_d18 = bdxTotalSupply_d18.sub(treasuryBalance).sub(srdBalance);
 
     if (hre.network.name === "rsk") {
       const lockingContractBalance = await bdx.balanceOf(bdxLockingContractAddressRSK);
