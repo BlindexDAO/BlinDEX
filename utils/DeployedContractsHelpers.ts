@@ -131,14 +131,12 @@ export function getBot(hre: HardhatRuntimeEnvironment) {
   return hre.ethers.getNamedSigner("BOT");
 }
 
-export async function getUser1(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
-  const user = await hre.ethers.getNamedSigner("TEST1");
-  return user;
+export function getUser1(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TEST1");
 }
 
-export async function getUser2(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
-  const user = await hre.ethers.getNamedSigner("TEST2");
-  return user;
+export function getUser2(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TEST2");
 }
 
 export function getTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
