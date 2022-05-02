@@ -132,9 +132,9 @@ export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2
 export const bdxLockAmount = to_d18(3150000);
 export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
 
-type SupportedToken = {
+interface SupportedToken {
   [key: string]: { symbol: string; address: string; decimals: number };
-};
+}
 
 export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC on eth
 export const EXTERNAL_USD_STABLE: SupportedToken = {
