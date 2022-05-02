@@ -180,7 +180,7 @@ export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironmen
     supportedStakingPools.map(async stakingPool => {
       const stakingReward = await getBDStableStakingReward(hre, stakingPool.tokenA, stakingPool.tokenB);
       if (!stakingReward) {
-        throw new Error(`${stakingPool.tokenA}-${stakingPool.tokenB} staking reward is missing`);
+        throw new Error(`${stakingPool.tokenA}_${stakingPool.tokenB} staking reward is missing`);
       }
       stakingRewards.push(stakingReward);
     })
