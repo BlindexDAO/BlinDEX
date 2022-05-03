@@ -368,7 +368,7 @@ export async function getOnChainWbtcUsdPrice(hre: HardhatRuntimeEnvironment) {
 
 export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, cryptoSymbol: "ETH" | "BTC") {
   const networkName = hre.network.name;
-  const cryptoToUsdFeedAddress = _.get(constants, [`${cryptoSymbol}_USD_FEED_ADDRESS`, networkName]);
+  const cryptoToUsdFeedAddress = _.get(constants.chainlinkPriceFeeds, [`${cryptoSymbol}_USD_FEED_ADDRESS`, networkName, "address"]);
   if (!cryptoToUsdFeedAddress) {
     throw new Error(`There is price feed address for "${cryptoSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
   }
@@ -384,7 +384,7 @@ export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, c
 
 export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, fiatSymbol: string, cryptoSymbol: "ETH" | "BTC") {
   const networkName = hre.network.name;
-  const fiatToUsdFeedAddress = _.get(constants, [`${fiatSymbol}_USD_FEED_ADDRESS`, networkName]);
+  const fiatToUsdFeedAddress = _.get(constants.chainlinkPriceFeeds, [`${fiatSymbol}_USD_FEED_ADDRESS`, networkName, "address"]);
   if (!fiatToUsdFeedAddress) {
     throw new Error(`There is price feed address for "${fiatSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
   }
