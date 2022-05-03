@@ -62,6 +62,15 @@ const config: HardhatUserConfig = {
       timeout: 60000,
       gas: 10_000_000
     },
+    arbitrumTestnet: {
+      // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
+      url: "https://rinkeby.arbitrum.io/rpc",
+      // TODO: Do we need different accounts for Arbitrum
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      timeout: 60000,
+      gasPrice: 2,
+      chainId: 421611
+    },
     rsk: {
       url: "https://public-node.rsk.co",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
