@@ -1,15 +1,18 @@
 import type { BigNumber } from "ethers";
 import _ from "lodash";
+import { ERC20TokenData } from "./interfaces/tokens.interface";
 import { to_d18 } from "./NumbersHelpers";
 
-export const wETH_address: { [key: string]: string } = {
-  mainnetFork: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-  rsk: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d" // actually wrBTC, reversed to reflect rbtc native coin
+export const wrappedNativeTokenData: { [key: string]: ERC20TokenData } = {
+  mainnetFork: { address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", symbol: "WETH", decimals: 18 },
+  rsk: { address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", symbol: "WRBTC", decimals: 18 },
+  arbitrumTestnet: { address: "0xEBbc3452Cc911591e4F18f3b36727Df45d6bd1f9", symbol: "WETH", decimals: 18 }
 };
 
 export const wETH_precision: { [key: string]: number } = {
-  mainnetFork: 18,
-  rsk: 18 // actually wrBTC, reversed to reflect rbtc native coin
+  mainnetFork: 18, // WETH
+  rsk: 18, // actually wrBTC, reversed to reflect rbtc native coin,
+  arbitrumTestnet: 18 // WETH
 };
 
 export const wBTC_address: { [key: string]: string } = {

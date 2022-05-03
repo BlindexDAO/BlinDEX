@@ -50,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             args: [
               bdstable.address,
               bdx.address,
-              formatAddress(hre, constants.wETH_address[hre.network.name]),
+              formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
               constants.wETH_precision[hre.network.name],
               true
             ]

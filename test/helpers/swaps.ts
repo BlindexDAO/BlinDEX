@@ -31,7 +31,7 @@ export async function swapWethFor(hre: HardhatRuntimeEnvironment, signer: Signer
   await uniswapV2Router02.swapExactTokensForTokens(
     to_d18(wEthToSwap),
     1,
-    [formatAddress(hre, constants.wETH_address[hre.network.name]), formatAddress(hre, bdStable.address)],
+    [formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), formatAddress(hre, bdStable.address)],
     formatAddress(hre, signer.address),
     currentBlock.timestamp + 24 * 60 * 60 * 7
   );
@@ -106,7 +106,7 @@ export async function getWethOraclePrices(hre: HardhatRuntimeEnvironment, bdStab
 
   const oracle = await getWethPairOracle(hre, bdStableName);
 
-  const wethInBdStablePrice_d18 = await oracle.consult(formatAddress(hre, constants.wETH_address[hre.network.name]), to_d18(1));
+  const wethInBdStablePrice_d18 = await oracle.consult(formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), to_d18(1));
   const bdStableWethPrice_d18 = await oracle.consult(formatAddress(hre, bdStable.address), to_d18(1));
 
   const wethInBdStableOraclePrice = bigNumberToDecimal(wethInBdStablePrice_d18, 18);
@@ -165,7 +165,7 @@ export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: Si
     .connect(account)
     .swapExactETHForTokens(
       0,
-      [formatAddress(hre, constants.wETH_address[hre.network.name]), formatAddress(hre, constants.wBTC_address[hre.network.name])],
+      [formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), formatAddress(hre, constants.wBTC_address[hre.network.name])],
       formatAddress(hre, account.address),
       Date.now() + 3600,
       {
