@@ -47,7 +47,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
         formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), // it's actually wrBTC (on RSK)
-        formatAddress(hre, constants.RSK_XUSD_ADDRESS),
+        formatAddress(hre, constants.EXTERNAL_USD_STABLE[hre.network.name].address),
         1e12,
         bot.address,
         60 * 60, // 60 min

@@ -138,11 +138,6 @@ export const initialBdstableMintingAmount = (networkName: string, symbol: string
 // original uniswap addresss on ETH
 export const ETH_uniswapRouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 
-export const RSK_RUSDT_ADDRESS = "0xEf213441a85DF4d7acBdAe0Cf78004E1e486BB96";
-export const RSK_WRBTC_ADDRESS = "0x542FDA317318eBf1d3DeAF76E0B632741a7e677d";
-export const RSK_ETHS_ADDRESS = "0x1D931BF8656D795e50Ef6d639562C5bD8AC2b78F";
-export const RSK_XUSD_ADDRESS = "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F";
-
 export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
 
 export const botAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
@@ -151,11 +146,9 @@ export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2
 export const bdxLockAmount = to_d18(3150000);
 export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
 
-export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // usdc on eth
-
 export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
-  mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
-  rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
+  mainnetFork: { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", decimals: 6 },
+  rsk: { symbol: "XUSD", address: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F", decimals: 18 }
 };
 
 export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
