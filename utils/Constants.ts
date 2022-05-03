@@ -4,15 +4,15 @@ import { ChainlinkPriceFeed, ERC20TokenData } from "./interfaces/constants.inter
 import { to_d18 } from "./NumbersHelpers";
 
 export const wrappedNativeTokenData: { [key: string]: ERC20TokenData } = {
-  mainnetFork: { address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", symbol: "WETH", decimals: 18 },
-  rsk: { address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", symbol: "WRBTC", decimals: 18 }, // Since RBTC is the native token on RSK
-  arbitrumTestnet: { address: "0xEBbc3452Cc911591e4F18f3b36727Df45d6bd1f9", symbol: "WETH", decimals: 18 }
+  mainnetFork: { symbol: "WETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", decimals: 18 },
+  rsk: { symbol: "WRBTC", address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", decimals: 18 }, // Since RBTC is the native token on RSK
+  arbitrumTestnet: { symbol: "WETH", address: "0xEBbc3452Cc911591e4F18f3b36727Df45d6bd1f9", decimals: 18 }
 };
 
 export const wrappedSecondaryTokenData: { [key: string]: ERC20TokenData } = {
-  mainnetFork: { address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", symbol: "WBTC", decimals: 8 },
-  rsk: { address: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f", symbol: "ETHs", decimals: 18 }, // Since RBTC is the native token on RSK
-  arbitrumTestnet: { address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", symbol: "WBTC", decimals: 8 }
+  mainnetFork: { symbol: "WBTC", address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", decimals: 8 },
+  rsk: { symbol: "ETHs", address: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f", decimals: 18 }, // Since RBTC is the native token on RSK
+  arbitrumTestnet: { symbol: "WBTC", address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", decimals: 8 }
 };
 
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
