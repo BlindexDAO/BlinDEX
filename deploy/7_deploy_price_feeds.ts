@@ -77,14 +77,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.EUR_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.chainlinkPriceFeeds.EUR_USD_FEED_ADDRESS[networkName].address]
+      args: [constants.chainlinkPriceFeeds.EUR_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${PriceFeedContractNames.EUR_USD} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.chainlinkPriceFeeds.ETH_USD_FEED_ADDRESS[networkName].address]
+      args: [constants.chainlinkPriceFeeds.ETH_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${PriceFeedContractNames.ETH_USD} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
@@ -95,7 +95,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
       args: [
-        constants.chainlinkPriceFeeds.BTC_ETH_FEED_ADDRESS[networkName].address,
+        constants.chainlinkPriceFeeds.BTC_ETH_FEED_ADDRESS[networkName]?.address,
         formatAddress(hre, constants.wrappedNativeTokenData[networkName].address)
       ]
     });

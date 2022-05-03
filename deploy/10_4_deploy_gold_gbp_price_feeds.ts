@@ -42,14 +42,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_XAU_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.XAU_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.chainlinkPriceFeeds.XAU_USD_FEED_ADDRESS[networkName].address]
+      args: [constants.chainlinkPriceFeeds.XAU_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${constants.PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
 
     priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.GBP_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.chainlinkPriceFeeds.GBP_USD_FEED_ADDRESS[networkName].address]
+      args: [constants.chainlinkPriceFeeds.GBP_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${constants.PriceFeedContractNames.GBP_USD} to: ${priceFeed_GBP_USD_Deployment.address}`);
   }
