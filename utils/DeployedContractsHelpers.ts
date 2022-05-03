@@ -23,7 +23,7 @@ import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { wBTC_address, wrappedNativeTokenData, EXTERNAL_USD_STABLE, PriceFeedContractNames } from "./Constants";
+import { wrappedSecondaryTokenData, wrappedNativeTokenData, EXTERNAL_USD_STABLE, PriceFeedContractNames } from "./Constants";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -296,7 +296,7 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
   if (wrappedNativeTokenData[hre.network.name].address === tokenAddress) {
     return getWeth(hre);
-  } else if (wBTC_address[hre.network.name] === tokenAddress) {
+  } else if (wrappedSecondaryTokenData[hre.network.name].address === tokenAddress) {
     return getWbtc(hre);
   } else {
     throw new Error(`Unknown token address ${tokenAddress}`);
@@ -315,7 +315,7 @@ export async function getWethConcrete(hre: HardhatRuntimeEnvironment) {
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", constants.wrappedSecondaryTokenData[hre.network.name].address, deployer)) as ERC20;
 }
 
 export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string) {
@@ -335,7 +335,7 @@ export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithA
   await (
     await uniRouter.swapETHForExactTokens(
       amount_d8,
-      [constants.wrappedNativeTokenData[networkName].address, constants.wBTC_address[networkName]],
+      [constants.wrappedNativeTokenData[networkName].address, constants.wrappedSecondaryTokenData[networkName].address],
       user.address,
       Date.now() + 3600,
       {
@@ -495,7 +495,7 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
   if (contractName === "WETH") {
     return constants.wrappedNativeTokenData[hre.network.name].address;
   } else if (contractName === "WBTC") {
-    return constants.wBTC_address[hre.network.name];
+    return constants.wrappedSecondaryTokenData[hre.network.name].address;
   } else if (contractName === EXTERNAL_USD_STABLE[hre.network.name].symbol) {
     return EXTERNAL_USD_STABLE[hre.network.name].address;
   } else {
@@ -537,12 +537,12 @@ export async function getTokenData(tokenAddress: string, hre: HardhatRuntimeEnvi
   } else if (tokenAddress === constants.wrappedNativeTokenData[hre.network.name].address) {
     return {
       symbol: constants.NATIVE_TOKEN_NAME[hre.network.name],
-      decimals: constants.wETH_precision[hre.network.name]
+      decimals: constants.wrappedNativeTokenData[hre.network.name].decimals
     };
-  } else if (tokenAddress === constants.wBTC_address[hre.network.name]) {
+  } else if (tokenAddress === constants.wrappedSecondaryTokenData[hre.network.name].address) {
     return {
       symbol: constants.SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name],
-      decimals: constants.wBTC_precision[hre.network.name]
+      decimals: constants.wrappedSecondaryTokenData[hre.network.name].decimals
     };
   } else {
     const token = await getERC20(hre, tokenAddress);

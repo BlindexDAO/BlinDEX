@@ -3,3 +3,9 @@ export interface ERC20TokenData {
   symbol: string;
   decimals: number;
 }
+
+export interface ChainlinkPriceFeed {
+  [key: string]: {
+    address: string;
+  } | null;
+}

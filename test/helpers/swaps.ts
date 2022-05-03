@@ -165,7 +165,10 @@ export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: Si
     .connect(account)
     .swapExactETHForTokens(
       0,
-      [formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), formatAddress(hre, constants.wBTC_address[hre.network.name])],
+      [
+        formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
+        formatAddress(hre, constants.wrappedSecondaryTokenData[hre.network.name].address)
+      ],
       formatAddress(hre, account.address),
       Date.now() + 3600,
       {

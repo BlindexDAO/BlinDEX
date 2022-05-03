@@ -1,53 +1,71 @@
 import type { BigNumber } from "ethers";
 import _ from "lodash";
-import { ERC20TokenData } from "./interfaces/tokens.interface";
+import { ChainlinkPriceFeed, ERC20TokenData } from "./interfaces/constants.interface";
 import { to_d18 } from "./NumbersHelpers";
 
 export const wrappedNativeTokenData: { [key: string]: ERC20TokenData } = {
   mainnetFork: { address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", symbol: "WETH", decimals: 18 },
-  rsk: { address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", symbol: "WRBTC", decimals: 18 },
+  rsk: { address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", symbol: "WRBTC", decimals: 18 }, // Since RBTC is the native token on RSK
   arbitrumTestnet: { address: "0xEBbc3452Cc911591e4F18f3b36727Df45d6bd1f9", symbol: "WETH", decimals: 18 }
 };
 
-export const wETH_precision: { [key: string]: number } = {
-  mainnetFork: 18, // WETH
-  rsk: 18, // actually wrBTC, reversed to reflect rbtc native coin,
-  arbitrumTestnet: 18 // WETH
+export const wrappedSecondaryTokenData: { [key: string]: ERC20TokenData } = {
+  mainnetFork: { address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", symbol: "WBTC", decimals: 8 },
+  rsk: { address: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f", symbol: "ETHs", decimals: 18 }, // Since RBTC is the native token on RSK
+  arbitrumTestnet: { address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", symbol: "WBTC", decimals: 8 }
 };
 
-export const wBTC_address: { [key: string]: string } = {
-  mainnetFork: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-  rsk: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f" // actually eths, reversed to reflect rbtc native coin
-};
-
-export const wBTC_precision: { [key: string]: number } = {
-  mainnetFork: 8,
-  rsk: 18 // actually eths, reversed to reflect rbtc native coin
-};
-
-export const EUR_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
-};
-
-export const XAU_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
-};
-
-export const GBP_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
-};
-
-export const ETH_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-};
-
-// we only ue this feed in tests moce it out
-export const BTC_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
-};
-
-export const BTC_ETH_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0xdeb288F737066589598e9214E782fa5A8eD689e8"
+export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
+  EUR_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
+    },
+    arbitrumTestnet: null,
+    rsk: null
+  },
+  XAU_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
+    },
+    arbitrumTestnet: null,
+    rsk: null
+  },
+  GBP_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
+    },
+    arbitrumTestnet: null,
+    rsk: null
+  },
+  ETH_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+    },
+    arbitrumTestnet: {
+      address: "0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8"
+    },
+    rsk: null
+  },
+  BTC_USD_FEED_ADDRESS: {
+    // This is not being used today as it was only needed on RSK but we don't yet have Chainlink there.
+    // Keeping it here for future use when Chainlink will deploy on RSK.
+    mainnetFork: {
+      address: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+    },
+    arbitrumTestnet: {
+      address: "0x0c9973e7a27d00e656B9f153348dA46CaD70d03d"
+    },
+    rsk: null
+  },
+  BTC_ETH_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0xdeb288F737066589598e9214E782fa5A8eD689e8"
+    },
+    arbitrumTestnet: {
+      address: "0x6eFd3CCf5c673bd5A7Ea91b414d0307a5bAb9cC1"
+    },
+    rsk: null
+  }
 };
 
 export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
@@ -127,7 +145,7 @@ export const RSK_XUSD_ADDRESS = "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F";
 
 export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
 
-export const rskBotAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
+export const botAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
 export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c";
 
 export const bdxLockAmount = to_d18(3150000);

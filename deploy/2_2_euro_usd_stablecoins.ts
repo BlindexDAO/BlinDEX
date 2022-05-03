@@ -51,7 +51,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
               bdstable.address,
               bdx.address,
               formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
-              constants.wETH_precision[hre.network.name],
+              constants.wrappedNativeTokenData[hre.network.name].decimals,
               true
             ]
           }
@@ -77,8 +77,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             args: [
               bdstable.address,
               bdx.address,
-              formatAddress(hre, constants.wBTC_address[hre.network.name]),
-              constants.wBTC_precision[hre.network.name],
+              formatAddress(hre, constants.wrappedSecondaryTokenData[hre.network.name].address),
+              constants.wrappedSecondaryTokenData[hre.network.name].decimals,
               false
             ]
           }

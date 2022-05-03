@@ -63,7 +63,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
         formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
-        formatAddress(hre, constants.wBTC_address[hre.network.name]),
+        formatAddress(hre, constants.wrappedSecondaryTokenData[hre.network.name].address),
         1e12,
         bot.address,
         60 * 60, // 60 min
@@ -75,14 +75,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.EUR_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.EUR_USD_FEED_ADDRESS[networkName]]
+      args: [constants.chainlinkPriceFeeds.EUR_USD_FEED_ADDRESS[networkName].address]
     });
     console.log(`deployed ${PriceFeedContractNames.EUR_USD} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.ETH_USD_FEED_ADDRESS[networkName]]
+      args: [constants.chainlinkPriceFeeds.ETH_USD_FEED_ADDRESS[networkName].address]
     });
     console.log(`deployed ${PriceFeedContractNames.ETH_USD} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
@@ -92,7 +92,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     btc_eth_oracle = await hre.deployments.deploy(PriceFeedContractNames.BTC_ETH, {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
-      args: [constants.BTC_ETH_FEED_ADDRESS[networkName], formatAddress(hre, constants.wrappedNativeTokenData[networkName].address)]
+      args: [
+        constants.chainlinkPriceFeeds.BTC_ETH_FEED_ADDRESS[networkName].address,
+        formatAddress(hre, constants.wrappedNativeTokenData[networkName].address)
+      ]
     });
     console.log(`deployed ${PriceFeedContractNames.BTC_ETH} to: ${btc_eth_oracle.address}`);
   }
