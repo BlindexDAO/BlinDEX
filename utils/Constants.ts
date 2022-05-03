@@ -35,6 +35,7 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   arbitrumTestnet: "WBTC"
 };
 
+// TODO: Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now.
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   EUR_USD_FEED_ADDRESS: {
     mainnetFork: {
