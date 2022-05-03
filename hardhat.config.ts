@@ -27,6 +27,7 @@ import { load as tokenListLoad } from "./tasks/token-list";
 import "hardhat-gas-reporter";
 import * as path from "path";
 import hardhatCompileConfig from "./hardhat.compile.config";
+import { chainIds } from "./utils/Constants";
 
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
@@ -55,7 +56,7 @@ const config: HardhatUserConfig = {
         mnemonic: process.env.MNEMONIC_PHRASE!,
         accountsBalance: "100000000000000000000000"
       },
-      chainId: 1337
+      chainId: chainIds.mainnetFork
     },
     mainnetFork: {
       url: "http://localhost:8545",
@@ -69,14 +70,14 @@ const config: HardhatUserConfig = {
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 60000,
       gasPrice: 2,
-      chainId: 421611
+      chainId: chainIds.arbitrumTestnet
     },
     rsk: {
       url: "https://public-node.rsk.co",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 6_000_000,
       gasPrice: 79240000,
-      chainId: 30
+      chainId: chainIds.rsk
     }
   },
   solidity: hardhatCompileConfig.solidity,

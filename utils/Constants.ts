@@ -1,6 +1,6 @@
 import type { BigNumber } from "ethers";
 import _ from "lodash";
-import { ChainlinkPriceFeed, ERC20TokenData } from "./interfaces/constants.interface";
+import { ChainlinkPriceFeed, ERC20TokenData, ImportantComponents as ImportantComponentsAddresses } from "./interfaces/constants.interface";
 import { to_d18 } from "./NumbersHelpers";
 
 export const wrappedNativeTokenData: { [key: string]: ERC20TokenData } = {
@@ -18,6 +18,16 @@ export const wrappedSecondaryTokenData: { [key: string]: ERC20TokenData } = {
 export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
   mainnetFork: { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", decimals: 6 },
   rsk: { symbol: "XUSD", address: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F", decimals: 18 }
+};
+
+export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
+  mainnetFork: "ETH",
+  rsk: "RBTC"
+};
+
+export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
+  mainnetFork: "BTC",
+  rsk: "ETHs"
 };
 
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
@@ -73,14 +83,20 @@ export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   }
 };
 
-export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
-  mainnetFork: "ETH",
-  rsk: "RBTC"
+export const importantAddresses: ImportantComponentsAddresses = {
+  mainnetFork: {
+    uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+  },
+  rsk: {
+    sovrynNetwork: "0x98AcE08d2B759A265ae326f010496BCd63c15Afc",
+    botAddress: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872",
+    multisigTreasuryAddress: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c"
+  }
 };
 
-export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
-  mainnetFork: "BTC",
-  rsk: "ETHs"
+export const teamLockingContract = {
+  bdxLockAmount: to_d18(3150000),
+  address: "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF"
 };
 
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);
@@ -139,17 +155,6 @@ export const initialBdstableMintingAmount = (networkName: string, symbol: string
   }
   return initalAmountPerSymbol;
 };
-
-// original uniswap addresss on ETH
-export const ETH_uniswapRouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-
-export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
-
-export const botAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
-export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c";
-
-export const bdxLockAmount = to_d18(3150000);
-export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
 
 export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
 export const BlindexTokensIconsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
@@ -211,5 +216,6 @@ export const BASE_STAKING_MULTIPLIER = 1e6;
 
 export const chainIds = {
   mainnetFork: 1337,
-  rsk: 30
+  rsk: 30,
+  arbitrumTestnet: 421611
 };

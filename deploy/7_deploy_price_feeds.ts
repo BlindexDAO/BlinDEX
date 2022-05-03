@@ -41,11 +41,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`deployed ${PriceFeedContractNames.EUR_USD} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
+    const sovrynNetworkAddress = constants.importantAddresses[hre.network.name].sovrynNetwork as string;
+
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_USD, {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
+        formatAddress(hre, sovrynNetworkAddress),
         formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), // it's actually wrBTC (on RSK)
         formatAddress(hre, constants.EXTERNAL_USD_STABLE[hre.network.name].address),
         1e12,
@@ -61,7 +63,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
+        formatAddress(hre, sovrynNetworkAddress),
         formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
         formatAddress(hre, constants.wrappedSecondaryTokenData[hre.network.name].address),
         1e12,

@@ -160,7 +160,10 @@ export async function provideLiquidity(
 export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: SignerWithAddress, amountETH: BigNumber) {
   // swaps ETH for WETH internally
 
-  const uniRouter = UniswapV2Router02__factory.connect(formatAddress(hre, constants.ETH_uniswapRouterAddress), account);
+  const uniRouter = UniswapV2Router02__factory.connect(
+    formatAddress(hre, constants.importantAddresses[hre.network.name].uniswapRouterAddress as string),
+    account
+  );
   await uniRouter
     .connect(account)
     .swapExactETHForTokens(

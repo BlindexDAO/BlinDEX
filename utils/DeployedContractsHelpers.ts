@@ -329,7 +329,7 @@ export async function getERC20(hre: HardhatRuntimeEnvironment, address: string) 
 }
 
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number) {
-  const uniRouter = UniswapV2Router02__factory.connect(constants.ETH_uniswapRouterAddress, user);
+  const uniRouter = UniswapV2Router02__factory.connect(constants.importantAddresses[hre.network.name].uniswapRouterAddress as string, user);
   const networkName = hre.network.name;
 
   await (

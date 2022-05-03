@@ -21,7 +21,10 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await getBdx(hre);
   const vesting = await getVesting(hre);
-  const treasuryAddress = hre.network.name.toLocaleLowerCase() === "rsk" ? constants.rskMultisigTreasuryAddress : (await getTreasury(hre)).address;
+  const treasuryAddress =
+    hre.network.name.toLocaleLowerCase() === "rsk"
+      ? constants.importantAddresses[hre.network.name].multisigTreasuryAddress
+      : (await getTreasury(hre)).address;
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy("StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER,

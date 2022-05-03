@@ -9,3 +9,12 @@ export interface ChainlinkPriceFeed {
     address: string;
   } | null;
 }
+
+export interface ImportantComponents {
+  [key: string]: {
+    multisigTreasuryAddress?: string;
+    botAddress?: string;
+    sovrynNetwork?: string;
+    uniswapRouterAddress?: string;
+  };
+}

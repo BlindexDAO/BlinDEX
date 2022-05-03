@@ -12,7 +12,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
     const deployer = await getDeployer(hre);
-    const treasuryAddress = hre.network.name === "rsk" ? constants.rskMultisigTreasuryAddress : (await getTreasury(hre)).address;
+    const treasuryAddress =
+      hre.network.name === "rsk" ? constants.importantAddresses[hre.network.name].multisigTreasuryAddress : (await getTreasury(hre)).address;
     const bdx = await getBdx(hre);
     const bdPoolLibraryDeployment = await hre.ethers.getContract("BdPoolLibrary");
 

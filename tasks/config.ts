@@ -31,10 +31,10 @@ import {
   NATIVE_TOKEN_NAME,
   SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
-  bdxLockingContractAddressRSK,
-  rskMultisigTreasuryAddress,
   PriceFeedContractNames,
-  chainIds
+  chainIds,
+  teamLockingContract,
+  importantAddresses
 } from "../utils/Constants";
 
 export function load() {
@@ -80,14 +80,20 @@ export function load() {
 
     const networkName = hre.network.name.toUpperCase();
     const chainId = +(await hre.getChainId());
+    let bdxIgnoreAddresses: string[] = [];
+
+    if (chainId === chainIds.rsk) {
+      bdxIgnoreAddresses = [importantAddresses[networkName].multisigTreasuryAddress as string, teamLockingContract.address];
+    } else if (chainId === chainIds.mainnetFork) {
+      bdxIgnoreAddresses = [(await getTreasury(hre)).address];
+    }
 
     const blockchainConfig = {
       [`BDX_ADDRESS`]: (await getBdx(hre)).address,
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
       [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-      [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
-        chainId === chainIds.rsk ? [rskMultisigTreasuryAddress, bdxLockingContractAddressRSK] : [(await getTreasury(hre)).address],
+      [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]: bdxIgnoreAddresses,
       [`AVAILABLE_PAIRS`]: swapPairs,
       [`STAKING_REWARDS`]: stakingRewards,
       [`PAIR_ORACLES`]: mappedPairOracles,
