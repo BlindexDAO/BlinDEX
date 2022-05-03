@@ -15,19 +15,24 @@ export const wrappedSecondaryTokenData: { [key: string]: ERC20TokenData } = {
   arbitrumTestnet: { symbol: "WBTC", address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", decimals: 8 }
 };
 
+// TODO: Do we really need it when Blindex doesn't host the DEX?
 export const EXTERNAL_USD_STABLE: { [key: string]: { symbol: string; address: string; decimals: number } } = {
   mainnetFork: { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", decimals: 6 },
   rsk: { symbol: "XUSD", address: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F", decimals: 18 }
 };
 
+// TODO: Do we really need it?
 export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
   mainnetFork: "ETH",
-  rsk: "RBTC"
+  rsk: "RBTC",
+  arbitrumTestnet: "ETH"
 };
 
+// TODO: Do we really need it?
 export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   mainnetFork: "BTC",
-  rsk: "ETHs"
+  rsk: "ETHs",
+  arbitrumTestnet: "WBTC"
 };
 
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
