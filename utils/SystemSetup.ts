@@ -26,7 +26,7 @@ import * as constants from "./Constants";
 import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 import type { IERC20 } from "../typechain/IERC20";
-import { getUsdcFor } from "./LocalHelpers";
+import { getDaiFor, getUsdcFor } from "./LocalHelpers";
 
 export type CollateralPrices = {
   NativeToken: { [symbol: string]: number };
@@ -119,6 +119,9 @@ export async function setUpFunctionalSystem(
 
     // transfer some usdc to treasury
     await getUsdcFor(hre, treasury.address, 1000);
+
+    // transfer some dai to treasury
+    await getDaiFor(hre, treasury.address, 1000);
   }
 
   let wethDecimals;
@@ -159,6 +162,18 @@ export async function setUpFunctionalSystem(
       usdc,
       to_d18(constants.INITIAL_USDC_UNISWAP_USD_AMOUNT),
       numberToBigNumberFixed(constants.INITIAL_USDC_UNISWAP_USD_AMOUNT, 6),
+      verbose
+    );
+
+    verboseLog(verbose, "provide liquidity bdus/dai");
+    const dai = (await hre.ethers.getContractAt("IERC20", constants.SECONDARY_EXTERNAL_USD_STABLE[hre.network.name].address)) as IERC20;
+    await provideLiquidity(
+      hre,
+      treasury,
+      bdUs,
+      dai,
+      to_d18(constants.INITIAL_DAI_UNISWAP_USD_AMOUNT),
+      numberToBigNumberFixed(constants.INITIAL_DAI_UNISWAP_USD_AMOUNT, 18),
       verbose
     );
 

@@ -112,14 +112,22 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const bdxPoolData = { name: bdxSymbol, token: bdx };
   const wethPoolData = { name: "WETH", token: weth };
   const wbtcPoolData = { name: "WBTC", token: wbtc };
+
   const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
   const externalUsdStableContract = (await hre.ethers.getContractAt("IERC20", hre.ethers.utils.getAddress(externalUsdStable.address))) as IERC20;
   const externalUsdStablePoolData = { name: externalUsdStable.symbol, token: externalUsdStableContract };
+  const secondaryExternalUsdStable = constants.SECONDARY_EXTERNAL_USD_STABLE[hre.network.name];
+  const secondaryExternalUsdStableContract = (await hre.ethers.getContractAt(
+    "IERC20",
+    hre.ethers.utils.getAddress(secondaryExternalUsdStable.address)
+  )) as IERC20;
+  const secondaryEexternalUsdStablePoolData = { name: secondaryExternalUsdStable.symbol, token: secondaryExternalUsdStableContract };
 
   const tokenToPoolTokenData: { [symbol: string]: PoolTokenData } = {
     ["WETH"]: wethPoolData,
     ["WBTC"]: wbtcPoolData,
     [externalUsdStable.symbol]: externalUsdStablePoolData,
+    [secondaryExternalUsdStable.symbol]: secondaryEexternalUsdStablePoolData,
     [bdxSymbol]: bdxPoolData
   };
 

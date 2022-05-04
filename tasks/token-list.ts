@@ -4,7 +4,7 @@ import addFormats from "ajv-formats";
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { ERC20 } from "../typechain/ERC20";
-import { BlindexLogoUrl, EXTERNAL_USD_STABLE, tokenLogoUrl, wBTC_address, wETH_address } from "../utils/Constants";
+import { BlindexLogoUrl, EXTERNAL_SUPPORTED_TOKENS, tokenLogoUrl, wBTC_address, wETH_address } from "../utils/Constants";
 import { getAllBDStables, getBdx, getERC20 } from "../utils/DeployedContractsHelpers";
 
 export function load() {
@@ -44,15 +44,17 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
   const chainId = hre.network.config.chainId;
 
   const bdStables = await getAllBDStables(hre);
-  const [bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable] = await Promise.all([
+  const [bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable, secondaryExternalUsdStable] = await Promise.all([
     getBdx(hre),
     getERC20(hre, wETH_address[hre.network.name]),
     getERC20(hre, wBTC_address[hre.network.name]),
-    getERC20(hre, EXTERNAL_USD_STABLE[hre.network.name].address)
+    ...EXTERNAL_SUPPORTED_TOKENS.map(token => getERC20(hre, token[hre.network.name].address))
   ]);
 
   const tokens = await Promise.all(
-    [...bdStables, bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable].map(token => getTokenInfo(token, chainId))
+    [...bdStables, bdx, wrappedNativeToken, wrappedSecondaryToken, externalUsdStable, secondaryExternalUsdStable].map(token =>
+      getTokenInfo(token, chainId)
+    )
   );
 
   const tokenList: TokenList = {
@@ -68,7 +70,7 @@ async function generateTokenList(hre: HardhatRuntimeEnvironment): Promise<TokenL
 
 async function getTokenInfo(token: ERC20, chainId: number): Promise<TokenInfo> {
   const [name, decimals, symbol] = await Promise.all([token.name(), token.decimals(), token.symbol()]);
-  const bdeuTokenInfo: TokenInfo = {
+  const tokenInfo: TokenInfo = {
     chainId,
     address: token.address,
     name,
@@ -77,7 +79,7 @@ async function getTokenInfo(token: ERC20, chainId: number): Promise<TokenInfo> {
     logoURI: tokenLogoUrl[symbol]
   };
 
-  return bdeuTokenInfo;
+  return tokenInfo;
 }
 
 /*
