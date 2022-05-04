@@ -23,7 +23,7 @@ import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { wBTC_address, wETH_address, EXTERNAL_USD_STABLE, PriceFeedContractNames } from "./Constants";
+import { wBTC_address, wETH_address, PriceFeedContractNames, getListOfSupportedLiquidityPools } from "./Constants";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -151,25 +151,21 @@ export async function getBDStableWethPool(hre: HardhatRuntimeEnvironment, symbol
 }
 
 export async function getStakingRewardsWithWeth(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
-  return await getBDStableCollateralStakingRewards(hre, symbol, "WETH");
+  return await getBDStableStakingReward(hre, symbol, "WETH");
 }
 
 export async function getStakingRewardsWithWbtc(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
-  return await getBDStableCollateralStakingRewards(hre, symbol, "WBTC");
+  return await getBDStableStakingReward(hre, symbol, "WBTC");
 }
 
 export async function getStakingRewardsWithBdx(hre: HardhatRuntimeEnvironment, symbol: string): Promise<StakingRewards | null> {
-  return await getBDStableCollateralStakingRewards(hre, symbol, "BDX");
+  return await getBDStableStakingReward(hre, symbol, "BDX");
 }
 
-async function getBDStableCollateralStakingRewards(
-  hre: HardhatRuntimeEnvironment,
-  stableSymbol: string,
-  collateralSymbol: string
-): Promise<StakingRewards | null> {
-  const collateralAddress = await getContratAddress(hre, collateralSymbol);
-  const stableAddress = await getContratAddress(hre, stableSymbol);
-  const poolKey = getPoolKey(collateralAddress, stableAddress, collateralSymbol, stableSymbol);
+async function getBDStableStakingReward(hre: HardhatRuntimeEnvironment, tokenASymbol: string, tokenBSymbol: string): Promise<StakingRewards | null> {
+  const tokenAAddress = await getContratAddress(hre, tokenASymbol);
+  const tokenBAddress = await getContratAddress(hre, tokenBSymbol);
+  const poolKey = getPoolKey(tokenAAddress, tokenBAddress, tokenASymbol, tokenBSymbol);
 
   const deployer = await getDeployer(hre);
   const stakingRewardsContract = await hre.ethers.getContractOrNull(`StakingRewards_${poolKey}`, deployer);
@@ -177,65 +173,18 @@ async function getBDStableCollateralStakingRewards(
 }
 
 export async function getAllBDStableStakingRewards(hre: HardhatRuntimeEnvironment): Promise<StakingRewards[]> {
-  const deployer = await getDeployer(hre);
-  const bdstablesSymbols = getAllBDStablesSymbols();
-  const bdx = await getBdx(hre);
   const stakingRewards: StakingRewards[] = [];
-  const stakingRewardsBdStablesMap = new Set<string>();
+  const supportedStakingPools = getListOfSupportedLiquidityPools(hre.network.name).filter(lp => lp.hasStakingPool);
 
-  const bdxWethStakingRewards = await getStakingRewardsWithWeth(hre, await bdx.symbol());
-  if (!bdxWethStakingRewards) {
-    throw new Error("BDX-WETH staking reward is missing");
-  }
-  stakingRewards.push(bdxWethStakingRewards);
-
-  const bdxWbtcStakingRewards = await getStakingRewardsWithWbtc(hre, await bdx.symbol());
-  if (!bdxWbtcStakingRewards) {
-    throw new Error("BDX-WBTC staking reward is missing");
-  }
-  stakingRewards.push(bdxWbtcStakingRewards);
-
-  for (const symbolA of bdstablesSymbols) {
-    const wethStakingRewards = await getStakingRewardsWithWeth(hre, symbolA);
-    if (wethStakingRewards) {
-      stakingRewards.push(wethStakingRewards);
-    }
-
-    const wbtcStakingRewards = await getStakingRewardsWithWbtc(hre, symbolA);
-    if (wbtcStakingRewards) {
-      stakingRewards.push(wbtcStakingRewards);
-    }
-
-    const bdxStakingRewards = await getStakingRewardsWithBdx(hre, symbolA);
-    if (bdxStakingRewards) {
-      stakingRewards.push(bdxStakingRewards);
-    }
-
-    for (const symbolB of bdstablesSymbols) {
-      const stableAddress = await getContratAddress(hre, symbolA);
-      const stableBAddress = await getContratAddress(hre, symbolB);
-      const poolKey = getPoolKey(stableBAddress, stableAddress, symbolB, symbolA);
-
-      // Do not repeat the same staking rewards twice
-      if (symbolA !== symbolB && !stakingRewardsBdStablesMap.has(poolKey)) {
-        const stablesStakingRewards = await hre.ethers.getContractOrNull(`StakingRewards_${poolKey}`, deployer);
-        if (stablesStakingRewards) {
-          stakingRewards.push(stablesStakingRewards as StakingRewards);
-          stakingRewardsBdStablesMap.add(poolKey);
-        }
+  await Promise.all(
+    supportedStakingPools.map(async stakingPool => {
+      const stakingReward = await getBDStableStakingReward(hre, stakingPool.tokenA, stakingPool.tokenB);
+      if (!stakingReward) {
+        throw new Error(`${stakingPool.tokenA}_${stakingPool.tokenB} staking reward is missing`);
       }
-    }
-  }
-
-  const bdus = await getBdUs(hre);
-  const externalUsdStable = EXTERNAL_USD_STABLE[hre.network.name];
-  const poolKey = getPoolKey(bdus.address, externalUsdStable.address, await bdus.symbol(), externalUsdStable.symbol);
-  const bdusExternalUsdStableStakingRewards = await hre.ethers.getContract(`StakingRewards_${poolKey}`, deployer);
-  if (!bdusExternalUsdStableStakingRewards) {
-    throw new Error(`Couldn't find ${poolKey} staking rewards contract`);
-  }
-  stakingRewards.push(bdusExternalUsdStableStakingRewards as StakingRewards);
-  stakingRewardsBdStablesMap.add(poolKey);
+      stakingRewards.push(stakingReward);
+    })
+  );
 
   return stakingRewards;
 }
@@ -491,16 +440,19 @@ export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, token
   return oracle;
 }
 
-export async function getContratAddress(hre: HardhatRuntimeEnvironment, contractName: string) {
+export async function getContratAddress(hre: HardhatRuntimeEnvironment, contractName: string): Promise<string> {
   if (contractName === "WETH") {
     return constants.wETH_address[hre.network.name];
   } else if (contractName === "WBTC") {
     return constants.wBTC_address[hre.network.name];
-  } else if (contractName === EXTERNAL_USD_STABLE[hre.network.name].symbol) {
-    return EXTERNAL_USD_STABLE[hre.network.name].address;
   } else {
-    return (await hre.ethers.getContract(contractName)).address;
+    const externalToken = constants.EXTERNAL_SUPPORTED_TOKENS.find(token => token[hre.network.name].symbol === contractName);
+    if (externalToken) {
+      return externalToken[hre.network.name].address;
+    }
   }
+
+  return (await hre.ethers.getContract(contractName)).address;
 }
 
 export async function getUpdater(hre: HardhatRuntimeEnvironment) {
