@@ -85,17 +85,17 @@ export function load() {
     const blockchainConfig = {
       ["BDX_ADDRESS"]: (await getBdx(hre)).address,
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
-      [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
+      ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
       ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
       ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? chainSpecificComponents[networkName].sovrynNetwork : undefined,
-      [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-      [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
-      [`AVAILABLE_PAIRS`]: swapPairs,
-      [`STAKING_REWARDS`]: stakingRewards,
-      [`PAIR_ORACLES`]: mappedPairOracles,
-      [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
-      [`oraclesUpdaterAddress`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
-      [`BDSTABLES`]: await getStablesConfig(hre)
+      ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
+      ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
+      ["AVAILABLE_PAIRS"]: swapPairs,
+      ["STAKING_REWARDS"]: stakingRewards,
+      ["PAIR_ORACLES"]: mappedPairOracles,
+      ["PRICE_FEEDS"]: await getPriceFeedsConfig(hre, deployer),
+      ["oraclesUpdaterAddress"]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
+      ["BDSTABLES"]: await getStablesConfig(hre)
     };
 
     console.log(
