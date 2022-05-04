@@ -25,7 +25,11 @@ jobs:
       - name: Compile
         run: npm run compile
       - name: Unit Tests
-        run: npm run test-unit
+        run: |
+          npm run node &
+          echo 'Sleeping for 7 seconds...'
+          sleep 7
+          npm run test-unit
       - name: Integration Tests
         env:
           MAINNET_URL: ${{ secrets.MAINNET_URL }}
