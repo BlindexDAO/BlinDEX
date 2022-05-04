@@ -14,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(
     hre,
     bdx.address,
-    formatAddress(hre, constants.wETH_address[networkName]),
+    formatAddress(hre, constants.wrappedNativeTokenData[networkName].address),
     "BDX",
     "WETH",
     false,
@@ -23,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await setupStakingContract(
     hre,
     bdx.address,
-    formatAddress(hre, constants.wBTC_address[networkName]),
+    formatAddress(hre, constants.wrappedSecondaryTokenData[networkName].address),
     "BDX",
     "WBTC",
     false,
@@ -42,7 +42,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await setupStakingContract(
       hre,
       stable.address,
-      formatAddress(hre, constants.wETH_address[networkName]),
+      formatAddress(hre, constants.wrappedNativeTokenData[networkName].address),
       symbol,
       "WETH",
       false,
@@ -51,7 +51,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await setupStakingContract(
       hre,
       stable.address,
-      formatAddress(hre, constants.wBTC_address[networkName]),
+      formatAddress(hre, constants.wrappedSecondaryTokenData[networkName].address),
       symbol,
       "WBTC",
       false,

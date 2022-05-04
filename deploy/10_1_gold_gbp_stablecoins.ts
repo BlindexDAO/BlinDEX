@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
     const deployer = await getDeployer(hre);
-    const treasuryAddress = hre.network.name === "rsk" ? constants.rskMultisigTreasuryAddress : (await getTreasury(hre)).address;
+    const treasuryAddress = hre.network.name === "rsk" ? constants.multisigTreasuryAddress[hre.network.name] : (await getTreasury(hre)).address;
     const bdx = await getBdx(hre);
     const bdPoolLibraryDeployment = await hre.ethers.getContract("BdPoolLibrary");
 
@@ -50,8 +50,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             args: [
               bdstable.address,
               bdx.address,
-              formatAddress(hre, constants.wETH_address[hre.network.name]),
-              constants.wETH_precision[hre.network.name],
+              formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
+              constants.wrappedNativeTokenData[hre.network.name].decimals,
               true
             ]
           }
@@ -98,8 +98,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             args: [
               bdstable.address,
               bdx.address,
-              formatAddress(hre, constants.wBTC_address[hre.network.name]),
-              constants.wBTC_precision[hre.network.name],
+              formatAddress(hre, constants.wrappedSecondaryTokenData[hre.network.name].address),
+              constants.wrappedSecondaryTokenData[hre.network.name].decimals,
               false
             ]
           }

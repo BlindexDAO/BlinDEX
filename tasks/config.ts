@@ -11,9 +11,9 @@ import {
   getBDStableWbtcPool,
   getAllBDStables,
   getWbtc,
-  getTreasury,
   getBDStableChainlinkPriceFeed,
-  bdStablesContractsDetails
+  bdStablesContractsDetails,
+  getBdxCirculatingSupplyIgnoreAddresses
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -31,13 +31,11 @@ import {
   NATIVE_TOKEN_NAME,
   SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
-  bdxLockingContractAddressRSK,
-  rskMultisigTreasuryAddress,
   PriceFeedContractNames,
   chainIds,
+  chainSpecificComponents,
   EXTERNAL_SUPPORTED_TOKENS,
-  SECONDARY_EXTERNAL_USD_STABLE,
-  RSK_SOVRYN_NETWORK
+  SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
 
 export function load() {
@@ -89,10 +87,9 @@ export function load() {
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
       ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
-      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? RSK_SOVRYN_NETWORK : undefined,
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? chainSpecificComponents[networkName].sovrynNetwork : undefined,
       ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
-      ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]:
-        chainId === chainIds.rsk ? [rskMultisigTreasuryAddress, bdxLockingContractAddressRSK] : [(await getTreasury(hre)).address],
+      ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
       ["AVAILABLE_PAIRS"]: swapPairs,
       ["STAKING_REWARDS"]: stakingRewards,
       ["PAIR_ORACLES"]: mappedPairOracles,
