@@ -84,7 +84,7 @@ export function load() {
     try {
       rimraf.sync("./package");
     } catch {
-      console.log("COuldn't sync folder using 'rimraf.sync'");
+      console.log("Couldn't sync folder using 'rimraf.sync'");
     }
     mkdirSync("./package");
     fsExtra.copySync("./typechain", "./package/typings");

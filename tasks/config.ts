@@ -34,7 +34,9 @@ import {
   PriceFeedContractNames,
   chainIds,
   teamLockingContract,
-  importantAddresses
+  importantAddresses,
+  EXTERNAL_SUPPORTED_TOKENS,
+  SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
 
 export function load() {
@@ -89,9 +91,11 @@ export function load() {
     }
 
     const blockchainConfig = {
-      [`BDX_ADDRESS`]: (await getBdx(hre)).address,
+      ["BDX_ADDRESS"]: (await getBdx(hre)).address,
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
+      ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? importantAddresses[networkName].sovrynNetwork : undefined,
       [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
       [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]: bdxIgnoreAddresses,
       [`AVAILABLE_PAIRS`]: swapPairs,
@@ -337,7 +341,7 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      EXTERNAL_USD_STABLE[hre.network.name].address,
+      ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
       ...stablesAddresses,
       ...swapsAddresses
     ];
