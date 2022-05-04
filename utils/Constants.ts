@@ -48,23 +48,17 @@ export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   EUR_USD_FEED_ADDRESS: {
     mainnetFork: {
       address: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
-    },
-    arbitrumTestnet: null,
-    rsk: null
+    }
   },
   XAU_USD_FEED_ADDRESS: {
     mainnetFork: {
       address: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
-    },
-    arbitrumTestnet: null,
-    rsk: null
+    }
   },
   GBP_USD_FEED_ADDRESS: {
     mainnetFork: {
       address: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
-    },
-    arbitrumTestnet: null,
-    rsk: null
+    }
   },
   ETH_USD_FEED_ADDRESS: {
     mainnetFork: {
@@ -72,8 +66,7 @@ export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
     },
     arbitrumTestnet: {
       address: "0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8"
-    },
-    rsk: null
+    }
   },
   BTC_USD_FEED_ADDRESS: {
     // This is not being used today as it was only needed on RSK but we don't yet have Chainlink there.
@@ -83,8 +76,7 @@ export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
     },
     arbitrumTestnet: {
       address: "0x0c9973e7a27d00e656B9f153348dA46CaD70d03d"
-    },
-    rsk: null
+    }
   },
   BTC_ETH_FEED_ADDRESS: {
     mainnetFork: {
@@ -92,8 +84,7 @@ export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
     },
     arbitrumTestnet: {
       address: "0x6eFd3CCf5c673bd5A7Ea91b414d0307a5bAb9cC1"
-    },
-    rsk: null
+    }
   }
 };
 
@@ -102,7 +93,8 @@ export const chainSpecificComponents: ChainSpecificComponents = {
     uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
   },
   rsk: {
-    sovrynNetwork: "0x98AcE08d2B759A265ae326f010496BCd63c15Afc"
+    sovrynNetwork: "0x98AcE08d2B759A265ae326f010496BCd63c15Afc",
+    teamLockingContract: "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF"
   }
 };
 
@@ -112,11 +104,6 @@ export const botAddress: MultichainAddresses = {
 
 export const multisigTreasuryAddress: MultichainAddresses = {
   rsk: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c"
-};
-
-export const teamLockingContract = {
-  bdxLockAmount: to_d18(3150000),
-  address: "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF"
 };
 
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);

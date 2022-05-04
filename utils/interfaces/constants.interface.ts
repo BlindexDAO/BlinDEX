@@ -1,11 +1,12 @@
 export interface ChainlinkPriceFeed {
   [key: string]: {
     address: string;
-  } | null;
+  };
 }
 
 export interface ChainSpecificComponents {
   [key: string]: {
+    teamLockingContract?: string;
     sovrynNetwork?: string;
     uniswapRouterAddress?: string;
   };
