@@ -1,32 +1,28 @@
 import type { BigNumber } from "ethers";
 import _ from "lodash";
-import { ChainlinkPriceFeed, ERC20TokenData, ImportantComponentsAddresses } from "./interfaces/constants.interface";
+import { ChainlinkPriceFeed, ChainSpecificComponents, MultichainAddresses, SupportedERC20Token } from "./interfaces/constants.interface";
 import { to_d18 } from "./NumbersHelpers";
 
-export const wrappedNativeTokenData: { [key: string]: ERC20TokenData } = {
+export const wrappedNativeTokenData: SupportedERC20Token = {
   mainnetFork: { symbol: "WETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", decimals: 18 },
   rsk: { symbol: "WRBTC", address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", decimals: 18 }, // Since RBTC is the native token on RSK
   arbitrumTestnet: { symbol: "WETH", address: "0xEBbc3452Cc911591e4F18f3b36727Df45d6bd1f9", decimals: 18 }
 };
 
-export const wrappedSecondaryTokenData: { [key: string]: ERC20TokenData } = {
+export const wrappedSecondaryTokenData: SupportedERC20Token = {
   mainnetFork: { symbol: "WBTC", address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", decimals: 8 },
   rsk: { symbol: "ETHs", address: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f", decimals: 18 }, // Since RBTC is the native token on RSK
   arbitrumTestnet: { symbol: "WBTC", address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", decimals: 8 }
 };
 
-interface SupportedToken {
-  [key: string]: { symbol: string; address: string; decimals: number };
-}
-
 // TODO: Do we really need it when Blindex doesn't host the DEX?
-export const EXTERNAL_USD_STABLE: SupportedToken = {
+export const EXTERNAL_USD_STABLE: SupportedERC20Token = {
   mainnetFork: { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", decimals: 6 },
   rsk: { symbol: "XUSD", address: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F", decimals: 18 }
 };
 
 // TODO: Do we really need it when Blindex doesn't host the DEX?
-export const SECONDARY_EXTERNAL_USD_STABLE: SupportedToken = {
+export const SECONDARY_EXTERNAL_USD_STABLE: SupportedERC20Token = {
   mainnetFork: { symbol: "DAI", address: "0x6B175474E89094C44Da98b954EedeAC495271d0F", decimals: 18 },
   rsk: { symbol: "DOC", address: "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB", decimals: 18 }
 };
@@ -101,15 +97,21 @@ export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   }
 };
 
-export const importantAddresses: ImportantComponentsAddresses = {
+export const chainSpecificComponents: ChainSpecificComponents = {
   mainnetFork: {
     uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
   },
   rsk: {
-    sovrynNetwork: "0x98AcE08d2B759A265ae326f010496BCd63c15Afc",
-    botAddress: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872",
-    multisigTreasuryAddress: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c"
+    sovrynNetwork: "0x98AcE08d2B759A265ae326f010496BCd63c15Afc"
   }
+};
+
+export const botAddress: MultichainAddresses = {
+  rsk: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872"
+};
+
+export const multisigTreasuryAddress: MultichainAddresses = {
+  rsk: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c"
 };
 
 export const teamLockingContract = {

@@ -117,7 +117,7 @@ export async function getBdxCirculatingSupplyIgnoreAddresses(hre: HardhatRuntime
   let bdxIgnoreAddresses: string[] = [];
 
   if (chainId === constants.chainIds.rsk) {
-    bdxIgnoreAddresses = [constants.importantAddresses[hre.network.name].multisigTreasuryAddress as string, constants.teamLockingContract.address];
+    bdxIgnoreAddresses = [constants.multisigTreasuryAddress[hre.network.name], constants.teamLockingContract.address];
   } else if (chainId === constants.chainIds.mainnetFork) {
     bdxIgnoreAddresses = [(await getTreasury(hre)).address];
   }
@@ -290,7 +290,7 @@ export async function getERC20(hre: HardhatRuntimeEnvironment, address: string) 
 }
 
 export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number) {
-  const uniRouter = UniswapV2Router02__factory.connect(constants.importantAddresses[hre.network.name].uniswapRouterAddress as string, user);
+  const uniRouter = UniswapV2Router02__factory.connect(constants.chainSpecificComponents[hre.network.name].uniswapRouterAddress as string, user);
   const networkName = hre.network.name;
 
   await (

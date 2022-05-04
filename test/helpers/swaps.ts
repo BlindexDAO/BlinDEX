@@ -161,7 +161,7 @@ export async function swapEthForWbtc(hre: HardhatRuntimeEnvironment, account: Si
   // swaps ETH for WETH internally
 
   const uniRouter = UniswapV2Router02__factory.connect(
-    formatAddress(hre, constants.importantAddresses[hre.network.name].uniswapRouterAddress as string),
+    formatAddress(hre, constants.chainSpecificComponents[hre.network.name].uniswapRouterAddress as string),
     account
   );
   await uniRouter

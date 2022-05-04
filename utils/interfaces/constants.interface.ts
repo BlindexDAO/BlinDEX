@@ -1,20 +1,20 @@
-export interface ERC20TokenData {
-  address: string;
-  symbol: string;
-  decimals: number;
-}
-
 export interface ChainlinkPriceFeed {
   [key: string]: {
     address: string;
   } | null;
 }
 
-export interface ImportantComponentsAddresses {
+export interface ChainSpecificComponents {
   [key: string]: {
-    multisigTreasuryAddress?: string;
-    botAddress?: string;
     sovrynNetwork?: string;
     uniswapRouterAddress?: string;
   };
+}
+
+export interface MultichainAddresses {
+  [key: string]: string;
+}
+
+export interface SupportedERC20Token {
+  [key: string]: { symbol: string; address: string; decimals: number };
 }

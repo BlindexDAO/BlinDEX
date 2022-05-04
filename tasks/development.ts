@@ -17,7 +17,7 @@ import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import { importantAddresses } from "../utils/Constants";
+import { chainSpecificComponents } from "../utils/Constants";
 import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
@@ -168,7 +168,7 @@ export function load() {
     async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
       const swapNetwork = (await hre.ethers.getContractAt(
         "ISovrynSwapNetwork",
-        formatAddress(hre, importantAddresses[hre.network.name].sovrynNetwork as string)
+        formatAddress(hre, chainSpecificComponents[hre.network.name].sovrynNetwork as string)
       )) as ISovrynSwapNetwork;
 
       // format:  token1 - acnchor_A - token2

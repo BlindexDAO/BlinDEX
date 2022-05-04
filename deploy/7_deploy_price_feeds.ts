@@ -41,7 +41,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`deployed ${PriceFeedContractNames.EUR_USD} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
-    const sovrynNetworkAddress = constants.importantAddresses[hre.network.name].sovrynNetwork as string;
+    const sovrynNetworkAddress = constants.chainSpecificComponents[hre.network.name].sovrynNetwork as string;
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_USD, {
       from: deployer.address,
