@@ -92,7 +92,7 @@ Now log in Gnosis safe and start the approval / execution procedure. (`Send` -> 
 
    1. `approveAndExecuteTransactionsBatchRaw`
 
-      - This will approve and execute the trnasaction immediately (you need to provide exactly the same parametrs as you provided when queuing). It can be also extracted form the `txHash`
+      - This will approve and execute the transaction immediately (you need to provide exactly the same parameters as you provided when queuing). It can be also extracted from the `txHash`
       - Provide `txParamsData`
 
    2. `approveTransactionsBatch`
