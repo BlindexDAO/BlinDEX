@@ -36,7 +36,8 @@ import {
   PriceFeedContractNames,
   chainIds,
   EXTERNAL_SUPPORTED_TOKENS,
-  SECONDARY_EXTERNAL_USD_STABLE
+  SECONDARY_EXTERNAL_USD_STABLE,
+  RSK_SOVRYN_NETWORK
 } from "../utils/Constants";
 
 export function load() {
@@ -84,19 +85,20 @@ export function load() {
     const chainId = +(await hre.getChainId());
 
     const blockchainConfig = {
-      [`BDX_ADDRESS`]: (await getBdx(hre)).address,
+      ["BDX_ADDRESS"]: (await getBdx(hre)).address,
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
-      [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
-      [`SECONDARY_EXTERNAL_USD_STABLE`]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
-      [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-      [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
+      ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
+      ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? RSK_SOVRYN_NETWORK : undefined,
+      ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
+      ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]:
         chainId === chainIds.rsk ? [rskMultisigTreasuryAddress, bdxLockingContractAddressRSK] : [(await getTreasury(hre)).address],
-      [`AVAILABLE_PAIRS`]: swapPairs,
-      [`STAKING_REWARDS`]: stakingRewards,
-      [`PAIR_ORACLES`]: mappedPairOracles,
-      [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
-      [`oraclesUpdaterAddress`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
-      [`BDSTABLES`]: await getStablesConfig(hre)
+      ["AVAILABLE_PAIRS"]: swapPairs,
+      ["STAKING_REWARDS"]: stakingRewards,
+      ["PAIR_ORACLES"]: mappedPairOracles,
+      ["PRICE_FEEDS"]: await getPriceFeedsConfig(hre, deployer),
+      ["oraclesUpdaterAddress"]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
+      ["BDSTABLES"]: await getStablesConfig(hre)
     };
 
     console.log(
