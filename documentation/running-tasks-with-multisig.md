@@ -50,7 +50,7 @@ This will output 3 values:
 - txParamsData
   - this is the raw bytes that were inputed when queuing the tranasactions batch
 
-Now log in Gnosis safe and start the approval / execution procedure procedure. (`Send` -> `Contract interaction`) and provide:
+Now log in Gnosis safe and start the approval / execution procedure. (`Send` -> `Contract interaction`) and provide:
 
 1. Contract address: TIMELOCK_ADDRESS
 2. ABI:
