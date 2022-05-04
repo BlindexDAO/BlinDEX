@@ -261,10 +261,8 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
 
 export async function getTimelock(hre: HardhatRuntimeEnvironment): Promise<Timelock> {
   const deployer = await getDeployer(hre);
-  const timelock = (await hre.ethers.getContract("Timelock", deployer)) as Timelock;
-  return timelock;
+  return hre.ethers.getContract("Timelock", deployer) as Timelock;
 }
-
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
   if (wrappedNativeTokenData[hre.network.name].address === tokenAddress) {
     return getWeth(hre);
