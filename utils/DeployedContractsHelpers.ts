@@ -113,6 +113,18 @@ export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<B
   return allStables;
 }
 
+export async function getBdxCirculatingSupplyIgnoreAddresses(hre: HardhatRuntimeEnvironment, chainId: number): Promise<string[]> {
+  let bdxIgnoreAddresses: string[] = [];
+
+  if (chainId === constants.chainIds.rsk) {
+    bdxIgnoreAddresses = [constants.importantAddresses[hre.network.name].multisigTreasuryAddress as string, constants.teamLockingContract.address];
+  } else if (chainId === constants.chainIds.mainnetFork) {
+    bdxIgnoreAddresses = [(await getTreasury(hre)).address];
+  }
+
+  return bdxIgnoreAddresses;
+}
+
 export async function getAllBDStablePools(hre: HardhatRuntimeEnvironment): Promise<BdStablePool[]> {
   const allStablePools = [];
 
