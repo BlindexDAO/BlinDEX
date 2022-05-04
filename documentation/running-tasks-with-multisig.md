@@ -8,7 +8,7 @@ Preparation
 
 Workflow:
 
-- Use RecordableContract, Recorder and TimelocStrategy classes to prepare transaction batch
+- Use RecordableContract, Recorder and TimelockStrategy classes to prepare transaction batch
 - Queue transaction batch using Recorder
 - Approve transaction batch
   - With multisig (if running on production)
