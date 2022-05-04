@@ -44,7 +44,7 @@ npx hardhat --network rsk dev:flipper-flip-0-1-timelock --timelockaddress TIMELO
 This will output 3 values:
 
 - txHash
-  - queue transaction hash (it can be used later on to determine the 2 remaining values if needed)
+  - The queued transaction hash (it can be used later on to determine the 2 remaining values if needed)
 - txParamsHash
   - this identifies transaciotions batch by their hashed data
 - txParamsData
