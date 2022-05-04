@@ -1,6 +1,6 @@
 import type { BigNumber } from "ethers";
 import _ from "lodash";
-import { ChainlinkPriceFeed, ERC20TokenData, ImportantComponents as ImportantComponentsAddresses } from "./interfaces/constants.interface";
+import { ChainlinkPriceFeed, ERC20TokenData, ImportantComponentsAddresses } from "./interfaces/constants.interface";
 import { to_d18 } from "./NumbersHelpers";
 
 export const wrappedNativeTokenData: { [key: string]: ERC20TokenData } = {

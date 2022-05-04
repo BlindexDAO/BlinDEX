@@ -10,7 +10,7 @@ export interface ChainlinkPriceFeed {
   } | null;
 }
 
-export interface ImportantComponents {
+export interface ImportantComponentsAddresses {
   [key: string]: {
     multisigTreasuryAddress?: string;
     botAddress?: string;
