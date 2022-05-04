@@ -222,7 +222,7 @@ export function load() {
     await run(rusdtAddress, wrbtcAddress, "usd", "btc");
   });
 
-  task("deploy-timelock")
+  task("dev:deploy-timelock")
     .addParam("proposer", "proposer address")
     .addParam("owner", "destinination owner address (usually multi-sig)")
     .setAction(async ({ proposer, owner }, hre) => {
