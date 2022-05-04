@@ -22,8 +22,8 @@ import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
-import { wBTC_address, wETH_address, PriceFeedContractNames, getListOfSupportedLiquidityPools } from "./Constants";
 import { Timelock } from "../typechain";
+import { wrappedSecondaryTokenData, wrappedNativeTokenData, PriceFeedContractNames, getListOfSupportedLiquidityPools } from "./Constants";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -111,6 +111,19 @@ export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<B
   }
 
   return allStables;
+}
+
+export async function getBdxCirculatingSupplyIgnoreAddresses(hre: HardhatRuntimeEnvironment, chainId: number): Promise<string[]> {
+  let bdxIgnoreAddresses: string[] = [];
+  const chainName = hre.network.name;
+
+  if (chainId === constants.chainIds.rsk) {
+    bdxIgnoreAddresses = [constants.multisigTreasuryAddress[chainName], constants.chainSpecificComponents[chainName].teamLockingContract as string];
+  } else if (chainId === constants.chainIds.mainnetFork) {
+    bdxIgnoreAddresses = [(await getTreasury(hre)).address];
+  }
+
+  return bdxIgnoreAddresses;
 }
 
 export async function getAllBDStablePools(hre: HardhatRuntimeEnvironment): Promise<BdStablePool[]> {
@@ -253,9 +266,9 @@ export async function getTimelock(hre: HardhatRuntimeEnvironment): Promise<Timel
 }
 
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
-  if (wETH_address[hre.network.name] === tokenAddress) {
+  if (wrappedNativeTokenData[hre.network.name].address === tokenAddress) {
     return getWeth(hre);
-  } else if (wBTC_address[hre.network.name] === tokenAddress) {
+  } else if (wrappedSecondaryTokenData[hre.network.name].address === tokenAddress) {
     return getWbtc(hre);
   } else {
     throw new Error(`Unknown token address ${tokenAddress}`);
@@ -264,17 +277,17 @@ export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddre
 
 export async function getWeth(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IERC20;
+  return (await hre.ethers.getContractAt("IWETH", constants.wrappedNativeTokenData[hre.network.name].address, deployer)) as IERC20;
 }
 
 export async function getWethConcrete(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("IWETH", constants.wETH_address[hre.network.name], deployer)) as IWETH;
+  return (await hre.ethers.getContractAt("IWETH", constants.wrappedNativeTokenData[hre.network.name].address, deployer)) as IWETH;
 }
 
 export async function getWbtc(hre: HardhatRuntimeEnvironment) {
   const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContractAt("ERC20", constants.wBTC_address[hre.network.name], deployer)) as ERC20;
+  return (await hre.ethers.getContractAt("ERC20", constants.wrappedSecondaryTokenData[hre.network.name].address, deployer)) as ERC20;
 }
 
 export async function getIERC20(hre: HardhatRuntimeEnvironment, address: string) {
@@ -299,7 +312,9 @@ export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithA
 
   await hre.network.provider.send("hardhat_setBalance", [bigWbtcHolder, "0x" + to_d18(1e6).toString()]);
 
-  const wbtc = await (await getERC20(hre, constants.wBTC_address[networkName])).connect(await hre.ethers.getSigner(bigWbtcHolder));
+  const wbtc = await (
+    await getERC20(hre, constants.wrappedSecondaryTokenData[networkName].address)
+  ).connect(await hre.ethers.getSigner(bigWbtcHolder));
 
   await wbtc.transfer(user.address, amount_d8);
 
@@ -332,7 +347,7 @@ export async function getOnChainWbtcUsdPrice(hre: HardhatRuntimeEnvironment) {
 
 export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, cryptoSymbol: "ETH" | "BTC") {
   const networkName = hre.network.name;
-  const cryptoToUsdFeedAddress = _.get(constants, [`${cryptoSymbol}_USD_FEED_ADDRESS`, networkName]);
+  const cryptoToUsdFeedAddress = _.get(constants.chainlinkPriceFeeds, [`${cryptoSymbol}_USD_FEED_ADDRESS`, networkName, "address"]);
   if (!cryptoToUsdFeedAddress) {
     throw new Error(`There is price feed address for "${cryptoSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
   }
@@ -348,7 +363,7 @@ export async function getOnChainCryptoUSDPrice(hre: HardhatRuntimeEnvironment, c
 
 export async function getOnChainCryptoFiatPrice(hre: HardhatRuntimeEnvironment, fiatSymbol: string, cryptoSymbol: "ETH" | "BTC") {
   const networkName = hre.network.name;
-  const fiatToUsdFeedAddress = _.get(constants, [`${fiatSymbol}_USD_FEED_ADDRESS`, networkName]);
+  const fiatToUsdFeedAddress = _.get(constants.chainlinkPriceFeeds, [`${fiatSymbol}_USD_FEED_ADDRESS`, networkName, "address"]);
   if (!fiatToUsdFeedAddress) {
     throw new Error(`There is price feed address for "${fiatSymbol}_USD_FEED_ADDRESS" on network ${networkName}`);
   }
@@ -415,7 +430,7 @@ export async function getWethPair(hre: HardhatRuntimeEnvironment, tokenName: str
 
   const token = (await hre.ethers.getContract(tokenName)) as BDStable;
 
-  const pairAddress = await uniswapFactory.getPair(token.address, constants.wETH_address[hre.network.name]);
+  const pairAddress = await uniswapFactory.getPair(token.address, constants.wrappedNativeTokenData[hre.network.name].address);
 
   const pair = (await hre.ethers.getContractAt("UniswapV2Pair", formatAddress(hre, pairAddress))) as UniswapV2Pair;
 
@@ -457,9 +472,9 @@ export async function getUniswapPairOracle(hre: HardhatRuntimeEnvironment, token
 
 export async function getContratAddress(hre: HardhatRuntimeEnvironment, contractName: string): Promise<string> {
   if (contractName === "WETH") {
-    return constants.wETH_address[hre.network.name];
+    return constants.wrappedNativeTokenData[hre.network.name].address;
   } else if (contractName === "WBTC") {
-    return constants.wBTC_address[hre.network.name];
+    return constants.wrappedSecondaryTokenData[hre.network.name].address;
   } else {
     const externalToken = constants.EXTERNAL_SUPPORTED_TOKENS.find(token => token[hre.network.name].symbol === contractName);
     if (externalToken) {
@@ -501,15 +516,15 @@ export async function getTokenData(tokenAddress: string, hre: HardhatRuntimeEnvi
       symbol,
       decimals
     };
-  } else if (tokenAddress === constants.wETH_address[hre.network.name]) {
+  } else if (tokenAddress === constants.wrappedNativeTokenData[hre.network.name].address) {
     return {
       symbol: constants.NATIVE_TOKEN_NAME[hre.network.name],
-      decimals: constants.wETH_precision[hre.network.name]
+      decimals: constants.wrappedNativeTokenData[hre.network.name].decimals
     };
-  } else if (tokenAddress === constants.wBTC_address[hre.network.name]) {
+  } else if (tokenAddress === constants.wrappedSecondaryTokenData[hre.network.name].address) {
     return {
       symbol: constants.SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name],
-      decimals: constants.wBTC_precision[hre.network.name]
+      decimals: constants.wrappedSecondaryTokenData[hre.network.name].decimals
     };
   } else {
     const token = await getERC20(hre, tokenAddress);

@@ -1,60 +1,109 @@
 import type { BigNumber } from "ethers";
 import _ from "lodash";
+import { ChainlinkPriceFeed, ChainSpecificComponents, MultichainAddresses, SupportedERC20Token } from "./interfaces/constants.interface";
 import { to_d18 } from "./NumbersHelpers";
 
-export const wETH_address: { [key: string]: string } = {
-  mainnetFork: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-  rsk: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d" // actually wrBTC, reversed to reflect rbtc native coin
+export const wrappedNativeTokenData: SupportedERC20Token = {
+  mainnetFork: { symbol: "WETH", address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", decimals: 18 },
+  rsk: { symbol: "WRBTC", address: "0x542fDA317318eBF1d3DEAf76E0b632741A7e677d", decimals: 18 }, // Since RBTC is the native token on RSK
+  arbitrumTestnet: { symbol: "WETH", address: "0xEBbc3452Cc911591e4F18f3b36727Df45d6bd1f9", decimals: 18 }
 };
 
-export const wETH_precision: { [key: string]: number } = {
-  mainnetFork: 18,
-  rsk: 18 // actually wrBTC, reversed to reflect rbtc native coin
+export const wrappedSecondaryTokenData: SupportedERC20Token = {
+  mainnetFork: { symbol: "WBTC", address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", decimals: 8 },
+  rsk: { symbol: "ETHs", address: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f", decimals: 18 }, // Since RBTC is the native token on RSK
+  arbitrumTestnet: { symbol: "WBTC", address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", decimals: 8 }
 };
 
-export const wBTC_address: { [key: string]: string } = {
-  mainnetFork: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-  rsk: "0x1D931Bf8656d795E50eF6D639562C5bD8Ac2B78f" // actually eths, reversed to reflect rbtc native coin
+// TODO: Do we really need it when Blindex doesn't host the DEX?
+export const EXTERNAL_USD_STABLE: SupportedERC20Token = {
+  mainnetFork: { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", decimals: 6 },
+  rsk: { symbol: "XUSD", address: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F", decimals: 18 }
 };
 
-export const wBTC_precision: { [key: string]: number } = {
-  mainnetFork: 8,
-  rsk: 18 // actually eths, reversed to reflect rbtc native coin
+// TODO: Do we really need it when Blindex doesn't host the DEX?
+export const SECONDARY_EXTERNAL_USD_STABLE: SupportedERC20Token = {
+  mainnetFork: { symbol: "DAI", address: "0x6B175474E89094C44Da98b954EedeAC495271d0F", decimals: 18 },
+  rsk: { symbol: "DOC", address: "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB", decimals: 18 }
 };
 
-export const EUR_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
-};
+export const EXTERNAL_SUPPORTED_TOKENS = [EXTERNAL_USD_STABLE, SECONDARY_EXTERNAL_USD_STABLE];
 
-export const XAU_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
-};
-
-export const GBP_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
-};
-
-export const ETH_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
-};
-
-// we only ue this feed in tests moce it out
-export const BTC_USD_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
-};
-
-export const BTC_ETH_FEED_ADDRESS: { [key: string]: string } = {
-  mainnetFork: "0xdeb288F737066589598e9214E782fa5A8eD689e8"
-};
-
+// TODO: Do we really need it?
 export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
   mainnetFork: "ETH",
-  rsk: "RBTC"
+  rsk: "RBTC",
+  arbitrumTestnet: "ETH"
 };
 
+// TODO: Do we really need it?
 export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   mainnetFork: "BTC",
-  rsk: "ETHs"
+  rsk: "ETHs",
+  arbitrumTestnet: "WBTC"
+};
+
+// TODO: Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now (in the updaterSettings section in the BE environment file).
+export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
+  EUR_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0xb49f677943BC038e9857d61E7d053CaA2C1734C1"
+    }
+  },
+  XAU_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0x214ed9da11d2fbe465a6fc601a91e62ebec1a0d6"
+    }
+  },
+  GBP_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0x5c0ab2d9b5a7ed9f470386e82bb36a3613cdd4b5"
+    }
+  },
+  ETH_USD_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+    },
+    arbitrumTestnet: {
+      address: "0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8"
+    }
+  },
+  BTC_USD_FEED_ADDRESS: {
+    // This is not being used today as it was only needed on RSK but we don't yet have Chainlink there.
+    // Keeping it here for future use when Chainlink will deploy on RSK.
+    mainnetFork: {
+      address: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c"
+    },
+    arbitrumTestnet: {
+      address: "0x0c9973e7a27d00e656B9f153348dA46CaD70d03d"
+    }
+  },
+  BTC_ETH_FEED_ADDRESS: {
+    mainnetFork: {
+      address: "0xdeb288F737066589598e9214E782fa5A8eD689e8"
+    },
+    arbitrumTestnet: {
+      address: "0x6eFd3CCf5c673bd5A7Ea91b414d0307a5bAb9cC1"
+    }
+  }
+};
+
+export const chainSpecificComponents: ChainSpecificComponents = {
+  mainnetFork: {
+    uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+  },
+  rsk: {
+    sovrynNetwork: "0x98AcE08d2B759A265ae326f010496BCd63c15Afc",
+    teamLockingContract: "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF"
+  }
+};
+
+export const botAddress: MultichainAddresses = {
+  rsk: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872"
+};
+
+export const multisigTreasuryAddress: MultichainAddresses = {
+  rsk: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c"
 };
 
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);
@@ -114,41 +163,6 @@ export const initialBdstableMintingAmount = (networkName: string, symbol: string
   }
   return initalAmountPerSymbol;
 };
-
-// original uniswap addresss on ETH
-export const ETH_uniswapRouterAddress = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-
-export const RSK_RUSDT_ADDRESS = "0xEf213441a85DF4d7acBdAe0Cf78004E1e486BB96";
-export const RSK_WRBTC_ADDRESS = "0x542FDA317318eBf1d3DeAF76E0B632741a7e677d";
-export const RSK_ETHS_ADDRESS = "0x1D931BF8656D795e50Ef6d639562C5bD8AC2b78F";
-export const RSK_XUSD_ADDRESS = "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F";
-export const RSK_DOC_ADDRESS = "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB";
-
-export const RSK_SOVRYN_NETWORK = "0x98AcE08d2B759A265ae326f010496BCd63c15Afc";
-
-export const rskBotAddress = "0x2A119532248d0E4Ff68A42bB37f64336C3F20872";
-export const rskMultisigTreasuryAddress = "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c";
-
-export const bdxLockAmount = to_d18(3150000);
-export const bdxLockingContractAddressRSK = "0x4292Ef0D3AfA1052605e2D706349dFe3A481cDcF";
-
-interface SupportedToken {
-  [key: string]: { symbol: string; address: string; decimals: number };
-}
-
-export const ETH_USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC on eth
-export const EXTERNAL_USD_STABLE: SupportedToken = {
-  mainnetFork: { symbol: "USDC", address: ETH_USDC_ADDRESS, decimals: 6 },
-  rsk: { symbol: "XUSD", address: RSK_XUSD_ADDRESS, decimals: 18 }
-};
-
-export const ETH_DAI_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI on eth
-export const SECONDARY_EXTERNAL_USD_STABLE: SupportedToken = {
-  mainnetFork: { symbol: "DAI", address: ETH_DAI_ADDRESS, decimals: 18 },
-  rsk: { symbol: "DOC", address: RSK_DOC_ADDRESS, decimals: 18 }
-};
-
-export const EXTERNAL_SUPPORTED_TOKENS = [EXTERNAL_USD_STABLE, SECONDARY_EXTERNAL_USD_STABLE];
 
 export const BlindexFileBaseUrl = "https://blindex-static-assets.s3.filebase.com";
 export const BlindexTokensIconsFileBaseUrl = `${BlindexFileBaseUrl}/tokens-icons`;
@@ -212,5 +226,6 @@ export const BASE_STAKING_MULTIPLIER = 1e6;
 
 export const chainIds = {
   mainnetFork: 1337,
-  rsk: 30
+  rsk: 30,
+  arbitrumTestnet: 421611
 };

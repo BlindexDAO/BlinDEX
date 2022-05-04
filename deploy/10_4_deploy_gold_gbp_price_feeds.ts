@@ -42,14 +42,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_XAU_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.XAU_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.XAU_USD_FEED_ADDRESS[networkName]]
+      args: [constants.chainlinkPriceFeeds.XAU_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${constants.PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
 
     priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.GBP_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.GBP_USD_FEED_ADDRESS[networkName]]
+      args: [constants.chainlinkPriceFeeds.GBP_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${constants.PriceFeedContractNames.GBP_USD} to: ${priceFeed_GBP_USD_Deployment.address}`);
   }
@@ -83,23 +83,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   for (const { stable, ethFiatOracle } of bdStablesWithWethOracles) {
     const symbol = await stable.symbol();
+    const wrappedNativeTokenAddress = constants.wrappedNativeTokenData[networkName].address;
 
     await (await stable.setETH_fiat_Oracle(ethFiatOracle)).wait();
     console.log(`Added WETH/Fiat oracle to ${symbol}`);
 
     const bdstableWethOracle = await getWethPairOracle(hre, symbol);
-    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added ${symbol}/WETH Uniswap oracle`);
 
     const bdstableWethPool = await getBDStableWethPool(hre, symbol);
     const bdstableWbtcPool = await getBDStableWbtcPool(hre, symbol);
 
-    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added ${symbol}/WETH bdstable pool oracle`);
-    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added ${symbol}/WBTC bdstable pool oracle`);
 
-    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added BDX/WETH Uniswap oracle to ${symbol}`);
   }
 

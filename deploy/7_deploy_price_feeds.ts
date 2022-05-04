@@ -41,13 +41,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     console.log(`deployed ${PriceFeedContractNames.EUR_USD} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
+    const sovrynNetworkAddress = constants.chainSpecificComponents[hre.network.name].sovrynNetwork as string;
+
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_USD, {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
-        formatAddress(hre, constants.wETH_address[hre.network.name]), // it's actually wrBTC (on RSK)
-        formatAddress(hre, constants.RSK_XUSD_ADDRESS),
+        formatAddress(hre, sovrynNetworkAddress),
+        formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address), // it's actually wrBTC (on RSK)
+        formatAddress(hre, constants.EXTERNAL_USD_STABLE[hre.network.name].address),
         1e12,
         bot.address,
         60 * 60, // 60 min
@@ -61,9 +63,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       from: deployer.address,
       contract: "SovrynSwapPriceFeed",
       args: [
-        formatAddress(hre, constants.RSK_SOVRYN_NETWORK),
-        formatAddress(hre, constants.wETH_address[hre.network.name]),
-        formatAddress(hre, constants.wBTC_address[hre.network.name]),
+        formatAddress(hre, sovrynNetworkAddress),
+        formatAddress(hre, constants.wrappedNativeTokenData[hre.network.name].address),
+        formatAddress(hre, constants.wrappedSecondaryTokenData[hre.network.name].address),
         1e12,
         bot.address,
         60 * 60, // 60 min
@@ -75,14 +77,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     priceFeed_EUR_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.EUR_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.EUR_USD_FEED_ADDRESS[networkName]]
+      args: [constants.chainlinkPriceFeeds.EUR_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${PriceFeedContractNames.EUR_USD} to: ${priceFeed_EUR_USD_Deployment.address}`);
 
     priceFeed_ETH_USD_Deployment = await hre.deployments.deploy(PriceFeedContractNames.ETH_USD, {
       from: deployer.address,
       contract: "AggregatorV3PriceFeed",
-      args: [constants.ETH_USD_FEED_ADDRESS[networkName]]
+      args: [constants.chainlinkPriceFeeds.ETH_USD_FEED_ADDRESS[networkName]?.address]
     });
     console.log(`deployed ${PriceFeedContractNames.ETH_USD} to: ${priceFeed_ETH_USD_Deployment.address}`);
 
@@ -92,7 +94,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     btc_eth_oracle = await hre.deployments.deploy(PriceFeedContractNames.BTC_ETH, {
       from: deployer.address,
       contract: "BtcToEthOracleChinlink",
-      args: [constants.BTC_ETH_FEED_ADDRESS[networkName], formatAddress(hre, constants.wETH_address[networkName])]
+      args: [
+        constants.chainlinkPriceFeeds.BTC_ETH_FEED_ADDRESS[networkName]?.address,
+        formatAddress(hre, constants.wrappedNativeTokenData[networkName].address)
+      ]
     });
     console.log(`deployed ${PriceFeedContractNames.BTC_ETH} to: ${btc_eth_oracle.address}`);
   }
@@ -120,27 +125,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   for (const { stable, ethFiatOracle } of bdStablesWithWethOracles) {
     const symbol = await stable.symbol();
+    const wrappedNativeTokenAddress = constants.wrappedNativeTokenData[networkName].address;
 
     await (await stable.setETH_fiat_Oracle(ethFiatOracle)).wait();
     console.log(`Added WETH/Fiat oracle to ${symbol}`);
 
     const bdstableWethOracle = await getWethPairOracle(hre, symbol);
-    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await stable.setBDStable_WETH_Oracle(bdstableWethOracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added ${symbol}/WETH Uniswap oracle`);
 
     const bdstableWethPool = await getBDStableWethPool(hre, symbol);
     const bdstableWbtcPool = await getBDStableWbtcPool(hre, symbol);
     const weth_to_weth_oracle = await hre.deployments.deploy("WethToWethOracle", {
       from: deployer.address,
-      args: [formatAddress(hre, constants.wETH_address[networkName])]
+      args: [formatAddress(hre, wrappedNativeTokenAddress)]
     });
 
-    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await bdstableWethPool.setCollatWETHOracle(weth_to_weth_oracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added ${symbol}/WETH bdstable pool oracle`);
-    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await bdstableWbtcPool.setCollatWETHOracle(btc_eth_oracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added ${symbol}/WBTC bdstable pool oracle`);
 
-    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, formatAddress(hre, constants.wETH_address[networkName]))).wait();
+    await (await stable.setBDX_WETH_Oracle(bdxWethOracle.address, formatAddress(hre, wrappedNativeTokenAddress))).wait();
     console.log(`Added BDX/WETH Uniswap oracle to ${symbol}`);
   }
 
