@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Timelock is Ownable {
-    enum TrnasactionStatus {
+    enum TransactionStatus {
         NonExistent,
         Queued,
         Approved
