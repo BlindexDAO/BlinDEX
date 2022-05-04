@@ -25,6 +25,12 @@ jobs:
       - name: Compile
         run: npm run compile
       - name: Unit Tests
+        env:
+          MAINNET_URL: ${{ secrets.MAINNET_URL }}
+          MNEMONIC_PHRASE: ${{ secrets.MNEMONIC_PHRASE }}
+          USER_DEPLOYER_PRIVATE_KEY: ${{ secrets.USER_DEPLOYER_PRIVATE_KEY }}
+          USER_TREASURY_PRIVATE_KEY: ${{ secrets.USER_TREASURY_PRIVATE_KEY }}
+          USER_BOT_PRIVATE_KEY: ${{ secrets.USER_BOT_PRIVATE_KEY }}
         run: |
           npm run node &
           echo 'Sleeping for 7 seconds...'
