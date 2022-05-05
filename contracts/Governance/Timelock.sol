@@ -21,7 +21,7 @@ contract Timelock is Ownable {
     uint256 public maximumDelay;
     uint256 public gracePeriod;
 
-    mapping(bytes32 => TrnasactionStatus) public queuedTransactions;
+    mapping(bytes32 => TransactionStatus) public queuedTransactions;
 
     address public proposer;
     uint256 public delay;
@@ -75,14 +75,14 @@ contract Timelock is Ownable {
         require(eta <= block.timestamp + delay + gracePeriod, "Timelock: Estimated execution time must satisfy delay and grace period.");
 
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
-        queuedTransactions[txParamsHash] = TrnasactionStatus.Queued;
+        queuedTransactions[txParamsHash] = TransactionStatus.Queued;
 
         emit QueuedTransactionsBatch(txParamsHash, transactions.length, eta);
         return txParamsHash;
     }
 
     function cancelTransactionsBatch(bytes32 txParamsHash) external onlyProposerOrOwner {
-        require(queuedTransactions[txParamsHash] != TrnasactionStatus.NonExistent, "Timelock: transaction is not queued");
+        require(queuedTransactions[txParamsHash] != TransactionStatus.NonExistent, "Timelock: transaction is not queued");
 
         delete queuedTransactions[txParamsHash];
 
@@ -113,9 +113,9 @@ contract Timelock is Ownable {
     }
 
     function _approveTransactionsBatchInternal(bytes32 txParamsHash) internal onlyOwner {
-        require(queuedTransactions[txParamsHash] == TrnasactionStatus.Queued, "Timelock: transaction is not queued");
+        require(queuedTransactions[txParamsHash] == TransactionStatus.Queued, "Timelock: transaction is not queued");
 
-        queuedTransactions[txParamsHash] = TrnasactionStatus.Approved;
+        queuedTransactions[txParamsHash] = TransactionStatus.Approved;
 
         emit ApprovedTransactionsBatch(txParamsHash);
     }
@@ -123,7 +123,7 @@ contract Timelock is Ownable {
     function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal {
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
-        require(queuedTransactions[txParamsHash] == TrnasactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
+        require(queuedTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
         require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed time lock.");
         require(block.timestamp <= eta + gracePeriod, "Timelock: Transaction is stale.");
 
