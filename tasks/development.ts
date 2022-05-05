@@ -17,7 +17,7 @@ import { mineBlock, simulateTimeElapseInDays, simulateTimeElapseInSeconds } from
 import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
-import { RSK_SOVRYN_NETWORK } from "../utils/Constants";
+import { chainSpecificComponents } from "../utils/Constants";
 import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
@@ -100,7 +100,7 @@ export function load() {
     try {
       rimraf.sync("./package");
     } catch {
-      console.log("COuldn't sync folder using 'rimraf.sync'");
+      console.log("Couldn't sync folder using 'rimraf.sync'");
     }
     mkdirSync("./package");
     fsExtra.copySync("./typechain", "./package/typings");
@@ -182,7 +182,10 @@ export function load() {
 
   task("show:sovryn-swap-prices").setAction(async (args, hre) => {
     async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
-      const swapNetwork = (await hre.ethers.getContractAt("ISovrynSwapNetwork", formatAddress(hre, RSK_SOVRYN_NETWORK))) as ISovrynSwapNetwork;
+      const swapNetwork = (await hre.ethers.getContractAt(
+        "ISovrynSwapNetwork",
+        formatAddress(hre, chainSpecificComponents[hre.network.name].sovrynNetwork as string)
+      )) as ISovrynSwapNetwork;
 
       // format:  token1 - acnchor_A - token2
       const conversionPath = await swapNetwork.conversionPath(token1, token2);
@@ -222,7 +225,7 @@ export function load() {
     await run(rusdtAddress, wrbtcAddress, "usd", "btc");
   });
 
-  task("deploy-timelock")
+  task("dev:deploy-timelock")
     .addParam("proposer", "proposer address")
     .addParam("owner", "destinination owner address (usually multi-sig)")
     .setAction(async ({ proposer, owner }, hre) => {

@@ -8,7 +8,7 @@ Preparation
 
 Workflow:
 
-- Use RecordableContract, Recorder and TimelocStrategy classes to prepare transaction batch
+- Use RecordableContract, Recorder and TimelockStrategy classes to prepare transaction batch
 - Queue transaction batch using Recorder
 - Approve transaction batch
   - With multisig (if running on production)
@@ -44,13 +44,13 @@ npx hardhat --network rsk dev:flipper-flip-0-1-timelock --timelockaddress TIMELO
 This will output 3 values:
 
 - txHash
-  - queue transaction hash (it can be used later on to determine the 2 remaining values if needed)
+  - The queued transaction hash (it can be used later on to determine the 2 remaining values if needed)
 - txParamsHash
   - this identifies transaciotions batch by their hashed data
 - txParamsData
   - this is the raw bytes that were inputed when queuing the tranasactions batch
 
-Now log in Gnosis safe and start the approval / execution procedure procedure. (`Send` -> `Contract interaction`) and provide:
+Now log in Gnosis safe and start the approval / execution procedure. (`Send` -> `Contract interaction`) and provide:
 
 1. Contract address: TIMELOCK_ADDRESS
 2. ABI:
@@ -92,7 +92,7 @@ Now log in Gnosis safe and start the approval / execution procedure procedure. (
 
    1. `approveAndExecuteTransactionsBatchRaw`
 
-      - This will approve and execute the trnasaction immediately (you need to provide exactly the same parametrs as you provided when queuing). It can be also extracted form the `txHash`
+      - This will approve and execute the transaction immediately (you need to provide exactly the same parameters as you provided when queuing). It can be also extracted from the `txHash`
       - Provide `txParamsData`
 
    2. `approveTransactionsBatch`

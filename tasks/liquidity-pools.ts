@@ -1,27 +1,25 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import {
-  formatAddress,
-  getAllUniswapPairs,
-  getBdx,
-  getOperationalTreasury,
-  getTokenData,
-  getUniswapFactory
-} from "../utils/DeployedContractsHelpers";
+import { multisigTreasuryAddress } from "../utils/Constants";
+import { formatAddress, getAllUniswapPairs, getBdx, getTokenData, getTreasury, getUniswapFactory } from "../utils/DeployedContractsHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 
 export function load() {
-  task("lp:all:set:feeTo-OperationalTreasury", "Setting the Uniswap V2 factory 'feeTo' address to the operational treasury").setAction(
-    async (_args, hre) => {
-      const operationalTreasury = await getOperationalTreasury(hre);
-      const factory = await getUniswapFactory(hre);
+  task("lp:all:set:feeTo-Treasury", "Setting the Uniswap V2 factory 'feeTo' address to the treasury").setAction(async (_args, hre) => {
+    const networkName = hre.network.name;
 
-      console.log("Current 'feeTo' address:", await factory.feeTo());
-      console.log(`Setting the 'feeTo' address to: ${operationalTreasury.address}`);
-      await (await factory.setFeeTo(operationalTreasury.address)).wait();
-      console.log("'feeTo' address after the change:", await factory.feeTo());
+    if (!["rsk", "mainnetFork"].includes(networkName.toLocaleLowerCase())) {
+      throw new Error("Chain not supported for this operation");
     }
-  );
+
+    const treasuryAddress = hre.network.name.toLocaleLowerCase() === "rsk" ? multisigTreasuryAddress[networkName] : (await getTreasury(hre)).address;
+    const factory = await getUniswapFactory(hre);
+
+    console.log("Current 'feeTo' address:", await factory.feeTo());
+    console.log(`Setting the 'feeTo' address to: ${treasuryAddress}`);
+    await (await factory.setFeeTo(treasuryAddress)).wait();
+    console.log("'feeTo' address after the change:", await factory.feeTo());
+  });
 
   task("lp:all:show:feeTo", "Shows the 'feeTo' address set on the Uniswap Factory").setAction(async (_args, hre) => {
     const factory = await getUniswapFactory(hre);

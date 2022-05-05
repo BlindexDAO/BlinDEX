@@ -20,13 +20,13 @@ import * as npmTasks from "./tasks/npm";
 import { load as lpTasksLoad } from "./tasks/liquidity-pools";
 import { load as bdStablePoolsTasksLoad } from "./tasks/bd-stable-pools";
 import { load as bdStableTasksLoad } from "./tasks/bd-stable";
-import { load as bdxTasksLoad } from "./tasks/bdx";
 import { load as stakingTasksLoad } from "./tasks/staking";
 import { load as usersLoad } from "./tasks/users";
 import { load as tokenListLoad } from "./tasks/token-list";
 import "hardhat-gas-reporter";
 import * as path from "path";
 import hardhatCompileConfig from "./hardhat.compile.config";
+import { chainIds } from "./utils/Constants";
 
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
@@ -39,7 +39,6 @@ npmTasks.load();
 lpTasksLoad();
 bdStablePoolsTasksLoad();
 bdStableTasksLoad();
-bdxTasksLoad();
 stakingTasksLoad();
 usersLoad();
 tokenListLoad();
@@ -55,24 +54,28 @@ const config: HardhatUserConfig = {
         mnemonic: process.env.MNEMONIC_PHRASE!,
         accountsBalance: "100000000000000000000000"
       },
-      chainId: 1337
+      chainId: chainIds.mainnetFork
     },
     mainnetFork: {
       url: "http://localhost:8545",
       timeout: 60000,
       gas: 10_000_000
     },
+    arbitrumTestnet: {
+      // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
+      url: "https://rinkeby.arbitrum.io/rpc",
+      // TODO: Do we need different accounts for Arbitrum
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      timeout: 60000,
+      gasPrice: 2,
+      chainId: chainIds.arbitrumTestnet
+    },
     rsk: {
       url: "https://public-node.rsk.co",
-      accounts: [
-        process.env.USER_DEPLOYER_PRIVATE_KEY!,
-        process.env.USER_TREASURY_PRIVATE_KEY!,
-        process.env.USER_BOT_PRIVATE_KEY!,
-        process.env.OPERATIONAL_TREASURY_PRIVATE_KEY!
-      ],
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 6_000_000,
       gasPrice: 79240000,
-      chainId: 30
+      chainId: chainIds.rsk
     }
   },
   solidity: hardhatCompileConfig.solidity,
@@ -95,20 +98,17 @@ const config: HardhatUserConfig = {
     BOT: {
       default: 2
     },
-    OPERATIONAL_TREASURY: {
+    TEST1: {
       default: 3
     },
-    TEST1: {
+    TEST2: {
       default: 4
     },
-    TEST2: {
+    TEST_VESTING_SCHEDULER: {
       default: 5
     },
-    TEST_VESTING_SCHEDULER: {
-      default: 6
-    },
     TEST_VESTING_REWARDS_PROVIDER: {
-      default: 7
+      default: 6
     }
   }
 };

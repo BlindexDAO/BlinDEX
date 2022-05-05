@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: UpdaterRSK");
 
   const deployer = await getDeployer(hre);
-  const botAddress = hre.network.name === "rsk" ? constants.rskBotAddress : (await getBot(hre)).address;
+  const botAddress = hre.network.name === "mainnetFork" ? (await getBot(hre)).address : constants.botAddress[hre.network.name];
 
   const updater: DeployResult = await hre.deployments.deploy("UpdaterRSK", {
     from: deployer.address,

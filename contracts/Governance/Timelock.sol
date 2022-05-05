@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Timelock is Ownable {
-    enum TrnasactionStatus {
+    enum TransactionStatus {
         NonExistent,
         Queued,
         Approved
@@ -40,8 +40,8 @@ contract Timelock is Ownable {
         uint256 _gracePeriod,
         uint256 _delay
     ) {
-        require(_proposer != address(0), "Proposer address cannot be 0");
-        require(_minimumDelay <= _maximumDelay, "Minimum delay cannot be larger than maximum delay");
+        require(_proposer != address(0), "Proposer's address cannot be 0");
+        require(_minimumDelay <= _maximumDelay, "The minimum delay cannot be larger than the maximum delay");
 
         minimumDelay = _minimumDelay;
         maximumDelay = _maximumDelay;

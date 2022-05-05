@@ -17,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   for (const stable of stables) {
     const symbol = await stable.symbol();
     console.log(`Starting deployment of ${symbol} staking contracts`);
-    await setupStakingContract(hre, stable.address, formatAddress(hre, constants.wETH_address[networkName]), symbol, "WETH", false);
+    await setupStakingContract(hre, stable.address, formatAddress(hre, constants.wrappedNativeTokenData[networkName].address), symbol, "WETH", false);
     await setupStakingContract(hre, bdx.address, stable.address, "BDX", symbol, true);
     console.log(`Finished deployment of ${symbol} staking contracts`);
   }
