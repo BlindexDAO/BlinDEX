@@ -30,7 +30,7 @@ contract Timelock is Ownable {
     event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
     event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed target, uint256 value, bytes data, uint256 eta);
-    event NewProposerSet(address indexed newProposer);
+    event NewProposerSet(address indexed previousProposer, address indexed newProposer);
     event NewDelaySet(uint256 indexed delay);
 
     constructor(
@@ -55,9 +55,10 @@ contract Timelock is Ownable {
     function setProposer(address _proposer) external onlyOwner {
         require(_proposer != address(0), "Proposer address cannot be 0");
 
+        address previousProposer = proposer;
         proposer = _proposer;
 
-        emit NewProposerSet(proposer);
+        emit NewProposerSet(previousProposer, proposer);
     }
 
     function setDelay(uint256 _delay) public onlyOwner {
