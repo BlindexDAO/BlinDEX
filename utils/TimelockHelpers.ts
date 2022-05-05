@@ -6,7 +6,6 @@ import { Timelock__factory } from "../typechain";
 export type QueuedTransaction = {
   target: string;
   value: number;
-  signature: string;
   data: string;
 };
 
@@ -39,14 +38,13 @@ export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hr
   const decodedQueuedTransactions = (decodedTxData.transactions as QueuedTransaction[]).map(x => ({
     target: x.target,
     value: x.value,
-    signature: x.signature,
     data: x.data
   }));
   const decodedEta = decodedTxData.eta as BigNumber;
 
   const encoder = new AbiCoder();
   const txParamsData = encoder.encode(
-    [ParamType.from("Transaction(address target, uint256 value, string signature, bytes data)[]"), "uint"],
+    [ParamType.from("Transaction(address target, uint256 value, bytes data)[]"), "uint"],
     [decodedQueuedTransactions, decodedEta]
   );
 

@@ -14,7 +14,6 @@ contract Timelock is Ownable {
     struct Transaction {
         address target;
         uint256 value;
-        string signature;
         bytes data;
     }
 
@@ -30,7 +29,7 @@ contract Timelock is Ownable {
     event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
     event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
-    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
+    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed target, uint256 value, bytes data, uint256 eta);
     event NewProposerSet(address indexed newProposer);
     event NewDelaySet(uint256 indexed delay);
 
@@ -131,25 +130,14 @@ contract Timelock is Ownable {
         delete queuedTransactions[txParamsHash];
 
         for (uint256 i = 0; i < transactions.length; i++) {
-            bytes memory callData = bytes(transactions[i].signature).length == 0
-                ? transactions[i].data
-                : abi.encodePacked(bytes4(keccak256(bytes(transactions[i].signature))), transactions[i].data);
-
             // Execute the transaction
             (
                 bool success, /* bytes memory returnData */
 
-            ) = transactions[i].target.call{value: transactions[i].value}(callData);
+            ) = transactions[i].target.call{value: transactions[i].value}(transactions[i].data);
             require(success, "Timelock: Transaction execution reverted.");
 
-            emit ExecutedTransaction(
-                txParamsHash,
-                transactions[i].target,
-                transactions[i].value,
-                transactions[i].signature,
-                transactions[i].data,
-                eta
-            );
+            emit ExecutedTransaction(txParamsHash, transactions[i].target, transactions[i].value, transactions[i].data, eta);
         }
     }
 

@@ -90,13 +90,11 @@ describe("Timelock", () => {
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
       ];
@@ -161,13 +159,11 @@ describe("Timelock", () => {
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
       ];
@@ -214,7 +210,6 @@ describe("Timelock", () => {
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(0)).data as string
         }
       ];
@@ -345,13 +340,11 @@ describe("Timelock", () => {
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
       ];
@@ -438,7 +431,6 @@ describe("Timelock", () => {
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(0)).data as string
         }
       ];
@@ -494,13 +486,11 @@ describe("Timelock", () => {
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
           target: flipper.address,
           value: 0,
-          signature: "",
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
       ];
