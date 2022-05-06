@@ -6,13 +6,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Timelock is Ownable {
     enum TransactionStatus {
-        NonExistent,
+        NonExistent, // 0 is what you get from a non-existent transaction (which you can get e.g. from a mapping)
         Queued,
         Approved
     }
 
     struct Transaction {
-        address target;
+        address recipient;
         uint256 value;
         bytes data;
     }
@@ -29,7 +29,7 @@ contract Timelock is Ownable {
     event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
     event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
-    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed target, uint256 value, bytes data, uint256 eta);
+    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 eta);
     event NewProposerSet(address indexed previousProposer, address indexed newProposer);
     event NewDelaySet(uint256 indexed delay);
 
@@ -131,14 +131,13 @@ contract Timelock is Ownable {
         delete queuedTransactions[txParamsHash];
 
         for (uint256 i = 0; i < transactions.length; i++) {
-            // Execute the transaction
             (
-                bool success, /* bytes memory returnData */
+                bool success, /* ignore the rest */
 
-            ) = transactions[i].target.call{value: transactions[i].value}(transactions[i].data);
+            ) = transactions[i].recipient.call{value: transactions[i].value}(transactions[i].data);
             require(success, "Timelock: Transaction execution reverted.");
 
-            emit ExecutedTransaction(txParamsHash, transactions[i].target, transactions[i].value, transactions[i].data, eta);
+            emit ExecutedTransaction(txParamsHash, transactions[i].recipient, transactions[i].value, transactions[i].data, eta);
         }
     }
 

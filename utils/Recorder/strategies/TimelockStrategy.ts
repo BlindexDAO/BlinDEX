@@ -3,7 +3,7 @@ import { ContractReceipt, ContractTransaction, UnsignedTransaction } from "ether
 import { Timelock } from "../../../typechain";
 
 type QueuedTransaction = {
-  target: string;
+  recipient: string;
   value: number | string;
   signature: string;
   data: string;
@@ -31,7 +31,7 @@ export class TimelockStrategy implements Strategy {
     while (txsToExecute.length > 0) {
       const toAdd = txsToExecute.shift() as UnsignedTransaction;
       toSend.push({
-        target: toAdd.to as string,
+        recipient: toAdd.to as string,
         value: 0,
         signature: "",
         data: toAdd.data as string

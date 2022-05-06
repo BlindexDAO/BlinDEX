@@ -4,7 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Timelock__factory } from "../typechain";
 
 export type QueuedTransaction = {
-  target: string;
+  recipient: string;
   value: number;
   data: string;
 };
@@ -36,7 +36,7 @@ export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hr
   const contractInterface = await Timelock__factory.createInterface();
   const decodedTxData = contractInterface.decodeFunctionData("queueTransactionsBatch", txData);
   const decodedQueuedTransactions = (decodedTxData.transactions as QueuedTransaction[]).map(x => ({
-    target: x.target,
+    recipient: x.recipient,
     value: x.value,
     data: x.data
   }));
@@ -44,7 +44,7 @@ export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hr
 
   const encoder = new AbiCoder();
   const txParamsData = encoder.encode(
-    [ParamType.from("Transaction(address target, uint256 value, bytes data)[]"), "uint"],
+    [ParamType.from("Transaction(address recipient, uint256 value, bytes data)[]"), "uint"],
     [decodedQueuedTransactions, decodedEta]
   );
 

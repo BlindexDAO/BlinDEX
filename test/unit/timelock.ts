@@ -88,12 +88,12 @@ describe("Timelock", () => {
       await deploy();
       queuedTransactions = [
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
@@ -157,12 +157,12 @@ describe("Timelock", () => {
       await deploy();
       queuedTransactions = [
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
@@ -208,7 +208,7 @@ describe("Timelock", () => {
 
       queuedTransactions = [
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(0)).data as string
         }
@@ -338,12 +338,12 @@ describe("Timelock", () => {
 
       queuedTransactions = [
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
@@ -429,7 +429,7 @@ describe("Timelock", () => {
       await deploy();
       queuedTransactions = [
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(0)).data as string
         }
@@ -484,12 +484,12 @@ describe("Timelock", () => {
     it("Should queue", async () => {
       queuedTransactions = [
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(0)).data as string
         },
         {
-          target: flipper.address,
+          recipient: flipper.address,
           value: 0,
           data: (await flipper.populateTransaction.flip(1)).data as string
         }
