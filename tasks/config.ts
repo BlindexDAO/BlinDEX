@@ -109,26 +109,19 @@ export function load() {
 
   task("show:fe-config").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    console.log("1");
     const allStables = await getAllBDStables(hre);
-    console.log("2");
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stables = await getStablesConfig(hre);
-    console.log("3");
     const swaps = await getSwapsConfig(hre, deployer);
-    console.log("4");
     const stakings = await getStakingsConfig(hre);
-    console.log("5");
     const weth = await getWeth(hre);
     const bdx = await getBdx(hre);
-    console.log("6");
     const erc20Info = await getErc20Info(
       hre,
       stables.map(x => x.address),
       swaps.map(x => x.address)
     );
-    console.log("7");
 
     const blockchainConfig = {
       STABLES: stables,
