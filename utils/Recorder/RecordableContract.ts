@@ -5,7 +5,7 @@ import { Recorder } from "./Recorder";
 // to record a transaction call recordableContract.record.METHOD_NAME(parameters)
 export class RecordableContract<T extends Contract> extends Contract {
   record = {
-    self: this // this is needed to this calss members from besing overridden in constructor
+    self: this // this is needed to this class members from being overridden in the constructor
   } as unknown as T;
 
   // it's used through this.self.recerder
