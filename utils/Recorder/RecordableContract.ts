@@ -1,8 +1,8 @@
 import { Contract } from "ethers";
 import { Recorder } from "./Recorder";
 
-// Extended Contract class that allows for simple transaction recording to Recorder class
-// to record a transaction call recordableContract.record.METHOD_NAME(parameters)
+// Extended Contract class that allows for simple transaction recording to Recorder class.
+// To record a transaction, just use: recordableContract.record.METHOD_NAME(parameters)
 export class RecordableContract<T extends Contract> extends Contract {
   record = {
     self: this // this is needed to this class members from being overridden in the constructor
