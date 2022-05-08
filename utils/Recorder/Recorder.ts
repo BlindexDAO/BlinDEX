@@ -41,7 +41,7 @@ export class Recorder {
 }
 
 type DefaultRecorderParams = {
-  etaDays: number | null;
+  executionStartInDays: number | null;
   singer: SignerWithAddress | null;
 };
 
@@ -60,15 +60,15 @@ export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: De
 export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
-  const days = params?.etaDays ?? 14;
+  const days = params?.executionStartInDays ?? 14;
 
   const secondsInDay = 60 * 60 * 24;
-  const eta = timestamp + days * secondsInDay + 100;
+  const executionStartTimestamp = timestamp + days * secondsInDay + 100;
 
   const timelockRecorder = new Recorder(
     new TimelockStrategy({
       timelock: await getTimelock(hre),
-      etaSeconds: eta
+      executionStartTimestamp: executionStartTimestamp
     })
   );
 

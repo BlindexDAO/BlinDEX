@@ -17,18 +17,18 @@ export enum TransactionStatus {
 
 export function decodeQueueTransactionsBatchParams(decodedTxData: Result) {
   const decodedQueuedTransactions = decodedTxData.transactions as QueuedTransaction[];
-  const decodedEta = decodedTxData.eta as BigNumber;
+  const decodedExecutionStartTimestamp = decodedTxData.executionStartTimestamp as BigNumber;
 
-  return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
+  return { queuedTransactions: decodedQueuedTransactions, executionStartTimestamp: decodedExecutionStartTimestamp };
 }
 
 export async function decodeTimelockQueuedTransactions(hre: HardhatRuntimeEnvironment, txHash: string) {
   const txData = (await hre.ethers.provider.getTransaction(txHash)).data;
   const decodedTxData = await Timelock__factory.createInterface().decodeFunctionData("queueTransactionsBatch", txData);
   const decodedQueuedTransactions = decodedTxData.transactions as QueuedTransaction[];
-  const decodedEta = decodedTxData.eta as BigNumber;
+  const decodEdexecutionStartTimestamp = decodedTxData.executionStartTimestamp as BigNumber;
 
-  return { queuedTransactions: decodedQueuedTransactions, eta: decodedEta };
+  return { queuedTransactions: decodedQueuedTransactions, executionStartTimestamp: decodEdexecutionStartTimestamp };
 }
 
 export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre: HardhatRuntimeEnvironment, txHash: string) {
@@ -40,12 +40,12 @@ export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hr
     value: x.value,
     data: x.data
   }));
-  const decodedEta = decodedTxData.eta as BigNumber;
+  const decodedExecutionStartTimestamp = decodedTxData.executionStartTimestamp as BigNumber;
 
   const encoder = new AbiCoder();
   const txParamsData = encoder.encode(
     [ParamType.from("Transaction(address recipient, uint256 value, bytes data)[]"), "uint"],
-    [decodedQueuedTransactions, decodedEta]
+    [decodedQueuedTransactions, decodedExecutionStartTimestamp]
   );
 
   const txParamsHash = hre.ethers.utils.keccak256(txParamsData);

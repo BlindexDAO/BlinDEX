@@ -64,7 +64,7 @@ export function load() {
     const pools = await getPools(hre);
 
     const deployer = await getDeployer(hre);
-    const recorder = await defaultTimelockRecorder(hre, { etaDays: null, singer: deployer });
+    const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, singer: deployer });
     for (const pool of pools) {
       const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
       await oracle.record.transferOwnership(deployer.address);
@@ -94,7 +94,7 @@ export function load() {
       const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
 
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
+      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp)).wait();
     });
 
   task("update:all")
@@ -104,7 +104,7 @@ export function load() {
     .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
       const signer = await getBot(hre);
 
-      const recorder = await defaultRecorder(hre, { etaDays: null, singer: signer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
 
       if (hre.network.name === "rsk") {
         console.log("starting sovryn swap price oracles updates");
@@ -146,7 +146,7 @@ export function load() {
 
       const signer = await getBot(hre);
 
-      const recorder = await defaultRecorder(hre, { etaDays: null, singer: signer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
 
       const oracleBtcEth = toRc((await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed, recorder);
       await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
@@ -165,7 +165,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
 
       const oracleEurUsd = toRc(
         (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
@@ -191,7 +191,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
 
       const oracleEurUsd = toRc(
         (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
@@ -206,7 +206,7 @@ export function load() {
 
   task("reset:uniswap-oracles").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
 
     await recordResetUniswapPairsOracles(hre, recorder);
 
@@ -215,7 +215,7 @@ export function load() {
 
   task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
 
     await recordUpdateUniswapPairsOracles(hre, recorder);
 
@@ -261,7 +261,7 @@ export function load() {
       const pools = await getPools(hre);
 
       const deployer = await getDeployer(hre);
-      const recorder = await defaultRecorder(hre, { etaDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
 
       console.log("setting consultLeniency to: " + newVal);
 

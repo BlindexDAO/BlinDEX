@@ -26,10 +26,10 @@ contract Timelock is Ownable {
 
     mapping(bytes32 => TransactionStatus) public queuedTransactions;
 
-    event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
+    event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 executionStartTimestamp);
     event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
-    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 eta);
+    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 executionStartTimestamp);
     event NewProposerSet(address indexed previousProposer, address indexed newProposer);
     event NewDelaySet(uint256 indexed delay);
 
@@ -68,18 +68,18 @@ contract Timelock is Ownable {
         emit NewDelaySet(executionDelay);
     }
 
-    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyProposer returns (bytes32) {
+    function queueTransactionsBatch(Transaction[] memory transactions, uint256 executionStartTimestamp) external onlyProposer returns (bytes32) {
         //todo ag hmm... do we really want it this way? we definitely want 0 delay on local deployment
-        require(eta >= block.timestamp + executionDelay, "Timelock: Estimated execution time must satisfy delay.");
+        require(executionStartTimestamp >= block.timestamp + executionDelay, "Timelock: Estimated execution time must satisfy delay.");
         require(
-            eta <= block.timestamp + executionDelay + executionGracePeriod,
+            executionStartTimestamp <= block.timestamp + executionDelay + executionGracePeriod,
             "Timelock: Estimated execution time must satisfy delay and grace period."
         );
 
-        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, executionStartTimestamp));
         queuedTransactions[txParamsHash] = TransactionStatus.Queued;
 
-        emit QueuedTransactionsBatch(txParamsHash, transactions.length, eta);
+        emit QueuedTransactionsBatch(txParamsHash, transactions.length, executionStartTimestamp);
         return txParamsHash;
     }
 
@@ -95,23 +95,23 @@ contract Timelock is Ownable {
         _approveTransactionsBatchInternal(txParamsHash);
     }
 
-    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
-        _executeTransactionsBatchInternal(transactions, eta);
+    function executeTransactionsBatch(Transaction[] memory transactions, uint256 executionStartTimestamp) external payable onlyOwner {
+        _executeTransactionsBatchInternal(transactions, executionStartTimestamp);
     }
 
-    function approveAndExecuteTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
-        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+    function approveAndExecuteTransactionsBatch(Transaction[] memory transactions, uint256 executionStartTimestamp) external payable onlyOwner {
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, executionStartTimestamp));
 
         _approveTransactionsBatchInternal(txParamsHash);
-        _executeTransactionsBatchInternal(transactions, eta);
+        _executeTransactionsBatchInternal(transactions, executionStartTimestamp);
     }
 
     function approveAndExecuteTransactionsBatchRaw(bytes calldata txParamsData) external payable onlyOwner {
         bytes32 txParamsHash = keccak256(txParamsData);
-        (Transaction[] memory transactions, uint256 eta) = abi.decode(txParamsData, (Transaction[], uint256));
+        (Transaction[] memory transactions, uint256 executionStartTimestamp) = abi.decode(txParamsData, (Transaction[], uint256));
 
         _approveTransactionsBatchInternal(txParamsHash);
-        _executeTransactionsBatchInternal(transactions, eta);
+        _executeTransactionsBatchInternal(transactions, executionStartTimestamp);
     }
 
     function _approveTransactionsBatchInternal(bytes32 txParamsHash) internal onlyOwner {
@@ -122,12 +122,12 @@ contract Timelock is Ownable {
         emit ApprovedTransactionsBatch(txParamsHash);
     }
 
-    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal {
-        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 executionStartTimestamp) internal {
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, executionStartTimestamp));
 
         require(queuedTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
-        require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed the execution delay.");
-        require(block.timestamp <= eta + executionGracePeriod, "Timelock: Transaction is stale.");
+        require(block.timestamp >= executionStartTimestamp, "Timelock: Transaction hasn't surpassed the execution delay.");
+        require(block.timestamp <= executionStartTimestamp + executionGracePeriod, "Timelock: Transaction is stale.");
 
         delete queuedTransactions[txParamsHash];
 
@@ -138,7 +138,7 @@ contract Timelock is Ownable {
             ) = transactions[i].recipient.call{value: transactions[i].value}(transactions[i].data);
             require(success, "Timelock: Transaction execution reverted.");
 
-            emit ExecutedTransaction(txParamsHash, transactions[i].recipient, transactions[i].value, transactions[i].data, eta);
+            emit ExecutedTransaction(txParamsHash, transactions[i].recipient, transactions[i].value, transactions[i].data, executionStartTimestamp);
         }
     }
 

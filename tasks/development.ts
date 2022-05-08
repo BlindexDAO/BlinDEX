@@ -297,12 +297,12 @@ export function load() {
       const blockBefore = await hre.ethers.provider.getBlock("latest");
       const timestamp = blockBefore.timestamp;
 
-      const eta = timestamp + 60 * 60; // now + 1h
+      const executionStartTimestamp = timestamp + 60 * 60; // now + 1h
 
       const recorder = new Recorder(
         new TimelockStrategy({
           timelock: timelock,
-          etaSeconds: eta
+          executionStartTimestamp: executionStartTimestamp
         })
       );
 
