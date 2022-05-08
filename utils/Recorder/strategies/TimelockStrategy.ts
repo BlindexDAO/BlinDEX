@@ -5,7 +5,6 @@ import { Timelock } from "../../../typechain";
 type QueuedTransaction = {
   recipient: string;
   value: number | string;
-  signature: string;
   data: string;
 };
 
@@ -33,7 +32,6 @@ export class TimelockStrategy implements Strategy {
       toSend.push({
         recipient: toAdd.to as string,
         value: 0,
-        signature: "",
         data: toAdd.data as string
       });
     }

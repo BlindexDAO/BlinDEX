@@ -19,12 +19,12 @@ contract Timelock is Ownable {
 
     uint256 public minimumDelay;
     uint256 public maximumDelay;
+    uint256 public delay;
     uint256 public gracePeriod;
 
-    mapping(bytes32 => TransactionStatus) public queuedTransactions;
-
     address public proposer;
-    uint256 public delay;
+
+    mapping(bytes32 => TransactionStatus) public queuedTransactions;
 
     event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
     event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
@@ -40,7 +40,6 @@ contract Timelock is Ownable {
         uint256 _gracePeriod,
         uint256 _delay
     ) {
-        require(_proposer != address(0), "Proposer's address cannot be 0");
         require(_minimumDelay <= _maximumDelay, "The minimum delay cannot be larger than the maximum delay");
 
         minimumDelay = _minimumDelay;
@@ -48,11 +47,10 @@ contract Timelock is Ownable {
         gracePeriod = _gracePeriod;
 
         setDelay(_delay);
-
-        proposer = _proposer;
+        setProposer(_proposer);
     }
 
-    function setProposer(address _proposer) external onlyOwner {
+    function setProposer(address _proposer) public onlyOwner {
         require(_proposer != address(0), "Proposer address cannot be 0");
 
         address previousProposer = proposer;
@@ -70,7 +68,7 @@ contract Timelock is Ownable {
         emit NewDelaySet(delay);
     }
 
-    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyProposerOrOwner returns (bytes32) {
+    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyProposer returns (bytes32) {
         //todo ag hmm... do we really want it this way? we definitely want 0 delay on local deployment
         require(eta >= block.timestamp + delay, "Timelock: Estimated execution time must satisfy delay.");
         require(eta <= block.timestamp + delay + gracePeriod, "Timelock: Estimated execution time must satisfy delay and grace period.");
@@ -82,7 +80,7 @@ contract Timelock is Ownable {
         return txParamsHash;
     }
 
-    function cancelTransactionsBatch(bytes32 txParamsHash) external onlyProposerOrOwner {
+    function cancelTransactionsBatch(bytes32 txParamsHash) external onlyOwner {
         require(queuedTransactions[txParamsHash] != TransactionStatus.NonExistent, "Timelock: transaction is not queued");
 
         delete queuedTransactions[txParamsHash];
@@ -94,7 +92,7 @@ contract Timelock is Ownable {
         _approveTransactionsBatchInternal(txParamsHash);
     }
 
-    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyProposerOrOwner {
+    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
         _executeTransactionsBatchInternal(transactions, eta);
     }
 
@@ -141,8 +139,8 @@ contract Timelock is Ownable {
         }
     }
 
-    modifier onlyProposerOrOwner() {
-        require(msg.sender == proposer || msg.sender == owner(), "Timelock: only proposer or owner can perform this action");
+    modifier onlyProposer() {
+        require(msg.sender == proposer, "Timelock: only proposer can perform this action");
         _;
     }
 }
