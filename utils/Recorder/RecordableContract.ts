@@ -25,7 +25,7 @@ export class RecordableContract<T extends Contract> extends Contract {
         throw "contract has a function with name that is protected";
       }
 
-      /* eslint-disable  @typescript-eslint/no-explicit-any */
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
       (this.record as any)[fnKeys[i]] = async function (...args: any[]) {
         const toRecord = await this.self.populateTransaction[fnKeys[i]](...args);
         this.self.recorder.record(toRecord);
