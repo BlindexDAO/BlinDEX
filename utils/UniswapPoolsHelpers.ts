@@ -88,7 +88,6 @@ export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: strin
 
 export function sortUniswapPairTokens(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenBSymbol: string) {
   // Logic form UniswapV2Factory.createPair()
-  // TODO verify on RSK if we have to lowercase addresses
 
   const retRes =
     Number(tokenAAddress) < Number(tokenBAddress)
