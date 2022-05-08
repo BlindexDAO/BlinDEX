@@ -316,7 +316,7 @@ export function load() {
       await recordableFlipper.record.flip(1);
 
       const receipts = await recorder.execute();
-      const { txParamsHash, txHash } = await extractTxParamsHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
+      const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
       const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
 
       console.log("txHash:", txHash);
