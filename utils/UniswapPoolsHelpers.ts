@@ -44,6 +44,7 @@ export async function recordResetUniswapPairsOracles(hre: HardhatRuntimeEnvironm
   console.log("finished recording reseting oracles");
 }
 
+// TODO - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
 export async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
   console.log("starting reseting oracles");
 
