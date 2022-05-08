@@ -123,7 +123,7 @@ contract Timelock is Ownable {
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
         require(queuedTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
-        require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed time lock.");
+        require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed the start signing time.");
         require(block.timestamp <= eta + gracePeriod, "Timelock: Transaction is stale.");
 
         delete queuedTransactions[txParamsHash];
