@@ -71,7 +71,7 @@ export function load() {
     }
 
     const receipt = await recorder.execute();
-    const { txParamsHash, txHash } = await extractTxParamsHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
+    const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
     const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
 
     console.log("txHash:", txHash);
