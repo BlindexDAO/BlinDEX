@@ -91,7 +91,7 @@ export function load() {
     .addPositionalParam("txHash", "Transaction blockchain hash")
     .setAction(async ({ timelockaddress, txHash }, hre) => {
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
-      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
       await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp)).wait();
