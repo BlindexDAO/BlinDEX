@@ -79,6 +79,7 @@ export async function recordResetOracle(hre: HardhatRuntimeEnvironment, symbol0:
   await oracle.record.reset();
 }
 
+// TODO - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
 export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string) {
   const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
 
