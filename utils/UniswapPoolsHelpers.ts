@@ -38,7 +38,7 @@ export async function recordResetUniswapPairsOracles(hre: HardhatRuntimeEnvironm
 
   for (const pool of pools) {
     await recordResetOracle(hre, pool[0].name, pool[1].name, recorder);
-    console.log(`record reset ${pool[0].name} / ${pool[1].name}`);
+    console.log(`recorded resetting: ${pool[0].name} / ${pool[1].name}`);
   }
 
   console.log("finished recording reseting oracles");
