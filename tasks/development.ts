@@ -383,6 +383,6 @@ export function load() {
 
       console.log("Owner:", await timelock.owner());
       console.log("Proposer:", await timelock.proposer());
-      console.log("Delay (s):", (await timelock.delay()).toNumber());
+      console.log("Delay (s):", (await timelock.executionDelay()).toNumber());
     });
 }

@@ -62,7 +62,7 @@ describe("Timelock", () => {
       const state1 = await flipper.state(1);
       const state2 = await flipper.state(2);
       const flipperOwner = await flipper.owner();
-      const delay = await timelock.delay();
+      const delay = await timelock.executionDelay();
       const timelockProposer = await timelock.proposer();
       const timelockOwner = await timelock.owner();
 
@@ -264,7 +264,7 @@ describe("Timelock", () => {
 
       await expectToFail(
         () => timelock.connect(owner).approveAndExecuteTransactionsBatch(queuedTransactions, eta),
-        "Timelock: Transaction hasn't surpassed time lock."
+        "Timelock: Transaction hasn't surpassed the execution delay."
       );
 
       await simulateTimeElapseInSeconds(INITIAL_DELAY_SECONDS + MARGIN_SECONDS);
@@ -394,7 +394,7 @@ describe("Timelock", () => {
 
       await expectToFail(
         () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
-        "Timelock: Transaction hasn't surpassed time lock."
+        "Timelock: Transaction hasn't surpassed the execution delay."
       );
     });
 

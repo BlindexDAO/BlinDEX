@@ -70,7 +70,7 @@ describe("Execute with timelock", () => {
 
     await expectToFail(
       () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),
-      "Timelock: Transaction hasn't surpassed time lock."
+      "Timelock: Transaction hasn't surpassed the execution delay."
     );
     await simulateTimeElapseInSeconds(delay + timeBetweenEtaAndExecution);
 

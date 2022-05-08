@@ -18,9 +18,9 @@ contract Timelock is Ownable {
     }
 
     uint256 public minimumDelay;
-    uint256 public maximumDelay;
-    uint256 public delay;
-    uint256 public gracePeriod;
+    uint256 public maximumExecutionDelay;
+    uint256 public executionDelay;
+    uint256 public executionGracePeriod;
 
     address public proposer;
 
@@ -36,17 +36,17 @@ contract Timelock is Ownable {
     constructor(
         address _proposer,
         uint256 _minimumDelay,
-        uint256 _maximumDelay,
+        uint256 _maximumExecutionDelay,
         uint256 _gracePeriod,
-        uint256 _delay
+        uint256 _executionDelay
     ) {
-        require(_minimumDelay <= _maximumDelay, "The minimum delay cannot be larger than the maximum delay");
+        require(_minimumDelay <= _maximumExecutionDelay, "The minimum delay cannot be larger than the maximum execution delay");
 
         minimumDelay = _minimumDelay;
-        maximumDelay = _maximumDelay;
-        gracePeriod = _gracePeriod;
+        maximumExecutionDelay = _maximumExecutionDelay;
+        executionGracePeriod = _gracePeriod;
 
-        setDelay(_delay);
+        setExecutionDelay(_executionDelay);
         setProposer(_proposer);
     }
 
@@ -59,19 +59,22 @@ contract Timelock is Ownable {
         emit NewProposerSet(previousProposer, proposer);
     }
 
-    function setDelay(uint256 _delay) public onlyOwner {
-        require(_delay >= minimumDelay, "Timelock: Delay must exceed minimum delay.");
-        require(_delay <= maximumDelay, "Timelock: Delay must not exceed maximum delay.");
+    function setExecutionDelay(uint256 _executionDelay) public onlyOwner {
+        require(_executionDelay >= minimumDelay, "Timelock: Delay must exceed minimum delay.");
+        require(_executionDelay <= maximumExecutionDelay, "Timelock: Delay must not exceed maximum execution delay.");
 
-        delay = _delay;
+        executionDelay = _executionDelay;
 
-        emit NewDelaySet(delay);
+        emit NewDelaySet(executionDelay);
     }
 
     function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyProposer returns (bytes32) {
         //todo ag hmm... do we really want it this way? we definitely want 0 delay on local deployment
-        require(eta >= block.timestamp + delay, "Timelock: Estimated execution time must satisfy delay.");
-        require(eta <= block.timestamp + delay + gracePeriod, "Timelock: Estimated execution time must satisfy delay and grace period.");
+        require(eta >= block.timestamp + executionDelay, "Timelock: Estimated execution time must satisfy delay.");
+        require(
+            eta <= block.timestamp + executionDelay + executionGracePeriod,
+            "Timelock: Estimated execution time must satisfy delay and grace period."
+        );
 
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
         queuedTransactions[txParamsHash] = TransactionStatus.Queued;
@@ -123,8 +126,8 @@ contract Timelock is Ownable {
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
         require(queuedTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
-        require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed the start signing time.");
-        require(block.timestamp <= eta + gracePeriod, "Timelock: Transaction is stale.");
+        require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed the execution delay.");
+        require(block.timestamp <= eta + executionGracePeriod, "Timelock: Transaction is stale.");
 
         delete queuedTransactions[txParamsHash];
 
