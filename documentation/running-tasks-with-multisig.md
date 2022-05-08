@@ -97,6 +97,6 @@ Now log in Gnosis safe and start the approval / execution procedure. (`Send` -> 
 
    2. `approveTransactionsBatch`
 
-      - This will only approve the transaction batch. You will have to execute is (as `timelock proposer` manually from terminal), using: `task("execute-timelock-transaction")`.
+      - This will only approve the transaction batch. You will have to execute it (as `timelock proposer` manually from terminal), using: `task("execute-timelock-transaction")`.
 
 Remember it's a Timelock contract and it has time constraints. You **can approve**, but you **cannot execute** a transaction before ETA. After ETA you only have the grace priod (configured in Timelock contract) to execute the transaction.
