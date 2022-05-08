@@ -18,7 +18,7 @@ export class Recorder {
     this.strategy = strategy_;
   }
 
-  // pushes an unsigned transaction (the paprameter) to the recordedTransaction List
+  // pushes an unsigned transaction (the parameter) to the recordedTransaction List
   record(transaction: UnsignedTransaction) {
     this.recordedTransactions.push(transaction);
   }
