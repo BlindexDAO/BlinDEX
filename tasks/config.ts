@@ -13,7 +13,8 @@ import {
   getWbtc,
   getBDStableChainlinkPriceFeed,
   bdStablesContractsDetails,
-  getBdxCirculatingSupplyIgnoreAddresses
+  getBdxCirculatingSupplyIgnoreAddresses,
+  formatAddress
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -79,7 +80,6 @@ export function load() {
       };
     });
 
-    const networkName = hre.network.name.toUpperCase();
     const chainId = +(await hre.getChainId());
 
     const blockchainConfig = {
@@ -87,7 +87,7 @@ export function load() {
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
       ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
-      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? chainSpecificComponents[networkName].sovrynNetwork : undefined,
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? chainSpecificComponents[hre.network.name].sovrynNetwork : undefined,
       ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
       ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
       ["AVAILABLE_PAIRS"]: swapPairs,
@@ -102,26 +102,33 @@ export function load() {
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
     );
     console.log("=================================================");
-    console.log(`Config for: ${networkName}, chainId: ${chainId}`);
+    console.log(`Config for: ${hre.network.name}, chainId: ${chainId}`);
     console.log("=================================================\n");
     console.log(cleanStringify(blockchainConfig));
   });
 
   task("show:fe-config").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
+    console.log("1");
     const allStables = await getAllBDStables(hre);
+    console.log("2");
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
     const stables = await getStablesConfig(hre);
+    console.log("3");
     const swaps = await getSwapsConfig(hre, deployer);
+    console.log("4");
     const stakings = await getStakingsConfig(hre);
+    console.log("5");
     const weth = await getWeth(hre);
     const bdx = await getBdx(hre);
+    console.log("6");
     const erc20Info = await getErc20Info(
       hre,
       stables.map(x => x.address),
       swaps.map(x => x.address)
     );
+    console.log("7");
 
     const blockchainConfig = {
       STABLES: stables,
@@ -333,7 +340,7 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
+      ...EXTERNAL_SUPPORTED_TOKENS.map(token => formatAddress(hre, token[hre.network.name].address)),
       ...stablesAddresses,
       ...swapsAddresses
     ];
