@@ -17,7 +17,7 @@ contract Timelock is Ownable {
         bytes data;
     }
 
-    uint256 public minimumDelay;
+    uint256 public minimumExecutionDelay;
     uint256 public maximumExecutionDelay;
     uint256 public executionDelay;
     uint256 public executionGracePeriod;
@@ -31,7 +31,10 @@ contract Timelock is Ownable {
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
     event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 executionStartTimestamp);
     event NewProposerSet(address indexed previousProposer, address indexed newProposer);
-    event NewDelaySet(uint256 indexed delay);
+    event NewExecutionDelaySet(uint256 indexed delay);
+    event NewMinimumExecutionDelaySet(uint256 indexed delay);
+    event NewMaximumExecutionDelaySet(uint256 indexed delay);
+    event NewExecutionGracePeriodSet(uint256 indexed delay);
 
     constructor(
         address _proposer,
@@ -42,7 +45,7 @@ contract Timelock is Ownable {
     ) {
         require(_minimumDelay <= _maximumExecutionDelay, "The minimum delay cannot be larger than the maximum execution delay");
 
-        minimumDelay = _minimumDelay;
+        minimumExecutionDelay = _minimumDelay;
         maximumExecutionDelay = _maximumExecutionDelay;
         executionGracePeriod = _gracePeriod;
 
@@ -59,13 +62,38 @@ contract Timelock is Ownable {
         emit NewProposerSet(previousProposer, proposer);
     }
 
+    function setMinimumExecutionDelay(uint256 _minimumExecutionDelay) public onlyOwner {
+        //todo ag tests
+        require(_minimumExecutionDelay >= 3600 * 24, "Timelock: Minimum execution delay must exceed 1 day.");
+
+        minimumExecutionDelay = _minimumExecutionDelay;
+
+        emit NewMinimumExecutionDelaySet(minimumExecutionDelay);
+    }
+
+    function setMaximumExecutionDelay(uint256 _maximumExecutionDelay) public onlyOwner {
+        //todo ag tests
+        require(_maximumExecutionDelay >= minimumExecutionDelay, "Timelock: Maximum execution delay cannot be lesser than minimum execution delay.");
+
+        maximumExecutionDelay = _maximumExecutionDelay;
+
+        emit NewMaximumExecutionDelaySet(_maximumExecutionDelay);
+    }
+
+    function setExecutionGracePeriod(uint256 _executionGracePeriod) public onlyOwner {
+        //todo ag tests
+        executionGracePeriod = _executionGracePeriod;
+
+        emit NewExecutionGracePeriodSet(_executionGracePeriod);
+    }
+
     function setExecutionDelay(uint256 _executionDelay) public onlyOwner {
-        require(_executionDelay >= minimumDelay, "Timelock: Delay must exceed minimum delay.");
-        require(_executionDelay <= maximumExecutionDelay, "Timelock: Delay must not exceed maximum execution delay.");
+        require(_executionDelay >= minimumExecutionDelay, "Timelock: Execution delay must exceed minimum execution delay.");
+        require(_executionDelay <= maximumExecutionDelay, "Timelock: Execution delay must not exceed maximum execution delay.");
 
         executionDelay = _executionDelay;
 
-        emit NewDelaySet(executionDelay);
+        emit NewExecutionDelaySet(executionDelay);
     }
 
     function queueTransactionsBatch(Transaction[] memory transactions, uint256 executionStartTimestamp) external onlyProposer returns (bytes32) {
