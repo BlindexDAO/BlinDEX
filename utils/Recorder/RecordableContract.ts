@@ -9,7 +9,7 @@ export class RecordableContract<T extends Contract> extends Contract {
   } as unknown as T;
 
   // it's used through this.self.recerder
-  private recorder: Recorder; // eslint-disable-line @typescript-eslint/no-unused-vars
+  private recorder: Recorder;
 
   constructor(contract: T, recorder_: Recorder) {
     super(contract.address, contract.interface, contract.provider !== undefined ? contract.provider : contract.signer);
