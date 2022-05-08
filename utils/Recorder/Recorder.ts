@@ -31,7 +31,7 @@ export class Recorder {
     this.recordedTransactions = [];
     this.executedTransactions.concat(response);
 
-    console.log("Executed transactions:", transactionsToExecuteCount);
+    console.log(`${transactionsToExecuteCount} transactions were executed`);
     return response;
   }
 
