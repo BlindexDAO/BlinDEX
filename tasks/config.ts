@@ -87,7 +87,7 @@ export function load() {
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
       ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
-      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? chainSpecificComponents[hre.network.name].sovrynNetwork : undefined,
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainSpecificComponents[hre.network.name].sovrynNetwork,
       ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
       ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
       ["AVAILABLE_PAIRS"]: swapPairs,
