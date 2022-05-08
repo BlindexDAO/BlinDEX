@@ -171,7 +171,7 @@ contract Timelock is Ownable {
     }
 
     modifier onlyProposer() {
-        require(msg.sender == proposer, "Timelock: only proposer can perform this action");
+        require(msg.sender == proposer, "Timelock: only the proposer can perform this action");
         _;
     }
 }
