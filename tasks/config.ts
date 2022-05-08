@@ -33,7 +33,6 @@ import {
   SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
   PriceFeedContractNames,
-  chainIds,
   chainSpecificComponents,
   EXTERNAL_SUPPORTED_TOKENS,
   SECONDARY_EXTERNAL_USD_STABLE
