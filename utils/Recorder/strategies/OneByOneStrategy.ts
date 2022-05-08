@@ -4,7 +4,7 @@ import { UnsignedTransaction } from "ethers";
 import { Deferrable } from "ethers/lib/utils";
 import { TransactionRequest } from "@ethersproject/abstract-provider";
 
-//Strategy specific params
+// Strategy specific params
 export type OneByOneStrategyParams = {
   signer: Signer;
 };
