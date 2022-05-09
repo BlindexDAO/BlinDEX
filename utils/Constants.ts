@@ -24,7 +24,7 @@ export const EXTERNAL_USD_STABLE: SupportedERC20Token = {
 // TODO: Do we really need it when Blindex doesn't host the DEX?
 export const SECONDARY_EXTERNAL_USD_STABLE: SupportedERC20Token = {
   mainnetFork: { symbol: "DAI", address: "0x6B175474E89094C44Da98b954EedeAC495271d0F", decimals: 18 },
-  rsk: { symbol: "DOC", address: "0xE700691Da7B9851F2F35f8b8182C69C53ccad9DB", decimals: 18 }
+  rsk: { symbol: "DOC", address: "0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db", decimals: 18 }
 };
 
 export const EXTERNAL_SUPPORTED_TOKENS = [EXTERNAL_USD_STABLE, SECONDARY_EXTERNAL_USD_STABLE];
