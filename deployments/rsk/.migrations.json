@@ -15,5 +15,6 @@
   "/BlinDEX/deploy/10_1_gold_gbp_stablecoins.ts": 1650279727,
   "/BlinDEX/deploy/10_2_deploy_gold_gbp_liquidity_pools.ts": 1650280170,
   "/BlinDEX/deploy/10_3_deploy_gold_gbp_staking_rewards.ts": 1650280955,
-  "/BlinDEX/deploy/10_4_deploy_gold_gbp_price_feeds.ts": 1650282622
+  "/BlinDEX/deploy/10_4_deploy_gold_gbp_price_feeds.ts": 1650282622,
+  "/BlinDEX/deploy/11_add_bdus_doc_pool.ts": 1652019391
 }
