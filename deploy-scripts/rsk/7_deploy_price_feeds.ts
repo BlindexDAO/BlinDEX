@@ -1,6 +1,6 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import * as constants from "../utils/Constants";
+import * as constants from "../../utils/Constants";
 import {
   formatAddress,
   getBdEu,
@@ -10,9 +10,9 @@ import {
   getBot,
   getDeployer,
   getWethPairOracle
-} from "../utils/DeployedContractsHelpers";
+} from "../../utils/DeployedContractsHelpers";
 import type { DeployResult } from "hardhat-deploy/dist/types";
-import { to_d12 } from "../utils/NumbersHelpers";
+import { to_d12 } from "../../utils/NumbersHelpers";
 
 const PriceFeedContractNames = {
   EUR_USD: "PriceFeed_EUR_USD",

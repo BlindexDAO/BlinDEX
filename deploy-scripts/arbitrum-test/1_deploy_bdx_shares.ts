@@ -1,34 +1,35 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
+import { tokensDetails } from "../deploy-scripts-constants";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  console.log("starting deployment: bdx");
+  console.log(`Starting deployment of: ${tokensDetails.bdx.symbol}`);
 
   const deployer = (await hre.getNamedAccounts()).DEPLOYER;
 
-  const bdx_proxy = await hre.deployments.deploy("BDX", {
+  const bdx_proxy = await hre.deployments.deploy(tokensDetails.bdx.symbol, {
     from: deployer,
     proxy: {
       proxyContract: "OptimizedTransparentProxy",
       execute: {
         init: {
           methodName: "initialize",
-          args: ["Blindex Shares", "BDX"]
+          args: [tokensDetails.bdx.name, tokensDetails.bdx.symbol]
         }
       }
     },
-    contract: "BDXShares",
+    contract: tokensDetails.bdx.contract,
     args: []
   });
 
-  console.log("BDX deployed to:", bdx_proxy.address);
+  console.log(`${tokensDetails.bdx.symbol} deployed to: ${bdx_proxy.address}`);
 
-  console.log("finished deployment: bdx");
+  console.log(`finished deployment: ${tokensDetails.bdx.symbol}`);
 
   // One time migration
   return true;
 };
 func.id = __filename;
 func.tags = ["BDX"];
-func.dependencies = ["Timelock"];
+func.dependencies = [];
 export default func;

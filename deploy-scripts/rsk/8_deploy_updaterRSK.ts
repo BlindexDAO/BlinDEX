@@ -1,7 +1,7 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import * as constants from "../utils/Constants";
-import { getBot, getDeployer } from "../utils/DeployedContractsHelpers";
+import * as constants from "../../utils/Constants";
+import { getBot, getDeployer } from "../../utils/DeployedContractsHelpers";
 import type { DeployResult } from "hardhat-deploy/dist/types";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
