@@ -1,7 +1,7 @@
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, formatAddress } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
 import { getListOfSupportedLiquidityPools } from "../utils/Constants";
 
@@ -86,15 +86,15 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const secondaryExternalUsdStable = constants.SECONDARY_EXTERNAL_USD_STABLE[hre.network.name];
   const secondaryExternalUsdStableContract = (await hre.ethers.getContractAt(
     "IERC20",
-    hre.ethers.utils.getAddress(secondaryExternalUsdStable.address)
+    hre.ethers.utils.getAddress(formatAddress(hre, secondaryExternalUsdStable.address))
   )) as IERC20;
-  const secondaryEexternalUsdStablePoolData = { name: secondaryExternalUsdStable.symbol, token: secondaryExternalUsdStableContract };
+  const secondaryExternalUsdStablePoolData = { name: secondaryExternalUsdStable.symbol, token: secondaryExternalUsdStableContract };
 
   const tokenToPoolTokenData: { [symbol: string]: PoolTokenData } = {
     ["WETH"]: wethPoolData,
     ["WBTC"]: wbtcPoolData,
     [externalUsdStable.symbol]: externalUsdStablePoolData,
-    [secondaryExternalUsdStable.symbol]: secondaryEexternalUsdStablePoolData,
+    [secondaryExternalUsdStable.symbol]: secondaryExternalUsdStablePoolData,
     [bdxSymbol]: bdxPoolData
   };
 
