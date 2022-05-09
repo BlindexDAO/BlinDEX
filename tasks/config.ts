@@ -332,14 +332,14 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      ...EXTERNAL_SUPPORTED_TOKENS.map(token => formatAddress(hre, token[hre.network.name].address)),
+      ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
       ...stablesAddresses,
       ...swapsAddresses
     ];
 
     const contractsData = await Promise.all(
       addresses.map(async address => {
-        const contact = (await hre.ethers.getContractAt("ERC20", address)) as ERC20;
+        const contact = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, address))) as ERC20;
 
         return {
           address: address,
