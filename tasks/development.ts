@@ -30,24 +30,24 @@ import { toRc } from "../utils/Recorder/RecordableContract";
 import { extractTimelockQueuedTransactionsBatchParamsDataAndHash, extractTxParamsHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
 
 export function load() {
-  task("mine-block", "", async (args_, hre_) => {
+  task("dev:mine-block", "", async (args_, hre_) => {
     await mineBlock();
   });
 
-  task("move-time-by-days")
+  task("dev:move-time-by-days")
     .addPositionalParam("days")
     .setAction(async ({ days }, hre_) => {
       await simulateTimeElapseInDays(days);
     });
 
-  task("mint-wrbtc-rsk", "", async (args_, hre) => {
+  task("dev:mint-wrbtc-rsk", "", async (args_, hre) => {
     const treasury = await getTreasury(hre);
     const wrbtc = await getWethConcrete(hre);
 
     await (await wrbtc.connect(treasury).deposit({ value: to_d18(0.001) })).wait();
   });
 
-  task("slow-down-mining", "Slows down mining on local fork", async (args, hre) => {
+  task("dev:slow-down-mining", "Slows down mining on local fork", async (args, hre) => {
     if (hre.network.name !== "mainnetFork") {
       throw new Error("this task can run only on mainnetFork");
     }
@@ -55,14 +55,14 @@ export function load() {
     await hre.ethers.provider.send("evm_setIntervalMining", [60000]);
   });
 
-  task("speed-up-mining", "Speeds up mining on local fork", async (args, hre) => {
+  task("dev:speed-up-mining", "Speeds up mining on local fork", async (args, hre) => {
     if (hre.network.name !== "mainnetFork") {
       throw new Error("this task can run only on mainnetFork");
     }
     await hre.ethers.provider.send("evm_setAutomine", [true]);
   });
 
-  task("mine-one-block", "Mine one block on local fork", async (args, hre) => {
+  task("dev:mine-one-block", "Mine one block on local fork", async (args, hre) => {
     if (hre.network.name !== "mainnetFork") {
       throw new Error("this task can run only on mainnetFork");
     }
@@ -71,7 +71,7 @@ export function load() {
     console.log("blockNumber after mine", await hre.ethers.provider.getBlockNumber());
   });
 
-  task("accounts", "Prints the list of accounts", async (args, hre) => {
+  task("dev:accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 
     for (const account of accounts) {
@@ -79,7 +79,7 @@ export function load() {
     }
   });
 
-  task("test:dir")
+  task("dev:test:dir")
     .addFlag("deployFixture", "run the global fixture before tests")
     .addPositionalParam("testDir", "Directory with *.ts files. Sholud end with '/'")
     .setAction(async ({ testDir, noCompile, deployFixture }, { run }) => {
@@ -96,7 +96,7 @@ export function load() {
       await run("test", { testFiles, noCompile, deployFixture });
     });
 
-  task("npm-package", "Packages type definitions and abis into npm package").setAction(async () => {
+  task("dev:npm-package", "Packages type definitions and abis into npm package").setAction(async () => {
     try {
       rimraf.sync("./package");
     } catch {
@@ -123,7 +123,7 @@ export function load() {
     });
   });
 
-  task("setup:account").setAction(async (args, hre) => {
+  task("dev:setup:account").setAction(async (args, hre) => {
     // send ether
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -146,7 +146,7 @@ export function load() {
     await hre.ethers.provider.send("hardhat_stopImpersonatingAccount", [bigDaiHolder]);
   });
 
-  task("setup:feed-test-user")
+  task("dev:setup:feed-test-user")
     .addPositionalParam("address", "receiver address")
     .setAction(async ({ address }, hre) => {
       const deployer = await getDeployer(hre);
@@ -162,7 +162,7 @@ export function load() {
       await (await wbtc.transfer(address, to_d8(1))).wait();
     });
 
-  task("setup:test-user-balance-ag").setAction(async (args, hre) => {
+  task("dev:setup:test-user-balance-ag").setAction(async (args, hre) => {
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
     const bdx = await getBdx(hre);
@@ -176,11 +176,11 @@ export function load() {
     console.log("bdeu: " + (await bdeu.balanceOf(testUserAddress)));
   });
 
-  task("simulateTimeElapse").setAction(async () => {
+  task("dev:simulateTimeElapse").setAction(async () => {
     await simulateTimeElapseInSeconds(3600 * 24 * 365 * 6);
   });
 
-  task("show:sovryn-swap-prices").setAction(async (args, hre) => {
+  task("dev:show:sovryn-swap-prices").setAction(async (args, hre) => {
     async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
       const swapNetwork = (await hre.ethers.getContractAt(
         "ISovrynSwapNetwork",
@@ -369,7 +369,7 @@ export function load() {
       console.log("Flipper state[2] before:", await flipper.state(2));
     });
 
-  task("timelock:show")
+  task("dev:timelock:show")
     .addPositionalParam("timelockaddress")
     .setAction(async ({ timelockaddress }, hre) => {
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
