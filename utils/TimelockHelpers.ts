@@ -1,6 +1,7 @@
 import { BigNumber, ContractReceipt } from "ethers";
 import { AbiCoder, ParamType, Result } from "ethers/lib/utils";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { extractTheOnlyEvent } from "./ExtractingEvents";
 import { Timelock__factory } from "../typechain";
 
 export type QueuedTransaction = {
@@ -31,7 +32,10 @@ export async function decodeTimelockQueuedTransactions(hre: HardhatRuntimeEnviro
   return { queuedTransactions: decodedQueuedTransactions, eta: decodEta };
 }
 
-export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre: HardhatRuntimeEnvironment, txHash: string) {
+export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(
+  hre: HardhatRuntimeEnvironment,
+  txHash: string
+): Promise<{ txParamsData: string; txParamsHash: string }> {
   const txData = (await hre.ethers.provider.getTransaction(txHash)).data;
   const contractInterface = await Timelock__factory.createInterface();
   const decodedTxData = contractInterface.decodeFunctionData("queueTransactionsBatch", txData);
@@ -53,30 +57,17 @@ export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(hr
   return { txParamsData, txParamsHash };
 }
 
-export function extractTxParamsHashAndTxHashFromSingleTransaction(receipts: ContractReceipt[], eventName: string) {
+export function extractTxParamsHashAndTxHashFromSingleTransaction(
+  receipts: ContractReceipt[],
+  eventName: string
+): { txParamsHash: string; txHash: string } {
   if (receipts.length !== 1) {
     throw new Error(`Unexpected amount of receipts. Received: ${receipts.length}, expected: 1`);
   }
 
   const receipt = receipts[0];
 
-  if (!receipt.events) {
-    throw new Error("Missing events");
-  }
-
-  const transactionsBatchEvents = receipt.events.filter(x => {
-    return x.event === eventName;
-  });
-
-  if (transactionsBatchEvents.length === 0) {
-    throw new Error(`Missing event: ${eventName}`);
-  }
-
-  if (transactionsBatchEvents.length > 1) {
-    throw new Error(`More than 1 event: ${eventName}`);
-  }
-
-  const theOnlyTransactionsBatchEvent = transactionsBatchEvents[0];
+  const theOnlyTransactionsBatchEvent = extractTheOnlyEvent(receipt, eventName);
 
   if (!theOnlyTransactionsBatchEvent.args) {
     throw new Error(`Event: ${eventName} is missing args`);
@@ -88,7 +79,7 @@ export function extractTxParamsHashAndTxHashFromSingleTransaction(receipts: Cont
     throw new Error(`Missing txParamsHash`);
   }
 
-  const txHash = receipt.events.filter(x => x.event === eventName)[0].transactionHash as string;
+  const txHash = theOnlyTransactionsBatchEvent.transactionHash as string;
 
   if (!txHash) {
     throw new Error(`Missing txHash`);

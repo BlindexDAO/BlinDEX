@@ -33,7 +33,7 @@ contract Timelock is Ownable {
     event NewExecutionDelaySet(uint256 indexed delay);
     event NewMinimumExecutionDelaySet(uint256 indexed delay);
     event NewMaximumExecutionDelaySet(uint256 indexed delay);
-    event NewExecutionGracePeriodSet(uint256 indexed delay);
+    event NewExecutionGracePeriodSet(uint256 indexed gracePeriod);
 
     constructor(
         address _proposer,
@@ -59,7 +59,6 @@ contract Timelock is Ownable {
     }
 
     function setMinimumExecutionDelay(uint256 _minimumExecutionDelay) public onlyOwner {
-        //todo ag tests
         require(_minimumExecutionDelay >= 3600 * 24, "Timelock: Minimum execution delay must be >= 1 day.");
 
         minimumExecutionDelay = _minimumExecutionDelay;
@@ -68,7 +67,6 @@ contract Timelock is Ownable {
     }
 
     function setMaximumExecutionDelay(uint256 _maximumExecutionDelay) public onlyOwner {
-        //todo ag tests
         require(_maximumExecutionDelay >= minimumExecutionDelay, "Timelock: Maximum execution delay cannot be lesser than minimum execution delay.");
 
         maximumExecutionDelay = _maximumExecutionDelay;
@@ -77,7 +75,6 @@ contract Timelock is Ownable {
     }
 
     function setExecutionGracePeriod(uint256 _executionGracePeriod) public onlyOwner {
-        //todo ag tests
         executionGracePeriod = _executionGracePeriod;
 
         emit NewExecutionGracePeriodSet(_executionGracePeriod);

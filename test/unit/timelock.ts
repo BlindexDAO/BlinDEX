@@ -18,6 +18,7 @@ import { expectEvent, expectToFail } from "../helpers/common";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
+import { extractTheOnlyEvent } from "../../utils/ExtractingEvents";
 
 chai.use(cap);
 chai.use(solidity);
@@ -74,6 +75,62 @@ describe("Timelock", () => {
     });
   });
 
+  describe("Setters", async () => {
+    before("deploy contracts", async () => {
+      await deploy();
+    });
+
+    let minimumExecutionDelay: number;
+
+    it("Set execution minimum delay", async () => {
+      minimumExecutionDelay = 1 * DAY;
+
+      await expectToFail(
+        () => timelock.connect(owner).setMinimumExecutionDelay(minimumExecutionDelay - 1),
+        "Timelock: Minimum execution delay must be >= 1 day."
+      );
+
+      await expectToFail(() => timelock.connect(proposer).setMinimumExecutionDelay(minimumExecutionDelay), "Ownable: caller is not the owner");
+
+      const receipt = await (await timelock.connect(owner).setMinimumExecutionDelay(minimumExecutionDelay)).wait();
+      const event = extractTheOnlyEvent(receipt, "NewMinimumExecutionDelaySet");
+
+      expect(event.args?.delay).to.eq(minimumExecutionDelay);
+      expect(await timelock.minimumExecutionDelay()).to.eq(minimumExecutionDelay);
+    });
+
+    it("Set execution maximum delay", async () => {
+      await expectToFail(
+        () => timelock.connect(owner).setMaximumExecutionDelay(minimumExecutionDelay - 1),
+        "Timelock: Maximum execution delay cannot be lesser than minimum execution delay."
+      );
+
+      await expectToFail(() => timelock.connect(proposer).setMaximumExecutionDelay(minimumExecutionDelay), "Ownable: caller is not the owner");
+
+      await timelock.connect(owner).setMaximumExecutionDelay(minimumExecutionDelay);
+
+      const maximumExecutionDelay = minimumExecutionDelay + 1;
+
+      const receipt = await (await timelock.connect(owner).setMaximumExecutionDelay(maximumExecutionDelay)).wait();
+      const event = extractTheOnlyEvent(receipt, "NewMaximumExecutionDelaySet");
+
+      expect(event.args?.delay).to.eq(maximumExecutionDelay);
+      expect(await timelock.maximumExecutionDelay()).to.eq(maximumExecutionDelay);
+    });
+
+    it("Set execution grace period", async () => {
+      const gracePeriod = 2 * DAY;
+
+      await expectToFail(() => timelock.connect(proposer).setExecutionGracePeriod(gracePeriod), "Ownable: caller is not the owner");
+
+      const receipt = await (await timelock.connect(owner).setExecutionGracePeriod(gracePeriod)).wait();
+      const event = extractTheOnlyEvent(receipt, "NewExecutionGracePeriodSet");
+
+      expect(event.args?.gracePeriod).to.eq(gracePeriod);
+      expect(await timelock.executionGracePeriod()).to.eq(gracePeriod);
+    });
+  });
+
   describe("Queueing transaction", async () => {
     let queuedTransactions: QueuedTransaction[] = [];
 
@@ -106,7 +163,7 @@ describe("Timelock", () => {
 
       await expectToFail(
         () => timelock.connect(user).queueTransactionsBatch(queuedTransactions, eta),
-        "Timelock: only proposer can perform this action"
+        "Timelock: only the proposer can perform this action"
       );
     });
 
