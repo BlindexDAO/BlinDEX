@@ -23,7 +23,9 @@ chai.use(cap);
 chai.use(solidity);
 
 const DAY = 86400;
-const INITIAL_DELAY_SECONDS = 2 * DAY;
+const EXECUTION_DELAY = 2 * DAY;
+const MIN_DELAY = EXECUTION_DELAY;
+const MAX_DELAY = 30 * DAY;
 const MARGIN_SECONDS = 10;
 const GRACE_PERIOD_SECONDS = 14 * DAY;
 
@@ -40,13 +42,7 @@ describe("Timelock", () => {
     flipper = (await flipperFactory.deploy()) as Flipper;
     await flipper.deployed();
     const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
-    timelock = (await timeLockFactory.deploy(
-      proposer.address,
-      0, // min dealy
-      30 * DAY, // max delay
-      GRACE_PERIOD_SECONDS,
-      INITIAL_DELAY_SECONDS
-    )) as Timelock;
+    timelock = (await timeLockFactory.deploy(proposer.address, MIN_DELAY, MAX_DELAY, GRACE_PERIOD_SECONDS)) as Timelock;
 
     await timelock.deployed();
     await flipper.transferOwnership(timelock.address);
@@ -62,7 +58,6 @@ describe("Timelock", () => {
       const state1 = await flipper.state(1);
       const state2 = await flipper.state(2);
       const flipperOwner = await flipper.owner();
-      const delay = await timelock.executionDelay();
       const timelockProposer = await timelock.proposer();
       const timelockOwner = await timelock.owner();
 
@@ -72,7 +67,6 @@ describe("Timelock", () => {
       expect(flipperOwner).to.equal(timelock.address);
       expect(timelockOwner).to.equal(owner.address);
       expect(timelockProposer).to.equal(proposer.address);
-      expect(delay).to.equal(BigNumber.from(INITIAL_DELAY_SECONDS));
     });
 
     it("Flipping should fail when called not by proposer", async () => {
@@ -99,50 +93,48 @@ describe("Timelock", () => {
       ];
     });
 
-    it("Queueing transaction by owner with proper executionStartTimestamp should not fail", async () => {
+    it("Queueing transaction by owner with proper eta should not fail", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp);
+      await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta);
     });
 
-    it("Queueing transaction by user with proper executionStartTimestamp should fail", async () => {
+    it("Queueing transaction by user with proper eta should fail", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY));
 
       await expectToFail(
-        () => timelock.connect(user).queueTransactionsBatch(queuedTransactions, executionStartTimestamp),
+        () => timelock.connect(user).queueTransactionsBatch(queuedTransactions, eta),
         "Timelock: only proposer can perform this action"
       );
     });
 
-    it("Queueing transaction by proposer with executionStartTimestamp before delay should fail", async () => {
+    it("Queueing transaction by proposer with eta before minimum delay should fail", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS - MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY - MARGIN_SECONDS));
 
       await expectToFail(
-        () => timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp),
+        () => timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta),
         "Timelock: Estimated execution time must satisfy delay."
       );
     });
 
-    it("Queueing transaction by proposer with executionStartTimestamp after delay and grace period should fail", async () => {
+    it("Queueing transaction by proposer with eta after max delay and grace period should fail", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(
-        BigNumber.from(INITIAL_DELAY_SECONDS).add(BigNumber.from(GRACE_PERIOD_SECONDS).add(MARGIN_SECONDS))
-      );
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY).add(BigNumber.from(MAX_DELAY).add(1)));
 
       await expectToFail(
-        () => timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp),
-        "Timelock: Estimated execution time must satisfy delay and grace period."
+        () => timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta),
+        "Timelock: Estimated execution time must satisfy delay."
       );
     });
 
-    it("Queueing transaction by proposer with proper executionStartTimestamp should work", async () => {
+    it("Queueing transaction by proposer with proper eta should work", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const tx: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp);
+      const tx: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta);
       const receipt: ContractReceipt = await tx.wait();
       expectEvent(receipt, "QueuedTransactionsBatch");
       const dataFromReceipt = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
@@ -172,9 +164,9 @@ describe("Timelock", () => {
         }
       ];
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const tx: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp);
+      const tx: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta);
       const receipt: ContractReceipt = await tx.wait();
       ({ txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch"));
     });
@@ -221,19 +213,19 @@ describe("Timelock", () => {
 
     it("Should execute as owner", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp)).wait();
+      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta)).wait();
       const { txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
       const flipperBefore = await flipper.state(0);
 
       await timelock.connect(owner).approveTransactionsBatch(txParamsHash);
 
-      await simulateTimeElapseInSeconds(INITIAL_DELAY_SECONDS + MARGIN_SECONDS);
+      await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
 
       expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
-      await timelock.connect(owner).executeTransactionsBatch(queuedTransactions, executionStartTimestamp);
+      await timelock.connect(owner).executeTransactionsBatch(queuedTransactions, eta);
       expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
@@ -242,9 +234,9 @@ describe("Timelock", () => {
 
     it("Should cancel as owner", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp)).wait();
+      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta)).wait();
       const { txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
       const flipperBefore = await flipper.state(0);
@@ -259,22 +251,22 @@ describe("Timelock", () => {
 
     it("Should approve and execute at the same time as owner", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp)).wait();
+      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta)).wait();
       const { txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
       await expectToFail(
-        () => timelock.connect(owner).approveAndExecuteTransactionsBatch(queuedTransactions, executionStartTimestamp),
+        () => timelock.connect(owner).approveAndExecuteTransactionsBatch(queuedTransactions, eta),
         "Timelock: Transaction hasn't surpassed the execution delay."
       );
 
-      await simulateTimeElapseInSeconds(INITIAL_DELAY_SECONDS + MARGIN_SECONDS);
+      await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
 
       const flipperBefore = await flipper.state(0);
 
       expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
-      await timelock.connect(owner).approveAndExecuteTransactionsBatch(queuedTransactions, executionStartTimestamp);
+      await timelock.connect(owner).approveAndExecuteTransactionsBatch(queuedTransactions, eta);
       expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
@@ -283,12 +275,12 @@ describe("Timelock", () => {
 
     it("Should approve and execute raw tx data at the same time as owner", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp)).wait();
+      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta)).wait();
       const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
-      await simulateTimeElapseInSeconds(INITIAL_DELAY_SECONDS + MARGIN_SECONDS);
+      await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
 
       const flipperBefore = await flipper.state(0);
       expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
@@ -303,20 +295,20 @@ describe("Timelock", () => {
 
     it("Should not approve and execute at the same time as proposer", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
       await expectToFail(
-        () => timelock.connect(proposer).approveAndExecuteTransactionsBatch(queuedTransactions, executionStartTimestamp),
+        () => timelock.connect(proposer).approveAndExecuteTransactionsBatch(queuedTransactions, eta),
         "Ownable: caller is not the owner"
       );
     });
 
     it("Should not approve and execute at the same time as user", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
       await expectToFail(
-        () => timelock.connect(user).approveAndExecuteTransactionsBatch(queuedTransactions, executionStartTimestamp),
+        () => timelock.connect(user).approveAndExecuteTransactionsBatch(queuedTransactions, eta),
         "Ownable: caller is not the owner"
       );
     });
@@ -325,13 +317,13 @@ describe("Timelock", () => {
   describe("Executing transaction", async () => {
     let firstTransactionDataHash: string;
     let firstTransactionHash: string;
-    let firstTransactionexecutionStartTimestamp: BigNumber;
-    const firstexecutionStartTimestampDaysFromNow = 3;
+    let firstTransactionEta: BigNumber;
+    const firstExecutionDelayDaysFromNow = 3;
 
     let secondTransactionDataHash: string;
     let secondTransactionHash: string;
-    let secondTransactionexecutionStartTimestamp: BigNumber;
-    const differenceBetweenFirstexecutionStartTimestampAndSecondInDays = 1;
+    let secondTransactionEta: BigNumber;
+    const differenceBetweenFirstExecutionDelayAndSecondInDays = 1;
 
     let queuedTransactions: QueuedTransaction[] = [];
 
@@ -352,23 +344,21 @@ describe("Timelock", () => {
       ];
 
       const timestamp = (await hre.ethers.provider.getBlock("latest")).timestamp;
-      // at least one from properties (queuedTransactions, executionStartTimestamp) has to differ between transactions
+      // at least one from properties (queuedTransactions, eta) has to differ between transactions
       // because otherwise they end up having the same data hash and approve on either approves 1st one
-      firstTransactionexecutionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(firstexecutionStartTimestampDaysFromNow * DAY));
+      firstTransactionEta = BigNumber.from(timestamp).add(BigNumber.from(firstExecutionDelayDaysFromNow * DAY));
 
-      const firstTransaction: ContractTransaction = await timelock
-        .connect(proposer)
-        .queueTransactionsBatch(queuedTransactions, firstTransactionexecutionStartTimestamp);
+      const firstTransaction: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, firstTransactionEta);
       const firstReceipt: ContractReceipt = await firstTransaction.wait();
       ({ txParamsHash: firstTransactionDataHash } = extractTxParamsHashAndTxHashFromSingleTransaction([firstReceipt], "QueuedTransactionsBatch"));
       firstTransactionHash = firstTransaction.hash;
 
-      secondTransactionexecutionStartTimestamp = BigNumber.from(timestamp).add(
-        BigNumber.from((firstexecutionStartTimestampDaysFromNow + differenceBetweenFirstexecutionStartTimestampAndSecondInDays) * DAY)
+      secondTransactionEta = BigNumber.from(timestamp).add(
+        BigNumber.from((firstExecutionDelayDaysFromNow + differenceBetweenFirstExecutionDelayAndSecondInDays) * DAY)
       );
       const secondTransaction: ContractTransaction = await timelock
         .connect(proposer)
-        .queueTransactionsBatch(queuedTransactions, secondTransactionexecutionStartTimestamp);
+        .queueTransactionsBatch(queuedTransactions, secondTransactionEta);
       const secondReceipt: ContractReceipt = await secondTransaction.wait();
       ({ txParamsHash: secondTransactionDataHash } = extractTxParamsHashAndTxHashFromSingleTransaction([secondReceipt], "QueuedTransactionsBatch"));
       secondTransactionHash = secondTransaction.hash;
@@ -380,7 +370,7 @@ describe("Timelock", () => {
     it("Executing approved transaction by user should fail", async () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
-        () => timelock.connect(user).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp),
+        () => timelock.connect(user).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Ownable: caller is not the owner"
       );
     });
@@ -388,29 +378,27 @@ describe("Timelock", () => {
     it("Executing approved transaction by proposer should fail", async () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
-        () => timelock.connect(proposer).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp),
+        () => timelock.connect(proposer).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Ownable: caller is not the owner"
       );
     });
 
-    it("Executing approved transaction by owner before executionStartTimestamp should fail", async () => {
+    it("Executing approved transaction by owner before eta should fail", async () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
 
       await expectToFail(
-        () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp),
+        () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: Transaction hasn't surpassed the execution delay."
       );
     });
 
     it("Simluate time elase", async () => {
-      await simulateTimeElapseInSeconds(firstexecutionStartTimestampDaysFromNow * DAY);
+      await simulateTimeElapseInSeconds(firstExecutionDelayDaysFromNow * DAY);
     });
 
     it("Executing approved transaction by owner should work", async () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
-      const tx = await timelock
-        .connect(owner)
-        .executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp);
+      const tx = await timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
       const receipt: ContractReceipt = await tx.wait();
 
       expectEvent(receipt, "ExecutedTransaction");
@@ -424,16 +412,16 @@ describe("Timelock", () => {
     it("Owner cannot execute not approved transaction", async () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
-        () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp),
+        () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: Transaction hasn't been approved."
       );
     });
 
-    it("Executing approved transaction by owner after executionStartTimestamp grace period should fail", async () => {
-      await simulateTimeElapseInSeconds(GRACE_PERIOD_SECONDS + differenceBetweenFirstexecutionStartTimestampAndSecondInDays * DAY); // wait for after executionStartTimestamp - blockchain time was already moved by firstexecutionStartTimestampDaysFromNow in previous tests
+    it("Executing approved transaction by owner after eta grace period should fail", async () => {
+      await simulateTimeElapseInSeconds(GRACE_PERIOD_SECONDS + differenceBetweenFirstExecutionDelayAndSecondInDays * DAY); // wait for after eta - blockchain time was already moved by firstExecutionDelayDaysFromNow in previous tests
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, secondTransactionHash);
       await expectToFail(
-        () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp),
+        () => timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
         "Timelock: Transaction is stale."
       );
     });
@@ -454,9 +442,9 @@ describe("Timelock", () => {
       ];
 
       const timestamp = (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(EXECUTION_DELAY + MARGIN_SECONDS);
 
-      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp)).wait();
+      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta)).wait();
       ({ txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch"));
     });
 
@@ -514,9 +502,9 @@ describe("Timelock", () => {
         }
       ];
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS + MARGIN_SECONDS));
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
-      const tx: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, executionStartTimestamp);
+      const tx: ContractTransaction = await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta);
       const receipt: ContractReceipt = await tx.wait();
       ({ txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch"));
       txHash = tx.hash;
@@ -528,11 +516,8 @@ describe("Timelock", () => {
 
     it("Proposer cannot execute unapproved transaction", async () => {
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
-      const executionStartTimestamp = BigNumber.from(timestamp).add(BigNumber.from(INITIAL_DELAY_SECONDS));
-      await expectToFail(
-        () => timelock.executeTransactionsBatch(queuedTransactions, executionStartTimestamp),
-        "Timelock: Transaction hasn't been approved."
-      );
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY));
+      await expectToFail(() => timelock.executeTransactionsBatch(queuedTransactions, eta), "Timelock: Transaction hasn't been approved.");
     });
 
     it("Owner can approve transaction", async () => {
@@ -546,10 +531,10 @@ describe("Timelock", () => {
     });
 
     it("Owner can execute a transaction", async () => {
-      await simulateTimeElapseInSeconds(INITIAL_DELAY_SECONDS + MARGIN_SECONDS); // wait for executionStartTimestamp
+      await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS); // wait for eta
 
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp);
+      await timelock.connect(owner).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
 
       expect(await flipper.state(0)).to.be.equal(true, "invalid state[0]");
       expect(await flipper.state(1)).to.be.equal(true, "invalid state[1]");
@@ -574,13 +559,13 @@ describe("Timelock", () => {
       // 1.1 speify strategy-speific params
       const blockBefore = await hre.ethers.provider.getBlock("latest");
       const timestamp = blockBefore.timestamp;
-      const executionStartTimestamp = timestamp + 3 * DAY + 100;
+      const eta = timestamp + 3 * DAY + 100;
 
       // 2. initialize Recorder with a strategy
       const recorder: Recorder = new Recorder(
         new TimelockStrategy({
           timelock: timelock.connect(proposer),
-          executionStartTimestamp: executionStartTimestamp
+          eta: eta
         })
       );
 
@@ -611,7 +596,7 @@ describe("Timelock", () => {
       await simulateTimeElapseInSeconds(3 * DAY + 100);
 
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp);
+      await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta);
 
       expect(await flipper.state(0)).to.be.equal(true);
       expect(await flipper.state(1)).to.be.equal(true);

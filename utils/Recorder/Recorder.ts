@@ -63,12 +63,12 @@ export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, pa
   const days = params?.executionStartInDays ?? 14;
 
   const secondsInDay = 60 * 60 * 24;
-  const executionStartTimestamp = timestamp + days * secondsInDay + 100;
+  const eta = timestamp + days * secondsInDay + 100;
 
   const timelockRecorder = new Recorder(
     new TimelockStrategy({
       timelock: await getTimelock(hre),
-      executionStartTimestamp: executionStartTimestamp
+      eta: eta
     })
   );
 

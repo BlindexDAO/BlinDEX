@@ -11,7 +11,7 @@ type QueuedTransaction = {
 //Strategy specific params
 export type TimelockParams = {
   timelock: Timelock;
-  executionStartTimestamp: number;
+  eta: number;
 };
 
 // Implementation of Strategy.interface
@@ -35,7 +35,7 @@ export class TimelockStrategy implements Strategy {
         data: toAdd.data as string
       });
     }
-    const tx: ContractTransaction = await this.params.timelock.queueTransactionsBatch(toSend, this.params.executionStartTimestamp);
+    const tx: ContractTransaction = await this.params.timelock.queueTransactionsBatch(toSend, this.params.eta);
     const receipt: ContractReceipt = await tx.wait();
 
     return [receipt];

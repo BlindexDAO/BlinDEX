@@ -94,7 +94,7 @@ export function load() {
       const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
 
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.executionStartTimestamp)).wait();
+      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
 
   task("update:all")

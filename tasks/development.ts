@@ -234,13 +234,7 @@ export function load() {
 
       const day = 3600 * 24;
 
-      const timelock = (await timeLockFactory.connect(deployer).deploy(
-        proposer,
-        0,
-        30 * day,
-        14 * day,
-        5 * 60 // 5 min initial delay
-      )) as Timelock;
+      const timelock = (await timeLockFactory.connect(deployer).deploy(proposer, 1 * day, 30 * day, 14 * day)) as Timelock;
 
       await timelock.deployed();
 
@@ -297,12 +291,12 @@ export function load() {
       const blockBefore = await hre.ethers.provider.getBlock("latest");
       const timestamp = blockBefore.timestamp;
 
-      const executionStartTimestamp = timestamp + 60 * 60; // now + 1h
+      const eta = timestamp + 60 * 60; // now + 1h
 
       const recorder = new Recorder(
         new TimelockStrategy({
           timelock: timelock,
-          executionStartTimestamp: executionStartTimestamp
+          eta: eta
         })
       );
 
@@ -383,6 +377,5 @@ export function load() {
 
       console.log("Owner:", await timelock.owner());
       console.log("Proposer:", await timelock.proposer());
-      console.log("Delay (s):", (await timelock.executionDelay()).toNumber());
     });
 }
