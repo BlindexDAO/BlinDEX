@@ -1,7 +1,7 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import { getWeth, getUniswapFactory, getBxau, getBgbp, getBdx } from "../utils/DeployedContractsHelpers";
-import { deployPairOracle } from "../utils/DeploymentHelpers";
+import { getWeth, getUniswapFactory, getBxau, getBgbp, getBdx } from "../../utils/DeployedContractsHelpers";
+import { deployPairOracle } from "../../utils/DeploymentHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Starting deployment: liquidity pools");

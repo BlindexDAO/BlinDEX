@@ -1,6 +1,6 @@
 import type { DeployFunction } from "hardhat-deploy/types";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { getBdx, getDeployer } from "../../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: vesting");

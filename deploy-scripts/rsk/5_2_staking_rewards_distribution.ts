@@ -1,9 +1,9 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
-import * as constants from "../utils/Constants";
-import { to_d18 } from "../utils/NumbersHelpers";
-import { getBdx, getTreasury, getVesting } from "../utils/DeployedContractsHelpers";
+import type { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
+import * as constants from "../../utils/Constants";
+import { to_d18 } from "../../utils/NumbersHelpers";
+import { getBdx, getTreasury, getVesting } from "../../utils/DeployedContractsHelpers";
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: staking rewards distribution");

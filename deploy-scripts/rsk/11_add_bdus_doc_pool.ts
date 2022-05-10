@@ -1,8 +1,8 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import * as constants from "../utils/Constants";
-import { formatAddress, getBdUs, getUniswapFactory } from "../utils/DeployedContractsHelpers";
-import { deployPairOracle, setupStakingContract } from "../utils/DeploymentHelpers";
+import * as constants from "../../utils/Constants";
+import { formatAddress, getBdUs, getUniswapFactory } from "../../utils/DeployedContractsHelpers";
+import { deployPairOracle, setupStakingContract } from "../../utils/DeploymentHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: BDUS-DOC");

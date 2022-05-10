@@ -27,6 +27,7 @@ import "hardhat-gas-reporter";
 import * as path from "path";
 import hardhatCompileConfig from "./hardhat.compile.config";
 import { chainIds } from "./utils/Constants";
+import { chainsDeployScriptsFolders } from "./deploy-scripts/deploy-scripts-constants";
 
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
@@ -59,7 +60,8 @@ const config: HardhatUserConfig = {
     mainnetFork: {
       url: "http://localhost:8545",
       timeout: 60000,
-      gas: 10_000_000
+      gas: 10_000_000,
+      deploy: chainsDeployScriptsFolders[chainIds.mainnetFork]
     },
     arbitrumTestnet: {
       // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
@@ -68,14 +70,16 @@ const config: HardhatUserConfig = {
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 60000,
       gasPrice: 2,
-      chainId: chainIds.arbitrumTestnet
+      chainId: chainIds.arbitrumTestnet,
+      deploy: chainsDeployScriptsFolders[chainIds.arbitrumTestnet]
     },
     rsk: {
       url: "https://public-node.rsk.co",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 6_000_000,
       gasPrice: 79240000,
-      chainId: chainIds.rsk
+      chainId: chainIds.rsk,
+      deploy: chainsDeployScriptsFolders[chainIds.rsk]
     }
   },
   solidity: hardhatCompileConfig.solidity,
