@@ -128,6 +128,7 @@ export async function setUpFunctionalSystem(
   let wbtcDecimals;
   const verbose = !forIntegrationTests;
 
+  // TODO: Multichain - What should we do here for other chains?
   if (hre.network.name === "rsk") {
     wethDecimals = 18;
     wbtcDecimals = 18;

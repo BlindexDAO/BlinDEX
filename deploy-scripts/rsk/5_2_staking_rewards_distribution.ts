@@ -13,6 +13,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   const bdx = await getBdx(hre);
   const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
 
+  // For RSK we were able to do this because back then the treasury wasn't in a multisig
   await (await bdx.connect(treasury).transfer(stakingRewardsDistribution.address, to_d18(21).mul(1e6).div(2))).wait();
 
   console.log("Fed Staking Rewards Distribution");
@@ -21,8 +22,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await getBdx(hre);
   const vesting = await getVesting(hre);
-  const treasuryAddress =
-    hre.network.name.toLocaleLowerCase() === "rsk" ? constants.multisigTreasuryAddress[hre.network.name] : (await getTreasury(hre)).address;
+  const treasuryAddress = hre.network.name === "mainnetFork" ? (await getTreasury(hre)).address : constants.treasuryAddresses[hre.network.name];
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy("StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER,

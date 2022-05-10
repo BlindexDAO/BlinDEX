@@ -14,7 +14,8 @@ import {
   getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
   getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
   getFiatToFiat_EurUsd,
-  getTokenData
+  getTokenData,
+  getBlindexUpdater
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -26,7 +27,6 @@ import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
 import type { IPriceFeed } from "../typechain/IPriceFeed";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
@@ -128,7 +128,7 @@ export function load() {
       console.log("starting the updater");
 
       const bot = await getBot(hre);
-      const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+      const updater = await getBlindexUpdater(hre, bot);
 
       const uniOracles = [];
       const pools = await getPools(hre);

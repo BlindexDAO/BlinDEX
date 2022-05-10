@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import { multisigTreasuryAddress } from "../utils/Constants";
+import { treasuryAddresses } from "../utils/Constants";
 import { formatAddress, getAllUniswapPairs, getBdx, getTokenData, getTreasury, getUniswapFactory } from "../utils/DeployedContractsHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 
@@ -12,7 +12,7 @@ export function load() {
       throw new Error("Chain not supported for this operation");
     }
 
-    const treasuryAddress = hre.network.name.toLocaleLowerCase() === "rsk" ? multisigTreasuryAddress[networkName] : (await getTreasury(hre)).address;
+    const treasuryAddress = hre.network.name === "mainnetFork" ? (await getTreasury(hre)).address : treasuryAddresses[networkName];
     const factory = await getUniswapFactory(hre);
 
     console.log("Current 'feeTo' address:", await factory.feeTo());

@@ -8,7 +8,7 @@ import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract UpdaterRSK is Ownable, ReentrancyGuard {
+contract BlindexUpdater is OwnableUpgradeable, ReentrancyGuard {
     address public updater;
 
     constructor(address _updater) {

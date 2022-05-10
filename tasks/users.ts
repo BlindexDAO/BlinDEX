@@ -8,7 +8,7 @@ import {
   getDeployer,
   getStakingRewardsDistribution,
   getUniswapPairOracle,
-  getUpdater,
+  getBlindexUpdater,
   getVesting
 } from "../utils/DeployedContractsHelpers";
 import type { Contract } from "ethers";
@@ -45,6 +45,18 @@ export function load() {
         if (!(await isSameOwner(owner, oracleEurUsd))) {
           console.log(`transfer ownership on contract ${PriceFeedContractNames.EUR_USD} to ${owner}`);
           await (await oracleEurUsd.transferOwnership(owner)).wait();
+        }
+
+        const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+        if (!(await isSameOwner(owner, oracleGbpUsd))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.GBP_USD} to ${owner}`);
+          await (await oracleGbpUsd.transferOwnership(owner)).wait();
+        }
+
+        const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+        if (!(await isSameOwner(owner, oracleXauUsd))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.XAU_USD} to ${owner}`);
+          await (await oracleXauUsd.transferOwnership(owner)).wait();
         }
       }
 
@@ -98,7 +110,8 @@ export function load() {
         console.log(`transfer ownership on vesting contract ${vesting.address} to ${owner}`);
         await (await vesting.transferOwnership(owner)).wait();
       }
-      const updater = await getUpdater(hre);
+      const updater = await getBlindexUpdater(hre, deployer);
+
       if (!(await isSameOwner(owner, updater))) {
         console.log(`transfer ownership on updater ${updater.address} to ${owner}`);
         await (await updater.transferOwnership(owner)).wait();

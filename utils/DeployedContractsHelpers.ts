@@ -20,10 +20,11 @@ import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import type { IWETH } from "../typechain/IWETH";
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
-import type { UpdaterRSK } from "../typechain/UpdaterRSK";
+import type { BlindexUpdater } from "../typechain/BlindexUpdater";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { wrappedSecondaryTokenData, wrappedNativeTokenData, PriceFeedContractNames, getListOfSupportedLiquidityPools } from "./Constants";
+import { Signer } from "ethers";
 
 interface BDStableContractDetail {
   [key: string]: {
@@ -115,10 +116,10 @@ export async function getAllBDStables(hre: HardhatRuntimeEnvironment): Promise<B
 
 export async function getBdxCirculatingSupplyIgnoreAddresses(hre: HardhatRuntimeEnvironment, chainId: number): Promise<string[]> {
   let bdxIgnoreAddresses: string[] = [];
-  const chainName = hre.network.name;
+  const networkName = hre.network.name;
 
   if (chainId === constants.chainIds.rsk) {
-    bdxIgnoreAddresses = [constants.multisigTreasuryAddress[chainName], constants.chainSpecificComponents[chainName].teamLockingContract as string];
+    bdxIgnoreAddresses = [constants.treasuryAddresses[networkName], constants.chainSpecificComponents[networkName].teamLockingContract as string];
   } else if (chainId === constants.chainIds.mainnetFork) {
     bdxIgnoreAddresses = [(await getTreasury(hre)).address];
   }
@@ -468,9 +469,11 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
   return (await hre.ethers.getContract(contractName)).address;
 }
 
-export async function getUpdater(hre: HardhatRuntimeEnvironment) {
-  const deployer = await getDeployer(hre);
-  return (await hre.ethers.getContract("UpdaterRSK", deployer)) as UpdaterRSK;
+export async function getBlindexUpdater(hre: HardhatRuntimeEnvironment, signer: Signer): Promise<BlindexUpdater> {
+  // On RSK we deployed the updater with a name that fits only RSK. On other chains it's a different more general name
+  const updaterContractName = hre.network.name === "rsk" ? "UpdaterRSK" : "BlindexUpdater";
+
+  return await hre.ethers.getContract(updaterContractName, signer);
 }
 
 // This is used to convert address string to a value suppored by particular network
