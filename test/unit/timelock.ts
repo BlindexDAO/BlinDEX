@@ -33,17 +33,19 @@ const GRACE_PERIOD_SECONDS = 14 * DAY;
 describe("Timelock", () => {
   let owner: SignerWithAddress;
   let proposer: SignerWithAddress;
+  let executor: SignerWithAddress;
   let user: SignerWithAddress;
+  let user2: SignerWithAddress;
   let flipper: Flipper;
   let timelock: Timelock;
 
   async function deploy() {
-    [owner, proposer, user] = await hre.ethers.getSigners();
+    [owner, proposer, executor, user, user2] = await hre.ethers.getSigners();
     const flipperFactory = await hre.ethers.getContractFactory("Flipper");
     flipper = (await flipperFactory.deploy()) as Flipper;
     await flipper.deployed();
     const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
-    timelock = (await timeLockFactory.deploy(proposer.address, MIN_DELAY, MAX_DELAY, GRACE_PERIOD_SECONDS)) as Timelock;
+    timelock = (await timeLockFactory.deploy(proposer.address, executor.address, MIN_DELAY, MAX_DELAY, GRACE_PERIOD_SECONDS)) as Timelock;
 
     await timelock.deployed();
     await flipper.transferOwnership(timelock.address);
@@ -60,6 +62,7 @@ describe("Timelock", () => {
       const state2 = await flipper.state(2);
       const flipperOwner = await flipper.owner();
       const timelockProposer = await timelock.proposer();
+      const timelockExecutor = await timelock.executor();
       const timelockOwner = await timelock.owner();
 
       expect(state0).to.equal(false);
@@ -68,6 +71,7 @@ describe("Timelock", () => {
       expect(flipperOwner).to.equal(timelock.address);
       expect(timelockOwner).to.equal(owner.address);
       expect(timelockProposer).to.equal(proposer.address);
+      expect(timelockExecutor).to.equal(executor.address);
     });
 
     it("Flipping should fail when called not by proposer", async () => {
@@ -128,6 +132,28 @@ describe("Timelock", () => {
 
       expect(event.args?.gracePeriod).to.eq(gracePeriod);
       expect(await timelock.executionGracePeriod()).to.eq(gracePeriod);
+    });
+
+    it("Set proposer", async () => {
+      await expectToFail(() => timelock.connect(user2).setProposer(user.address), "Ownable: caller is not the owner");
+      await expectToFail(() => timelock.connect(owner).setProposer(hre.ethers.constants.AddressZero), "Timelock: Proposer address cannot be 0");
+
+      const receipt = await (await timelock.connect(owner).setProposer(user.address)).wait();
+      const event = extractTheOnlyEvent(receipt, "NewProposerSet");
+
+      expect(event.args?.newProposer).to.eq(user.address);
+      expect(await timelock.proposer()).to.eq(user.address);
+    });
+
+    it("Set executor", async () => {
+      await expectToFail(() => timelock.connect(user2).setExecutor(user.address), "Ownable: caller is not the owner");
+      await timelock.connect(owner).setExecutor(hre.ethers.constants.AddressZero); // should allow to disable executor
+
+      const receipt = await (await timelock.connect(owner).setExecutor(user.address)).wait();
+      const event = extractTheOnlyEvent(receipt, "NewExecutorSet");
+
+      expect(event.args?.newExecutor).to.eq(user.address);
+      expect(await timelock.executor()).to.eq(user.address);
     });
   });
 
@@ -371,6 +397,53 @@ describe("Timelock", () => {
     });
   });
 
+  describe("Executing as executor", async () => {
+    let queuedTransactions: QueuedTransaction[] = [];
+
+    beforeEach("deploy contracts", async () => {
+      await deploy();
+
+      queuedTransactions = [
+        {
+          recipient: flipper.address,
+          value: 0,
+          data: (await flipper.populateTransaction.flip(0)).data as string
+        }
+      ];
+    });
+
+    it("Should execute as executor", async () => {
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
+      const eta = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
+
+      const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta)).wait();
+      const { txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
+
+      const flipperBefore = await flipper.state(0);
+
+      await timelock.connect(owner).approveTransactionsBatch(txParamsHash);
+
+      await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
+
+      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
+
+      expectToFail(
+        () => timelock.connect(user).executeTransactionsBatch(queuedTransactions, eta),
+        "Timelock: only the executor or owner can perform this action"
+      );
+      expectToFail(
+        () => timelock.connect(proposer).executeTransactionsBatch(queuedTransactions, eta),
+        "Timelock: only the executor or owner can perform this action"
+      );
+
+      await timelock.connect(executor).executeTransactionsBatch(queuedTransactions, eta);
+      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
+
+      const flipperAfter = await flipper.state(0);
+      expect(flipperBefore).to.not.eq(flipperAfter);
+    });
+  });
+
   describe("Executing transaction", async () => {
     let firstTransactionDataHash: string;
     let firstTransactionHash: string;
@@ -428,7 +501,7 @@ describe("Timelock", () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
         () => timelock.connect(user).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
-        "Ownable: caller is not the owner"
+        "Timelock: only the executor or owner can perform this action"
       );
     });
 
@@ -436,7 +509,7 @@ describe("Timelock", () => {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, firstTransactionHash);
       await expectToFail(
         () => timelock.connect(proposer).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta),
-        "Ownable: caller is not the owner"
+        "Timelock: only the executor or owner can perform this action"
       );
     });
 

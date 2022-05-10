@@ -22,6 +22,7 @@ contract Timelock is Ownable {
     uint256 public executionGracePeriod;
 
     address public proposer;
+    address public executor;
 
     mapping(bytes32 => TransactionStatus) public queuedTransactions;
 
@@ -30,6 +31,7 @@ contract Timelock is Ownable {
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
     event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 eta);
     event NewProposerSet(address indexed previousProposer, address indexed newProposer);
+    event NewExecutorSet(address indexed previousExecutor, address indexed newExecutor);
     event NewExecutionDelaySet(uint256 indexed delay);
     event NewMinimumExecutionDelaySet(uint256 indexed delay);
     event NewMaximumExecutionDelaySet(uint256 indexed delay);
@@ -37,25 +39,34 @@ contract Timelock is Ownable {
 
     constructor(
         address _proposer,
+        address _executor,
         uint256 _minimumExecutionDelay,
         uint256 _maximumExecutionDelay,
         uint256 _executionGracePeriod
     ) {
-        require(_minimumExecutionDelay <= _maximumExecutionDelay, "The minimum delay cannot be larger than the maximum execution delay");
+        require(_minimumExecutionDelay <= _maximumExecutionDelay, "Timelock: The minimum delay cannot be larger than the maximum execution delay");
 
         setMinimumExecutionDelay(_minimumExecutionDelay);
         setMaximumExecutionDelay(_maximumExecutionDelay);
         setExecutionGracePeriod(_executionGracePeriod);
         setProposer(_proposer);
+        setExecutor(_executor);
     }
 
     function setProposer(address _proposer) public onlyOwner {
-        require(_proposer != address(0), "Proposer address cannot be 0");
+        require(_proposer != address(0), "Timelock: Proposer address cannot be 0");
 
         address previousProposer = proposer;
         proposer = _proposer;
 
         emit NewProposerSet(previousProposer, proposer);
+    }
+
+    function setExecutor(address _executor) public onlyOwner {
+        address previousExecutor = executor;
+        executor = _executor;
+
+        emit NewExecutorSet(previousExecutor, executor);
     }
 
     function setMinimumExecutionDelay(uint256 _minimumExecutionDelay) public onlyOwner {
@@ -105,7 +116,7 @@ contract Timelock is Ownable {
         _approveTransactionsBatchInternal(txParamsHash);
     }
 
-    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
+    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyExecutorOrOwner {
         _executeTransactionsBatchInternal(transactions, eta);
     }
 
@@ -154,6 +165,11 @@ contract Timelock is Ownable {
 
     modifier onlyProposer() {
         require(msg.sender == proposer, "Timelock: only the proposer can perform this action");
+        _;
+    }
+
+    modifier onlyExecutorOrOwner() {
+        require(msg.sender == executor || msg.sender == owner(), "Timelock: only the executor or owner can perform this action");
         _;
     }
 }

@@ -11,6 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     args: [
       deployer,
+      deployer,
       day * 1, // min delay
       day * 30, // max delay
       day * 3 // grace period
