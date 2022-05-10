@@ -94,7 +94,7 @@ export function load() {
       ["STAKING_REWARDS"]: stakingRewards,
       ["PAIR_ORACLES"]: mappedPairOracles,
       ["PRICE_FEEDS"]: await getPriceFeedsConfig(hre, deployer),
-      ["oraclesUpdaterAddress"]: (await getBlindexUpdater(hre, deployer)).address,
+      ["blindexUpdaterAddress"]: (await getBlindexUpdater(hre, deployer)).address,
       ["BDSTABLES"]: await getStablesConfig(hre)
     };
 
