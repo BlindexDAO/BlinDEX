@@ -266,7 +266,7 @@ export function load() {
     .setAction(async ({ flipperAddress }, hre) => {
       const deployer = await getDeployer(hre);
       const flipperFactory = await hre.ethers.getContractFactory("Flipper");
-      const flipper = (await flipperFactory.attach(flipperAddress).connect(deployer)) as Flipper;
+      const flipper = flipperFactory.attach(flipperAddress).connect(deployer) as Flipper;
 
       console.log("Flipper state[0] before:", await flipper.state(0));
 
@@ -281,7 +281,7 @@ export function load() {
     .setAction(async ({ timelockaddress, flipperaddress }, hre) => {
       const timelockProposer = await getDeployer(hre);
       const flipperFactory = await hre.ethers.getContractFactory("Flipper");
-      const flipper = (await flipperFactory.attach(flipperaddress).connect(timelockProposer)) as Flipper;
+      const flipper = flipperFactory.attach(flipperaddress).connect(timelockProposer) as Flipper;
 
       console.log("timelockProposer", timelockProposer.address);
 
@@ -310,7 +310,7 @@ export function load() {
       await recordableFlipper.record.flip(1);
 
       const receipts = await recorder.execute();
-      const { txParamsHash, txHash } = await extractTxParamsHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
+      const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
       const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
 
       console.log("txHash:", txHash);
@@ -325,7 +325,7 @@ export function load() {
       // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
 
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
-      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
       await (await timelock.approveTransactionsBatch(txParamsHash)).wait();
     });
@@ -340,7 +340,7 @@ export function load() {
       console.log("txParamsHash", txParamsHash);
 
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
-      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
       await (await timelock.approveTransactionsBatch(txParamsHash)).wait();
     });
@@ -352,7 +352,7 @@ export function load() {
       // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
 
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
-      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
       await (await timelock.approveAndExecuteTransactionsBatchRaw(txRawParamsData)).wait();
     });
@@ -361,7 +361,7 @@ export function load() {
     .addPositionalParam("flipperaddress")
     .setAction(async ({ flipperaddress }, hre) => {
       const flipperFactory = await hre.ethers.getContractFactory("Flipper");
-      const flipper = (await flipperFactory.attach(flipperaddress)) as Flipper;
+      const flipper = flipperFactory.attach(flipperaddress) as Flipper;
 
       console.log("Owner:", await flipper.owner());
       console.log("Flipper state[0] before:", await flipper.state(0));
@@ -373,7 +373,7 @@ export function load() {
     .addPositionalParam("timelockaddress")
     .setAction(async ({ timelockaddress }, hre) => {
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
-      const timelock = (await timelockFactory.attach(timelockaddress)) as Timelock;
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
       console.log("Owner:", await timelock.owner());
       console.log("Proposer:", await timelock.proposer());

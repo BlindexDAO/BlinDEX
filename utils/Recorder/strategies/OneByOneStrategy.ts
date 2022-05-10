@@ -4,13 +4,13 @@ import { UnsignedTransaction } from "ethers";
 import { Deferrable } from "ethers/lib/utils";
 import { TransactionRequest } from "@ethersproject/abstract-provider";
 
-//Strategy specific params
+// Strategy specific params
 export type OneByOneStrategyParams = {
   signer: Signer;
 };
 
 // Implementation of Strategy.interface
-// Send transactions ony by one to the blockchain
+// Send transactions one by one to the blockchain
 // need to specify during construction:
 // Signer - ethers.Signer connected to network
 export class OneByOneStrategy implements Strategy {

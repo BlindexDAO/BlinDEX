@@ -1,7 +1,7 @@
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, formatAddress } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
 import { Recorder } from "./Recorder/Recorder";
 import { toRc } from "./Recorder/RecordableContract";
@@ -19,6 +19,7 @@ export async function recordUpdateOracle(hre: HardhatRuntimeEnvironment, symbol0
   await oracle.record.updateOracle();
 }
 
+// TODO - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("Starting tp update the Uniswap oracles");
 
@@ -37,12 +38,13 @@ export async function recordResetUniswapPairsOracles(hre: HardhatRuntimeEnvironm
 
   for (const pool of pools) {
     await recordResetOracle(hre, pool[0].name, pool[1].name, recorder);
-    console.log(`record reset ${pool[0].name} / ${pool[1].name}`);
+    console.log(`recorded resetting: ${pool[0].name} / ${pool[1].name}`);
   }
 
   console.log("finished recording reseting oracles");
 }
 
+// TODO - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
 export async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
   console.log("starting reseting oracles");
 
@@ -77,6 +79,7 @@ export async function recordResetOracle(hre: HardhatRuntimeEnvironment, symbol0:
   await oracle.record.reset();
 }
 
+// TODO - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
 export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string) {
   const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
 
@@ -85,7 +88,6 @@ export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: strin
 
 export function sortUniswapPairTokens(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenBSymbol: string) {
   // Logic form UniswapV2Factory.createPair()
-  // TODO verify on RSK if we have to lowercase addresses
 
   const retRes =
     Number(tokenAAddress) < Number(tokenBAddress)
@@ -119,15 +121,15 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const secondaryExternalUsdStable = constants.SECONDARY_EXTERNAL_USD_STABLE[hre.network.name];
   const secondaryExternalUsdStableContract = (await hre.ethers.getContractAt(
     "IERC20",
-    hre.ethers.utils.getAddress(secondaryExternalUsdStable.address)
+    hre.ethers.utils.getAddress(formatAddress(hre, secondaryExternalUsdStable.address))
   )) as IERC20;
-  const secondaryEexternalUsdStablePoolData = { name: secondaryExternalUsdStable.symbol, token: secondaryExternalUsdStableContract };
+  const secondaryExternalUsdStablePoolData = { name: secondaryExternalUsdStable.symbol, token: secondaryExternalUsdStableContract };
 
   const tokenToPoolTokenData: { [symbol: string]: PoolTokenData } = {
     ["WETH"]: wethPoolData,
     ["WBTC"]: wbtcPoolData,
     [externalUsdStable.symbol]: externalUsdStablePoolData,
-    [secondaryExternalUsdStable.symbol]: secondaryEexternalUsdStablePoolData,
+    [secondaryExternalUsdStable.symbol]: secondaryExternalUsdStablePoolData,
     [bdxSymbol]: bdxPoolData
   };
 

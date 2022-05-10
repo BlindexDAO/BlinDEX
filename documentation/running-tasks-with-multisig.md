@@ -22,7 +22,7 @@ Create a Gnosis safe which will be the owner of the timelock conctact.
 Deploy Timelock:
 
 ```
-npx hardhat --network rsk deploy-timelock --proposer TX_PROPOSER_ADDRESS --owner GNOSIS_MULTISIG_SAFE_ADDRESS
+npx hardhat --network rsk dev:deploy-timelock --proposer TX_PROPOSER_ADDRESS --owner GNOSIS_MULTISIG_SAFE_ADDRESS
 ```
 
 In the terminal you can see the deployed Timelock address (TIMELOCK_ADDRESS), save it.
@@ -97,6 +97,6 @@ Now log in Gnosis safe and start the approval / execution procedure. (`Send` -> 
 
    2. `approveTransactionsBatch`
 
-      - This will only approve the transaction batch. You will have to execute is (as `timelock proposer` manually from terminal), using: `task("execute-timelock-transaction")`.
+      - This will only approve the transaction batch. You will have to execute it (as `timelock proposer` manually from terminal), using: `task("execute-timelock-transaction")`.
 
-Remember it's a Timelock contract and it has time constraints. You **can approve**, but you **cannot execute** a transaction before ETA. After ETA you only have the grace priod (configured in Timelock contract) to execute the transaction.
+Remember it's a Timelock contract and it has time constraints. You **can approve**, but you **cannot execute** a transaction before the `executionStartTimestamp`. After the `executionStartTimestamp` you only have the grace period (configured in the Timelock contract) to execute the transaction.

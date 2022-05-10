@@ -8,7 +8,7 @@ type QueuedTransaction = {
   data: string;
 };
 
-//Strategy specific params
+// Strategy specific params
 export type TimelockParams = {
   timelock: Timelock;
   eta: number;

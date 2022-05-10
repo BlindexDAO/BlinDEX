@@ -13,7 +13,8 @@ import {
   getWbtc,
   getBDStableChainlinkPriceFeed,
   bdStablesContractsDetails,
-  getBdxCirculatingSupplyIgnoreAddresses
+  getBdxCirculatingSupplyIgnoreAddresses,
+  formatAddress
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -32,7 +33,6 @@ import {
   SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
   PriceFeedContractNames,
-  chainIds,
   chainSpecificComponents,
   EXTERNAL_SUPPORTED_TOKENS,
   SECONDARY_EXTERNAL_USD_STABLE
@@ -79,7 +79,6 @@ export function load() {
       };
     });
 
-    const networkName = hre.network.name.toUpperCase();
     const chainId = +(await hre.getChainId());
 
     const blockchainConfig = {
@@ -87,7 +86,7 @@ export function load() {
       ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
       ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
       ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
-      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainId === chainIds.rsk ? chainSpecificComponents[networkName].sovrynNetwork : undefined,
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainSpecificComponents[hre.network.name].sovrynNetwork,
       ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
       ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
       ["AVAILABLE_PAIRS"]: swapPairs,
@@ -102,7 +101,7 @@ export function load() {
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
     );
     console.log("=================================================");
-    console.log(`Config for: ${networkName}, chainId: ${chainId}`);
+    console.log(`Config for: ${hre.network.name}, chainId: ${chainId}`);
     console.log("=================================================\n");
     console.log(cleanStringify(blockchainConfig));
   });
@@ -340,7 +339,7 @@ export function load() {
 
     const contractsData = await Promise.all(
       addresses.map(async address => {
-        const contact = (await hre.ethers.getContractAt("ERC20", address)) as ERC20;
+        const contact = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, address))) as ERC20;
 
         return {
           address: address,
