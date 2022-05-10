@@ -369,7 +369,7 @@ export function load() {
       console.log("Flipper state[2] before:", await flipper.state(2));
     });
 
-  task("timelock-show")
+  task("timelock:show")
     .addPositionalParam("timelockaddress")
     .setAction(async ({ timelockaddress }, hre) => {
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");

@@ -16,7 +16,7 @@ export enum TransactionStatus {
   Approved
 }
 
-export function decodeQueueTransactionsBatchParams(decodedTxData: Result) {
+export function decodeQueuedTransactionsBatchParams(decodedTxData: Result) {
   const decodedQueuedTransactions = decodedTxData.transactions as QueuedTransaction[];
   const decodEta = decodedTxData.eta as BigNumber;
 
