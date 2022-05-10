@@ -2,6 +2,7 @@ import { expect } from "chai";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BigNumber, ContractReceipt } from "ethers";
 import { getBdEu, getBdx, getTreasury } from "../../utils/DeployedContractsHelpers";
+import { extractTheOnlyEvent } from "../../utils/ExtractingEvents";
 
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function expectToFail(fun: () => any, message: string) {
@@ -15,6 +16,13 @@ export async function expectToFail(fun: () => any, message: string) {
 export function expectEvent(receipt: ContractReceipt, expectedEventName: string) {
   const events = receipt.events?.filter(x => x.event === expectedEventName);
   expect(events).to.not.be.empty;
+}
+
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function expectEventWithArgs(receipt: ContractReceipt, expectedEventName: string, eventArgs: any[]) {
+  const theOnlyEvent = extractTheOnlyEvent(receipt, expectedEventName);
+
+  expect(theOnlyEvent.args).to.eql(eventArgs);
 }
 
 export async function provideBdx(hre: HardhatRuntimeEnvironment, to: string, amount: BigNumber) {

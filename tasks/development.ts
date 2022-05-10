@@ -79,7 +79,7 @@ export function load() {
     }
   });
 
-  task("dev:test:dir")
+  task("test:dir")
     .addFlag("deployFixture", "run the global fixture before tests")
     .addPositionalParam("testDir", "Directory with *.ts files. Sholud end with '/'")
     .setAction(async ({ testDir, noCompile, deployFixture }, { run }) => {

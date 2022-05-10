@@ -14,7 +14,7 @@ import {
   QueuedTransaction,
   TransactionStatus
 } from "../../utils/TimelockHelpers";
-import { expectEvent, expectToFail } from "../helpers/common";
+import { expectEvent, expectEventWithArgs, expectToFail } from "../helpers/common";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
@@ -265,7 +265,7 @@ describe("Timelock", () => {
     it("Approving transaction by owner should work", async () => {
       const tx: ContractTransaction = await timelock.connect(owner).approveTransactionsBatch(txParamsHash);
       const receipt: ContractReceipt = await tx.wait();
-      expectEvent(receipt, "ApprovedTransactionsBatch");
+      expectEventWithArgs(receipt, "ApprovedTransactionsBatch", [txParamsHash]);
       const dataFromReceipt = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "ApprovedTransactionsBatch");
 
       expect(dataFromReceipt.txParamsHash).to.be.ok;
@@ -594,7 +594,7 @@ describe("Timelock", () => {
       const tx = await timelock.connect(owner).cancelTransactionsBatch(txParamsHash);
       const receipt = await tx.wait();
 
-      expectEvent(receipt, "CancelledTransactionsBatch");
+      expectEventWithArgs(receipt, "CancelledTransactionsBatch", [txParamsHash]);
       const dataFromReceipt = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "CancelledTransactionsBatch");
       expect(dataFromReceipt.txParamsHash).to.eq(txParamsHash);
       expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
@@ -654,7 +654,7 @@ describe("Timelock", () => {
       const tx = await timelock.connect(owner).approveTransactionsBatch(txParamsHash);
       const receipt = await tx.wait();
 
-      expectEvent(receipt, "ApprovedTransactionsBatch");
+      expectEventWithArgs(receipt, "ApprovedTransactionsBatch", [txParamsHash]);
       const dataFromReceipt = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "ApprovedTransactionsBatch");
       expect(dataFromReceipt.txParamsHash).to.eq(txParamsHash);
       expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
