@@ -10,7 +10,7 @@ import {
   getOnChainWethFiatPrice,
   getOnChainWbtcFiatPrice,
   getDeployer,
-  getTreasury,
+  getTreasurySigner,
   mintWeth,
   getBDStableWethPool,
   getBDStableWbtcPool,
@@ -95,7 +95,7 @@ export async function setUpFunctionalSystem(
   initialCollateralPrices: CollateralPrices
 ) {
   const deployer = await getDeployer(hre);
-  const treasury = await getTreasury(hre);
+  const treasury = await getTreasurySigner(hre);
   const weth = await getWeth(hre);
   const wbtc = await getWbtc(hre);
   const bdx = await getBdx(hre);
@@ -128,6 +128,7 @@ export async function setUpFunctionalSystem(
   let wbtcDecimals;
   const verbose = !forIntegrationTests;
 
+  // TODO: Multichain - What should we do here for other chains?
   if (hre.network.name === "rsk") {
     wethDecimals = 18;
     wbtcDecimals = 18;

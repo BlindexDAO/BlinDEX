@@ -7,10 +7,6 @@ import { deployPairOracle, setupStakingContract } from "../../utils/DeploymentHe
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: BDUS-DOC");
 
-  if (hre.network.name !== "rsk" && hre.network.name !== "mainnetFork") {
-    throw Error(`Please add support for new network: ${hre.network.name}`);
-  }
-
   const factory = await getUniswapFactory(hre);
   const bdus = await getBdUs(hre);
   const secondaryExternalUsdStable = constants.SECONDARY_EXTERNAL_USD_STABLE[hre.network.name];

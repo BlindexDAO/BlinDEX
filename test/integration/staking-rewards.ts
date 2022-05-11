@@ -20,7 +20,7 @@ import {
   mintWbtc,
   mintWeth,
   getStakingRewardsCount,
-  getTreasury
+  getTreasurySigner
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
@@ -57,7 +57,7 @@ let vesting: Vesting;
 
 async function initialize() {
   deployer = await getDeployer(hre);
-  treasury = await getTreasury(hre);
+  treasury = await getTreasurySigner(hre);
   testUser1 = await hre.ethers.getNamedSigner("TEST1");
   testUser2 = await hre.ethers.getNamedSigner("TEST2");
   weth = await getWeth(hre);

@@ -3,7 +3,14 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../../utils/Constants";
 import type { BdStablePool } from "../../typechain/BdStablePool";
-import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasury } from "../../utils/DeployedContractsHelpers";
+import {
+  bdStablesContractsDetails,
+  formatAddress,
+  getBdx,
+  getDeployer,
+  getTreasuryAddress,
+  getTreasurySigner
+} from "../../utils/DeployedContractsHelpers";
 import { to_d12 } from "../../utils/NumbersHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -12,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
     const deployer = await getDeployer(hre);
-    const treasuryAddress = hre.network.name === "rsk" ? constants.multisigTreasuryAddress[hre.network.name] : (await getTreasury(hre)).address;
+    const treasuryAddress = await getTreasuryAddress(hre);
     const bdx = await getBdx(hre);
     const bdPoolLibraryDeployment = await hre.ethers.getContract("BdPoolLibrary");
 
@@ -136,9 +143,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       )
     ).wait();
 
-    // TODO: Enable this on rsk once we have a solution for running multisig tasks
+    // For RSK we've done this transaction manually due to the fact the treasury is in our multisig and we didn't have an option for running multisig tasks yet
     if (hre.network.name === "mainnetFork") {
-      const treasury = await getTreasury(hre);
+      const treasury = await getTreasurySigner(hre);
       await (await bdx.connect(treasury).transfer(bdstable.address, constants.INITIAL_BDX_AMOUNT_FOR_BDSTABLE)).wait();
       console.log(`${stableDetails.symbol} provided with BDX`);
     }

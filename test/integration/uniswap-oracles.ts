@@ -6,7 +6,7 @@ import cap from "chai-as-promised";
 import { provideLiquidity, swapWethFor, getWethOraclePrices } from "../helpers/swaps";
 import { diffPctN, to_d18 } from "../../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { getBdEu, getUser, getWeth, getUniswapPairOracle, mintWeth, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getUser, getWeth, getUniswapPairOracle, mintWeth, getTreasurySigner, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
 
@@ -30,7 +30,7 @@ describe("Uniswap Oracles", () => {
 
     const user = await getUser(hre);
     const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
 
     await mintWeth(hre, user, to_d18(20));
     await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
@@ -77,7 +77,7 @@ describe("Uniswap Oracles", () => {
       const weth = await getWeth(hre);
 
       const user = await getUser(hre);
-      const treasury = await getTreasury(hre);
+      const treasury = await getTreasurySigner(hre);
       const deployer = await getDeployer(hre);
 
       const spotWehtBdEuPrice = 4000;
@@ -110,7 +110,7 @@ describe("Uniswap Oracles", () => {
     const weth = await getWeth(hre);
 
     const user = await getUser(hre);
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
 
     await mintWeth(hre, user, to_d18(20));
 

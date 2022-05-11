@@ -3,7 +3,7 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import * as constants from "../../utils/Constants";
 import type { BdStablePool } from "../../typechain/BdStablePool";
-import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasury } from "../../utils/DeployedContractsHelpers";
+import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasurySigner } from "../../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const initialDeployBDStables = Object.values(bdStablesContractsDetails).filter(stableDetails => ["BDEU", "BDUS"].includes(stableDetails.symbol));
@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`Starting deployment: ${stableDetails.fiat} stable - ${stableDetails.symbol}`);
 
     const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
 
     const bdx = await getBdx(hre);
     const bdPoolLibraryDeployment = await hre.ethers.getContract("BdPoolLibrary");
