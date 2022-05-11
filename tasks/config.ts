@@ -14,7 +14,8 @@ import {
   getBDStableChainlinkPriceFeed,
   bdStablesContractsDetails,
   getBdxCirculatingSupplyIgnoreAddresses,
-  formatAddress
+  formatAddress,
+  getBlindexUpdater
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -93,7 +94,7 @@ export function load() {
       ["STAKING_REWARDS"]: stakingRewards,
       ["PAIR_ORACLES"]: mappedPairOracles,
       ["PRICE_FEEDS"]: await getPriceFeedsConfig(hre, deployer),
-      ["oraclesUpdaterAddress"]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
+      ["blindexUpdaterAddress"]: (await getBlindexUpdater(hre, deployer)).address,
       ["BDSTABLES"]: await getStablesConfig(hre)
     };
 

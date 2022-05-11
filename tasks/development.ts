@@ -5,7 +5,7 @@ import {
   getBdEu,
   getBdx,
   getDeployer,
-  getTreasury,
+  getTreasurySigner,
   getWbtc,
   getWeth,
   getWethConcrete,
@@ -41,7 +41,7 @@ export function load() {
     });
 
   task("dev:mint-wrbtc-rsk", "", async (args_, hre) => {
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
     const wrbtc = await getWethConcrete(hre);
 
     await (await wrbtc.connect(treasury).deposit({ value: to_d18(0.001) })).wait();

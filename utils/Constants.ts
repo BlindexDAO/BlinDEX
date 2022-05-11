@@ -15,13 +15,13 @@ export const wrappedSecondaryTokenData: SupportedERC20Token = {
   arbitrumTestnet: { symbol: "WBTC", address: "0x1F7dC0B961950c69584d0F9cE290A918124d32CD", decimals: 8 }
 };
 
-// TODO: Do we really need it when Blindex doesn't host the DEX?
+// TODO: Multichain - Do we really need it when Blindex doesn't host the DEX?
 export const EXTERNAL_USD_STABLE: SupportedERC20Token = {
   mainnetFork: { symbol: "USDC", address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", decimals: 6 },
   rsk: { symbol: "XUSD", address: "0xb5999795BE0EbB5bAb23144AA5FD6A02D080299F", decimals: 18 }
 };
 
-// TODO: Do we really need it when Blindex doesn't host the DEX?
+// TODO: Multichain - Do we really need it when Blindex doesn't host the DEX?
 export const SECONDARY_EXTERNAL_USD_STABLE: SupportedERC20Token = {
   mainnetFork: { symbol: "DAI", address: "0x6B175474E89094C44Da98b954EedeAC495271d0F", decimals: 18 },
   rsk: { symbol: "DOC", address: "0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db", decimals: 18 }
@@ -29,21 +29,21 @@ export const SECONDARY_EXTERNAL_USD_STABLE: SupportedERC20Token = {
 
 export const EXTERNAL_SUPPORTED_TOKENS = [EXTERNAL_USD_STABLE, SECONDARY_EXTERNAL_USD_STABLE];
 
-// TODO: Do we really need it?
+// TODO: Multichain - Do we really need it?
 export const NATIVE_TOKEN_NAME: { [key: string]: string } = {
   mainnetFork: "ETH",
   rsk: "RBTC",
   arbitrumTestnet: "ETH"
 };
 
-// TODO: Do we really need it?
+// TODO: Multichain - Do we really need it?
 export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   mainnetFork: "BTC",
   rsk: "ETHs",
   arbitrumTestnet: "WBTC"
 };
 
-// TODO: Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now (in the updaterSettings section in the BE environment file).
+// TODO: Multichain - Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now (in the updaterSettings section in the BE environment file).
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   EUR_USD_FEED_ADDRESS: {
     mainnetFork: {
@@ -102,8 +102,9 @@ export const botAddress: MultichainAddresses = {
   rsk: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872"
 };
 
-export const multisigTreasuryAddress: MultichainAddresses = {
-  rsk: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c"
+export const treasuryAddresses: MultichainAddresses = {
+  rsk: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c",
+  arbitrumTestnet: "0xb2952754fe429D30Dd799149A1a47dD17c035dba"
 };
 
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);

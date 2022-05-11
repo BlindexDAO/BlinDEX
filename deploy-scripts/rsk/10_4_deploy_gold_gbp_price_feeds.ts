@@ -30,6 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       contract: "FiatToFiatPseudoOracleFeed",
       args: [bot.address, to_d12(1922.78)]
     });
+
     console.log(`deployed ${constants.PriceFeedContractNames.XAU_USD} to: ${priceFeed_XAU_USD_Deployment.address}`);
 
     priceFeed_GBP_USD_Deployment = await hre.deployments.deploy(constants.PriceFeedContractNames.GBP_USD, {
