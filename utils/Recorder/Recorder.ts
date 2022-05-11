@@ -14,8 +14,8 @@ export class Recorder {
   executedTransactions: ContractReceipt[] = [];
   strategy: Strategy;
 
-  constructor(strategy_: Strategy) {
-    this.strategy = strategy_;
+  constructor(_strategy: Strategy) {
+    this.strategy = _strategy;
   }
 
   // pushes an unsigned transaction (the parameter) to the recordedTransaction List

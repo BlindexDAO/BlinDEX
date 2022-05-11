@@ -26,6 +26,10 @@ export class TimelockStrategy implements Strategy {
   }
 
   async execute(txsToExecute: UnsignedTransaction[]): Promise<ContractReceipt[]> {
+    if (txsToExecute.length === 0) {
+      throw new Error("You need at least 1 transaction to execute");
+    }
+
     const toSend: QueuedTransaction[] = [];
     while (txsToExecute.length > 0) {
       const toAdd = txsToExecute.shift() as UnsignedTransaction;

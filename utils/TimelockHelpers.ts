@@ -26,10 +26,8 @@ export function decodeQueuedTransactionsBatchParams(decodedTxData: Result) {
 export async function decodeTimelockQueuedTransactions(hre: HardhatRuntimeEnvironment, txHash: string) {
   const txData = (await hre.ethers.provider.getTransaction(txHash)).data;
   const decodedTxData = await Timelock__factory.createInterface().decodeFunctionData("queueTransactionsBatch", txData);
-  const decodedQueuedTransactions = decodedTxData.transactions as QueuedTransaction[];
-  const decodEta = decodedTxData.eta as BigNumber;
 
-  return { queuedTransactions: decodedQueuedTransactions, eta: decodEta };
+  return decodeQueuedTransactionsBatchParams(decodedTxData);
 }
 
 export async function extractTimelockQueuedTransactionsBatchParamsDataAndHash(

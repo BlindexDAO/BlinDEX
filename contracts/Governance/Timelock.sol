@@ -96,6 +96,8 @@ contract Timelock is Ownable {
             "Timelock: Estimated execution time must satisfy delay."
         );
 
+        require(transactions.length > 0, "Timelock: You need at least 1 transaction to queue a batch");
+
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
         queuedTransactions[txParamsHash] = TransactionStatus.Queued;
 
