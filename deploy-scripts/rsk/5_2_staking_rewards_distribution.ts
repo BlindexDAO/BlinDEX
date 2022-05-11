@@ -1,14 +1,13 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import type { StakingRewardsDistribution } from "../../typechain/StakingRewardsDistribution";
-import * as constants from "../../utils/Constants";
 import { to_d18 } from "../../utils/NumbersHelpers";
-import { getBdx, getTreasury, getVesting } from "../../utils/DeployedContractsHelpers";
+import { getBdx, getTreasuryAddress, getTreasurySigner, getVesting } from "../../utils/DeployedContractsHelpers";
 
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: staking rewards distribution");
 
-  const treasury = await getTreasury(hre);
+  const treasury = await getTreasurySigner(hre);
 
   const bdx = await getBdx(hre);
   const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
@@ -22,7 +21,7 @@ async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await getBdx(hre);
   const vesting = await getVesting(hre);
-  const treasuryAddress = hre.network.name === "mainnetFork" ? (await getTreasury(hre)).address : constants.treasuryAddresses[hre.network.name];
+  const treasuryAddress = await getTreasuryAddress(hre);
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy("StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER,

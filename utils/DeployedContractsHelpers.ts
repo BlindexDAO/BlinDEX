@@ -121,7 +121,7 @@ export async function getBdxCirculatingSupplyIgnoreAddresses(hre: HardhatRuntime
   if (chainId === constants.chainIds.rsk) {
     bdxIgnoreAddresses = [constants.treasuryAddresses[networkName], constants.chainSpecificComponents[networkName].teamLockingContract as string];
   } else if (chainId === constants.chainIds.mainnetFork) {
-    bdxIgnoreAddresses = [(await getTreasury(hre)).address];
+    bdxIgnoreAddresses = [(await getTreasurySigner(hre)).address];
   }
 
   return bdxIgnoreAddresses;
@@ -150,8 +150,12 @@ export function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddre
   return hre.ethers.getNamedSigner("TEST2");
 }
 
-export function getTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+export function getTreasurySigner(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   return hre.ethers.getNamedSigner("TREASURY");
+}
+
+export async function getTreasuryAddress(hre: HardhatRuntimeEnvironment): Promise<string> {
+  return hre.network.name === "mainnetFork" ? (await hre.ethers.getNamedSigner("TREASURY")).address : constants.treasuryAddresses[hre.network.name];
 }
 
 export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string): Promise<BdStablePool> {

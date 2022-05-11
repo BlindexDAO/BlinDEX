@@ -7,7 +7,7 @@ import {
   getBdx,
   getBot,
   getDeployer,
-  getTreasury,
+  getTreasurySigner,
   getUniswapPairOracle,
   getWeth,
   formatAddress,
@@ -252,7 +252,7 @@ export function load() {
 
   task("show:users").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
     const bot = await getBot(hre);
 
     console.log("deployer: " + deployer.address);

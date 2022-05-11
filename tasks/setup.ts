@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getAllBDStableStakingRewards, getDeployer, getTreasury, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
+import { getAllBDStableStakingRewards, getDeployer, getTreasurySigner, mintWbtc, mintWeth } from "../utils/DeployedContractsHelpers";
 import { to_d18, to_d8 } from "../utils/NumbersHelpers";
 import { getDaiFor, getUsdcFor } from "../utils/LocalHelpers";
 import { CollateralPrices, setupLocalSystem, setupProductionReadySystem } from "../utils/SystemSetup";
@@ -58,7 +58,7 @@ export function load() {
       }
 
       const deployer = await getDeployer(hre);
-      const treasury = await getTreasury(hre);
+      const treasury = await getTreasurySigner(hre);
 
       // mint initial WETH
       await mintWeth(hre, deployer, to_d18(100));
