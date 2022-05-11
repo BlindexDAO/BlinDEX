@@ -1,8 +1,8 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import * as constants from "../utils/Constants";
-import { formatAddress, getBdx, getBgbp, getBxau } from "../utils/DeployedContractsHelpers";
-import { setupStakingContract } from "../utils/DeploymentHelpers";
+import * as constants from "../../utils/Constants";
+import { formatAddress, getBdx, getBgbp, getBxau } from "../../utils/DeployedContractsHelpers";
+import { setupStakingContract } from "../../utils/DeploymentHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const networkName = hre.network.name;

@@ -1,8 +1,8 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import { to_d18 } from "../utils/NumbersHelpers";
+import { to_d18 } from "../../utils/NumbersHelpers";
 import { ethers } from "hardhat";
-import { getBdx, getDeployer, getTreasury } from "../utils/DeployedContractsHelpers";
+import { getBdx, getDeployer, getTreasury } from "../../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: mint bdx");
