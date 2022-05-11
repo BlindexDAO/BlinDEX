@@ -4,14 +4,16 @@ import type { IERC20 } from "../typechain/IERC20";
 import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, formatAddress } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
 import { getListOfSupportedLiquidityPools } from "../utils/Constants";
+import { printAndWaitOnTransaction } from "./DeploymentHelpers";
 
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("Starting tp update the Uniswap oracles");
 
   const pools = await getPools(hre);
-  const promises = pools.map(pool => updateOracle(hre, pool[0].name, pool[1].name, signer));
 
-  await Promise.allSettled(promises);
+  for (const pool of pools) {
+    await updateOracle(hre, pool[0].name, pool[1].name, signer);
+  }
 
   console.log("Finished updating the Uniswap oracles");
 }
@@ -37,8 +39,9 @@ export async function updateOracle(hre: HardhatRuntimeEnvironment, symbol0: stri
 
   try {
     console.log(`Starting to update ${oracleName}`);
-    await (await oracle.connect(updater).updateOracle()).wait();
-    console.log(`Updated ${oracleName}`);
+
+    // Do not await on the function so we could run multiple transactions like that in parallel
+    printAndWaitOnTransaction(await oracle.connect(updater).updateOracle());
   } catch (e) {
     console.log(`Error while updating ${oracleName}`, e);
   }
