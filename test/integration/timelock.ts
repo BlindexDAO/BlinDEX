@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import type { Timelock } from "../../typechain/Timelock";
-import { getDeployer, getStakingRewardsDistribution, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getStakingRewardsDistribution, getUser1, getUser2, getUser3 } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { expectToFail } from "../helpers/common";
 import { extractTxParamsHashAndTxHashFromSingleTransaction } from "../../utils/TimelockHelpers";
@@ -38,11 +38,12 @@ describe("Execute with timelock", () => {
 
     const timelock = await GetTimelock();
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-    const admin = await getUser1(hre);
-    const randomUser = await getUser2(hre);
+    const proposer = await getUser1(hre);
+    const executor = await getUser2(hre);
+    const randomUser = await getUser3(hre);
 
-    await timelock.setProposer(admin.address);
-    await timelock.setDelay(delay);
+    await timelock.setProposer(proposer.address);
+    await timelock.setExecutor(executor.address);
 
     expect((await stakingRewardsDistribution.vestingRewardRatio_percent()).toNumber()).to.not.eq(expectedVestingRewardRatio);
 
@@ -50,36 +51,50 @@ describe("Execute with timelock", () => {
 
     const queuedTransactions = [
       {
-        target: stakingRewardsDistribution.address,
+        recipient: stakingRewardsDistribution.address,
         value: 0,
-        signature: "",
         data: (await stakingRewardsDistribution.populateTransaction.setVestingRewardRatio(13)).data as string
       }
     ];
 
     const etaBN = BigNumber.from(now).add(delay + 100);
 
-    const receipt = await (await timelock.connect(admin).queueTransactionsBatch(queuedTransactions, etaBN)).wait();
+    const receipt = await (await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, etaBN)).wait();
     const { txParamsHash } = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "QueuedTransactionsBatch");
 
     await expectToFail(
-      () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),
+      () => timelock.connect(proposer).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: only the executor or owner can perform this action"
+    );
+
+    await expectToFail(
+      () => timelock.connect(randomUser).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: only the executor or owner can perform this action"
+    );
+
+    await expectToFail(
+      () => timelock.connect(executor).executeTransactionsBatch(queuedTransactions, etaBN),
       "Timelock: Transaction hasn't been approved."
     );
     await timelock.approveTransactionsBatch(txParamsHash);
 
     await expectToFail(
-      () => timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN),
+      () => timelock.connect(executor).executeTransactionsBatch(queuedTransactions, etaBN),
       "Timelock: Transaction hasn't surpassed the execution delay."
     );
     await simulateTimeElapseInSeconds(delay + timeBetweenEtaAndExecution);
 
     await expectToFail(
-      () => timelock.connect(randomUser).executeTransactionsBatch(queuedTransactions, etaBN),
-      "Timelock: only proposer can perform this action"
+      () => timelock.connect(proposer).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: only the executor or owner can perform this action"
     );
 
-    await timelock.connect(admin).executeTransactionsBatch(queuedTransactions, etaBN);
+    await expectToFail(
+      () => timelock.connect(randomUser).executeTransactionsBatch(queuedTransactions, etaBN),
+      "Timelock: only the executor or owner can perform this action"
+    );
+
+    await timelock.connect(executor).executeTransactionsBatch(queuedTransactions, etaBN);
 
     expect((await stakingRewardsDistribution.vestingRewardRatio_percent()).toNumber()).to.eq(expectedVestingRewardRatio);
   });

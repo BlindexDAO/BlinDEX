@@ -153,6 +153,10 @@ export function getUser2(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddr
   return hre.ethers.getNamedSigner("TEST2");
 }
 
+export function getUser3(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TEST3");
+}
+
 export function getTreasury(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   return hre.ethers.getNamedSigner("TREASURY");
 }
