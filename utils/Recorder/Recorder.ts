@@ -60,10 +60,11 @@ export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: De
 export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
-  const days = params?.executionStartInDays ?? 14;
+
+  const days = params?.executionStartInDays ?? 14; //todo ag default
 
   const secondsInDay = 60 * 60 * 24;
-  const eta = timestamp + days * secondsInDay + 100;
+  const eta = timestamp + days * secondsInDay + 100; //todo ag 100 is sketchy
 
   const timelockRecorder = new Recorder(
     new TimelockStrategy({

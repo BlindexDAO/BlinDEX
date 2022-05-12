@@ -19,7 +19,7 @@ export async function recordUpdateOracle(hre: HardhatRuntimeEnvironment, symbol0
   await oracle.record.updateOracle();
 }
 
-// TODO - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
+// TODO ag - Cleanup after we release the multisig approach - https://lagoslabs.atlassian.net/browse/LAGO-864
 export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
   console.log("Starting tp update the Uniswap oracles");
 

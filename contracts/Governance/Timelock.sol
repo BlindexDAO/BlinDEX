@@ -2,8 +2,11 @@
 pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract Timelock is Ownable {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
     enum TransactionStatus {
         NonExistent, // 0 is what you get from a non-existent transaction (which you can get e.g. from a mapping)
         Queued,
@@ -16,6 +19,11 @@ contract Timelock is Ownable {
         bytes data;
     }
 
+    struct PendingTransaction {
+        bytes32 txParamsHash;
+        TransactionStatus status;
+    }
+
     uint256 public minimumExecutionDelay;
     uint256 public maximumExecutionDelay;
     uint256 public executionGracePeriod;
@@ -23,6 +31,7 @@ contract Timelock is Ownable {
     address public proposer;
     address public executor;
 
+    EnumerableSet.Bytes32Set queuedTransactionsParamsHashes;
     mapping(bytes32 => TransactionStatus) public queuedTransactions;
 
     event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
@@ -100,6 +109,7 @@ contract Timelock is Ownable {
 
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
         queuedTransactions[txParamsHash] = TransactionStatus.Queued;
+        queuedTransactionsParamsHashes.add(txParamsHash);
 
         emit QueuedTransactionsBatch(txParamsHash, transactions.length, eta);
         return txParamsHash;
@@ -109,6 +119,7 @@ contract Timelock is Ownable {
         require(queuedTransactions[txParamsHash] != TransactionStatus.NonExistent, "Timelock: transaction is not queued");
 
         delete queuedTransactions[txParamsHash];
+        queuedTransactionsParamsHashes.remove(txParamsHash);
 
         emit CancelledTransactionsBatch(txParamsHash);
     }
@@ -152,6 +163,7 @@ contract Timelock is Ownable {
         require(block.timestamp <= eta + executionGracePeriod, "Timelock: Transaction is stale.");
 
         delete queuedTransactions[txParamsHash];
+        queuedTransactionsParamsHashes.remove(txParamsHash);
 
         for (uint256 i = 0; i < transactions.length; i++) {
             (
@@ -162,6 +174,17 @@ contract Timelock is Ownable {
 
             emit ExecutedTransaction(txParamsHash, transactions[i].recipient, transactions[i].value, transactions[i].data, eta);
         }
+    }
+
+    function getPendingTransactions() external view returns (PendingTransaction[] memory) {
+        PendingTransaction[] memory pending = new PendingTransaction[](queuedTransactionsParamsHashes.length());
+
+        for (uint256 i = 0; i < queuedTransactionsParamsHashes.length(); i++) {
+            bytes32 txParamsHash = queuedTransactionsParamsHashes.at(i);
+            pending[i] = PendingTransaction(txParamsHash, queuedTransactions[txParamsHash]);
+        }
+
+        return pending;
     }
 
     modifier onlyProposer() {

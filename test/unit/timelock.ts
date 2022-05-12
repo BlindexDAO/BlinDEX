@@ -674,6 +674,55 @@ describe("Timelock", () => {
     });
   });
 
+  describe("Returning pending transactions", async () => {
+    let queuedTransactions: QueuedTransaction[] = [];
+
+    beforeEach("deploy contracts", async () => {
+      await deploy();
+
+      queuedTransactions = [
+        {
+          recipient: flipper.address,
+          value: 0,
+          data: (await flipper.populateTransaction.flip(0)).data as string
+        }
+      ];
+    });
+
+    it("Should return pending transactions", async () => {
+      const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
+      const eta1 = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
+
+      await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta1);
+
+      const eta2 = eta1.add(1000);
+      await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta2);
+
+      const pending1 = await timelock.getPendingTransactions();
+      expect(pending1.length).to.eq(2);
+      expect(pending1.map(t => t.status)).to.eql([TransactionStatus.Queued, TransactionStatus.Queued]);
+
+      await timelock.connect(owner).approveTransactionsBatch(pending1[0].txParamsHash);
+      const pending2 = await timelock.getPendingTransactions();
+
+      expect(pending2.length).to.eq(2);
+      expect(pending2.map(t => t.status)).to.eql([TransactionStatus.Approved, TransactionStatus.Queued]);
+
+      await timelock.connect(owner).cancelTransactionsBatch(pending2[1].txParamsHash);
+      const pending3 = await timelock.getPendingTransactions();
+
+      expect(pending3.length).to.eq(1);
+      expect(pending3.map(t => t.status)).to.eql([TransactionStatus.Approved]);
+
+      await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS); // wait for eta
+
+      await timelock.connect(owner).executeTransactionsBatch(queuedTransactions, eta1);
+      const pending4 = await timelock.getPendingTransactions();
+
+      expect(pending4.length).to.eq(0);
+    });
+  });
+
   describe("Using Recorder to queue", async () => {
     let txParamsHash: string;
     let txHash: string;
