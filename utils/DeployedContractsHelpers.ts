@@ -158,6 +158,14 @@ export function getUser3(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddr
   return hre.ethers.getNamedSigner("TEST3");
 }
 
+export function getProposer(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TIMELOCK_PROPOSER");
+}
+
+export function getExecutor(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TIMELOCK_EXECUTOR");
+}
+
 export function getTreasurySigner(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   return hre.ethers.getNamedSigner("TREASURY");
 }

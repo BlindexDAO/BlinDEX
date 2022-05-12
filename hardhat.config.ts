@@ -101,20 +101,26 @@ const config: HardhatUserConfig = {
     BOT: {
       default: 2
     },
-    TEST1: {
+    TIMELOCK_PROPOSER: {
       default: 3
     },
-    TEST2: {
+    TIMELOCK_EXECUTOR: {
       default: 4
     },
-    TEST3: {
+    TEST1: {
       default: 5
     },
-    TEST_VESTING_SCHEDULER: {
+    TEST2: {
       default: 6
     },
-    TEST_VESTING_REWARDS_PROVIDER: {
+    TEST3: {
       default: 7
+    },
+    TEST_VESTING_SCHEDULER: {
+      default: 8
+    },
+    TEST_VESTING_REWARDS_PROVIDER: {
+      default: 9
     }
   }
 };

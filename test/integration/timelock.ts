@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import type { Timelock } from "../../typechain/Timelock";
-import { getDeployer, getStakingRewardsDistribution, getUser1, getUser2, getUser3 } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getExecutor, getProposer, getStakingRewardsDistribution, getUser3 } from "../../utils/DeployedContractsHelpers";
 import { BigNumber } from "ethers";
 import { expectToFail } from "../helpers/common";
 import { extractTxParamsHashAndTxHashFromSingleTransaction } from "../../utils/TimelockHelpers";
@@ -38,8 +38,8 @@ describe("Execute with timelock", () => {
 
     const timelock = await GetTimelock();
     const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-    const proposer = await getUser1(hre);
-    const executor = await getUser2(hre);
+    const proposer = await getProposer(hre);
+    const executor = await getExecutor(hre);
     const randomUser = await getUser3(hre);
 
     await timelock.setProposer(proposer.address);

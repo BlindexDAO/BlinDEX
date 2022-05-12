@@ -1,10 +1,11 @@
 import { ContractReceipt, UnsignedTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getDeployer, getTimelock } from "../DeployedContractsHelpers";
+import { getDeployer, getProposer, getTimelock } from "../DeployedContractsHelpers";
 import { Strategy } from "./strategies/Strategy.interface";
 import { TimelockStrategy } from "./strategies/TimelockStrategy";
 import { OneByOneStrategy } from "./strategies/OneByOneStrategy";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { blockTimeSeconds } from "../Constants";
 
 // class responsible for recoding and executing transactions
 // construction:
@@ -61,14 +62,26 @@ export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, pa
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
 
-  const days = params?.executionStartInDays ?? 14; //todo ag default
+  // the default use of the timlock recorder is to queue the transactions
+  // be default they will be executed by the multisig
+  // if we want to execute the approved transactions batch from terminal we should specify the signer explicitly (the executor)
+  const signer = params?.singer ?? (await getProposer(hre));
 
-  const secondsInDay = 60 * 60 * 24;
-  const eta = timestamp + days * secondsInDay + 100; //todo ag 100 is sketchy
+  const timelock = (await getTimelock(hre)).connect(signer);
+
+  const validBlockMargin = blockTimeSeconds[hre.network.name] * 2; // 2 blocks just in case
+
+  let eta: number;
+  if (params?.executionStartInDays) {
+    const secondsInDay = 60 * 60 * 24;
+    eta = timestamp + params?.executionStartInDays * secondsInDay + validBlockMargin;
+  } else {
+    eta = timestamp + Number(await timelock.minimumExecutionDelay()) + validBlockMargin;
+  }
 
   const timelockRecorder = new Recorder(
     new TimelockStrategy({
-      timelock: await getTimelock(hre),
+      timelock: timelock,
       eta: eta
     })
   );
