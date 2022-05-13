@@ -43,6 +43,18 @@ export const SECONDARY_COLLATERAL_TOKEN_NAME: { [key: string]: string } = {
   arbitrumTestnet: "WBTC"
 };
 
+export const PriceFeedContractNames = {
+  EUR_USD: "PriceFeed_EUR_USD",
+  XAU_USD: "PriceFeed_XAU_USD",
+  GBP_USD: "PriceFeed_GBP_USD",
+  ETH_USD: "PriceFeed_ETH_USD",
+  BTC_ETH: "BtcToEthOracle",
+  ETH_XAU: "OracleBasedCryptoFiatFeed_ETH_XAU",
+  ETH_GBP: "OracleBasedCryptoFiatFeed_ETH_GBP",
+  ETH_EUR: "OracleBasedCryptoFiatFeed_ETH_EUR",
+  ETH_USD_ADAPTER: "OracleBasedWethUSDFeed_ETH_USD"
+};
+
 // TODO: Multichain - Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now (in the updaterSettings section in the BE environment file).
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   EUR_USD_FEED_ADDRESS: {
@@ -177,18 +189,6 @@ export const tokenLogoUrl: { [symbol: string]: string } = {
   ETHs: `${BlindexFileBaseUrl}/ETH.svg`,
   XUSD: `${BlindexFileBaseUrl}/XUSD.svg`,
   DOC: `${BlindexFileBaseUrl}/DOC.svg`
-};
-
-export const PriceFeedContractNames = {
-  EUR_USD: "PriceFeed_EUR_USD",
-  XAU_USD: "PriceFeed_XAU_USD",
-  GBP_USD: "PriceFeed_GBP_USD",
-  ETH_USD: "PriceFeed_ETH_USD",
-  BTC_ETH: "BtcToEthOracle",
-  ETH_XAU: "OracleBasedCryptoFiatFeed_ETH_XAU",
-  ETH_GBP: "OracleBasedCryptoFiatFeed_ETH_GBP",
-  ETH_EUR: "OracleBasedCryptoFiatFeed_ETH_EUR",
-  ETH_USD_ADAPTER: "OracleBasedWethUSDFeed_ETH_USD"
 };
 
 export function getListOfSupportedLiquidityPools(networkName: string): {
