@@ -155,17 +155,20 @@ export function load() {
     });
   });
 
+  // TODO: Change the config to be based on the new BE config we used
   async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
+    // TODO: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it)
     const priceFeeds = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
       const instance = await hre.ethers.getContract(value, deployer);
-      return { symbol: key, address: instance.address, decimals: await getDecimals(instance) };
+      return { symbol: key, address: instance.address, decimals: await getPriceFeedDecimals(instance) };
     });
 
     const results = await Promise.all(priceFeeds);
     return results;
   }
 
-  async function getDecimals(instance: Contract): Promise<number | undefined> {
+  // We have different ways on getting the decimals based on the price feed type
+  async function getPriceFeedDecimals(instance: Contract): Promise<number | undefined> {
     if (instance.decimals) {
       return await instance.decimals();
     } else if (instance.getDecimals) {
