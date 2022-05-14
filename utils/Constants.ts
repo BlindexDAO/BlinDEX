@@ -55,7 +55,7 @@ export const PriceFeedContractNames = {
   ETH_USD_ADAPTER: "OracleBasedWethUSDFeed_ETH_USD"
 };
 
-// TODO: Multichain - Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now (in the updaterSettings section in the BE environment file).
+// TODO: Multichain - Maybe combine it with the price feeds we deploy? That way we could have a field called "shouldUpdate" and the BE bot could read it to know if it should update it or not. That way we won't need it hardcoded on the BE config like it is right now (in the updaterSettings section in the BE environment file). https://lagoslabs.atlassian.net/browse/LAGO-890
 export const chainlinkPriceFeeds: { [key: string]: ChainlinkPriceFeed } = {
   EUR_USD_FEED_ADDRESS: {
     mainnetFork: {

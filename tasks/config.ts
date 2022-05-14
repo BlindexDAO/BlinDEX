@@ -157,7 +157,7 @@ export function load() {
   });
 
   async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress): Promise<{ [key: string]: PriceFeed }> {
-    // TODO - Multichain: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it)
+    // TODO - Multichain: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it) - https://lagoslabs.atlassian.net/browse/LAGO-890
     const priceFeedsPromises = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
       const priceFeedContract = await hre.ethers.getContract(value, deployer);
       const priceFeedData: PriceFeed = {
@@ -194,7 +194,7 @@ export function load() {
       return await instance.getDecimals();
     }
 
-    // TODO - Multichain: When adding support for a chain we're not the one who deployed the contract, then handle this case
+    // TODO - Multichain: When adding support for a chain we're not the one who deployed the contract, then handle this case - https://lagoslabs.atlassian.net/browse/LAGO-890
     return 0;
   }
 
