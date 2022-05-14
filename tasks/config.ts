@@ -38,6 +38,7 @@ import {
   EXTERNAL_SUPPORTED_TOKENS,
   SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
+import { PriceFeed } from "./interfaces/config.interface";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -155,27 +156,46 @@ export function load() {
     });
   });
 
-  // TODO: Change the config to be based on the new BE config we used
-  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
-    // TODO: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it)
-    const priceFeeds = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
-      const instance = await hre.ethers.getContract(value, deployer);
-      return { symbol: key, address: instance.address, decimals: await getPriceFeedDecimals(instance) };
+  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress): Promise<{ [key: string]: PriceFeed }> {
+    // TODO - Multichain: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it)
+    const priceFeedsPromises = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
+      const priceFeedContract = await hre.ethers.getContract(value, deployer);
+      const priceFeedData: PriceFeed = {
+        address: priceFeedContract.address,
+        decimals: await getPriceFeedDecimals(priceFeedContract),
+        updatable: isPriceFeedUpdatable(priceFeedContract)
+      };
+
+      return { [key]: priceFeedData };
     });
 
-    const results = await Promise.all(priceFeeds);
-    return results;
+    const results = await Promise.all(priceFeedsPromises);
+
+    return results.reduce((previous, current) => {
+      const key = Object.keys(current)[0];
+      previous[key] = current[key];
+
+      return previous;
+    }, {});
+  }
+
+  function isPriceFeedUpdatable(priceFeed: Contract): boolean {
+    const isFiatPriceFeed = priceFeed.setPrice; // Taken from FiatToFiatPseudoOracleFeed
+    const isSovrynCryptoPriceFeed = priceFeed.updateOracleWithVerification; // Taken from SovrynSwapPriceFeed
+
+    return !!(isFiatPriceFeed || isSovrynCryptoPriceFeed);
   }
 
   // We have different ways on getting the decimals based on the price feed type
-  async function getPriceFeedDecimals(instance: Contract): Promise<number | undefined> {
+  async function getPriceFeedDecimals(instance: Contract): Promise<number> {
     if (instance.decimals) {
       return await instance.decimals();
     } else if (instance.getDecimals) {
       return await instance.getDecimals();
-    } else {
-      return undefined;
     }
+
+    // TODO - Multichain: When adding support for a chain we're not the one who deployed the contract, then handle this case
+    return 0;
   }
 
   async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
