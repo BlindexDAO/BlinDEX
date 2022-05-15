@@ -1,7 +1,6 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import { to_d18 } from "../../utils/NumbersHelpers";
-import { ethers } from "hardhat";
 import { getBdx, getDeployer, getTreasuryAddress } from "../../utils/DeployedContractsHelpers";
 import { deployContract, printAndWaitOnTransaction } from "../../utils/DeploymentHelpers";
 
@@ -13,8 +12,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const bdx21M = to_d18(21).mul(1e6);
 
+    const estimatedGas = await bdx.connect(deployer).estimateGas.mint(treasuryAddress, bdx21M);
+
     // mint all of the BDX up front to the treasury
-    await printAndWaitOnTransaction(await bdx.connect(deployer).mint(ethers.constants.AddressZero, treasuryAddress, bdx21M));
+    await printAndWaitOnTransaction(await bdx.connect(deployer).mint(treasuryAddress, bdx21M, { gasLimit: estimatedGas.mul(2) }));
   });
 };
 

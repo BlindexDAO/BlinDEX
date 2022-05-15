@@ -37,21 +37,17 @@ contract BDXShares is ERC20Upgradeable, OwnableUpgradeable {
         }
     }
 
-    function mint(
-        address bd_stable,
-        address to,
-        uint256 amount
-    ) public onlyOwner {
+    function mint(address to, uint256 amount) public onlyOwner {
         require((totalSupply() + amount) <= MAX_TOTAL_SUPPLY, "BDX limit reached");
 
         _mint(to, amount);
 
-        emit BdxMinted(address(this), to, bd_stable, amount);
+        emit BdxMinted(address(this), to, amount);
     }
 
     /* ========== EVENTS ========== */
 
-    event BdxBurned(address indexed from, address indexed to, address bd_stable, uint256 indexed amount);
-    event BdxMinted(address indexed from, address indexed to, address bd_stable, uint256 indexed amount);
+    event BdxBurned(address indexed from, address indexed to, uint256 indexed amount);
+    event BdxMinted(address indexed from, address indexed to, uint256 indexed amount);
     event BdStableAddressAdded(address indexed addr);
 }
