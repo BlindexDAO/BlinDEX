@@ -37,14 +37,10 @@ export async function updateOracle(hre: HardhatRuntimeEnvironment, symbol0: stri
   const updater = signer === null ? await getBot(hre) : signer;
   const oracleName = `${symbol0} / ${symbol1}`;
 
-  try {
-    console.log(`Starting to update ${oracleName}`);
+  console.log(`Starting to update ${oracleName}`);
 
-    // Do not await on the function so we could run multiple transactions like that in parallel
-    printAndWaitOnTransaction(await oracle.connect(updater).updateOracle());
-  } catch (e) {
-    console.log(`Error while updating ${oracleName}`, e);
-  }
+  // Do not await on the function so we could run multiple transactions like that in parallel
+  printAndWaitOnTransaction(await oracle.connect(updater).updateOracle()).catch(error => console.log(`Error while updating ${oracleName}`, error));
 }
 
 export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string) {
