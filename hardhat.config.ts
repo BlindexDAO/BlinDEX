@@ -64,6 +64,12 @@ const config: HardhatUserConfig = {
       gas: 10_000_000,
       deploy: chainsDeployScriptsFolders[chainIds.mainnetFork]
     },
+    rinkeby: {
+      chainId: chainIds.rinkeby,
+      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.rinkeby]
+    },
     arbitrumTestnet: {
       // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
       url: "https://rinkeby.arbitrum.io/rpc",

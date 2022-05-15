@@ -8,7 +8,8 @@ export const chainsDeployScriptsFolders = {
   // Our local development is based ont he deployment scripts of RSK, being the native chain of Blindex.
   // The deployment files there have different conditions based on the chain
   [chainIds.mainnetFork]: [`${deploymentScriptsFolder}/mainnet-rsk`],
-  [chainIds.arbitrumTestnet]: [`${deploymentScriptsFolder}/testnet-arbitrum`]
+  [chainIds.arbitrumTestnet]: [`${deploymentScriptsFolder}/testnet-arbitrum`],
+  [chainIds.rinkeby]: [`${deploymentScriptsFolder}/testnet-arbitrum`]
 };
 
 // Since we're deploying the same tokens on multiple chains, having this data in a constant file will prevent mistakes of typos between chains

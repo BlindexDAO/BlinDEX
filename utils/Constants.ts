@@ -228,5 +228,6 @@ export const BASE_STAKING_MULTIPLIER = 1e6;
 export const chainIds = {
   mainnetFork: 1337,
   rsk: 30,
-  arbitrumTestnet: 421611
+  arbitrumTestnet: 421611,
+  rinkeby: 4
 };
