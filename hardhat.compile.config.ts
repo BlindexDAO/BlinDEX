@@ -42,7 +42,8 @@ const config: HardhatUserConfig = {
       "./node_modules/@uniswap/v2-core/build/UniswapV2Factory.json",
       "./node_modules/@uniswap/v2-core/build/UniswapV2Factory__factory.json",
       "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02.json",
-      "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02__factors.json"
+      "./node_modules/@uniswap/v2-periphery/build/UniswapV2Router02__factors.json",
+      "./node_modules/@chainlink/contracts/abi/v0.8/AggregatorInterface.json"
     ]
   },
   external: {

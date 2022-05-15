@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import "./IPriceFeed.sol";
-import "./AggregatorV3Interface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract AggregatorV3PriceFeed is IPriceFeed {
     AggregatorV3Interface private feed;
