@@ -3,8 +3,9 @@ pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract Timelock is Ownable {
+contract Timelock is Ownable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     enum TransactionStatus {
@@ -155,7 +156,7 @@ contract Timelock is Ownable {
         emit ApprovedTransactionsBatch(txParamsHash);
     }
 
-    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal {
+    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal nonReentrant {
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
         require(queuedTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
