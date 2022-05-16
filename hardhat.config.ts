@@ -69,6 +69,11 @@ const config: HardhatUserConfig = {
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       deploy: chainsDeployScriptsFolders[chainIds.goerli]
     },
+    kovan: {
+      url: process.env.KOVAN_URL!,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.kovan]
+    },
     arbitrumTestnet: {
       url: process.env.ARBITRUM_TESTNET_URL || "https://rinkeby.arbitrum.io/rpc",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],

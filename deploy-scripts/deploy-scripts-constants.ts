@@ -9,7 +9,8 @@ export const chainsDeployScriptsFolders = {
   // The deployment files there have different conditions based on the chain
   [chainIds.mainnetFork]: [`${deploymentScriptsFolder}/mainnet-rsk`],
   [chainIds.arbitrumTestnet]: [`${deploymentScriptsFolder}/testnet-arbitrum`],
-  [chainIds.goerli]: [`${deploymentScriptsFolder}/testnet-arbitrum`]
+  [chainIds.goerli]: [`${deploymentScriptsFolder}/testnet-arbitrum`],
+  [chainIds.kovan]: [`${deploymentScriptsFolder}/testnet-arbitrum`]
 };
 
 // Since we're deploying the same tokens on multiple chains, having this data in a constant file will prevent mistakes of typos between chains
