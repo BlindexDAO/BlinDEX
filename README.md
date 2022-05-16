@@ -21,7 +21,7 @@ Replacing all traditional financial systems calls for a completely stable, inclu
 
 ## Environment variables
 
-Create `.env` file at root level, fill it with the following values:
+Create `.env` file at root level, fill it with the following **mandatory** values:
 
 ```
 MAINNET_URL=https://eth-mainnet.alchemyapi.io/v2/<your_personal_eth-mainnet_alchemyapi_project_token>
@@ -29,8 +29,16 @@ MNEMONIC_PHRASE=fashion night boss nature jelly resource mechanic faculty messag
 USER_DEPLOYER_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 USER_TREASURY_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 USER_BOT_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
+GOERLI_URL=<your PRC URL>
+INFURA_API_KEY=<your infura API key>
+```
+
+And you may also use these **optional** values:
+
+```
 CMC_TOKEN=your_coin_market_cap_token
 ETHERSCAN_API_KEY=<token>
+ARBITRUM_TESTNET_URL=<your PRC URL>
 ```
 
 Please note that the private keys and seed phrase above are valid, but random and public, use them only for development purposes. Or even better, replace them with your own development keys.
