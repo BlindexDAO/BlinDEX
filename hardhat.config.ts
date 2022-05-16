@@ -71,8 +71,7 @@ const config: HardhatUserConfig = {
       deploy: chainsDeployScriptsFolders[chainIds.rinkeby]
     },
     arbitrumTestnet: {
-      // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
-      url: "https://rinkeby.arbitrum.io/rpc",
+      url: process.env.ARBITRUM_TESTNET_URL || "https://rinkeby.arbitrum.io/rpc",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       chainId: chainIds.arbitrumTestnet,
       deploy: chainsDeployScriptsFolders[chainIds.arbitrumTestnet]

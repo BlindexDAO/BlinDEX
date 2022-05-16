@@ -12,10 +12,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const bdx21M = to_d18(21).mul(1e6);
 
-    const estimatedGas = await bdx.connect(deployer).estimateGas.mint(treasuryAddress, bdx21M);
-
     // mint all of the BDX up front to the treasury
-    await printAndWaitOnTransaction(await bdx.connect(deployer).mint(treasuryAddress, bdx21M, { gasLimit: estimatedGas.mul(2) }));
+    await printAndWaitOnTransaction(await bdx.connect(deployer).mint(treasuryAddress, bdx21M));
   });
 };
 
