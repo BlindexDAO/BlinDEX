@@ -3,3 +3,7 @@ export interface PriceFeed {
   decimals: number;
   updatable: boolean;
 }
+
+export interface PriceFeedConfig {
+  [key: string]: PriceFeed;
+}
