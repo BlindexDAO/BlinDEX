@@ -207,6 +207,17 @@ contract Timelock is Ownable, ReentrancyGuard {
         return pending;
     }
 
+    function getPendingTransactionAt(uint256 i) external view returns (PendingTransaction memory) {
+        require(queuedTransactionsParamsHashes.length() > i, "Timelock: pending transactions index out of range");
+
+        bytes32 txParamsHash = queuedTransactionsParamsHashes.at(i);
+        return PendingTransaction(txParamsHash, queuedTransactions[txParamsHash]);
+    }
+
+    function getPendingTransactionsCount() external view returns (uint256) {
+        return queuedTransactionsParamsHashes.length();
+    }
+
     modifier onlyProposer() {
         require(msg.sender == proposer, "Timelock: only the proposer can perform this action");
         _;

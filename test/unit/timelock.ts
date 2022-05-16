@@ -706,6 +706,23 @@ describe("Timelock", () => {
     });
 
     it("Should return pending transactions", async () => {
+      async function expectPendingTxStatusesToBe(expectedPendingStatuses: TransactionStatus[]) {
+        const actualStatuses = [];
+
+        for (let i = 0; i < expectedPendingStatuses.length; i++) {
+          const status = (await timelock.getPendingTransactionAt(i)).status;
+          actualStatuses.push(status);
+        }
+
+        const pendingAllAtOnce = await timelock.getPendingTransactions();
+
+        expect(await timelock.getPendingTransactionsCount()).to.eq(expectedPendingStatuses.length);
+        expect(pendingAllAtOnce.length).to.eq(expectedPendingStatuses.length);
+
+        expect(actualStatuses).to.eql(expectedPendingStatuses);
+        expect(pendingAllAtOnce.map(t => t.status)).to.eql(expectedPendingStatuses);
+      }
+
       const timestamp = await (await hre.ethers.provider.getBlock("latest")).timestamp;
       const eta1 = BigNumber.from(timestamp).add(BigNumber.from(EXECUTION_DELAY + MARGIN_SECONDS));
 
@@ -714,21 +731,18 @@ describe("Timelock", () => {
       const eta2 = eta1.add(1000);
       await timelock.connect(proposer).queueTransactionsBatch(queuedTransactions, eta2);
 
-      const pending1 = await timelock.getPendingTransactions();
-      expect(pending1.length).to.eq(2);
-      expect(pending1.map(t => t.status)).to.eql([TransactionStatus.Queued, TransactionStatus.Queued]);
+      const expectedPendingStatuses1 = [TransactionStatus.Queued, TransactionStatus.Queued];
+      await expectPendingTxStatusesToBe(expectedPendingStatuses1);
 
-      await timelock.connect(owner).approveTransactionsBatch(pending1[0].txParamsHash);
-      const pending2 = await timelock.getPendingTransactions();
+      await timelock.connect(owner).approveTransactionsBatch((await timelock.getPendingTransactionAt(0)).txParamsHash);
+      const expectedPendingStatuses2 = [TransactionStatus.Approved, TransactionStatus.Queued];
 
-      expect(pending2.length).to.eq(2);
-      expect(pending2.map(t => t.status)).to.eql([TransactionStatus.Approved, TransactionStatus.Queued]);
+      await expectPendingTxStatusesToBe(expectedPendingStatuses2);
 
-      await timelock.connect(owner).cancelTransactionsBatch(pending2[1].txParamsHash);
-      const pending3 = await timelock.getPendingTransactions();
+      await timelock.connect(owner).cancelTransactionsBatch((await timelock.getPendingTransactionAt(1)).txParamsHash);
+      const expectedPendingStatuses3 = [TransactionStatus.Approved];
 
-      expect(pending3.length).to.eq(1);
-      expect(pending3.map(t => t.status)).to.eql([TransactionStatus.Approved]);
+      await expectPendingTxStatusesToBe(expectedPendingStatuses3);
 
       await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS); // wait for eta
 
