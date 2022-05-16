@@ -62,7 +62,7 @@ describe("Timelock", () => {
       const state2 = await flipper.state(2);
       const flipperOwner = await flipper.owner();
       const timelockProposer = await timelock.proposer();
-      const timelockExecutor = await timelock.executor();
+      const timelockExecutor = await timelock.executorAt(0);
       const timelockOwner = await timelock.owner();
 
       expect(state0).to.equal(false);
@@ -145,15 +145,31 @@ describe("Timelock", () => {
       expect(await timelock.proposer()).to.eq(user.address);
     });
 
-    it("Set executor", async () => {
-      await expectToFail(() => timelock.connect(user2).setExecutor(user.address), "Ownable: caller is not the owner");
-      await timelock.connect(owner).setExecutor(hre.ethers.constants.AddressZero); // should allow to disable executor
+    it("Add and remove executors", async () => {
+      await expectToFail(() => timelock.connect(user2).addExecutor(user.address), "Ownable: caller is not the owner");
+      await expectToFail(() => timelock.connect(user2).removeExecutor(user.address), "Ownable: caller is not the owner");
 
-      const receipt = await (await timelock.connect(owner).setExecutor(user.address)).wait();
-      const event = extractTheOnlyEvent(receipt, "NewExecutorSet");
+      await expectToFail(() => timelock.connect(owner).addExecutor(hre.ethers.constants.AddressZero), "Timelock: executor cannot be 0 address");
 
-      expect(event.args?.newExecutor).to.eq(user.address);
-      expect(await timelock.executor()).to.eq(user.address);
+      await timelock.connect(owner).removeExecutor(executor.address); // remove the original executor to start with a blank page
+
+      expectToFail(() => timelock.executorAt(0), "Timelock: executors index out of range");
+
+      const receiptForAdded1 = await (await timelock.connect(owner).addExecutor(user.address)).wait();
+      expectEventWithArgs(receiptForAdded1, "NewExecutorAdded", [user.address]);
+      expect(await timelock.executorAt(0)).to.eq(user.address);
+      expect(await timelock.executorsCount()).to.eq(1);
+
+      const receiptForAdded2 = await (await timelock.connect(owner).addExecutor(user2.address)).wait();
+      expectEventWithArgs(receiptForAdded2, "NewExecutorAdded", [user2.address]);
+      expect(await timelock.executorAt(1)).to.eq(user2.address);
+      expect(await timelock.executorsCount()).to.eq(2);
+
+      const receiptForRemoved = await (await timelock.connect(owner).removeExecutor(user2.address)).wait();
+      expectEventWithArgs(receiptForRemoved, "ExecutorRemoved", [user2.address]);
+      expect(await timelock.executorsCount()).to.eq(1);
+      expect(await timelock.executorAt(0)).to.eq(user.address);
+      expectToFail(() => timelock.executorAt(1), "Timelock: executors index out of range");
     });
   });
 

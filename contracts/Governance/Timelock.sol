@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract Timelock is Ownable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     enum TransactionStatus {
         NonExistent, // 0 is what you get from a non-existent transaction (which you can get e.g. from a mapping)
@@ -30,7 +31,7 @@ contract Timelock is Ownable, ReentrancyGuard {
     uint256 public executionGracePeriod;
 
     address public proposer;
-    address public executor;
+    EnumerableSet.AddressSet executors;
 
     EnumerableSet.Bytes32Set queuedTransactionsParamsHashes;
     mapping(bytes32 => TransactionStatus) public queuedTransactions;
@@ -40,7 +41,8 @@ contract Timelock is Ownable, ReentrancyGuard {
     event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
     event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 eta);
     event NewProposerSet(address indexed previousProposer, address indexed newProposer);
-    event NewExecutorSet(address indexed previousExecutor, address indexed newExecutor);
+    event NewExecutorAdded(address indexed executor);
+    event ExecutorRemoved(address indexed executor);
     event NewExecutionDelaySet(uint256 indexed delay);
     event NewMinimumExecutionDelaySet(uint256 indexed delay);
     event NewMaximumExecutionDelaySet(uint256 indexed delay);
@@ -59,7 +61,7 @@ contract Timelock is Ownable, ReentrancyGuard {
         setMaximumExecutionDelay(_maximumExecutionDelay);
         setExecutionGracePeriod(_executionGracePeriod);
         setProposer(_proposer);
-        setExecutor(_executor);
+        addExecutor(_executor);
     }
 
     function setProposer(address _proposer) public onlyOwner {
@@ -71,11 +73,28 @@ contract Timelock is Ownable, ReentrancyGuard {
         emit NewProposerSet(previousProposer, proposer);
     }
 
-    function setExecutor(address _executor) public onlyOwner {
-        address previousExecutor = executor;
-        executor = _executor;
+    function addExecutor(address _executor) public onlyOwner {
+        require(!executors.contains(_executor), "Timelock: executor already exists");
+        require(_executor != address(0), "Timelock: executor cannot be 0 address");
 
-        emit NewExecutorSet(previousExecutor, executor);
+        executors.add(_executor);
+        emit NewExecutorAdded(_executor);
+    }
+
+    function removeExecutor(address _executor) public onlyOwner {
+        require(executors.contains(_executor), "Timelock: executor dosn't exist");
+
+        executors.remove(_executor);
+        emit ExecutorRemoved(_executor);
+    }
+
+    function executorsCount() external view returns (uint256) {
+        return executors.length();
+    }
+
+    function executorAt(uint256 i) external view returns (address) {
+        require(executors.length() > i, "Timelock: executors index out of range");
+        return executors.at(i);
     }
 
     function setMinimumExecutionDelay(uint256 _minimumExecutionDelay) public onlyOwner {
@@ -194,7 +213,7 @@ contract Timelock is Ownable, ReentrancyGuard {
     }
 
     modifier onlyExecutorOrOwner() {
-        require(msg.sender == executor || msg.sender == owner(), "Timelock: only the executor or owner can perform this action");
+        require(executors.contains(msg.sender) || msg.sender == owner(), "Timelock: only the executor or owner can perform this action");
         _;
     }
 }

@@ -43,7 +43,7 @@ describe("Execute with timelock", () => {
     const randomUser = await getUser3(hre);
 
     await timelock.setProposer(proposer.address);
-    await timelock.setExecutor(executor.address);
+    await timelock.addExecutor(executor.address);
 
     expect((await stakingRewardsDistribution.vestingRewardRatio_percent()).toNumber()).to.not.eq(expectedVestingRewardRatio);
 
