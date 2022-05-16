@@ -67,13 +67,7 @@ const config: HardhatUserConfig = {
     goerli: {
       url: process.env.GOERLI_URL!,
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
-      deploy: chainsDeployScriptsFolders[chainIds.rinkeby]
-    },
-    rinkeby: {
-      chainId: chainIds.rinkeby,
-      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
-      deploy: chainsDeployScriptsFolders[chainIds.rinkeby]
+      deploy: chainsDeployScriptsFolders[chainIds.goerli]
     },
     arbitrumTestnet: {
       url: process.env.ARBITRUM_TESTNET_URL || "https://rinkeby.arbitrum.io/rpc",
