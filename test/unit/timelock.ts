@@ -240,7 +240,7 @@ describe("Timelock", () => {
 
       expect(dataFromReceipt.txParamsHash).to.be.ok;
       expect(dataFromReceipt.txHash).to.be.ok;
-      expect(await timelock.connect(proposer).queuedTransactions(dataFromReceipt.txParamsHash)).to.be.equal(TransactionStatus.Queued);
+      expect(await timelock.connect(proposer).pendingTransactions(dataFromReceipt.txParamsHash)).to.be.equal(TransactionStatus.Queued);
     });
   });
 
@@ -287,7 +287,7 @@ describe("Timelock", () => {
       expect(dataFromReceipt.txParamsHash).to.be.ok;
       expect(dataFromReceipt.txHash).to.be.ok;
       expect(dataFromReceipt.txParamsHash).to.eq(txParamsHash);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
     });
 
     it("Approving not queued transaction by owner should fail ", async () => {
@@ -323,9 +323,9 @@ describe("Timelock", () => {
 
       await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
 
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
       await timelock.connect(owner).executeTransactionsBatch(queuedTransactions, eta);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
       expect(flipperBefore).to.not.eq(flipperAfter);
@@ -340,9 +340,9 @@ describe("Timelock", () => {
 
       const flipperBefore = await flipper.state(0);
 
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
       await timelock.connect(owner).cancelTransactionsBatch(txParamsHash);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
       expect(flipperBefore).to.eq(flipperAfter);
@@ -364,9 +364,9 @@ describe("Timelock", () => {
 
       const flipperBefore = await flipper.state(0);
 
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
       await timelock.connect(owner).approveAndExecuteTransactionsBatch(queuedTransactions, eta);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
       expect(flipperBefore).to.not.eq(flipperAfter);
@@ -382,11 +382,11 @@ describe("Timelock", () => {
       await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
 
       const flipperBefore = await flipper.state(0);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.Queued);
 
       const x = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
       await timelock.connect(owner).approveAndExecuteTransactionsBatchRaw(x.txParamsData);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
       expect(flipperBefore).to.not.eq(flipperAfter);
@@ -441,7 +441,7 @@ describe("Timelock", () => {
 
       await simulateTimeElapseInSeconds(EXECUTION_DELAY + MARGIN_SECONDS);
 
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
 
       expectToFail(
         () => timelock.connect(user).executeTransactionsBatch(queuedTransactions, eta),
@@ -453,7 +453,7 @@ describe("Timelock", () => {
       );
 
       await timelock.connect(executor).executeTransactionsBatch(queuedTransactions, eta);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.NonExistent);
 
       const flipperAfter = await flipper.state(0);
       expect(flipperBefore).to.not.eq(flipperAfter);
@@ -552,7 +552,7 @@ describe("Timelock", () => {
       expect(await flipper.state(1)).to.be.equal(true, "invalid state[1]");
       expect(await flipper.state(2)).to.be.equal(false, "invalid state[2]");
 
-      expect(await timelock.queuedTransactions(firstTransactionDataHash)).to.be.equal(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(firstTransactionDataHash)).to.be.equal(TransactionStatus.NonExistent);
     });
 
     it("Owner cannot execute not approved transaction", async () => {
@@ -595,7 +595,7 @@ describe("Timelock", () => {
     });
 
     it("Queueing transaction by proposer should work", async () => {
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Queued);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.Queued);
     });
 
     it("Canceling transactions by user should fail", async () => {
@@ -613,7 +613,7 @@ describe("Timelock", () => {
       expectEventWithArgs(receipt, "CancelledTransactionsBatch", [txParamsHash]);
       const dataFromReceipt = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "CancelledTransactionsBatch");
       expect(dataFromReceipt.txParamsHash).to.eq(txParamsHash);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
     });
 
     it("Approving a cancelled transaction by owner should fail", async () => {
@@ -657,7 +657,7 @@ describe("Timelock", () => {
     });
 
     it("Proposer can queue a transaction", async () => {
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Queued);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.Queued);
     });
 
     it("Proposer cannot execute unapproved transaction", async () => {
@@ -673,7 +673,7 @@ describe("Timelock", () => {
       expectEventWithArgs(receipt, "ApprovedTransactionsBatch", [txParamsHash]);
       const dataFromReceipt = extractTxParamsHashAndTxHashFromSingleTransaction([receipt], "ApprovedTransactionsBatch");
       expect(dataFromReceipt.txParamsHash).to.eq(txParamsHash);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
     });
 
     it("Owner can execute a transaction", async () => {
@@ -686,7 +686,7 @@ describe("Timelock", () => {
       expect(await flipper.state(1)).to.be.equal(true, "invalid state[1]");
       expect(await flipper.state(2)).to.be.equal(false, "invalid state[2]");
 
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
     });
   });
 
@@ -793,12 +793,12 @@ describe("Timelock", () => {
       txParamsHash = hashes.txParamsHash;
       txHash = hashes.txHash;
 
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Queued);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.Queued);
     });
 
     it("Approve", async () => {
       await timelock.connect(owner).approveTransactionsBatch(txParamsHash);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.Approved);
     });
 
     it("Executing using decoded data got from txHash", async () => {
@@ -810,7 +810,7 @@ describe("Timelock", () => {
       expect(await flipper.state(0)).to.be.equal(true);
       expect(await flipper.state(1)).to.be.equal(true);
       expect(await flipper.state(2)).to.be.equal(false);
-      expect(await timelock.queuedTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
+      expect(await timelock.pendingTransactions(txParamsHash)).to.be.equal(TransactionStatus.NonExistent);
     });
   });
 });

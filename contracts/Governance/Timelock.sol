@@ -33,8 +33,8 @@ contract Timelock is Ownable, ReentrancyGuard {
     address public proposer;
     EnumerableSet.AddressSet executors;
 
-    EnumerableSet.Bytes32Set queuedTransactionsParamsHashes;
-    mapping(bytes32 => TransactionStatus) public queuedTransactions;
+    EnumerableSet.Bytes32Set pendingTransactionsParamsHashes;
+    mapping(bytes32 => TransactionStatus) public pendingTransactions;
 
     event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
     event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
@@ -128,18 +128,18 @@ contract Timelock is Ownable, ReentrancyGuard {
         require(transactions.length > 0, "Timelock: You need at least 1 transaction to queue a batch");
 
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
-        queuedTransactions[txParamsHash] = TransactionStatus.Queued;
-        queuedTransactionsParamsHashes.add(txParamsHash);
+        pendingTransactions[txParamsHash] = TransactionStatus.Queued;
+        pendingTransactionsParamsHashes.add(txParamsHash);
 
         emit QueuedTransactionsBatch(txParamsHash, transactions.length, eta);
         return txParamsHash;
     }
 
     function cancelTransactionsBatch(bytes32 txParamsHash) external onlyOwner {
-        require(queuedTransactions[txParamsHash] != TransactionStatus.NonExistent, "Timelock: transaction is not queued");
+        require(pendingTransactions[txParamsHash] != TransactionStatus.NonExistent, "Timelock: transaction is not queued");
 
-        delete queuedTransactions[txParamsHash];
-        queuedTransactionsParamsHashes.remove(txParamsHash);
+        delete pendingTransactions[txParamsHash];
+        pendingTransactionsParamsHashes.remove(txParamsHash);
 
         emit CancelledTransactionsBatch(txParamsHash);
     }
@@ -168,9 +168,9 @@ contract Timelock is Ownable, ReentrancyGuard {
     }
 
     function _approveTransactionsBatchInternal(bytes32 txParamsHash) internal onlyOwner {
-        require(queuedTransactions[txParamsHash] == TransactionStatus.Queued, "Timelock: transaction is not queued");
+        require(pendingTransactions[txParamsHash] == TransactionStatus.Queued, "Timelock: transaction is not queued");
 
-        queuedTransactions[txParamsHash] = TransactionStatus.Approved;
+        pendingTransactions[txParamsHash] = TransactionStatus.Approved;
 
         emit ApprovedTransactionsBatch(txParamsHash);
     }
@@ -178,12 +178,12 @@ contract Timelock is Ownable, ReentrancyGuard {
     function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal nonReentrant {
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
-        require(queuedTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
+        require(pendingTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
         require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed the execution delay.");
         require(block.timestamp <= eta + executionGracePeriod, "Timelock: Transaction is stale.");
 
-        delete queuedTransactions[txParamsHash];
-        queuedTransactionsParamsHashes.remove(txParamsHash);
+        delete pendingTransactions[txParamsHash];
+        pendingTransactionsParamsHashes.remove(txParamsHash);
 
         for (uint256 i = 0; i < transactions.length; i++) {
             (
@@ -197,25 +197,25 @@ contract Timelock is Ownable, ReentrancyGuard {
     }
 
     function getPendingTransactions() external view returns (PendingTransaction[] memory) {
-        PendingTransaction[] memory pending = new PendingTransaction[](queuedTransactionsParamsHashes.length());
+        PendingTransaction[] memory pending = new PendingTransaction[](pendingTransactionsParamsHashes.length());
 
-        for (uint256 i = 0; i < queuedTransactionsParamsHashes.length(); i++) {
-            bytes32 txParamsHash = queuedTransactionsParamsHashes.at(i);
-            pending[i] = PendingTransaction(txParamsHash, queuedTransactions[txParamsHash]);
+        for (uint256 i = 0; i < pendingTransactionsParamsHashes.length(); i++) {
+            bytes32 txParamsHash = pendingTransactionsParamsHashes.at(i);
+            pending[i] = PendingTransaction(txParamsHash, pendingTransactions[txParamsHash]);
         }
 
         return pending;
     }
 
     function getPendingTransactionAt(uint256 i) external view returns (PendingTransaction memory) {
-        require(queuedTransactionsParamsHashes.length() > i, "Timelock: pending transactions index out of range");
+        require(pendingTransactionsParamsHashes.length() > i, "Timelock: pending transactions index out of range");
 
-        bytes32 txParamsHash = queuedTransactionsParamsHashes.at(i);
-        return PendingTransaction(txParamsHash, queuedTransactions[txParamsHash]);
+        bytes32 txParamsHash = pendingTransactionsParamsHashes.at(i);
+        return PendingTransaction(txParamsHash, pendingTransactions[txParamsHash]);
     }
 
     function getPendingTransactionsCount() external view returns (uint256) {
-        return queuedTransactionsParamsHashes.length();
+        return pendingTransactionsParamsHashes.length();
     }
 
     modifier onlyProposer() {

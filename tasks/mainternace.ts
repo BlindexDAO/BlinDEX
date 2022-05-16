@@ -83,7 +83,7 @@ export function load() {
     .addPositionalParam("txParamsHash", "Transaction input data hash")
     .setAction(async ({ txParamsHash }, hre) => {
       const timelock = await getTimelock(hre);
-      console.log("TX status:", await timelock.queuedTransactions(txParamsHash));
+      console.log("TX status:", await timelock.pendingTransactions(txParamsHash));
     });
 
   task("execute-timelock-transaction")
