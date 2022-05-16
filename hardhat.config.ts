@@ -72,7 +72,8 @@ const config: HardhatUserConfig = {
     kovan: {
       url: process.env.KOVAN_URL!,
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
-      deploy: chainsDeployScriptsFolders[chainIds.kovan]
+      deploy: chainsDeployScriptsFolders[chainIds.kovan],
+      gasMultiplier: 2
     },
     arbitrumTestnet: {
       url: process.env.ARBITRUM_TESTNET_URL || "https://rinkeby.arbitrum.io/rpc",
