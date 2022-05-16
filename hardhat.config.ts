@@ -64,6 +64,11 @@ const config: HardhatUserConfig = {
       gas: 10_000_000,
       deploy: chainsDeployScriptsFolders[chainIds.mainnetFork]
     },
+    goerli: {
+      url: process.env.GOERLI_URL!,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.rinkeby]
+    },
     rinkeby: {
       chainId: chainIds.rinkeby,
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,

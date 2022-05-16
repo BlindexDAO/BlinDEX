@@ -111,12 +111,17 @@ export const chainSpecificComponents: ChainSpecificComponents = {
 };
 
 export const botAddress: MultichainAddresses = {
-  rsk: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872"
+  rsk: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872",
+  arbitrumTestnet: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872",
+  goerli: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872",
+  rinkeby: "0x2A119532248d0E4Ff68A42bB37f64336C3F20872"
 };
 
 export const treasuryAddresses: MultichainAddresses = {
   rsk: "0x18bc35c3b74b35c70cff0ec14ad62f4a8c2e679c",
-  arbitrumTestnet: "0xb2952754fe429D30Dd799149A1a47dD17c035dba"
+  arbitrumTestnet: "0xb2952754fe429D30Dd799149A1a47dD17c035dba",
+  goerli: "0xb2952754fe429D30Dd799149A1a47dD17c035dba",
+  rinkeby: "0xb2952754fe429D30Dd799149A1a47dD17c035dba"
 };
 
 export const INITIAL_BDX_AMOUNT_FOR_BDSTABLE = to_d18(6e4);

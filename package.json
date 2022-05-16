@@ -11,6 +11,7 @@
     "deploy:rsk": "hardhat --network rsk deploy",
     "deploy:testnet-arbitrum": "hardhat --network arbitrumTestnet deploy",
     "deploy:testnet-rinkeby": "hardhat --network rinkeby deploy",
+    "deploy:testnet-goerli": "hardhat --network goerli deploy",
     "initialize": "hardhat --network mainnetFork initialize:local",
     "update:oracles:fork": "hardhat --network mainnetFork update:oracles",
     "update:oracles:rsk": "hardhat --network rsk update:oracles",
