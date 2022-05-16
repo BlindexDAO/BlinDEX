@@ -47,7 +47,7 @@ type DefaultRecorderParams = {
 };
 
 export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
-  if (hre.network.name === "mainnetFork" || hre.network.name === "arbitrumTestnet") {
+  if (["mainnetFork", "arbitrumTestnet", "goerli", "kovan"].includes(hre.network.name)) {
     return new Recorder(
       new OneByOneStrategy({
         signer: params?.singer ?? (await getDeployer(hre))
