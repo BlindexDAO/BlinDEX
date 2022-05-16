@@ -31,6 +31,7 @@ jobs:
           USER_DEPLOYER_PRIVATE_KEY: ${{ secrets.USER_DEPLOYER_PRIVATE_KEY }}
           USER_TREASURY_PRIVATE_KEY: ${{ secrets.USER_TREASURY_PRIVATE_KEY }}
           USER_BOT_PRIVATE_KEY: ${{ secrets.USER_BOT_PRIVATE_KEY }}
+          GOERLI_URL: ${{ secrets.GOERLI_URL }}
         run: |
           npm run node &
           echo 'Sleeping for 7 seconds...'
