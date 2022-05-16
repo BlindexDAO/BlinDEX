@@ -38,7 +38,7 @@ import {
   EXTERNAL_SUPPORTED_TOKENS,
   SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
-import { PriceFeed } from "./interfaces/config.interface";
+import { PriceFeed, PriceFeedConfig } from "./interfaces/config.interface";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -156,27 +156,25 @@ export function load() {
     });
   });
 
-  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress): Promise<{ [key: string]: PriceFeed }> {
+  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress): Promise<PriceFeedConfig> {
     // TODO - Multichain: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it) - https://lagoslabs.atlassian.net/browse/LAGO-890
-    const priceFeedsPromises = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
+    return await Object.entries(PriceFeedContractNames).reduce(async (previousPromise, current) => {
+      const previous = await previousPromise;
+      const key = current[0];
+      const value = current[1];
+
       const priceFeedContract = await hre.ethers.getContract(value, deployer);
+
       const priceFeedData: PriceFeed = {
         address: priceFeedContract.address,
         decimals: await getPriceFeedDecimals(priceFeedContract),
         updatable: isPriceFeedUpdatable(priceFeedContract)
       };
 
-      return { [key]: priceFeedData };
-    });
-
-    const results = await Promise.all(priceFeedsPromises);
-
-    return results.reduce((previous, current) => {
-      const key = Object.keys(current)[0];
-      previous[key] = current[key];
-
+      (previous as PriceFeedConfig)[key] = priceFeedData;
       return previous;
-    }, {});
+    }, Promise.resolve({} as PriceFeedConfig));
+    // The return type of each reduce function is a promise, therefore we need to resolve it here so it will wait for all the promises together. That way we're getting parallelism abilities as well.
   }
 
   function isPriceFeedUpdatable(priceFeed: Contract): boolean {
