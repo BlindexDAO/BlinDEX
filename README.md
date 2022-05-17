@@ -109,6 +109,14 @@ The account responsible for updating oracles and refreshing other parts of the s
 We take security very seriously. Therefore the Blindex protocol had and will been go through security Audits.
 You can find the audits we did so far [in our docs](https://docs.blindex.io/smart-contracts/audits).
 
+# Etherscan auto verify contracts
+
+All you have to do is get your `ETHERSCAN_API_KEY` in the `.env` file and then run:
+
+```shell
+npx hardhat verify --network <network> DEPLOYED_CONTRACT_ADDRESS
+```
+
 # Credits
 
 We're grateful to the following projects for sharing their code and packages, used in this project:
