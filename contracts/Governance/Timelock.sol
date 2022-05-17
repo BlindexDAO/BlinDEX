@@ -66,6 +66,7 @@ contract Timelock is Ownable, ReentrancyGuard {
 
     function setProposer(address _proposer) public onlyOwner {
         require(_proposer != address(0), "Timelock: Proposer address cannot be 0");
+        require(_proposer != proposer, "Timelock: New proposer must be different than the current proposer");
 
         address previousProposer = proposer;
         proposer = _proposer;
@@ -82,7 +83,7 @@ contract Timelock is Ownable, ReentrancyGuard {
     }
 
     function removeExecutor(address _executor) public onlyOwner {
-        require(executors.contains(_executor), "Timelock: executor dosn't exist");
+        require(executors.contains(_executor), "Timelock: executor doesn't exist");
 
         executors.remove(_executor);
         emit ExecutorRemoved(_executor);
