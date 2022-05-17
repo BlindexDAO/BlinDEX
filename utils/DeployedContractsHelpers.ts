@@ -171,7 +171,7 @@ export function getTreasurySigner(hre: HardhatRuntimeEnvironment): Promise<Signe
 }
 
 export async function getTreasuryAddress(hre: HardhatRuntimeEnvironment): Promise<string> {
-  return hre.network.name === "mainnetFork" ? (await hre.ethers.getNamedSigner("TREASURY")).address : constants.treasuryAddresses[hre.network.name];
+  return hre.network.name === "mainnetFork" ? (await getTreasurySigner(hre)).address : constants.treasuryAddresses[hre.network.name];
 }
 
 export async function getBDStableWbtcPool(hre: HardhatRuntimeEnvironment, symbol: string): Promise<BdStablePool> {

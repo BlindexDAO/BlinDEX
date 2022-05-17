@@ -28,6 +28,7 @@ import * as path from "path";
 import hardhatCompileConfig from "./hardhat.compile.config";
 import { chainIds } from "./utils/Constants";
 import { chainsDeployScriptsFolders } from "./deploy-scripts/deploy-scripts-constants";
+import "@nomiclabs/hardhat-etherscan";
 
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
@@ -67,8 +68,6 @@ const config: HardhatUserConfig = {
       // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
       url: "https://rinkeby.arbitrum.io/rpc",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
-      timeout: 60000,
-      gasPrice: 2,
       chainId: chainIds.arbitrumTestnet,
       deploy: chainsDeployScriptsFolders[chainIds.arbitrumTestnet]
     },
@@ -90,6 +89,9 @@ const config: HardhatUserConfig = {
   gasReporter: {
     currency: "USD",
     coinmarketcap: process.env.CMC_TOKEN
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
   namedAccounts: {
     DEPLOYER: {

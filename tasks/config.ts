@@ -38,6 +38,7 @@ import {
   EXTERNAL_SUPPORTED_TOKENS,
   SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
+import { PriceFeed, PriceFeedConfig } from "./interfaces/config.interface";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -155,24 +156,44 @@ export function load() {
     });
   });
 
-  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
-    const priceFeeds = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
-      const instance = await hre.ethers.getContract(value, deployer);
-      return { symbol: key, address: instance.address, decimals: await getDecimals(instance) };
-    });
+  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress): Promise<PriceFeedConfig> {
+    // TODO - Multichain: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it) - https://lagoslabs.atlassian.net/browse/LAGO-890
+    return await Object.entries(PriceFeedContractNames).reduce(async (previousPromise, current) => {
+      const previous = await previousPromise;
+      const key = current[0];
+      const value = current[1];
 
-    const results = await Promise.all(priceFeeds);
-    return results;
+      const priceFeedContract = await hre.ethers.getContract(value, deployer);
+
+      const priceFeedData: PriceFeed = {
+        address: priceFeedContract.address,
+        decimals: await getPriceFeedDecimals(priceFeedContract),
+        updatable: isPriceFeedUpdatable(priceFeedContract)
+      };
+
+      (previous as PriceFeedConfig)[key] = priceFeedData;
+      return previous;
+    }, Promise.resolve({} as PriceFeedConfig));
+    // The return type of each reduce function is a promise, therefore we need to resolve it here so it will wait for all the promises together. That way we're getting parallelism abilities as well.
   }
 
-  async function getDecimals(instance: Contract): Promise<number | undefined> {
+  function isPriceFeedUpdatable(priceFeed: Contract): boolean {
+    const isFiatPriceFeed = priceFeed.setPrice; // Taken from FiatToFiatPseudoOracleFeed
+    const isSovrynCryptoPriceFeed = priceFeed.updateOracleWithVerification; // Taken from SovrynSwapPriceFeed
+
+    return !!(isFiatPriceFeed || isSovrynCryptoPriceFeed);
+  }
+
+  // We have different ways on getting the decimals based on the price feed type
+  async function getPriceFeedDecimals(instance: Contract): Promise<number> {
     if (instance.decimals) {
       return await instance.decimals();
     } else if (instance.getDecimals) {
       return await instance.getDecimals();
-    } else {
-      return undefined;
     }
+
+    // TODO - Multichain: When adding support for a chain we're not the one who deployed the contract, then handle this case - https://lagoslabs.atlassian.net/browse/LAGO-890
+    return 0;
   }
 
   async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
