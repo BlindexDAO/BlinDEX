@@ -1,0 +1,7 @@
+{
+  "/BlinDEX/deploy-scripts/testnet-arbitrum/1-bdx-shares.ts": 1652730120,
+  "/BlinDEX/deploy-scripts/testnet-arbitrum/2-mint-bdx.ts": 1652730131,
+  "/BlinDEX/deploy-scripts/testnet-arbitrum/3-vesting.ts": 1652730148,
+  "/BlinDEX/deploy-scripts/testnet-arbitrum/4-staking-rewards-distribution.ts": 1652730193,
+  "/BlinDEX/deploy-scripts/testnet-arbitrum/5-blindex-updater.ts": 1652730204
+}
