@@ -82,7 +82,7 @@ contract Timelock is Ownable, ReentrancyGuard {
     }
 
     function removeExecutor(address _executor) public onlyOwner {
-        require(executors.contains(_executor), "Timelock: executor dosn't exist");
+        require(executors.contains(_executor), "Timelock: executor doesn't exist");
 
         executors.remove(_executor);
         emit ExecutorRemoved(_executor);
