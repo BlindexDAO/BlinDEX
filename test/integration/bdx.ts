@@ -1,4 +1,4 @@
-import hre, { ethers } from "hardhat";
+import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
@@ -32,7 +32,7 @@ describe("BDX", () => {
 
     await expect(
       (async () => {
-        await bdx.mint(ethers.constants.AddressZero, deployer.address, 1);
+        await bdx.mint(deployer.address, 1);
       })()
     ).to.be.rejectedWith("BDX limit reached");
   });

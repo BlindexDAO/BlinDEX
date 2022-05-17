@@ -30,8 +30,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     console.log("Deployed StakingRewardsDistribution: " + stakingRewardsDistribution_ProxyDeployment.address);
 
-    // there is cycle dependency between staking rewards distribution and vesting
-    // once staking rewards distribution is available we override vesting params
+    // There is cycle dependency between staking rewards distribution and vesting.
+    // Once the staking rewards distribution is available we override vesting params
 
     console.log("Settings the funds provider");
     await printAndWaitOnTransaction(await vesting.setFundsProvider(stakingRewardsDistribution_ProxyDeployment.address));

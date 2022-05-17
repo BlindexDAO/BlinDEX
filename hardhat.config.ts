@@ -64,9 +64,19 @@ const config: HardhatUserConfig = {
       gas: 10_000_000,
       deploy: chainsDeployScriptsFolders[chainIds.mainnetFork]
     },
+    goerli: {
+      url: process.env.GOERLI_URL!,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.goerli]
+    },
+    kovan: {
+      url: process.env.KOVAN_URL!,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.kovan],
+      gasMultiplier: 2
+    },
     arbitrumTestnet: {
-      // Please note: We haven't decided yet that Arbitrum will be our next go to chain. We're using it right now as a general EVM chain and you cannot coclude anything beyond that.
-      url: "https://rinkeby.arbitrum.io/rpc",
+      url: process.env.ARBITRUM_TESTNET_URL || "https://rinkeby.arbitrum.io/rpc",
       accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       chainId: chainIds.arbitrumTestnet,
       deploy: chainsDeployScriptsFolders[chainIds.arbitrumTestnet]
