@@ -37,7 +37,7 @@ And you may also use these **optional** values:
 ```
 CMC_TOKEN=your_coin_market_cap_token
 ETHERSCAN_API_KEY=<token>
-ARBITRUM_TESTNET_URL=<your PRC URL>
+ARBITRUM_TESTNET_URL=<your RPC URL>
 ```
 
 Please note that the private keys and seed phrase above are valid, but random and public, use them only for development purposes. Or even better, replace them with your own development keys.
