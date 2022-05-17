@@ -66,6 +66,7 @@ contract Timelock is Ownable, ReentrancyGuard {
 
     function setProposer(address _proposer) public onlyOwner {
         require(_proposer != address(0), "Timelock: Proposer address cannot be 0");
+        require(_proposer != proposer, "Timelock: New proposer must be different than the current proposer");
 
         address previousProposer = proposer;
         proposer = _proposer;
