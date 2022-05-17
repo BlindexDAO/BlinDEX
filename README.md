@@ -29,7 +29,8 @@ MNEMONIC_PHRASE=fashion night boss nature jelly resource mechanic faculty messag
 USER_DEPLOYER_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 USER_TREASURY_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
 USER_BOT_PRIVATE_KEY=472a082c0ea7300773c6fb27b3b3215807da7cb9ab4ca2ae0763eb5deb10725d
-GOERLI_URL=<your RPC URL>
+GOERLI_URL=<your RPC URL - reach out to the other team members to understand how to get it. You can also just get it by setting up a free alchemyapi or infura accounts>
+KOVAN_URL=<your RPC URL - reach out to the other team members to understand how to get it. You can also just get it by setting up a free alchemyapi or infura accounts>
 ```
 
 And you may also use these **optional** values:
@@ -37,7 +38,7 @@ And you may also use these **optional** values:
 ```
 CMC_TOKEN=your_coin_market_cap_token
 ETHERSCAN_API_KEY=<token>
-ARBITRUM_TESTNET_URL=<your RPC URL>
+ARBITRUM_TESTNET_URL=<your RPC URL - reach out to the other team members to understand how to get it. You can also just get it by setting up a free alchemyapi or infura accounts>
 ```
 
 Please note that the private keys and seed phrase above are valid, but random and public, use them only for development purposes. Or even better, replace them with your own development keys.
