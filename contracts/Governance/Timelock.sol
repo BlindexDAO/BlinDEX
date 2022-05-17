@@ -31,9 +31,9 @@ contract Timelock is Ownable, ReentrancyGuard {
     uint256 public executionGracePeriod;
 
     address public proposer;
-    EnumerableSet.AddressSet executors;
+    EnumerableSet.AddressSet private executors;
 
-    EnumerableSet.Bytes32Set pendingTransactionsParamsHashes;
+    EnumerableSet.Bytes32Set private pendingTransactionsParamsHashes;
     mapping(bytes32 => TransactionStatus) public pendingTransactions;
 
     event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
