@@ -172,7 +172,9 @@ const initalBbstableForMinting = {
 export const blockTimeSeconds: { [key: string]: number } = {
   rsk: 30,
   mainnetFork: 14,
-  arbitrumTestnet: 13
+  arbitrumTestnet: 13,
+  kovan: 4,
+  goerli: 15
 };
 
 export const initialBdstableMintingAmount = (networkName: string, symbol: string): BigNumber => {

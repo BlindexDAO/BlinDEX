@@ -14,7 +14,7 @@ export class RecordableContract<T extends Contract> extends Contract {
   constructor(contract: T, recorder_: Recorder) {
     super(contract.address, contract.interface, contract.provider !== undefined ? contract.provider : contract.signer);
 
-    if (contract.address === undefined) {
+    if (!contract.address) {
       throw "contract.address undefined";
     }
     this.recorder = recorder_;
