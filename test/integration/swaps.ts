@@ -140,7 +140,7 @@ describe("Swaps", () => {
   }
 
   async function chooseBestPath(pathsPrices: { amountOut: BigNumber; path: string[] }[]) {
-    const bestPath = pathsPrices.reduce((prev, current) => (prev.amountOut > current.amountOut ? prev : current));
+    const bestPath = pathsPrices.reduce((prev, current) => (prev.amountOut.gt(current.amountOut) ? prev : current));
     return bestPath;
   }
 });
