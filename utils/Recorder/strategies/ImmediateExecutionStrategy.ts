@@ -5,7 +5,7 @@ import { Deferrable } from "ethers/lib/utils";
 import { TransactionRequest } from "@ethersproject/abstract-provider";
 
 // Strategy specific params
-export type OneByOneStrategyParams = {
+export type ImmediateExecutionStrategyParams = {
   signer: Signer;
 };
 
@@ -13,14 +13,14 @@ export type OneByOneStrategyParams = {
 // Send transactions one by one to the blockchain
 // need to specify during construction:
 // Signer - ethers.Signer connected to network
-export class OneByOneStrategy implements Strategy {
-  params: OneByOneStrategyParams;
+export class ImmediateExecutionStrategy implements Strategy {
+  params: ImmediateExecutionStrategyParams;
 
-  constructor(params_: OneByOneStrategyParams) {
+  constructor(params_: ImmediateExecutionStrategyParams) {
     this.params = { signer: params_.signer };
   }
 
-  async execute(txsToExecute: UnsignedTransaction[], params: OneByOneStrategyParams = this.params): Promise<ContractReceipt[]> {
+  async execute(txsToExecute: UnsignedTransaction[], params: ImmediateExecutionStrategyParams = this.params): Promise<ContractReceipt[]> {
     const signer = params.signer;
     const responses: ContractReceipt[] = [];
     while (txsToExecute.length > 0) {

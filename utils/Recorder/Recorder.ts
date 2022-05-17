@@ -3,9 +3,10 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getDeployer, getProposer, getTimelock } from "../DeployedContractsHelpers";
 import { Strategy } from "./strategies/Strategy.interface";
 import { TimelockStrategy } from "./strategies/TimelockStrategy";
-import { OneByOneStrategy } from "./strategies/OneByOneStrategy";
+import { ImmediateExecutionStrategy } from "./strategies/ImmediateExecutionStrategy";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { blockTimeSeconds } from "../Constants";
+import { Signer } from "ethers";
 
 // class responsible for recoding and executing transactions
 // construction:
@@ -49,7 +50,7 @@ type DefaultRecorderParams = {
 export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
   if (["mainnetFork", "arbitrumTestnet", "goerli", "kovan"].includes(hre.network.name)) {
     return new Recorder(
-      new OneByOneStrategy({
+      new ImmediateExecutionStrategy({
         signer: params?.singer ?? (await getDeployer(hre))
       })
     );
@@ -87,4 +88,8 @@ export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, pa
   );
 
   return timelockRecorder;
+}
+
+export function defaultImmediateExecutionRecorder(signer: Signer) {
+  return new Recorder(new ImmediateExecutionStrategy({ signer: signer }));
 }
