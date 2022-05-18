@@ -245,3 +245,11 @@ export const chainIds = {
   goerli: 420,
   kovan: 42
 };
+
+export const chainNames = {
+  mainnetFork: "mainnetFork",
+  rsk: "rsk",
+  arbitrumTestnet: "arbitrumTestnet",
+  goerli: "goerli",
+  kovan: "kovan"
+};

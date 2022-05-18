@@ -168,7 +168,7 @@ contract Timelock is Ownable, ReentrancyGuard {
         _executeTransactionsBatchInternal(transactions, eta);
     }
 
-    function _approveTransactionsBatchInternal(bytes32 txParamsHash) internal onlyOwner {
+    function _approveTransactionsBatchInternal(bytes32 txParamsHash) private onlyOwner {
         require(pendingTransactions[txParamsHash] == TransactionStatus.Queued, "Timelock: transaction is not queued");
 
         pendingTransactions[txParamsHash] = TransactionStatus.Approved;
@@ -176,7 +176,7 @@ contract Timelock is Ownable, ReentrancyGuard {
         emit ApprovedTransactionsBatch(txParamsHash);
     }
 
-    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) internal nonReentrant {
+    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) private nonReentrant {
         bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
 
         require(pendingTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
