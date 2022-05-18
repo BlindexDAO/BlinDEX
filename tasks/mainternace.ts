@@ -45,7 +45,7 @@ export function load() {
   task("change-owner-to-timelock").setAction(async (args, hre) => {
     const timelock = await getTimelock(hre);
 
-    //todo ag change for all contracts? Or maybe add address parameter?
+    //todo ag change for all contracts? Or maybe add an address parameter? - LAGO-835
 
     const deployer = await getDeployer(hre);
 
