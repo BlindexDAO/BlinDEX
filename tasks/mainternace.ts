@@ -59,7 +59,7 @@ export function load() {
   });
 
   task("queue-change-owner-to-deployer").setAction(async (args_, hre) => {
-    //todo ag change for all contracts? Or maybe add address parameter?
+    //todo ag change for all contracts? Or maybe add an address parameter? LAGO-835
 
     const pools = await getPools(hre);
 
