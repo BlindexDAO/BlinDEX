@@ -174,6 +174,14 @@ const initalBbstableForMinting = {
   }
 };
 
+export const blockTimeSeconds: { [key: string]: number } = {
+  rsk: 30,
+  mainnetFork: 14,
+  arbitrumTestnet: 13,
+  kovan: 4,
+  goerli: 15
+};
+
 export const initialBdstableMintingAmount = (networkName: string, symbol: string): BigNumber => {
   const initalAmountPerSymbol = symbol && _.get(initalBbstableForMinting, [networkName, symbol]);
   if (!initalAmountPerSymbol) {
@@ -236,4 +244,12 @@ export const chainIds = {
   arbitrumTestnet: 421611,
   goerli: 420,
   kovan: 42
+};
+
+export const chainNames = {
+  mainnetFork: "mainnetFork",
+  rsk: "rsk",
+  arbitrumTestnet: "arbitrumTestnet",
+  goerli: "goerli",
+  kovan: "kovan"
 };

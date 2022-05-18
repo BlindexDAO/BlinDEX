@@ -9,9 +9,9 @@ import {
   getBdEu,
   getBdEuWbtcPool,
   getBdEuWethPool,
+  getUser1,
   getOnChainWbtcFiatPrice,
   getOnChainWethFiatPrice,
-  getUser,
   getWbtc,
   getWeth,
   mintWbtc,
@@ -40,7 +40,7 @@ describe("BDStable 1to1", () => {
 
     const ethInEurPrice_1e12 = (await getOnChainWethFiatPrice(hre, "EUR")).price_1e12;
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const collateralAmount = 10;
 
     await lockBdeuCrAt(hre, 1);
@@ -77,7 +77,7 @@ describe("BDStable 1to1", () => {
 
     const ethInEurPrice_1e12 = (await getOnChainWethFiatPrice(hre, "EUR")).price_1e12;
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const collateralAmount = 10;
 
     await lockBdeuCrAt(hre, 1);
@@ -111,7 +111,7 @@ describe("BDStable 1to1", () => {
 
     const btcInEurPrice_1e12 = (await getOnChainWbtcFiatPrice(hre, "EUR")).price_1e12;
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const collateralAmount = 0.5;
 
     await lockBdeuCrAt(hre, 1);
@@ -145,7 +145,7 @@ describe("BDStable 1to1", () => {
   });
 
   it("should redeem bdeu when CR = 1", async () => {
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const weth = await getWeth(hre);
     const bdEuPool = await getBdEuWethPool(hre);
@@ -201,7 +201,7 @@ describe("BDStable 1to1", () => {
   });
 
   it("should redeem bdeu when CR = 1 with native token", async () => {
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const weth = await getWeth(hre);
     const bdEuPool = await getBdEuWethPool(hre);
@@ -267,7 +267,7 @@ describe("BDStable 1to1", () => {
   });
 
   it("should fail illegal 1to1 redemption", async () => {
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const bdEuPool = await getBdEuWethPool(hre);
     const bdEu = await getBdEu(hre);
@@ -297,7 +297,7 @@ describe("BDStable 1to1", () => {
 
   it("should set right treasury", async () => {
     const bdEu = await getBdEu(hre);
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     await bdEu.setTreasury(testUser.address);
     expect(await bdEu.treasury()).to.be.equal(testUser.address);
@@ -305,7 +305,7 @@ describe("BDStable 1to1", () => {
 
   it("set treasury should emit event", async () => {
     const bdEu = await getBdEu(hre);
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const tx = await bdEu.setTreasury(testUser.address);
     expect(tx).to.emit(bdEu, "TreasuryChanged").withArgs(testUser.address);
@@ -313,7 +313,7 @@ describe("BDStable 1to1", () => {
 
   it("should fail if not owner calls setTreasury()", async () => {
     const bdEu = await getBdEu(hre);
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     await expectToFail(() => bdEu.connect(testUser).setTreasury(testUser.address), "Ownable: caller is not the owner");
   });
@@ -339,7 +339,7 @@ export async function perform1To1MintingForWbtc(hre: HardhatRuntimeEnvironment, 
   const bdEuPool = await getBdEuWbtcPool(hre);
   const wbtc = await getWbtc(hre);
 
-  await mintWbtc(hre, user, to_d8(wbtcAmount), 100);
+  await mintWbtc(hre, user, to_d8(wbtcAmount));
 
   await wbtc.connect(user).approve(bdEuPool.address, to_d8(wbtcAmount));
   await bdEuPool.connect(user).mintFractionalBdStable(to_d8(wbtcAmount), 0, to_d18(1), false, {});

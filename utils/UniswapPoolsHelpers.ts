@@ -1,52 +1,40 @@
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getBot, getAllBDStables, formatAddress } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getAllBDStables, formatAddress } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
+import { Recorder } from "./Recorder/Recorder";
+import { toRc } from "./Recorder/RecordableContract";
 import { getListOfSupportedLiquidityPools } from "../utils/Constants";
-import { printAndWaitOnTransaction } from "./DeploymentHelpers";
 
-export async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: SignerWithAddress | null = null) {
-  console.log("Starting tp update the Uniswap oracles");
+export async function recordUpdateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, recorder: Recorder) {
+  const pools = await getPools(hre);
+  const promises = pools.map(pool => recordUpdateOracle(hre, pool[0].name, pool[1].name, recorder));
+
+  await Promise.allSettled(promises);
+}
+
+export async function recordUpdateOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, recorder: Recorder) {
+  const oracle = toRc(await getUniswapPairOracle(hre, symbol0, symbol1), recorder);
+  await oracle.record.updateOracle();
+}
+
+export async function recordResetUniswapPairsOracles(hre: HardhatRuntimeEnvironment, recorder: Recorder) {
+  console.log("starting recording reseting oracles");
 
   const pools = await getPools(hre);
 
   for (const pool of pools) {
-    await updateOracle(hre, pool[0].name, pool[1].name, signer);
+    await recordResetOracle(hre, pool[0].name, pool[1].name, recorder);
+    console.log(`recorded resetting: ${pool[0].name} / ${pool[1].name}`);
   }
 
-  console.log("Finished updating the Uniswap oracles");
+  console.log("finished recording reseting oracles");
 }
 
-export async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment) {
-  console.log("starting reseting oracles");
+export async function recordResetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, recorder: Recorder) {
+  const oracle = toRc(await getUniswapPairOracle(hre, symbol0, symbol1), recorder);
 
-  const pools = await getPools(hre);
-
-  for (const pool of pools) {
-    await resetOracle(hre, pool[0].name, pool[1].name);
-    console.log(`reset ${pool[0].name} / ${pool[1].name}`);
-  }
-
-  console.log("finished reseting oracles");
-}
-
-export async function updateOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, signer: SignerWithAddress | null = null) {
-  const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
-
-  const updater = signer === null ? await getBot(hre) : signer;
-  const oracleName = `${symbol0} / ${symbol1}`;
-
-  console.log(`Starting to update ${oracleName}`);
-
-  // Do not await on the function so we could run multiple transactions like that in parallel
-  printAndWaitOnTransaction(await oracle.connect(updater).updateOracle()).catch(error => console.log(`Error while updating ${oracleName}`, error));
-}
-
-export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string) {
-  const oracle = await getUniswapPairOracle(hre, symbol0, symbol1);
-
-  await (await oracle.reset()).wait();
+  await oracle.record.reset();
 }
 
 export function sortUniswapPairTokens(tokenAAddress: string, tokenBAddress: string, tokenASymbol: string, tokenBSymbol: string) {

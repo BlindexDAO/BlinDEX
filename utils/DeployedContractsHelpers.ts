@@ -6,14 +6,13 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import type { BDXShares } from "../typechain/BDXShares";
 import type { AggregatorV3Interface } from "../typechain/AggregatorV3Interface";
 import type { ERC20 } from "../typechain/ERC20";
-import { UniswapV2Router02__factory } from "../typechain/factories/UniswapV2Router02__factory";
 import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { UniswapV2Router02 } from "../typechain/UniswapV2Router02";
 import type { BigNumber } from "@ethersproject/bignumber";
 import * as constants from "./Constants";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { bigNumberToDecimal, to_d12 } from "./NumbersHelpers";
+import { bigNumberToDecimal, to_d12, to_d18 } from "./NumbersHelpers";
 import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
 import type { Vesting } from "../typechain/Vesting";
 import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
@@ -23,6 +22,7 @@ import type { StakingRewards } from "../typechain/StakingRewards";
 import type { BlindexUpdater } from "../typechain/BlindexUpdater";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
+import { Timelock } from "../typechain";
 import { wrappedSecondaryTokenData, wrappedNativeTokenData, PriceFeedContractNames, getListOfSupportedLiquidityPools } from "./Constants";
 import { Signer } from "ethers";
 
@@ -146,8 +146,24 @@ export function getBot(hre: HardhatRuntimeEnvironment) {
   return hre.ethers.getNamedSigner("BOT");
 }
 
-export function getUser(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+export function getUser1(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TEST1");
+}
+
+export function getUser2(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
   return hre.ethers.getNamedSigner("TEST2");
+}
+
+export function getUser3(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TEST3");
+}
+
+export function getProposer(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TIMELOCK_PROPOSER");
+}
+
+export function getExecutor(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
+  return hre.ethers.getNamedSigner("TIMELOCK_EXECUTOR");
 }
 
 export function getTreasurySigner(hre: HardhatRuntimeEnvironment): Promise<SignerWithAddress> {
@@ -260,6 +276,10 @@ export async function getBdx(hre: HardhatRuntimeEnvironment) {
   return (await hre.ethers.getContract("BDX", deployer)) as BDXShares;
 }
 
+export async function getTimelock(hre: HardhatRuntimeEnvironment): Promise<Timelock> {
+  const deployer = await getDeployer(hre);
+  return hre.ethers.getContract("Timelock", deployer) as Promise<Timelock>;
+}
 export function getCollateralContract(hre: HardhatRuntimeEnvironment, tokenAddress: string) {
   if (wrappedNativeTokenData[hre.network.name].address === tokenAddress) {
     return getWeth(hre);
@@ -295,21 +315,28 @@ export async function getERC20(hre: HardhatRuntimeEnvironment, address: string) 
   return (await hre.ethers.getContractAt("ERC20", address, deployer)) as ERC20;
 }
 
-export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber, maxBtcEthPrice: number) {
-  const uniRouter = UniswapV2Router02__factory.connect(constants.chainSpecificComponents[hre.network.name].uniswapRouterAddress as string, user);
+export async function mintWbtc(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount_d8: BigNumber) {
   const networkName = hre.network.name;
 
-  await (
-    await uniRouter.swapETHForExactTokens(
-      amount_d8,
-      [constants.wrappedNativeTokenData[networkName].address, constants.wrappedSecondaryTokenData[networkName].address],
-      user.address,
-      Date.now() + 3600,
-      {
-        value: amount_d8.mul(1e10).mul(maxBtcEthPrice) // mul*1e10 : align precision // second mul(maxBtcEthPrice) : excessive amount of eth, we'll get the rest back
-      }
-    )
-  ).wait();
+  const bigWbtcHolder = "0x9ff58f4ffb29fa2266ab25e75e2a8b3503311656";
+
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [bigWbtcHolder]
+  });
+
+  await hre.network.provider.send("hardhat_setBalance", [bigWbtcHolder, "0x" + to_d18(1e6).toString()]);
+
+  const wbtc = await (
+    await getERC20(hre, constants.wrappedSecondaryTokenData[networkName].address)
+  ).connect(await hre.ethers.getSigner(bigWbtcHolder));
+
+  await wbtc.transfer(user.address, amount_d8);
+
+  await hre.network.provider.request({
+    method: "hardhat_stopImpersonatingAccount",
+    params: [bigWbtcHolder]
+  });
 }
 
 export async function mintWeth(hre: HardhatRuntimeEnvironment, user: SignerWithAddress, amount: BigNumber) {

@@ -104,7 +104,7 @@ async function setVestingRewardsRatio(contract: StakingRewardsDistribution, rati
   await contract.connect(deployer).setVestingRewardRatio(ratio);
 }
 
-describe.only("StakingRewards", () => {
+describe("StakingRewards", () => {
   beforeEach(async () => {
     await setVestingRewardsRatio(stakingRewardsDistribution, 0);
   });
@@ -529,7 +529,7 @@ describe("Claiming all rewards", () => {
 
   it("should collect all rewards", async () => {
     await mintWeth(hre, testUser1, to_d18(1));
-    await mintWbtc(hre, testUser1, to_d8(1), 100);
+    await mintWbtc(hre, testUser1, to_d8(1));
     await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);

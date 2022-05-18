@@ -10,7 +10,7 @@ import {
   getWeth,
   getBdEuWethPool,
   getDeployer,
-  getUser,
+  getUser1,
   getOnChainWethFiatPrice,
   mintWeth
 } from "../../utils/DeployedContractsHelpers";
@@ -32,7 +32,7 @@ describe("Recollateralization", () => {
   it("should recollateralize when efCR < CR", async () => {
     await setUpFunctionalSystemForTests(hre, 0.4);
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const bdx = await getBdx(hre);
     const weth = await getWeth(hre);
@@ -101,7 +101,7 @@ describe("Recollateralization", () => {
 
   it("recollateralize should NOT fail when efCR < CR", async () => {
     await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const weth = await getWeth(hre);
 
     await lockBdeuCrAt(hre, 0.9); // CR
@@ -120,7 +120,7 @@ describe("Recollateralization", () => {
 
     await lockBdeuCrAt(hre, 0.3); // CR
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const weth = await getWeth(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
 
@@ -193,7 +193,7 @@ describe("Recollateralization", () => {
 
   it("should recollateralize native token", async () => {
     await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const weth = await getWeth(hre);
 
     await lockBdeuCrAt(hre, 0.9); // CR

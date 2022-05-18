@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { getBdEu, getBot, getUser, getDeployer, getUniswapPairOracle, getBlindexUpdater } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBot, getDeployer, getUniswapPairOracle, getBlindexUpdater, getUser1 } from "../../utils/DeployedContractsHelpers";
 import { getPools } from "../../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../../typechain/BDStable";
 import type { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
@@ -85,7 +85,7 @@ describe("BlindexUpdater", () => {
 
   it("should set the updater correctly with setUpdater()", async () => {
     const deployer = await getDeployer(hre);
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
     const updater = await getBlindexUpdater(hre, bot);
 
@@ -96,7 +96,7 @@ describe("BlindexUpdater", () => {
 
   it("should emit the UpdaterChanged event", async () => {
     const deployer = await getDeployer(hre);
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
     const updater = await getBlindexUpdater(hre, bot);
 
@@ -105,7 +105,7 @@ describe("BlindexUpdater", () => {
   });
 
   it("should fail if not updater calls update()", async () => {
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
     const updater = await getBlindexUpdater(hre, bot);
 

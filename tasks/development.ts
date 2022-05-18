@@ -5,6 +5,8 @@ import {
   getBdEu,
   getBdx,
   getDeployer,
+  getExecutor,
+  getProposer,
   getTreasurySigner,
   getWbtc,
   getWeth,
@@ -13,7 +15,7 @@ import {
   mintWeth
 } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, to_d12, to_d18, to_d8 } from "../utils/NumbersHelpers";
-import { simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
+import { mineBlock, simulateTimeElapseInDays, simulateTimeElapseInSeconds } from "../utils/HelpersHardhat";
 import type { ISovrynLiquidityPoolV1Converter } from "../typechain/ISovrynLiquidityPoolV1Converter";
 import type { ISovrynAnchor } from "../typechain/ISovrynAnchor";
 import type { ISovrynSwapNetwork } from "../typechain/ISovrynSwapNetwork";
@@ -22,16 +24,32 @@ import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
+import { Timelock } from "../typechain/Timelock";
+import { Flipper } from "../typechain/Flipper";
+import { Recorder } from "../utils/Recorder/Recorder";
+import { TimelockStrategy } from "../utils/Recorder/strategies/TimelockStrategy";
+import { toRc } from "../utils/Recorder/RecordableContract";
+import { extractTimelockQueuedTransactionsBatchParamsDataAndHash, extractTxParamsHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
 
 export function load() {
-  task("mint-wrbtc-rsk", "", async (args, hre) => {
+  task("dev:mine-block", "", async (args_, hre_) => {
+    await mineBlock();
+  });
+
+  task("dev:move-time-by-days")
+    .addPositionalParam("days")
+    .setAction(async ({ days }, hre_) => {
+      await simulateTimeElapseInDays(days);
+    });
+
+  task("dev:mint-wrbtc-rsk", "", async (args_, hre) => {
     const treasury = await getTreasurySigner(hre);
     const wrbtc = await getWethConcrete(hre);
 
     await (await wrbtc.connect(treasury).deposit({ value: to_d18(0.001) })).wait();
   });
 
-  task("slow-down-mining", "Slows down mining on local fork", async (args, hre) => {
+  task("dev:slow-down-mining", "Slows down mining on local fork", async (args, hre) => {
     if (hre.network.name !== "mainnetFork") {
       throw new Error("this task can run only on mainnetFork");
     }
@@ -39,14 +57,14 @@ export function load() {
     await hre.ethers.provider.send("evm_setIntervalMining", [60000]);
   });
 
-  task("speed-up-mining", "Speeds up mining on local fork", async (args, hre) => {
+  task("dev:speed-up-mining", "Speeds up mining on local fork", async (args, hre) => {
     if (hre.network.name !== "mainnetFork") {
       throw new Error("this task can run only on mainnetFork");
     }
     await hre.ethers.provider.send("evm_setAutomine", [true]);
   });
 
-  task("mine-one-block", "Mine one block on local fork", async (args, hre) => {
+  task("dev:mine-one-block", "Mine one block on local fork", async (args, hre) => {
     if (hre.network.name !== "mainnetFork") {
       throw new Error("this task can run only on mainnetFork");
     }
@@ -55,7 +73,7 @@ export function load() {
     console.log("blockNumber after mine", await hre.ethers.provider.getBlockNumber());
   });
 
-  task("accounts", "Prints the list of accounts", async (args, hre) => {
+  task("dev:accounts", "Prints the list of accounts", async (args, hre) => {
     const accounts = await hre.ethers.getSigners();
 
     for (const account of accounts) {
@@ -80,7 +98,7 @@ export function load() {
       await run("test", { testFiles, noCompile, deployFixture });
     });
 
-  task("npm-package", "Packages type definitions and abis into npm package").setAction(async () => {
+  task("dev:npm-package", "Packages type definitions and abis into npm package").setAction(async () => {
     try {
       rimraf.sync("./package");
     } catch {
@@ -107,7 +125,7 @@ export function load() {
     });
   });
 
-  task("setup:account").setAction(async (args, hre) => {
+  task("dev:setup:account").setAction(async (args, hre) => {
     // send ether
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -130,7 +148,7 @@ export function load() {
     await hre.ethers.provider.send("hardhat_stopImpersonatingAccount", [bigDaiHolder]);
   });
 
-  task("setup:feed-test-user")
+  task("dev:setup:feed-test-user")
     .addPositionalParam("address", "receiver address")
     .setAction(async ({ address }, hre) => {
       const deployer = await getDeployer(hre);
@@ -140,13 +158,13 @@ export function load() {
 
       await deployer.sendTransaction({ to: address, value: hre.ethers.utils.parseEther("7.5") });
       await mintWeth(hre, deployer, to_d18(200));
-      await mintWbtc(hre, deployer, to_d8(10), 100);
+      await mintWbtc(hre, deployer, to_d8(10));
 
       await (await weth.transfer(address, to_d18(1))).wait();
       await (await wbtc.transfer(address, to_d8(1))).wait();
     });
 
-  task("setup:test-user-balance-ag").setAction(async (args, hre) => {
+  task("dev:setup:test-user-balance-ag").setAction(async (args, hre) => {
     const weth = await getWeth(hre);
     const wbtc = await getWbtc(hre);
     const bdx = await getBdx(hre);
@@ -160,11 +178,11 @@ export function load() {
     console.log("bdeu: " + (await bdeu.balanceOf(testUserAddress)));
   });
 
-  task("simulateTimeElapse").setAction(async () => {
+  task("dev:simulateTimeElapse").setAction(async () => {
     await simulateTimeElapseInSeconds(3600 * 24 * 365 * 6);
   });
 
-  task("show:sovryn-swap-prices").setAction(async (args, hre) => {
+  task("dev:show:sovryn-swap-prices").setAction(async (args, hre) => {
     async function run(token1: string, token2: string, token1Name: string, token2Name: string) {
       const swapNetwork = (await hre.ethers.getContractAt(
         "ISovrynSwapNetwork",
@@ -208,4 +226,160 @@ export function load() {
     await run(ethsAddress, wrbtcAddress, "eth", "btc");
     await run(rusdtAddress, wrbtcAddress, "usd", "btc");
   });
+
+  task("dev:deploy-timelock")
+    .addParam("owner", "destinination owner address (usually multi-sig)")
+    .setAction(async ({ owner }, hre) => {
+      const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
+      const deployer = await getDeployer(hre);
+      const proposer = await getProposer(hre);
+      const executor = await getExecutor(hre);
+
+      const day = 3600 * 24;
+
+      const timelock = (await timeLockFactory.connect(deployer).deploy(proposer.address, executor.address, 1 * day, 30 * day, 14 * day)) as Timelock;
+
+      await timelock.deployed();
+
+      console.log("Timelock deployed to:", timelock.address);
+
+      await (await timelock.transferOwnership(owner)).wait();
+
+      console.log("Timelock proposer:", await timelock.proposer());
+      console.log("Timelock executor[0]:", await timelock.executorAt(0));
+      console.log("Timelock ownership transferred to:", await timelock.owner());
+    });
+
+  task("dev:deploy-flipper")
+    .addParam("owner", "destinination owner address (usually timelock)")
+    .setAction(async ({ owner }, hre) => {
+      const deployer = await getDeployer(hre);
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = (await flipperFactory.connect(deployer).deploy()) as Flipper;
+      await flipper.deployed();
+
+      console.log("Flipper deployed to:", flipper.address);
+
+      await (await flipper.transferOwnership(owner)).wait();
+
+      console.log("Flipper ownership transferred to:", await flipper.owner());
+    });
+
+  task("dev:flipper-flip-0")
+    .addPositionalParam("flipperAddress")
+    .setAction(async ({ flipperAddress }, hre) => {
+      const deployer = await getDeployer(hre);
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = flipperFactory.attach(flipperAddress).connect(deployer) as Flipper;
+
+      console.log("Flipper state[0] before:", await flipper.state(0));
+
+      await (await flipper.flip(0)).wait();
+
+      console.log("Flipper state[0] after:", await flipper.state(0));
+    });
+
+  task("dev:flipper-flip-0-1-timelock")
+    .addParam("timelockaddress")
+    .addParam("flipperaddress")
+    .setAction(async ({ timelockaddress, flipperaddress }, hre) => {
+      const timelockProposer = await getProposer(hre);
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = flipperFactory.attach(flipperaddress).connect(timelockProposer) as Flipper;
+
+      console.log("timelockProposer", timelockProposer.address);
+
+      const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timeLockFactory.attach(timelockaddress).connect(timelockProposer) as Timelock;
+
+      const blockBefore = await hre.ethers.provider.getBlock("latest");
+      const timestamp = blockBefore.timestamp;
+
+      const eta = timestamp + 60 * 60; // now + 1h
+
+      const recorder = new Recorder(
+        new TimelockStrategy({
+          timelock: timelock,
+          eta: eta
+        })
+      );
+
+      const recordableFlipper = toRc(flipper, recorder);
+
+      console.log("Flipper state[0] before:", await recordableFlipper.state(0));
+      console.log("Flipper state[1] before:", await recordableFlipper.state(1));
+      console.log("Flipper state[2] before:", await recordableFlipper.state(2));
+
+      await recordableFlipper.record.flip(0);
+      await recordableFlipper.record.flip(1);
+
+      const receipts = await recorder.execute();
+      const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipts, "QueuedTransactionsBatch");
+      const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
+
+      console.log("txHash:", txHash);
+      console.log("txParamsHash:", txParamsHash);
+      console.log("txParamsData:", txParamsData);
+    });
+
+  task("dev:approve-timelock-transaction-by-txParamsHash")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txParamsHash", "Transaction input data hash")
+    .setAction(async ({ timelockaddress, txParamsHash }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
+
+      await (await timelock.approveTransactionsBatch(txParamsHash)).wait();
+    });
+
+  task("dev:approve-timelock-transaction-by-txHash")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txHash", "Transaction input hash")
+    .setAction(async ({ timelockaddress, txHash }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const { txParamsHash } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
+      console.log("txParamsHash", txParamsHash);
+
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
+
+      await (await timelock.approveTransactionsBatch(txParamsHash)).wait();
+    });
+
+  task("dev:approve-execute-timelock-transaction")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txRawParamsData")
+    .setAction(async ({ timelockaddress, txRawParamsData }, hre) => {
+      // this is dev only, normally done by multisig which is supposed to be the owner of the timelock
+
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
+
+      await (await timelock.approveAndExecuteTransactionsBatchRaw(txRawParamsData)).wait();
+    });
+
+  task("dev:flipper-show")
+    .addPositionalParam("flipperaddress")
+    .setAction(async ({ flipperaddress }, hre) => {
+      const flipperFactory = await hre.ethers.getContractFactory("Flipper");
+      const flipper = flipperFactory.attach(flipperaddress) as Flipper;
+
+      console.log("Owner:", await flipper.owner());
+      console.log("Flipper state[0] before:", await flipper.state(0));
+      console.log("Flipper state[1] before:", await flipper.state(1));
+      console.log("Flipper state[2] before:", await flipper.state(2));
+    });
+
+  task("dev:timelock:show")
+    .addPositionalParam("timelockaddress")
+    .setAction(async ({ timelockaddress }, hre) => {
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
+
+      console.log("Owner:", await timelock.owner());
+      console.log("Proposer:", await timelock.proposer());
+    });
 }

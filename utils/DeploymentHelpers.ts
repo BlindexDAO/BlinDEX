@@ -64,7 +64,8 @@ export async function setupStakingContract(
 
 export async function printAndWaitOnTransaction(transaction: ContractTransaction) {
   console.log(`Transaction Hash: ${transaction.hash}`);
-  await transaction.wait();
+  const receipt = await transaction.wait();
+  return receipt;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types

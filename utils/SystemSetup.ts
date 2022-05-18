@@ -23,10 +23,12 @@ import {
   getAllBDStablesFiatSymbols
 } from "./DeployedContractsHelpers";
 import * as constants from "./Constants";
-import { resetUniswapPairsOracles, updateUniswapPairsOracles } from "./UniswapPoolsHelpers";
 import { provideLiquidity } from "../test/helpers/swaps";
 import type { IERC20 } from "../typechain/IERC20";
 import { getDaiFor, getUsdcFor } from "./LocalHelpers";
+import { defaultImmediateExecutionRecorder } from "./Recorder/Recorder";
+import { recordResetUniswapPairsOracles, recordUpdateUniswapPairsOracles } from "./UniswapPoolsHelpers";
+import { Signer } from "ethers";
 
 export type CollateralPrices = {
   NativeToken: { [symbol: string]: number };
@@ -83,6 +85,26 @@ export async function setUpFunctionalSystemForTests(hre: HardhatRuntimeEnvironme
   await setUpFunctionalSystem(hre, initialBDStableCollteralRatio, true, bdxEur, bdxUsd, bdxXau, bdxGbp, usdEur, initialCollateralPrices);
 }
 
+async function updateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: Signer) {
+  console.log("Starting tp update the Uniswap oracles");
+
+  const recorder = defaultImmediateExecutionRecorder(signer);
+  await recordUpdateUniswapPairsOracles(hre, recorder);
+  await recorder.execute();
+
+  console.log("Finished updating the Uniswap oracles");
+}
+
+async function resetUniswapPairsOracles(hre: HardhatRuntimeEnvironment, signer: Signer) {
+  console.log("starting reseting oracles");
+
+  const recorder = defaultImmediateExecutionRecorder(signer);
+  await recordResetUniswapPairsOracles(hre, recorder);
+  await recorder.execute();
+
+  console.log("finished reseting oracles");
+}
+
 export async function setUpFunctionalSystem(
   hre: HardhatRuntimeEnvironment,
   initialBDStableCollteralRatio: number,
@@ -106,16 +128,16 @@ export async function setUpFunctionalSystem(
 
   if (forIntegrationTests) {
     // mint initial WETH
-    await mintWeth(hre, deployer, to_d18(100));
+    await mintWeth(hre, deployer, to_d18(200));
 
     // mint inital WBTC
-    await mintWbtc(hre, deployer, to_d8(10), 100);
+    await mintWbtc(hre, deployer, to_d8(10));
 
     // mint initial WETH
-    await mintWeth(hre, treasury, to_d18(100));
+    await mintWeth(hre, treasury, to_d18(200));
 
     // mint inital WBTC
-    await mintWbtc(hre, treasury, to_d8(10), 100);
+    await mintWbtc(hre, treasury, to_d8(10));
 
     // transfer some usdc to treasury
     await getUsdcFor(hre, treasury.address, 1000);
@@ -313,7 +335,7 @@ export async function setUpFunctionalSystem(
 
   verboseLog(verbose, "Provide liquidity - done");
 
-  await resetUniswapPairsOracles(hre);
+  await resetUniswapPairsOracles(hre, deployer);
   verboseLog(verbose, "oracles reset");
   await updateUniswapPairsOracles(hre, deployer);
   verboseLog(verbose, "oracles updated");
