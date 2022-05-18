@@ -5,6 +5,8 @@ import {
   getBdEu,
   getBdx,
   getDeployer,
+  getExecutor,
+  getProposer,
   getTreasurySigner,
   getWbtc,
   getWeth,
@@ -226,15 +228,16 @@ export function load() {
   });
 
   task("dev:deploy-timelock")
-    .addParam("proposer", "proposer address")
     .addParam("owner", "destinination owner address (usually multi-sig)")
-    .setAction(async ({ proposer, owner }, hre) => {
+    .setAction(async ({ owner }, hre) => {
       const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
       const deployer = await getDeployer(hre);
+      const proposer = await getProposer(hre);
+      const executor = await getExecutor(hre);
 
       const day = 3600 * 24;
 
-      const timelock = (await timeLockFactory.connect(deployer).deploy(proposer, 1 * day, 30 * day, 14 * day)) as Timelock;
+      const timelock = (await timeLockFactory.connect(deployer).deploy(proposer.address, executor.address, 1 * day, 30 * day, 14 * day)) as Timelock;
 
       await timelock.deployed();
 
@@ -243,6 +246,7 @@ export function load() {
       await (await timelock.transferOwnership(owner)).wait();
 
       console.log("Timelock proposer:", await timelock.proposer());
+      console.log("Timelock executor[0]:", await timelock.executorAt(0));
       console.log("Timelock ownership transferred to:", await timelock.owner());
     });
 
@@ -279,7 +283,7 @@ export function load() {
     .addParam("timelockaddress")
     .addParam("flipperaddress")
     .setAction(async ({ timelockaddress, flipperaddress }, hre) => {
-      const timelockProposer = await getDeployer(hre);
+      const timelockProposer = await getProposer(hre);
       const flipperFactory = await hre.ethers.getContractFactory("Flipper");
       const flipper = flipperFactory.attach(flipperaddress).connect(timelockProposer) as Flipper;
 

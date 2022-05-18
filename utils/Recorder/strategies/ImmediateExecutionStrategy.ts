@@ -3,6 +3,7 @@ import { Strategy } from "./Strategy.interface";
 import { UnsignedTransaction } from "ethers";
 import { Deferrable } from "ethers/lib/utils";
 import { TransactionRequest } from "@ethersproject/abstract-provider";
+import { printAndWaitOnTransaction } from "../../DeploymentHelpers";
 
 // Strategy specific params
 export type ImmediateExecutionStrategyParams = {
@@ -24,9 +25,13 @@ export class ImmediateExecutionStrategy implements Strategy {
     const signer = params.signer;
     const responses: ContractReceipt[] = [];
     while (txsToExecute.length > 0) {
-      const tx: ContractTransaction = await signer.sendTransaction(txsToExecute.shift() as Deferrable<TransactionRequest>);
-      const receipt: ContractReceipt = await tx.wait();
-      responses.push(receipt);
+      try {
+        const tx: ContractTransaction = await signer.sendTransaction(txsToExecute.shift() as Deferrable<TransactionRequest>);
+        const receipt = await printAndWaitOnTransaction(tx);
+        responses.push(receipt);
+      } catch (e) {
+        console.log(e);
+      }
     }
     return responses;
   }

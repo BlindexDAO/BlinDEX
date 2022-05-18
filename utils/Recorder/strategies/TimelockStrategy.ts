@@ -1,6 +1,7 @@
 import { Strategy } from "./Strategy.interface";
 import { ContractReceipt, ContractTransaction, UnsignedTransaction } from "ethers";
 import { Timelock } from "../../../typechain";
+import { printAndWaitOnTransaction } from "../../DeploymentHelpers";
 
 type QueuedTransaction = {
   recipient: string;
@@ -40,7 +41,7 @@ export class TimelockStrategy implements Strategy {
       });
     }
     const tx: ContractTransaction = await this.params.timelock.queueTransactionsBatch(toSend, this.params.eta);
-    const receipt: ContractReceipt = await tx.wait();
+    const receipt = await printAndWaitOnTransaction(tx);
 
     return [receipt];
   }

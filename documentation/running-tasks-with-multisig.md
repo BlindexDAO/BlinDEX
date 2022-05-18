@@ -22,7 +22,7 @@ Create a Gnosis safe which will be the owner of the timelock conctact.
 Deploy Timelock:
 
 ```
-npx hardhat --network rsk dev:deploy-timelock --proposer TX_PROPOSER_ADDRESS --owner GNOSIS_MULTISIG_SAFE_ADDRESS
+npx hardhat --network rsk dev:deploy-timelock --owner GNOSIS_MULTISIG_SAFE_ADDRESS
 ```
 
 In the terminal you can see the deployed Timelock address (TIMELOCK_ADDRESS), save it.
