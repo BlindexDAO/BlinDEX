@@ -5,7 +5,7 @@ import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d12 } from "../../utils/NumbersHelpers";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser, getDeployer } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser1, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { lockBdeuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { provideBdEu, provideBdx } from "../helpers/common";
@@ -30,7 +30,7 @@ describe("BDStable algorythmic", () => {
   });
 
   it("should mint bdeu when CR = 0", async () => {
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const bdx = await getBdx(hre);
     const weth = await getWeth(hre);
@@ -85,7 +85,7 @@ describe("BDStable algorythmic", () => {
   });
 
   it("should redeem bdeu when CR = 0", async () => {
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const bdx = await getBdx(hre);
     const weth = await getWeth(hre);
@@ -143,7 +143,7 @@ describe("BDStable algorythmic", () => {
   });
 
   it("should fail illegal algorithmic redemption", async () => {
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const bdEu = await getBdEu(hre);
     const bdEuPool = await getBdEuWethPool(hre);

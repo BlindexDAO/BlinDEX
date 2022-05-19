@@ -9,12 +9,13 @@ import {
   getWeth,
   getBDStableWethPool,
   getBDStableWbtcPool,
-  getBDStableFiat,
   getAllBDStables,
   getWbtc,
-  getTreasury,
-  getOperationalTreasury,
-  getBDStableChainlinkPriceFeed
+  getBDStableChainlinkPriceFeed,
+  bdStablesContractsDetails,
+  getBdxCirculatingSupplyIgnoreAddresses,
+  formatAddress,
+  getBlindexUpdater
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -23,7 +24,6 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
@@ -33,11 +33,12 @@ import {
   NATIVE_TOKEN_NAME,
   SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
-  rskTreasuryAddress,
-  bdxLockingContractAddressRSK,
-  rskOperationalTreasuryAddress,
-  rskMultisigTreasuryAddress
+  PriceFeedContractNames,
+  chainSpecificComponents,
+  EXTERNAL_SUPPORTED_TOKENS,
+  SECONDARY_EXTERNAL_USD_STABLE
 } from "../utils/Constants";
+import { PriceFeed, PriceFeedConfig } from "./interfaces/config.interface";
 
 export function load() {
   task("show:be-config").setAction(async (args, hre) => {
@@ -60,6 +61,7 @@ export function load() {
     const swapPairs = pairOracles.map(pairOracle => {
       return {
         pairAddress: pairOracle.pair.address,
+        pairSymbol: pairOracle.symbol,
         token0Address: pairOracle.pair.token0,
         token1Address: pairOracle.pair.token1,
         token0Symbol: pairOracle.pair.token0Symbol,
@@ -69,6 +71,7 @@ export function load() {
 
     const mappedPairOracles = pairOracles.map(pairOracle => {
       return {
+        symbol: pairOracle.symbol,
         pairAddress: pairOracle.pair.address,
         oracleAddress: pairOracle.pairOracle.oracleAddress,
         token0Address: pairOracle.pair.token0,
@@ -78,33 +81,30 @@ export function load() {
       };
     });
 
-    const pairSymbols = pairOracles.map(po => po.symbol);
-
-    const networkName = hre.network.name.toUpperCase();
+    const chainId = +(await hre.getChainId());
 
     const blockchainConfig = {
-      [`${networkName}`]: {
-        [`UNISWAP_FACTORY_ADDRESS`]: (await getUniswapFactory(hre)).address,
-        [`BDX_ADDRESS`]: (await getBdx(hre)).address,
-        [`EXTERNAL_USD_STABLE`]: EXTERNAL_USD_STABLE[hre.network.name],
-        [`STAKING_REWARDS_DISTRIBUTION_ADDRESS`]: (await getStakingRewardsDistribution(hre)).address,
-        [`AVAILABLE_PAIR_SYMBOLS`]: pairSymbols,
-        [`BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES`]:
-          networkName === "RSK"
-            ? [rskTreasuryAddress, rskOperationalTreasuryAddress, rskMultisigTreasuryAddress, bdxLockingContractAddressRSK]
-            : [(await getTreasury(hre)).address, (await getOperationalTreasury(hre)).address],
-        [`AVAILABLE_PAIRS`]: swapPairs,
-        [`STAKING_REWARDS`]: stakingRewards,
-        [`PAIR_ORACLES`]: mappedPairOracles,
-        [`PRICE_FEEDS`]: await getPriceFeedsConfig(hre, deployer),
-        [`UPDATER_RSK_ADDRESS`]: (await hre.ethers.getContract("UpdaterRSK", deployer)).address,
-        [`BDSTABLES`]: await getStablesConfig(hre)
-      }
+      ["BDX_ADDRESS"]: (await getBdx(hre)).address,
+      ["NATIVE_TOKEN_WRAPPER_ADDRESS"]: (await getWeth(hre)).address,
+      ["EXTERNAL_USD_STABLE"]: EXTERNAL_USD_STABLE[hre.network.name],
+      ["SECONDARY_EXTERNAL_USD_STABLE"]: SECONDARY_EXTERNAL_USD_STABLE[hre.network.name],
+      ["SOVRYN_SWAP_NETWORK_ADDRESS"]: chainSpecificComponents[hre.network.name].sovrynNetwork,
+      ["STAKING_REWARDS_DISTRIBUTION_ADDRESS"]: (await getStakingRewardsDistribution(hre)).address,
+      ["BDX_CIRCULATING_SUPPLY_IGNORE_ADDRESSES"]: await getBdxCirculatingSupplyIgnoreAddresses(hre, chainId),
+      ["AVAILABLE_PAIRS"]: swapPairs,
+      ["STAKING_REWARDS"]: stakingRewards,
+      ["PAIR_ORACLES"]: mappedPairOracles,
+      ["PRICE_FEEDS"]: await getPriceFeedsConfig(hre, deployer),
+      ["blindexUpdaterAddress"]: (await getBlindexUpdater(hre, deployer)).address,
+      ["BDSTABLES"]: await getStablesConfig(hre)
     };
 
     console.log(
       "Please make sure to run hardhat with the appropriate network you wanted to get the BE configuration for (npx hardhat --network <network_name> show:be-config)\n"
     );
+    console.log("=================================================");
+    console.log(`Config for: ${hre.network.name}, chainId: ${chainId}`);
+    console.log("=================================================\n");
     console.log(cleanStringify(blockchainConfig));
   });
 
@@ -156,24 +156,44 @@ export function load() {
     });
   });
 
-  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
-    const priceFeeds = Object.entries(PriceFeedContractNames).map(async ([key, value]) => {
-      const instance = await hre.ethers.getContract(value, deployer);
-      return { symbol: key, address: instance.address, decimals: await getDecimals(instance) };
-    });
+  async function getPriceFeedsConfig(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress): Promise<PriceFeedConfig> {
+    // TODO - Multichain: This approach won't work when we're not the ones deploying the contract (for example when Chainlink is the one doing it) - https://lagoslabs.atlassian.net/browse/LAGO-890
+    return await Object.entries(PriceFeedContractNames).reduce(async (previousPromise, current) => {
+      const previous = await previousPromise;
+      const key = current[0];
+      const value = current[1];
 
-    const results = await Promise.all(priceFeeds);
-    return results;
+      const priceFeedContract = await hre.ethers.getContract(value, deployer);
+
+      const priceFeedData: PriceFeed = {
+        address: priceFeedContract.address,
+        decimals: await getPriceFeedDecimals(priceFeedContract),
+        updatable: isPriceFeedUpdatable(priceFeedContract)
+      };
+
+      (previous as PriceFeedConfig)[key] = priceFeedData;
+      return previous;
+    }, Promise.resolve({} as PriceFeedConfig));
+    // The return type of each reduce function is a promise, therefore we need to resolve it here so it will wait for all the promises together. That way we're getting parallelism abilities as well.
   }
 
-  async function getDecimals(instance: Contract): Promise<number | undefined> {
+  function isPriceFeedUpdatable(priceFeed: Contract): boolean {
+    const isFiatPriceFeed = priceFeed.setPrice; // Taken from FiatToFiatPseudoOracleFeed
+    const isSovrynCryptoPriceFeed = priceFeed.updateOracleWithVerification; // Taken from SovrynSwapPriceFeed
+
+    return !!(isFiatPriceFeed || isSovrynCryptoPriceFeed);
+  }
+
+  // We have different ways on getting the decimals based on the price feed type
+  async function getPriceFeedDecimals(instance: Contract): Promise<number> {
     if (instance.decimals) {
       return await instance.decimals();
     } else if (instance.getDecimals) {
       return await instance.getDecimals();
-    } else {
-      return undefined;
     }
+
+    // TODO - Multichain: When adding support for a chain we're not the one who deployed the contract, then handle this case - https://lagoslabs.atlassian.net/browse/LAGO-890
+    return 0;
   }
 
   async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
@@ -252,7 +272,6 @@ export function load() {
         const stakingTokenDecimals = (await stakingRewards.stakingDecimals()).toNumber();
         const isTrueBdPool = await stakingRewards.isTrueBdPool();
         const isPaused = await stakingRewards.paused();
-        const rewardForDuration = (await stakingRewards.getRewardForDuration()).toString();
         const lp = (await hre.ethers.getContractAt("UniswapV2Pair", lpAddress)) as UniswapV2Pair;
         const token0Address = await lp.token0();
         const token1Address = await lp.token1();
@@ -264,7 +283,6 @@ export function load() {
           stakingTokenDecimals,
           isTrueBdPool,
           isPaused,
-          rewardForDuration,
           stakingTokenAddress: stakingTokenAddress,
           token0Address: token0.address,
           token1Address: token1.address,
@@ -311,13 +329,16 @@ export function load() {
         })
       );
 
+      const { fiat, fiatSymbol, isCurrency } = bdStablesContractsDetails[symbol];
       stableConfigs.push({
         symbol: await stable.symbol(),
         decimals: await stable.decimals(),
         address: stable.address,
-        fiat: getBDStableFiat(symbol),
-        ehereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
-        pools: stablePools
+        fiat,
+        fiatSymbol,
+        ethereumChainlinkPriceFeed: getBDStableChainlinkPriceFeed(symbol),
+        pools: stablePools,
+        isCurrency
       });
     }
 
@@ -333,14 +354,14 @@ export function load() {
       bdx.address,
       weth.address,
       wbtc.address,
-      EXTERNAL_USD_STABLE[hre.network.name].address,
+      ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
       ...stablesAddresses,
       ...swapsAddresses
     ];
 
     const contractsData = await Promise.all(
       addresses.map(async address => {
-        const contact = (await hre.ethers.getContractAt("ERC20", address)) as ERC20;
+        const contact = (await hre.ethers.getContractAt("ERC20", formatAddress(hre, address))) as ERC20;
 
         return {
           address: address,

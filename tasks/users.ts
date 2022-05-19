@@ -1,5 +1,6 @@
 import { task } from "hardhat/config";
 import {
+  formatAddress,
   getAllBDStablePools,
   getAllBDStables,
   getAllBDStableStakingRewards,
@@ -7,14 +8,14 @@ import {
   getDeployer,
   getStakingRewardsDistribution,
   getUniswapPairOracle,
-  getUpdater,
+  getBlindexUpdater,
   getVesting
 } from "../utils/DeployedContractsHelpers";
 import type { Contract } from "ethers";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { getPools } from "../utils/UniswapPoolsHelpers";
+import { PriceFeedContractNames } from "../utils/Constants";
 
 export function load() {
   async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {
@@ -44,6 +45,18 @@ export function load() {
         if (!(await isSameOwner(owner, oracleEurUsd))) {
           console.log(`transfer ownership on contract ${PriceFeedContractNames.EUR_USD} to ${owner}`);
           await (await oracleEurUsd.transferOwnership(owner)).wait();
+        }
+
+        const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+        if (!(await isSameOwner(owner, oracleGbpUsd))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.GBP_USD} to ${owner}`);
+          await (await oracleGbpUsd.transferOwnership(owner)).wait();
+        }
+
+        const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+        if (!(await isSameOwner(owner, oracleXauUsd))) {
+          console.log(`transfer ownership on contract ${PriceFeedContractNames.XAU_USD} to ${owner}`);
+          await (await oracleXauUsd.transferOwnership(owner)).wait();
         }
       }
 
@@ -97,7 +110,8 @@ export function load() {
         console.log(`transfer ownership on vesting contract ${vesting.address} to ${owner}`);
         await (await vesting.transferOwnership(owner)).wait();
       }
-      const updater = await getUpdater(hre);
+      const updater = await getBlindexUpdater(hre, deployer);
+
       if (!(await isSameOwner(owner, updater))) {
         console.log(`transfer ownership on updater ${updater.address} to ${owner}`);
         await (await updater.transferOwnership(owner)).wait();
@@ -116,6 +130,8 @@ export function load() {
       const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
       const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
       const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD, deployer)) as FiatToFiatPseudoOracleFeed;
 
       if (networkName === "rsk") {
         await (await oracleEthUsd.setUpdater(newUpdater)).wait();
@@ -126,6 +142,12 @@ export function load() {
 
         await (await oracleEurUsd.setUpdater(newUpdater)).wait();
         console.log("updated oracleEurUsd");
+
+        await (await oracleGbpUsd.setUpdater(newUpdater)).wait();
+        console.log("updated oracleGbpUsd");
+
+        await (await oracleXauUsd.setUpdater(newUpdater)).wait();
+        console.log("updated oracleXauUsd");
       }
 
       console.log("updaters set");
@@ -139,6 +161,7 @@ export function load() {
   task("users:treasury:set")
     .addPositionalParam("treasury", "new treasury address")
     .setAction(async ({ treasury }, hre) => {
+      treasury = formatAddress(hre, treasury);
       console.log(`Setting the new treasury '${treasury}' on ${hre.network.name}`);
 
       const stables = await getAllBDStables(hre);
@@ -149,17 +172,11 @@ export function load() {
           console.log(`${await stable.symbol()} treasury set to ${treasury}`);
         }
       }
-    });
-
-  task("users:operational-treasury:set")
-    .addPositionalParam("operationalTreasury", "new operational treasury address")
-    .setAction(async ({ operationalTreasury }, hre) => {
-      console.log(`Setting the new operational treasury '${operationalTreasury}' on ${hre.network.name}`);
 
       const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-      if (!(await isSameTreasury(operationalTreasury, stakingRewardsDistribution))) {
-        await (await stakingRewardsDistribution.setTreasury(operationalTreasury)).wait();
-        console.log(`StakingRewardsDistribution operational treasury set to ${operationalTreasury}`);
+      if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
+        await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
+        console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
       }
     });
 }

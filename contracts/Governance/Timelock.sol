@@ -1,123 +1,231 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-contract Timelock {
-    event NewAdmin(address indexed newAdmin);
-    event NewPendingAdmin(address indexed newPendingAdmin);
-    event NewDelay(uint256 indexed newDelay);
-    event CancelTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
-    event ExecuteTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
-    event QueueTransaction(bytes32 indexed txHash, address indexed target, uint256 value, string signature, bytes data, uint256 eta);
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-    uint256 public constant GRACE_PERIOD = 14 days;
-    uint256 public constant MINIMUM_DELAY = 2 days;
-    uint256 public constant MAXIMUM_DELAY = 30 days;
+contract Timelock is Ownable, ReentrancyGuard {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    address public admin;
-    address public pendingAdmin;
-    uint256 public delay;
-
-    mapping(bytes32 => bool) public queuedTransactions;
-
-    constructor(address admin_, uint256 delay_) {
-        require(admin_ != address(0), "Admin address cannot be 0");
-        require(delay_ >= MINIMUM_DELAY, "Timelock::constructor: Delay must exceed minimum delay.");
-        require(delay_ <= MAXIMUM_DELAY, "Timelock::setDelay: Delay must not exceed maximum delay.");
-
-        admin = admin_;
-        delay = delay_;
+    enum TransactionStatus {
+        NonExistent, // 0 is what you get from a non-existent transaction (which you can get e.g. from a mapping)
+        Queued,
+        Approved
     }
 
-    function setDelay(uint256 delay_) external {
-        require(msg.sender == address(this), "Timelock::setDelay: Call must come from Timelock.");
-        require(delay_ >= MINIMUM_DELAY, "Timelock::setDelay: Delay must exceed minimum delay.");
-        require(delay_ <= MAXIMUM_DELAY, "Timelock::setDelay: Delay must not exceed maximum delay.");
-        delay = delay_;
-
-        emit NewDelay(delay);
+    struct Transaction {
+        address recipient;
+        uint256 value;
+        bytes data;
     }
 
-    function acceptAdmin() external {
-        require(msg.sender == pendingAdmin, "Timelock::acceptAdmin: Call must come from pendingAdmin.");
-        admin = msg.sender;
-        pendingAdmin = address(0);
-
-        emit NewAdmin(admin);
+    struct PendingTransaction {
+        bytes32 txParamsHash;
+        TransactionStatus status;
     }
 
-    function setPendingAdmin(address pendingAdmin_) external {
-        require(msg.sender == address(this), "Timelock::setPendingAdmin: Call must come from Timelock.");
-        pendingAdmin = pendingAdmin_;
+    uint256 public minimumExecutionDelay;
+    uint256 public maximumExecutionDelay;
+    uint256 public executionGracePeriod;
 
-        emit NewPendingAdmin(pendingAdmin);
+    address public proposer;
+    EnumerableSet.AddressSet private executors;
+
+    EnumerableSet.Bytes32Set private pendingTransactionsParamsHashes;
+    mapping(bytes32 => TransactionStatus) public pendingTransactions;
+
+    event QueuedTransactionsBatch(bytes32 indexed txParamsHash, uint256 numberOfTransactions, uint256 eta);
+    event CancelledTransactionsBatch(bytes32 indexed txParamsHash);
+    event ApprovedTransactionsBatch(bytes32 indexed txParamsHash);
+    event ExecutedTransaction(bytes32 indexed txParamsHash, address indexed recipient, uint256 value, bytes data, uint256 eta);
+    event NewProposerSet(address indexed previousProposer, address indexed newProposer);
+    event NewExecutorAdded(address indexed executor);
+    event ExecutorRemoved(address indexed executor);
+    event NewExecutionDelaySet(uint256 indexed delay);
+    event NewMinimumExecutionDelaySet(uint256 indexed delay);
+    event NewMaximumExecutionDelaySet(uint256 indexed delay);
+    event NewExecutionGracePeriodSet(uint256 indexed gracePeriod);
+
+    constructor(
+        address _proposer,
+        address _executor,
+        uint256 _minimumExecutionDelay,
+        uint256 _maximumExecutionDelay,
+        uint256 _executionGracePeriod
+    ) {
+        require(_minimumExecutionDelay <= _maximumExecutionDelay, "Timelock: The minimum delay cannot be larger than the maximum execution delay");
+
+        setMinimumExecutionDelay(_minimumExecutionDelay);
+        setMaximumExecutionDelay(_maximumExecutionDelay);
+        setExecutionGracePeriod(_executionGracePeriod);
+        setProposer(_proposer);
+        addExecutor(_executor);
     }
 
-    function queueTransaction(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) external returns (bytes32) {
-        require(msg.sender == admin, "Timelock::queueTransaction: Call must come from admin.");
-        require(eta >= getBlockTimestamp() + delay, "Timelock::queueTransaction: Estimated execution block must satisfy delay.");
+    function setProposer(address _proposer) public onlyOwner {
+        require(_proposer != address(0), "Timelock: Proposer address cannot be 0");
+        require(_proposer != proposer, "Timelock: New proposer must be different than the current proposer");
 
-        bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
-        queuedTransactions[txHash] = true;
+        address previousProposer = proposer;
+        proposer = _proposer;
 
-        emit QueueTransaction(txHash, target, value, signature, data, eta);
-        return txHash;
+        emit NewProposerSet(previousProposer, proposer);
     }
 
-    function cancelTransaction(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) external {
-        require(msg.sender == admin, "Timelock::cancelTransaction: Call must come from admin.");
+    function addExecutor(address _executor) public onlyOwner {
+        require(!executors.contains(_executor), "Timelock: executor already exists");
+        require(_executor != address(0), "Timelock: executor cannot be 0 address");
 
-        bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
-        queuedTransactions[txHash] = false;
-
-        emit CancelTransaction(txHash, target, value, signature, data, eta);
+        executors.add(_executor);
+        emit NewExecutorAdded(_executor);
     }
 
-    function executeTransaction(
-        address target,
-        uint256 value,
-        string memory signature,
-        bytes memory data,
-        uint256 eta
-    ) external payable returns (bytes memory) {
-        require(msg.sender == admin, "Timelock::executeTransaction: Call must come from admin.");
+    function removeExecutor(address _executor) public onlyOwner {
+        require(executors.contains(_executor), "Timelock: executor doesn't exist");
 
-        bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
-        require(queuedTransactions[txHash], "Timelock::executeTransaction: Transaction hasn't been queued.");
-        require(getBlockTimestamp() >= eta, "Timelock::executeTransaction: Transaction hasn't surpassed time lock.");
-        require(getBlockTimestamp() <= eta + GRACE_PERIOD, "Timelock::executeTransaction: Transaction is stale.");
+        executors.remove(_executor);
+        emit ExecutorRemoved(_executor);
+    }
 
-        queuedTransactions[txHash] = false;
+    function executorsCount() external view returns (uint256) {
+        return executors.length();
+    }
 
-        bytes memory callData;
+    function executorAt(uint256 i) external view returns (address) {
+        require(executors.length() > i, "Timelock: executors index out of range");
+        return executors.at(i);
+    }
 
-        if (bytes(signature).length == 0) {
-            callData = data;
-        } else {
-            callData = abi.encodePacked(bytes4(keccak256(bytes(signature))), data);
+    function setMinimumExecutionDelay(uint256 _minimumExecutionDelay) public onlyOwner {
+        require(_minimumExecutionDelay >= 3600 * 24, "Timelock: Minimum execution delay must be >= 1 day.");
+
+        minimumExecutionDelay = _minimumExecutionDelay;
+
+        emit NewMinimumExecutionDelaySet(minimumExecutionDelay);
+    }
+
+    function setMaximumExecutionDelay(uint256 _maximumExecutionDelay) public onlyOwner {
+        require(_maximumExecutionDelay >= minimumExecutionDelay, "Timelock: Maximum execution delay cannot be lesser than minimum execution delay.");
+
+        maximumExecutionDelay = _maximumExecutionDelay;
+
+        emit NewMaximumExecutionDelaySet(_maximumExecutionDelay);
+    }
+
+    function setExecutionGracePeriod(uint256 _executionGracePeriod) public onlyOwner {
+        executionGracePeriod = _executionGracePeriod;
+
+        emit NewExecutionGracePeriodSet(_executionGracePeriod);
+    }
+
+    function queueTransactionsBatch(Transaction[] memory transactions, uint256 eta) external onlyProposer returns (bytes32) {
+        require(
+            eta >= block.timestamp + minimumExecutionDelay && eta <= block.timestamp + maximumExecutionDelay,
+            "Timelock: Estimated execution time must satisfy delay."
+        );
+
+        require(transactions.length > 0, "Timelock: You need at least 1 transaction to queue a batch");
+
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+        pendingTransactions[txParamsHash] = TransactionStatus.Queued;
+        pendingTransactionsParamsHashes.add(txParamsHash);
+
+        emit QueuedTransactionsBatch(txParamsHash, transactions.length, eta);
+        return txParamsHash;
+    }
+
+    function cancelTransactionsBatch(bytes32 txParamsHash) external onlyOwner {
+        require(pendingTransactions[txParamsHash] != TransactionStatus.NonExistent, "Timelock: transaction is not queued");
+
+        delete pendingTransactions[txParamsHash];
+        pendingTransactionsParamsHashes.remove(txParamsHash);
+
+        emit CancelledTransactionsBatch(txParamsHash);
+    }
+
+    function approveTransactionsBatch(bytes32 txParamsHash) external onlyOwner {
+        _approveTransactionsBatchInternal(txParamsHash);
+    }
+
+    function executeTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyExecutorOrOwner {
+        _executeTransactionsBatchInternal(transactions, eta);
+    }
+
+    function approveAndExecuteTransactionsBatch(Transaction[] memory transactions, uint256 eta) external payable onlyOwner {
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+
+        _approveTransactionsBatchInternal(txParamsHash);
+        _executeTransactionsBatchInternal(transactions, eta);
+    }
+
+    function approveAndExecuteTransactionsBatchRaw(bytes calldata txParamsData) external payable onlyOwner {
+        bytes32 txParamsHash = keccak256(txParamsData);
+        (Transaction[] memory transactions, uint256 eta) = abi.decode(txParamsData, (Transaction[], uint256));
+
+        _approveTransactionsBatchInternal(txParamsHash);
+        _executeTransactionsBatchInternal(transactions, eta);
+    }
+
+    function _approveTransactionsBatchInternal(bytes32 txParamsHash) private onlyOwner {
+        require(pendingTransactions[txParamsHash] == TransactionStatus.Queued, "Timelock: transaction is not queued");
+
+        pendingTransactions[txParamsHash] = TransactionStatus.Approved;
+
+        emit ApprovedTransactionsBatch(txParamsHash);
+    }
+
+    function _executeTransactionsBatchInternal(Transaction[] memory transactions, uint256 eta) private nonReentrant {
+        bytes32 txParamsHash = keccak256(abi.encode(transactions, eta));
+
+        require(pendingTransactions[txParamsHash] == TransactionStatus.Approved, "Timelock: Transaction hasn't been approved.");
+        require(block.timestamp >= eta, "Timelock: Transaction hasn't surpassed the execution delay.");
+        require(block.timestamp <= eta + executionGracePeriod, "Timelock: Transaction is stale.");
+
+        delete pendingTransactions[txParamsHash];
+        pendingTransactionsParamsHashes.remove(txParamsHash);
+
+        for (uint256 i = 0; i < transactions.length; i++) {
+            (
+                bool success, /* ignore the rest */
+
+            ) = transactions[i].recipient.call{value: transactions[i].value}(transactions[i].data);
+            require(success, "Timelock: Transaction execution reverted.");
+
+            emit ExecutedTransaction(txParamsHash, transactions[i].recipient, transactions[i].value, transactions[i].data, eta);
+        }
+    }
+
+    function getPendingTransactions() external view returns (PendingTransaction[] memory) {
+        PendingTransaction[] memory pending = new PendingTransaction[](pendingTransactionsParamsHashes.length());
+
+        for (uint256 i = 0; i < pendingTransactionsParamsHashes.length(); i++) {
+            bytes32 txParamsHash = pendingTransactionsParamsHashes.at(i);
+            pending[i] = PendingTransaction(txParamsHash, pendingTransactions[txParamsHash]);
         }
 
-        // Execute the call
-        (bool success, bytes memory returnData) = target.call{value: value}(callData);
-        require(success, "Timelock::executeTransaction: Transaction execution reverted.");
-
-        emit ExecuteTransaction(txHash, target, value, signature, data, eta);
-
-        return returnData;
+        return pending;
     }
 
-    function getBlockTimestamp() internal view returns (uint256) {
-        return block.timestamp;
+    function getPendingTransactionAt(uint256 i) external view returns (PendingTransaction memory) {
+        require(pendingTransactionsParamsHashes.length() > i, "Timelock: pending transactions index out of range");
+
+        bytes32 txParamsHash = pendingTransactionsParamsHashes.at(i);
+        return PendingTransaction(txParamsHash, pendingTransactions[txParamsHash]);
+    }
+
+    function getPendingTransactionsCount() external view returns (uint256) {
+        return pendingTransactionsParamsHashes.length();
+    }
+
+    modifier onlyProposer() {
+        require(msg.sender == proposer, "Timelock: only the proposer can perform this action");
+        _;
+    }
+
+    modifier onlyExecutorOrOwner() {
+        require(executors.contains(msg.sender) || msg.sender == owner(), "Timelock: only the executor or owner can perform this action");
+        _;
     }
 }

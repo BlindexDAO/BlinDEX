@@ -3,6 +3,7 @@ import { getDeployer, getUniswapFactory } from "../utils/DeployedContractsHelper
 import { getPoolKey, sortUniswapPairTokens } from "../utils/UniswapPoolsHelpers";
 import type { UniswapV2Factory } from "../typechain/UniswapV2Factory";
 import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
+import { ContractTransaction } from "ethers";
 
 export async function deployPairOracle(hre: HardhatRuntimeEnvironment, nameA: string, nameB: string, addressA: string, addressB: string) {
   const deployer = await getDeployer(hre);
@@ -59,4 +60,21 @@ export async function setupStakingContract(
 
   await (await stakingRewardsDistribution.connect(deployer).registerPools([<string>stakingRewards_ProxyDeployment.address], [poolWeight])).wait();
   console.log("registered staking rewards pool to staking rewards distribution");
+}
+
+export async function printAndWaitOnTransaction(transaction: ContractTransaction) {
+  console.log(`Transaction Hash: ${transaction.hash}`);
+  const receipt = await transaction.wait();
+  return receipt;
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export async function deployContract(deploymentName: string, deploymentFunc: Function, oneTimeDeployment = true): Promise<boolean> {
+  console.log(`Starting the deployment: '${deploymentName}'`);
+
+  await deploymentFunc();
+
+  console.log(`Finished the deployment: '${deploymentName}`);
+
+  return oneTimeDeployment;
 }

@@ -7,18 +7,20 @@ import {
   getBdx,
   getBot,
   getDeployer,
-  getTreasury,
+  getTreasurySigner,
   getUniswapPairOracle,
   getWeth,
   formatAddress,
   getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
   getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
   getFiatToFiat_EurUsd,
-  getTokenData
+  getTokenData,
+  getTimelock,
+  getBlindexUpdater
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
-import { getPools, updateUniswapPairsOracles, resetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
+import { getPools, recordUpdateUniswapPairsOracles, recordResetUniswapPairsOracles } from "../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import type { IOracleBasedCryptoFiatFeed } from "../typechain/IOracleBasedCryptoFiatFeed";
@@ -26,14 +28,75 @@ import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { BtcToEthOracleChinlink } from "../typechain/BtcToEthOracleChinlink";
 import type { IPriceFeed } from "../typechain/IPriceFeed";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
-import { PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
 import moment from "moment";
+import { defaultRecorder, defaultTimelockRecorder } from "../utils/Recorder/Recorder";
+import { toRc } from "../utils/Recorder/RecordableContract";
+import {
+  decodeTimelockQueuedTransactions,
+  extractTxParamsHashAndTxHashFromSingleTransaction,
+  extractTimelockQueuedTransactionsBatchParamsDataAndHash
+} from "../utils/TimelockHelpers";
+import { Timelock } from "../typechain/Timelock";
 
 export function load() {
+  task("change-owner-to-timelock").setAction(async (args, hre) => {
+    const timelock = await getTimelock(hre);
+
+    //todo ag change for all contracts? Or maybe add an address parameter? - LAGO-835
+
+    const deployer = await getDeployer(hre);
+
+    const pools = await getPools(hre);
+    for (const pool of pools) {
+      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+      await (await oracle.connect(deployer).transferOwnership(timelock.address)).wait();
+    }
+
+    console.log("owner changed to timelock");
+  });
+
+  task("queue-change-owner-to-deployer").setAction(async (args_, hre) => {
+    //todo ag change for all contracts? Or maybe add an address parameter? LAGO-835
+
+    const pools = await getPools(hre);
+
+    const deployer = await getDeployer(hre);
+    const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, singer: deployer });
+    for (const pool of pools) {
+      const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
+      await oracle.record.transferOwnership(deployer.address);
+    }
+
+    const receipt = await recorder.execute();
+    const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
+    const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
+
+    console.log("txHash:", txHash);
+    console.log("txParamsHash:", txParamsHash);
+    console.log("txParamsData:", txParamsData);
+  });
+
+  task("get-timelock-transaction-status")
+    .addPositionalParam("txParamsHash", "Transaction input data hash")
+    .setAction(async ({ txParamsHash }, hre) => {
+      const timelock = await getTimelock(hre);
+      console.log("TX status:", await timelock.pendingTransactions(txParamsHash));
+    });
+
+  task("execute-timelock-transaction")
+    .addPositionalParam("timelockaddress")
+    .addPositionalParam("txHash", "Transaction blockchain hash")
+    .setAction(async ({ timelockaddress, txHash }, hre) => {
+      const timelockFactory = await hre.ethers.getContractFactory("Timelock");
+      const timelock = timelockFactory.attach(timelockaddress) as Timelock;
+
+      const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
+      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
+    });
+
   task("update:all")
     .addParam("btcusd", "BTCUSD price")
     .addParam("btceth", "BTCETH price")
@@ -41,32 +104,37 @@ export function load() {
     .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
       const signer = await getBot(hre);
 
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
+
       if (hre.network.name === "rsk") {
         console.log("starting sovryn swap price oracles updates");
-        const oracleEthUsd = await getSovrynFeed_RbtcUsd(hre);
-        await (await oracleEthUsd.updateOracleWithVerification(to_d12(btcusd))).wait();
+        const oracleEthUsd = toRc(await getSovrynFeed_RbtcUsd(hre), recorder);
+        await oracleEthUsd.record.updateOracleWithVerification(to_d12(btcusd));
         console.log("updated ETH / USD (RSK BTC / USD)");
 
-        const oracleBtcEth = await getSovrynFeed_RbtcEths(hre);
-        await (await oracleBtcEth.updateOracleWithVerification(to_d12(btceth))).wait();
+        const oracleBtcEth = toRc(await getSovrynFeed_RbtcEths(hre), recorder);
+        await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
         console.log("updated BTC / ETH (same on both networks)");
 
         console.log("starting fiat to fiat oracles updates");
-        const oracleEurUsd = await getFiatToFiat_EurUsd(hre);
-        await (await oracleEurUsd.setPrice(to_d12(eurusd))).wait();
+        const oracleEurUsd = toRc(await getFiatToFiat_EurUsd(hre), recorder);
+        await oracleEurUsd.record.setPrice(to_d12(eurusd));
         console.log("updated EUR / USD");
       }
 
       console.log("starting uniswap pairs oracles updates");
-      await updateUniswapPairsOracles(hre, signer);
+      await recordUpdateUniswapPairsOracles(hre, recorder);
 
       console.log("starting refresh collateral ratio");
       const stables = await getAllBDStables(hre);
 
       for (const stable of stables) {
-        await (await stable.connect(signer).refreshCollateralRatio()).wait();
-        console.log(`${await stable.symbol()} refreshed collateral ratio`);
+        const recordableStable = toRc(stable, recorder);
+        await recordableStable.record.refreshCollateralRatio();
+        console.log(`${await recordableStable.symbol()} refreshed collateral ratio`);
       }
+
+      await recorder.execute();
     });
 
   task("update:btceth:rsk")
@@ -78,8 +146,13 @@ export function load() {
 
       const signer = await getBot(hre);
 
-      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed;
-      await (await oracleBtcEth.updateOracleWithVerification(to_d12(btceth))).wait();
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
+
+      const oracleBtcEth = toRc((await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed, recorder);
+      await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
+
+      await recorder.execute();
+
       console.log("updated RSK BTC/ETH (same on both networks)");
     });
 
@@ -89,9 +162,19 @@ export function load() {
       if (hre.network.name !== "rsk") {
         throw new Error("RSK only task");
       }
+
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.connect(deployer).setPrice(to_d12(eurusd))).wait();
+
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+
+      const oracleEurUsd = toRc(
+        (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
+        recorder
+      );
+      await oracleEurUsd.record.setPrice(to_d12(eurusd));
+
+      await recorder.execute();
+
       console.log("updated EUR / USD");
     });
 
@@ -107,18 +190,36 @@ export function load() {
       }
 
       const deployer = await getDeployer(hre);
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
-      await (await oracleEurUsd.connect(deployer).setMaxDayChange_d12(to_d12(change))).wait();
+
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+
+      const oracleEurUsd = toRc(
+        (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
+        recorder
+      );
+      await oracleEurUsd.record.setMaxDayChange_d12(to_d12(change));
+
+      await recorder.execute();
+
       console.log("updated EUR / USD max day change");
     });
 
   task("reset:uniswap-oracles").setAction(async (args, hre) => {
-    await resetUniswapPairsOracles(hre);
+    const deployer = await getDeployer(hre);
+    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+
+    await recordResetUniswapPairsOracles(hre, recorder);
+
+    await recorder.execute();
   });
 
   task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    await updateUniswapPairsOracles(hre, deployer);
+    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+
+    await recordUpdateUniswapPairsOracles(hre, recorder);
+
+    recorder.execute();
   });
 
   task("update:all-with-updater")
@@ -129,7 +230,7 @@ export function load() {
       console.log("starting the updater");
 
       const bot = await getBot(hre);
-      const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+      const updater = await getBlindexUpdater(hre, bot);
 
       const uniOracles = [];
       const pools = await getPools(hre);
@@ -159,15 +260,20 @@ export function load() {
     .setAction(async ({ newVal }, hre) => {
       const pools = await getPools(hre);
 
+      const deployer = await getDeployer(hre);
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+
       console.log("setting consultLeniency to: " + newVal);
 
       for (const pool of pools) {
-        const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+        const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
         console.log(`starting for ${pool[0].name} / ${pool[1].name}`);
 
-        await (await oracle.setConsultLeniency(newVal)).wait();
+        await oracle.record.setConsultLeniency(newVal);
         console.log("pool done");
       }
+
+      await recorder.execute();
       console.log("all done");
     });
 
@@ -220,7 +326,7 @@ export function load() {
 
       console.log("Setting EUR/USD: " + newPrice);
 
-      const feed = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as FiatToFiatPseudoOracleFeed;
+      const feed = (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD)) as FiatToFiatPseudoOracleFeed;
       await (await feed.connect(bot).setPrice(to_d12(newPrice))).wait();
     });
 
@@ -253,7 +359,7 @@ export function load() {
 
   task("show:users").setAction(async (args, hre) => {
     const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
     const bot = await getBot(hre);
 
     console.log("deployer: " + deployer.address);
@@ -324,13 +430,13 @@ export function load() {
   });
 
   async function show_ethEur(hre: HardhatRuntimeEnvironment) {
-    const feed = (await hre.ethers.getContract(PriceFeedContractNames.ETH_EUR)) as IOracleBasedCryptoFiatFeed;
+    const feed = (await hre.ethers.getContract(constants.PriceFeedContractNames.ETH_EUR)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
     console.log(`${constants.NATIVE_TOKEN_NAME[hre.network.name]}/EUR: ${price}`);
   }
 
   async function show_ethUsd(hre: HardhatRuntimeEnvironment) {
-    const feed = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD_ADAPTER)) as IOracleBasedCryptoFiatFeed;
+    const feed = (await hre.ethers.getContract(constants.PriceFeedContractNames.ETH_USD_ADAPTER)) as IOracleBasedCryptoFiatFeed;
     const price = d12_ToNumber(await feed.getPrice_1e12());
     console.log(`${constants.NATIVE_TOKEN_NAME[hre.network.name]}/USD: ${price}`);
   }
@@ -338,10 +444,10 @@ export function load() {
   async function show_btcEth(hre: HardhatRuntimeEnvironment) {
     let price;
     if (hre.network.name === "rsk") {
-      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as IPriceFeed;
+      const feed = (await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH)) as IPriceFeed;
       price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     } else {
-      const feed = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as BtcToEthOracleChinlink;
+      const feed = (await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH)) as BtcToEthOracleChinlink;
       price = d12_ToNumber(await feed.getPrice_1e12());
     }
 
@@ -349,7 +455,7 @@ export function load() {
   }
 
   async function show_eurUsd(hre: HardhatRuntimeEnvironment) {
-    const feed = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as IPriceFeed;
+    const feed = (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD)) as IPriceFeed;
     const price = bigNumberToDecimal(await feed.price(), await feed.decimals());
     let lastUpdateTimestamp = 0;
     if (hre.network.name === "rsk") {

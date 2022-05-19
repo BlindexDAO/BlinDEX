@@ -10,8 +10,8 @@ import {
   getWeth,
   getBdEuWethPool,
   getDeployer,
-  getUser,
-  getOnChainEthEurPrice,
+  getUser1,
+  getOnChainWethFiatPrice,
   mintWeth
 } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
@@ -32,7 +32,7 @@ describe("Recollateralization", () => {
   it("should recollateralize when efCR < CR", async () => {
     await setUpFunctionalSystemForTests(hre, 0.4);
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
 
     const bdx = await getBdx(hre);
     const weth = await getWeth(hre);
@@ -50,7 +50,11 @@ describe("Recollateralization", () => {
     const wethInEurPrice_d12 = await bdEuWethPool.getCollateralPrice_d12();
 
     const bdEuCollatrValue_d18 = await bdEu.globalCollateralValue();
-    const maxPossibleRecollateralInEur_d18 = constants.initialBdstableMintingAmount().sub(bdEuCollatrValue_d18).mul(1e12).div(wethInEurPrice_d12);
+    const maxPossibleRecollateralInEur_d18 = constants
+      .initialBdstableMintingAmount(hre.network.name, "BDEU")
+      .sub(bdEuCollatrValue_d18)
+      .mul(1e12)
+      .div(wethInEurPrice_d12);
 
     // recollateralization
     const toRecollatInEur_d18 = maxPossibleRecollateralInEur_d18.div(2);
@@ -97,7 +101,7 @@ describe("Recollateralization", () => {
 
   it("recollateralize should NOT fail when efCR < CR", async () => {
     await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const weth = await getWeth(hre);
 
     await lockBdeuCrAt(hre, 0.9); // CR
@@ -116,7 +120,7 @@ describe("Recollateralization", () => {
 
     await lockBdeuCrAt(hre, 0.3); // CR
 
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const weth = await getWeth(hre);
     const bdEuWethPool = await getBdEuWethPool(hre);
 
@@ -144,7 +148,7 @@ describe("Recollateralization", () => {
     const cr = 0.9;
     await lockBdeuCrAt(hre, cr); // CR
 
-    const wethPrice = (await getOnChainEthEurPrice(hre)).price;
+    const wethPrice = (await getOnChainWethFiatPrice(hre, "EUR")).price;
     const bdxPrice = d12_ToNumber(await bdEu.BDX_price_d12());
 
     const bdxLeftInBdEu_d18 = to_d18(6);
@@ -189,7 +193,7 @@ describe("Recollateralization", () => {
 
   it("should recollateralize native token", async () => {
     await setUpFunctionalSystemForTests(hre, 0.3); // ~efCR
-    const testUser = await getUser(hre);
+    const testUser = await getUser1(hre);
     const weth = await getWeth(hre);
 
     await lockBdeuCrAt(hre, 0.9); // CR

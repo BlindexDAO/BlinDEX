@@ -3,8 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import type { UpdaterRSK } from "../../typechain/UpdaterRSK";
-import { getBdEu, getBot, getUser, getDeployer, getUniswapPairOracle } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBot, getDeployer, getUniswapPairOracle, getBlindexUpdater, getUser1 } from "../../utils/DeployedContractsHelpers";
 import { getPools } from "../../utils/UniswapPoolsHelpers";
 import type { BDStable } from "../../typechain/BDStable";
 import type { UniswapPairOracle } from "../../typechain/UniswapPairOracle";
@@ -15,7 +14,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe("UpdaterRSK", () => {
+describe("BlindexUpdater", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     await setUpFunctionalSystemForTests(hre, 1);
@@ -25,7 +24,7 @@ describe("UpdaterRSK", () => {
 
   it("should update", async () => {
     const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+    const updater = await getBlindexUpdater(hre, bot);
 
     const pools = await getPools(hre);
     const uniOracles: UniswapPairOracle[] = [];
@@ -79,16 +78,16 @@ describe("UpdaterRSK", () => {
 
   it("should set the updater correctly at deployment", async () => {
     const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+    const updater = await getBlindexUpdater(hre, bot);
 
     expect(await updater.updater()).to.be.eq(bot.address);
   });
 
   it("should set the updater correctly with setUpdater()", async () => {
     const deployer = await getDeployer(hre);
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+    const updater = await getBlindexUpdater(hre, bot);
 
     await updater.connect(deployer).setUpdater(user.address);
 
@@ -97,25 +96,25 @@ describe("UpdaterRSK", () => {
 
   it("should emit the UpdaterChanged event", async () => {
     const deployer = await getDeployer(hre);
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+    const updater = await getBlindexUpdater(hre, bot);
 
     const tx = await updater.connect(deployer).setUpdater(user.address);
     expect(tx).to.emit(updater, "UpdaterChanged").withArgs(bot.address, user.address);
   });
 
   it("should fail if not updater calls update()", async () => {
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+    const updater = await getBlindexUpdater(hre, bot);
 
     await expectToFail(() => updater.connect(user).update([], [], [], [], [], []), "You're not the updater");
   });
 
   it("should fail if update() provided with wrong arguments", async () => {
     const bot = await getBot(hre);
-    const updater = (await hre.ethers.getContract("UpdaterRSK", bot)) as UpdaterRSK;
+    const updater = await getBlindexUpdater(hre, bot);
 
     await expectToFail(() => updater.update([], [1], [], [], [], []), "Each sovryn oracle address needs its corresponding price");
     await expectToFail(() => updater.update([], [], [], [1, 1], [], []), "Each fiat oracle address needs its corresponding price");

@@ -12,14 +12,15 @@ import {
   getStakingRewardsWithWeth,
   getBdx,
   getDeployer,
-  getOperationalTreasury,
   getStakingRewardsDistribution,
   getUniswapPair,
   getVesting,
   getWbtc,
   getWeth,
   mintWbtc,
-  mintWeth
+  mintWeth,
+  getStakingRewardsCount,
+  getTreasurySigner
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
@@ -43,7 +44,7 @@ const totalRewardsSupply_d18 = to_d18(21e6 / 2);
 let deployer: SignerWithAddress;
 let testUser1: SignerWithAddress;
 let testUser2: SignerWithAddress;
-let operationalTreasury: SignerWithAddress;
+let treasury: SignerWithAddress;
 
 let weth: IERC20;
 let wbtc: IERC20;
@@ -56,7 +57,7 @@ let vesting: Vesting;
 
 async function initialize() {
   deployer = await getDeployer(hre);
-  operationalTreasury = await getOperationalTreasury(hre);
+  treasury = await getTreasurySigner(hre);
   testUser1 = await hre.ethers.getNamedSigner("TEST1");
   testUser2 = await hre.ethers.getNamedSigner("TEST2");
   weth = await getWeth(hre);
@@ -66,21 +67,24 @@ async function initialize() {
 
   const wethBdeuStakingRewardContract = await getStakingRewardsWithWeth(hre, await bdEu.symbol());
   if (!wethBdeuStakingRewardContract) {
-    throw new Error(`StakingRewads contract BDEU-WETH doesn't exist`);
+    throw new Error(`StakingRewards contract BDEU-WETH doesn't exist`);
   }
   stakingRewards_BDEU_WETH = wethBdeuStakingRewardContract;
 
   const wbtcBdeuStakingRewardContract = await getStakingRewardsWithWbtc(hre, await bdEu.symbol());
   if (!wbtcBdeuStakingRewardContract) {
-    throw new Error(`StakingRewads contract BDEU-WBTC doesn't exist`);
+    throw new Error(`StakingRewards contract BDEU-WBTC doesn't exist`);
   }
   stakingRewards_BDEU_WBTC = wbtcBdeuStakingRewardContract;
 
   stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
   vesting = await getVesting(hre);
 
-  await stakingRewards_BDEU_WETH.unpause();
-  await stakingRewards_BDEU_WBTC.unpause();
+  [stakingRewards_BDEU_WETH, stakingRewards_BDEU_WBTC].forEach(async stakingRewards => {
+    if (await stakingRewards.paused()) {
+      await stakingRewards.unpause();
+    }
+  });
 }
 
 async function get_BDEU_WETH_poolWeight() {
@@ -117,7 +121,7 @@ describe("StakingRewards", () => {
     let treasuryBdxBalanceBefore: BigNumber;
 
     it("should get first reward", async () => {
-      treasuryBdxBalanceBefore = await bdx.balanceOf(operationalTreasury.address);
+      treasuryBdxBalanceBefore = await bdx.balanceOf(treasury.address);
 
       // provide some initial weth for the users
       await mintWeth(hre, testUser1, to_d18(100));
@@ -180,7 +184,7 @@ describe("StakingRewards", () => {
 
       // vesting is disabled
 
-      const treasuryBdxBalanceAfter = await bdx.balanceOf(operationalTreasury.address);
+      const treasuryBdxBalanceAfter = await bdx.balanceOf(treasury.address);
       const bdxRewardUser1 = await bdx.balanceOf(testUser1.address);
       const bdxRewardUser2 = await bdx.balanceOf(testUser2.address);
 
@@ -236,7 +240,7 @@ describe("StakingRewards", () => {
     let treasuryBdxBalanceBefore: BigNumber;
 
     it("should get reward", async () => {
-      treasuryBdxBalanceBefore = await bdx.balanceOf(operationalTreasury.address);
+      treasuryBdxBalanceBefore = await bdx.balanceOf(treasury.address);
 
       const user1YearsLocked = 5;
       const user1LockBonusMultiplier = 10;
@@ -307,7 +311,7 @@ describe("StakingRewards", () => {
 
       const rewardsSupplyPerPool = await adjustRewardsFor_BDEU_WETH_pool(totalRewardsSupply_d18);
 
-      const treasuryBdxBalanceAfter = await bdx.balanceOf(operationalTreasury.address);
+      const treasuryBdxBalanceAfter = await bdx.balanceOf(treasury.address);
 
       const totalRewards = bdxRewardUser1.add(bdxRewardUser2).add(treasuryBdxBalanceAfter).sub(treasuryBdxBalanceBefore);
 
@@ -495,7 +499,7 @@ describe("Unregistering pools", () => {
 
   it("should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
-    const numberOfStakingPools = 10;
+    const numberOfStakingPools = await getStakingRewardsCount(hre);
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
     const poolIndexToRemove = 2;
     const thirdPoolAddress = poolsAddresses[poolIndexToRemove];
@@ -525,7 +529,7 @@ describe("Claiming all rewards", () => {
 
   it("should collect all rewards", async () => {
     await mintWeth(hre, testUser1, to_d18(1));
-    await mintWbtc(hre, testUser1, to_d8(1), 100);
+    await mintWbtc(hre, testUser1, to_d8(1));
     await provideBdEu(hre, testUser1.address, to_d18(100));
 
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);
@@ -583,7 +587,7 @@ describe("Claiming all rewards", () => {
     await provideLiquidity(hre, testUser1, weth, bdEu, to_d18(0.1), to_d18(10), false);
 
     const userBalanceBefore = await bdx.balanceOf(testUser1.address);
-    const treasuryBalanceBefore = await bdx.balanceOf(operationalTreasury.address);
+    const treasuryBalanceBefore = await bdx.balanceOf(treasury.address);
 
     const pairWeth = await getUniswapPair(hre, bdEu, weth);
     const wethLPBal = await pairWeth.balanceOf(testUser1.address);
@@ -601,7 +605,7 @@ describe("Claiming all rewards", () => {
     await stakingRewardsDistribution.connect(testUser1).collectAllRewards(0, 100);
 
     const userBalanceAfter = await bdx.balanceOf(testUser1.address);
-    const treasuryBalanceAfter = await bdx.balanceOf(operationalTreasury.address);
+    const treasuryBalanceAfter = await bdx.balanceOf(treasury.address);
 
     const userBalanceDiff = userBalanceAfter.sub(userBalanceBefore);
     const treasuryBalanceDiff = treasuryBalanceAfter.sub(treasuryBalanceBefore);

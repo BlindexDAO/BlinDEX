@@ -6,14 +6,38 @@ import cap from "chai-as-promised";
 import { provideLiquidity, swapWethFor, getWethOraclePrices } from "../helpers/swaps";
 import { diffPctN, to_d18 } from "../../utils/NumbersHelpers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
-import { getBdEu, getUser, getWeth, getUniswapPairOracle, mintWeth, getTreasury, getDeployer } from "../../utils/DeployedContractsHelpers";
-import { resetOracle, updateOracle } from "../../utils/UniswapPoolsHelpers";
+import {
+  getBdEu,
+  getUser1,
+  getWeth,
+  getUniswapPairOracle,
+  mintWeth,
+  getDeployer,
+  getTreasurySigner,
+  getBot
+} from "../../utils/DeployedContractsHelpers";
 import { expectToFail } from "../helpers/common";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { Signer } from "ethers";
+import { defaultImmediateExecutionRecorder } from "../../utils/Recorder/Recorder";
+import { recordResetOracle, recordUpdateOracle } from "../../utils/UniswapPoolsHelpers";
 
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
+
+export async function updateOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, signer: Signer) {
+  const recorder = defaultImmediateExecutionRecorder(signer);
+  await recordUpdateOracle(hre, symbol0, symbol1, recorder);
+  await recorder.execute();
+}
+
+export async function resetOracle(hre: HardhatRuntimeEnvironment, symbol0: string, symbol1: string, signer: Signer) {
+  const recorder = defaultImmediateExecutionRecorder(signer);
+  await recordResetOracle(hre, symbol0, symbol1, recorder);
+  await recorder.execute();
+}
 
 describe("Uniswap Oracles", () => {
   beforeEach(async () => {
@@ -28,16 +52,17 @@ describe("Uniswap Oracles", () => {
     const bdeu = await getBdEu(hre);
     const weth = await getWeth(hre);
 
-    const user = await getUser(hre);
+    const user = await getUser1(hre);
     const deployer = await getDeployer(hre);
-    const treasury = await getTreasury(hre);
+    const bot = await getBot(hre);
+    const treasury = await getTreasurySigner(hre);
 
     await mintWeth(hre, user, to_d18(20));
     await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
 
     // properly initalize system
     await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
-    await resetOracle(hre, "BDEU", "WETH");
+    await resetOracle(hre, "BDEU", "WETH", deployer);
     await simulateTimeElapseInSeconds(10); // wait a little bit to reflect real world scenario
     await updateOracle(hre, "BDEU", "WETH", deployer); // first immediate update by deployer
     await simulateTimeElapseInSeconds(oneHour);
@@ -47,7 +72,7 @@ describe("Uniswap Oracles", () => {
     await swapWethFor(hre, testUser, "BDEU", 5);
     await simulateTimeElapseInSeconds(2 * oneHour);
 
-    await updateOracle(hre, "BDEU", "WETH");
+    await updateOracle(hre, "BDEU", "WETH", bot);
 
     const { wethInBdStableOraclePrice, bdStableInWethOraclePrice } = await getWethOraclePrices(hre, "BDEU");
 
@@ -76,8 +101,8 @@ describe("Uniswap Oracles", () => {
       const bdeu = await getBdEu(hre);
       const weth = await getWeth(hre);
 
-      const user = await getUser(hre);
-      const treasury = await getTreasury(hre);
+      const user = await getUser1(hre);
+      const treasury = await getTreasurySigner(hre);
       const deployer = await getDeployer(hre);
 
       const spotWehtBdEuPrice = 4000;
@@ -88,7 +113,7 @@ describe("Uniswap Oracles", () => {
 
       // properly initalize system
       await provideLiquidity(hre, user, weth, bdeu, to_d18(1), to_d18(spotWehtBdEuPrice), false);
-      await resetOracle(hre, "BDEU", "WETH");
+      await resetOracle(hre, "BDEU", "WETH", deployer);
       await simulateTimeElapseInSeconds(seconds); // wait before first oracle update
       await updateOracle(hre, "BDEU", "WETH", deployer); // allow immediate update by deployer
 
@@ -109,14 +134,15 @@ describe("Uniswap Oracles", () => {
     const bdeu = await getBdEu(hre);
     const weth = await getWeth(hre);
 
-    const user = await getUser(hre);
-    const treasury = await getTreasury(hre);
+    const user = await getUser1(hre);
+    const deploer = await getDeployer(hre);
+    const treasury = await getTreasurySigner(hre);
 
     await mintWeth(hre, user, to_d18(20));
 
     await bdeu.connect(treasury).transfer(user.address, to_d18(80)); // treasury gives user some bdeu so user can provide liquidity
     await provideLiquidity(hre, user, weth, bdeu, to_d18(20), to_d18(80), false);
-    await resetOracle(hre, "BDEU", "WETH");
+    await resetOracle(hre, "BDEU", "WETH", deploer);
 
     const testUser = await hre.ethers.getNamedSigner("TEST2");
     await swapWethFor(hre, testUser, "BDEU", 5);

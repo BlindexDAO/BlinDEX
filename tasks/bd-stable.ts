@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { lockBdeuCrAt, lockBdusCrAt, toggleBdeuCrPaused, toggleBdusCrPaused } from "../test/helpers/bdStable";
+import { lockBdeuCrAt, lockBdusCrAt, lockBgbpCrAt, lockBxauCrAt, toggleBdeuCrPaused, toggleBdusCrPaused } from "../test/helpers/bdStable";
 import { getAllBDStables } from "../utils/DeployedContractsHelpers";
 
 export function load() {
@@ -13,6 +13,18 @@ export function load() {
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
       await lockBdusCrAt(hre, crRatio);
+    });
+
+  task("bds:bxau:lockCollateralRatio")
+    .addPositionalParam("crRatio", "The desired collateral ratio")
+    .setAction(async ({ crRatio }, hre) => {
+      await lockBxauCrAt(hre, crRatio);
+    });
+
+  task("bds:bgbp:lockCollateralRatio")
+    .addPositionalParam("crRatio", "The desired collateral ratio")
+    .setAction(async ({ crRatio }, hre) => {
+      await lockBgbpCrAt(hre, crRatio);
     });
 
   task("bds:all:lockCollateralRatio")

@@ -20,13 +20,15 @@ import * as npmTasks from "./tasks/npm";
 import { load as lpTasksLoad } from "./tasks/liquidity-pools";
 import { load as bdStablePoolsTasksLoad } from "./tasks/bd-stable-pools";
 import { load as bdStableTasksLoad } from "./tasks/bd-stable";
-import { load as bdxTasksLoad } from "./tasks/bdx";
 import { load as stakingTasksLoad } from "./tasks/staking";
 import { load as usersLoad } from "./tasks/users";
 import { load as tokenListLoad } from "./tasks/token-list";
 import "hardhat-gas-reporter";
 import * as path from "path";
 import hardhatCompileConfig from "./hardhat.compile.config";
+import { chainIds } from "./utils/Constants";
+import { chainsDeployScriptsFolders } from "./deploy-scripts/deploy-scripts-constants";
+import "@nomiclabs/hardhat-etherscan";
 
 const envPath = path.join(__dirname, "./.env");
 dotenv.config({ path: envPath });
@@ -39,7 +41,6 @@ npmTasks.load();
 lpTasksLoad();
 bdStablePoolsTasksLoad();
 bdStableTasksLoad();
-bdxTasksLoad();
 stakingTasksLoad();
 usersLoad();
 tokenListLoad();
@@ -55,24 +56,38 @@ const config: HardhatUserConfig = {
         mnemonic: process.env.MNEMONIC_PHRASE!,
         accountsBalance: "100000000000000000000000"
       },
-      chainId: 1337
+      chainId: chainIds.mainnetFork
     },
     mainnetFork: {
       url: "http://localhost:8545",
       timeout: 60000,
-      gas: 10_000_000
+      gas: 10_000_000,
+      deploy: chainsDeployScriptsFolders[chainIds.mainnetFork]
+    },
+    goerli: {
+      url: process.env.GOERLI_URL!,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.goerli]
+    },
+    kovan: {
+      url: process.env.KOVAN_URL!,
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      deploy: chainsDeployScriptsFolders[chainIds.kovan],
+      gasMultiplier: 2
+    },
+    arbitrumTestnet: {
+      url: process.env.ARBITRUM_TESTNET_URL || "https://rinkeby.arbitrum.io/rpc",
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
+      chainId: chainIds.arbitrumTestnet,
+      deploy: chainsDeployScriptsFolders[chainIds.arbitrumTestnet]
     },
     rsk: {
       url: "https://public-node.rsk.co",
-      accounts: [
-        process.env.USER_DEPLOYER_PRIVATE_KEY!,
-        process.env.USER_TREASURY_PRIVATE_KEY!,
-        process.env.USER_BOT_PRIVATE_KEY!,
-        process.env.OPERATIONAL_TREASURY_PRIVATE_KEY!
-      ],
+      accounts: [process.env.USER_DEPLOYER_PRIVATE_KEY!, process.env.USER_TREASURY_PRIVATE_KEY!, process.env.USER_BOT_PRIVATE_KEY!],
       timeout: 6_000_000,
       gasPrice: 79240000,
-      chainId: 30
+      chainId: chainIds.rsk,
+      deploy: chainsDeployScriptsFolders[chainIds.rsk]
     }
   },
   solidity: hardhatCompileConfig.solidity,
@@ -85,6 +100,9 @@ const config: HardhatUserConfig = {
     currency: "USD",
     coinmarketcap: process.env.CMC_TOKEN
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
+  },
   namedAccounts: {
     DEPLOYER: {
       default: 0
@@ -95,20 +113,26 @@ const config: HardhatUserConfig = {
     BOT: {
       default: 2
     },
-    OPERATIONAL_TREASURY: {
+    TIMELOCK_PROPOSER: {
       default: 3
     },
-    TEST1: {
+    TIMELOCK_EXECUTOR: {
       default: 4
     },
-    TEST2: {
+    TEST1: {
       default: 5
     },
-    TEST_VESTING_SCHEDULER: {
+    TEST2: {
       default: 6
     },
-    TEST_VESTING_REWARDS_PROVIDER: {
+    TEST3: {
       default: 7
+    },
+    TEST_VESTING_SCHEDULER: {
+      default: 8
+    },
+    TEST_VESTING_REWARDS_PROVIDER: {
+      default: 9
     }
   }
 };

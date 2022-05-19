@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, to_d18 } from "../../utils/NumbersHelpers";
-import { getBdEu, getBdEuWethPool, getBdx, getTreasury, getWeth } from "../../utils/DeployedContractsHelpers";
+import { getBdEu, getBdEuWethPool, getBdx, getTreasurySigner, getWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import { swapWethAsDeployer } from "../helpers/swaps";
@@ -65,7 +65,7 @@ describe("Locking collateral ratio", () => {
   });
 
   async function DecreaseCollateralizationAndWait() {
-    const treasury = await getTreasury(hre);
+    const treasury = await getTreasurySigner(hre);
 
     const bdEuWethPool = await getBdEuWethPool(hre);
     const weth = await getWeth(hre);
