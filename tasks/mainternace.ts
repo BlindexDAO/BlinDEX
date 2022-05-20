@@ -16,7 +16,8 @@ import {
   getFiatToFiat_EurUsd,
   getTokenData,
   getTimelock,
-  getBlindexUpdater
+  getBlindexUpdater,
+  getAllBdStables
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -44,30 +45,25 @@ import { Timelock } from "../typechain/Timelock";
 export function load() {
   task("change-owner-to-timelock").setAction(async (args, hre) => {
     const timelock = await getTimelock(hre);
-
-    //todo ag change for all contracts? Or maybe add an address parameter? - LAGO-835
-
     const deployer = await getDeployer(hre);
 
-    const pools = await getPools(hre);
-    for (const pool of pools) {
-      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-      await (await oracle.connect(deployer).transferOwnership(timelock.address)).wait();
+    const contracts = await getContractsToTransferOwnership(hre);
+
+    for (const contract of contracts) {
+      await (await contract.connect(deployer).transferOwnership(timelock.address)).wait();
     }
 
     console.log("owner changed to timelock");
   });
 
   task("queue-change-owner-to-deployer").setAction(async (args_, hre) => {
-    //todo ag change for all contracts? Or maybe add an address parameter? LAGO-835
-
-    const pools = await getPools(hre);
+    const contracts = await getContractsToTransferOwnership(hre);
 
     const deployer = await getDeployer(hre);
     const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, singer: deployer });
-    for (const pool of pools) {
-      const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
-      await oracle.record.transferOwnership(deployer.address);
+
+    for (const contract of contracts) {
+      await toRc(contract, recorder).record.transferOwnership(deployer.address);
     }
 
     const receipt = await recorder.execute();
@@ -78,6 +74,24 @@ export function load() {
     console.log("txParamsHash:", txParamsHash);
     console.log("txParamsData:", txParamsData);
   });
+
+  async function getContractsToTransferOwnership(hre: HardhatRuntimeEnvironment) {
+    //todo ag change for all contracts? Or maybe add an address parameter? LAGO-835
+
+    const contracts = [];
+
+    const pools = await getPools(hre);
+
+    for (const pool of pools) {
+      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+      contracts.push(oracle);
+    }
+
+    const stables = await getAllBdStables(hre);
+    contracts.push(...stables);
+
+    return contracts;
+  }
 
   task("get-timelock-transaction-status")
     .addPositionalParam("txParamsHash", "Transaction input data hash")
@@ -214,6 +228,7 @@ export function load() {
   });
 
   task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
+    //todo ag
     const deployer = await getDeployer(hre);
     const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
 

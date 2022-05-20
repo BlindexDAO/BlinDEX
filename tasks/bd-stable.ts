@@ -1,37 +1,60 @@
 import { task } from "hardhat/config";
-import { lockBdeuCrAt, lockBdusCrAt, lockBgbpCrAt, lockBxauCrAt, toggleBdeuCrPaused, toggleBdusCrPaused } from "../test/helpers/bdStable";
-import { getAllBDStables } from "../utils/DeployedContractsHelpers";
+import {
+  lockBdeuCrAt,
+  lockBdStableCrAt,
+  lockBdusCrAt,
+  lockBgbpCrAt,
+  lockBxauCrAt,
+  toggleBdeuCrPaused,
+  toggleBdusCrPaused
+} from "../test/helpers/bdStable";
+import { getAllBdStables, getAllBDStables } from "../utils/DeployedContractsHelpers";
+import { defaultRecorder } from "../utils/Recorder/Recorder";
 
 export function load() {
   task("bds:bdeu:lockCollateralRatio")
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
-      await lockBdeuCrAt(hre, crRatio);
+      const recorder = await defaultRecorder(hre);
+      await lockBdeuCrAt(hre, crRatio, recorder);
+      await recorder.execute();
     });
 
   task("bds:bdus:lockCollateralRatio")
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
-      await lockBdusCrAt(hre, crRatio);
+      const recorder = await defaultRecorder(hre);
+      await lockBdusCrAt(hre, crRatio, recorder);
+      await recorder.execute();
     });
 
   task("bds:bxau:lockCollateralRatio")
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
-      await lockBxauCrAt(hre, crRatio);
+      const recorder = await defaultRecorder(hre);
+      await lockBxauCrAt(hre, crRatio, recorder);
+      await recorder.execute();
     });
 
   task("bds:bgbp:lockCollateralRatio")
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
-      await lockBgbpCrAt(hre, crRatio);
+      const recorder = await defaultRecorder(hre);
+      await lockBgbpCrAt(hre, crRatio, recorder);
+      await recorder.execute();
     });
 
   task("bds:all:lockCollateralRatio")
     .addPositionalParam("crRatio", "The desired collateral ratio")
     .setAction(async ({ crRatio }, hre) => {
-      await lockBdeuCrAt(hre, crRatio);
-      await lockBdusCrAt(hre, crRatio);
+      const recorder = await defaultRecorder(hre);
+
+      const stables = await getAllBdStables(hre);
+      for (const stable of stables) {
+        await lockBdStableCrAt(crRatio, stable, recorder);
+      }
+
+      await recorder.execute();
     });
 
   task("bds:bdeu:toggleCrPaused").setAction(async (args, hre) => {
@@ -68,7 +91,7 @@ export function load() {
     }
   });
 
-  task("bds:all:setCrPriceBand")
+  task("bds:all:setCrPriceBand") ///todo ag
     .addPositionalParam("newPriceBand", "The desired CR price band")
     .setAction(async ({ newPriceBand }, hre) => {
       const stables = await getAllBDStables(hre);

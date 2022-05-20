@@ -23,7 +23,7 @@ export function load() {
     return currentOwner.toLowerCase() === owner.toLowerCase();
   }
 
-  task("users:owner:set")
+  task("users:owner:set") //todo ag
     .addPositionalParam("owner", "owner address")
     .setAction(async ({ owner }, hre) => {
       console.log(`set:owner ${owner} on ${hre.network.name}`);
@@ -120,7 +120,7 @@ export function load() {
       console.log(`All ownership transfered to ${owner}`);
     });
 
-  task("users:updater:set")
+  task("users:updater:set") //todo ag
     .addPositionalParam("newUpdater", "new updater address")
     .setAction(async ({ newUpdater }, hre) => {
       console.log("starting the setUpdaters to:", newUpdater);
@@ -158,7 +158,7 @@ export function load() {
     return currentTreasury.toLowerCase() === treasury.toLowerCase();
   }
 
-  task("users:treasury:set")
+  task("users:treasury:set") //todo ag
     .addPositionalParam("treasury", "new treasury address")
     .setAction(async ({ treasury }, hre) => {
       treasury = formatAddress(hre, treasury);

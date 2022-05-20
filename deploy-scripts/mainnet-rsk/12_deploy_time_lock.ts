@@ -1,17 +1,21 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
+import { getDeployer, getExecutor, getProposer } from "../../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: Timelock");
 
   const day = 3600 * 24;
 
-  const deployer = (await hre.getNamedAccounts()).DEPLOYER;
+  const deployer = await getDeployer(hre);
+  const proposer = await getProposer(hre);
+  const executor = await getExecutor(hre);
+
   const timelock = await hre.deployments.deploy("Timelock", {
-    from: deployer,
+    from: deployer.address,
     args: [
-      deployer,
-      deployer,
+      proposer.address,
+      executor.address,
       day * 1, // min delay
       day * 30, // max delay
       day * 7 // grace period

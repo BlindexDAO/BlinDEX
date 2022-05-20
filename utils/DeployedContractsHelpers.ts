@@ -227,6 +227,10 @@ export function getBDStableChainlinkPriceFeed(symbol: string): string | undefine
   return bdStablesContractsDetails[symbol].ethereumChainlinkPriceFeed;
 }
 
+export async function getAllBdStables(hre: HardhatRuntimeEnvironment) {
+  return [await getBdUs(hre), await getBdEu(hre), await getBxau(hre), await getBgbp(hre)];
+}
+
 export async function getBdEu(hre: HardhatRuntimeEnvironment) {
   return getBDStable(hre, "BDEU");
 }

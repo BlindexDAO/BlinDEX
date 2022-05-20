@@ -92,6 +92,7 @@ export function load() {
   });
 
   task("bdsp:all:toggle:recollateralizeOnlyForOwner").setAction(async (args, hre) => {
+    //todo ag
     const stablePools = await getAllBDStablePools(hre);
 
     for (let index = 0; index < stablePools.length; index++) {

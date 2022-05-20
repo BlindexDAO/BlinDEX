@@ -1,11 +1,11 @@
 import { ContractReceipt, UnsignedTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getDeployer, getProposer, getTimelock } from "../DeployedContractsHelpers";
+import { getProposer, getTimelock } from "../DeployedContractsHelpers";
 import { Strategy } from "./strategies/Strategy.interface";
 import { TimelockStrategy } from "./strategies/TimelockStrategy";
 import { ImmediateExecutionStrategy } from "./strategies/ImmediateExecutionStrategy";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { blockTimeSeconds, chainNames } from "../Constants";
+import { blockTimeSeconds } from "../Constants";
 import { Signer } from "ethers";
 
 // class responsible for recoding and executing transactions
@@ -33,7 +33,7 @@ export class Recorder {
     this.recordedTransactions = [];
     this.executedTransactions.concat(response);
 
-    console.log(`${transactionsToExecuteCount} transactions were executed`);
+    console.log(`${transactionsToExecuteCount} transactions were queued/executed`);
     return response;
   }
 
@@ -48,15 +48,18 @@ type DefaultRecorderParams = {
 };
 
 export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
-  if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
-    return new Recorder(
-      new ImmediateExecutionStrategy({
-        signer: params?.singer ?? (await getDeployer(hre))
-      })
-    );
-  } else {
-    return defaultTimelockRecorder(hre, params);
-  }
+  return defaultTimelockRecorder(hre, params);
+
+  //todo ag
+  // if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
+  //   return new Recorder(
+  //     new ImmediateExecutionStrategy({
+  //       signer: params?.singer ?? (await getDeployer(hre))
+  //     })
+  //   );
+  // } else {
+  //   return defaultTimelockRecorder(hre, params);
+  // }
 }
 
 export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {

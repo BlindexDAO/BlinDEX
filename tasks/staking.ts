@@ -33,7 +33,7 @@ export function load() {
       }
     });
 
-  task("staking:single:pause")
+  task("staking:single:pause") //todo ag
     .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
     .setAction(async ({ stakingRewardAddress }, hre) => {
       const deployer = await getDeployer(hre);
@@ -46,7 +46,7 @@ export function load() {
       }
     });
 
-  task("staking:single:unpause")
+  task("staking:single:unpause") //todo ag
     .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
     .setAction(async ({ stakingRewardAddress }, hre) => {
       const deployer = await getDeployer(hre);
@@ -60,6 +60,7 @@ export function load() {
     });
 
   task("staking:all:pause").setAction(async (args, hre) => {
+    //todo ag
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
       if (!(await staking.paused())) {
@@ -72,6 +73,7 @@ export function load() {
   });
 
   task("staking:all:unpause").setAction(async (args, hre) => {
+    //todo ag
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
       if (await staking.paused()) {
@@ -107,7 +109,7 @@ export function load() {
     console.log("Total rewards", (await srd.stakingRewardsWeightsTotal()).toString());
   });
 
-  task("staking:update-weight")
+  task("staking:update-weight") //todo ag
     .addPositionalParam("poolAddress", "Pool to update addresss")
     .addPositionalParam("newWeight", "New pool weight")
     .setAction(async ({ poolAddress, newWeight }, hre) => {
