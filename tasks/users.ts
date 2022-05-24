@@ -9,18 +9,79 @@ import {
   getStakingRewardsDistribution,
   getUniswapPairOracle,
   getBlindexUpdater,
-  getVesting
+  getVesting,
+  getAllBdStables,
+  getTimelock
 } from "../utils/DeployedContractsHelpers";
 import type { Contract } from "ethers";
 import { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
 import { getPools } from "../utils/UniswapPoolsHelpers";
 import { PriceFeedContractNames } from "../utils/Constants";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { extractTimelockQueuedTransactionsBatchParamsDataAndHash, extractTxParamsHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
+import { defaultRecorder, defaultTimelockRecorder } from "../utils/Recorder/Recorder";
+import { toRc } from "../utils/Recorder/RecordableContract";
 
 export function load() {
   async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {
     const currentOwner = await contract.owner();
     return currentOwner.toLowerCase() === owner.toLowerCase();
+  }
+
+  task("change-owner-to-timelock").setAction(async (args, hre) => {
+    const timelock = await getTimelock(hre);
+    const deployer = await getDeployer(hre);
+
+    const contracts = await getContractsToTransferOwnership(hre);
+
+    for (const contract of contracts) {
+      await (await contract.connect(deployer).transferOwnership(timelock.address)).wait();
+    }
+
+    console.log("owner changed to timelock");
+  });
+
+  task("queue-change-owner-to-deployer").setAction(async (args_, hre) => {
+    const contracts = await getContractsToTransferOwnership(hre);
+
+    const deployer = await getDeployer(hre);
+    const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, singer: deployer });
+
+    for (const contract of contracts) {
+      await toRc(contract, recorder).record.transferOwnership(deployer.address);
+    }
+
+    const receipt = await recorder.execute();
+    const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
+    const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
+
+    console.log("txHash:", txHash);
+    console.log("txParamsHash:", txParamsHash);
+    console.log("txParamsData:", txParamsData);
+  });
+
+  async function getContractsToTransferOwnership(hre: HardhatRuntimeEnvironment) {
+    //todo ag change for every Ownable or OwnableUpgradeable
+
+    const contracts = [];
+
+    const pools = await getPools(hre);
+
+    for (const pool of pools) {
+      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
+      contracts.push(oracle);
+    }
+
+    const stables = await getAllBdStables(hre);
+    const stablePools = await getAllBDStablePools(hre);
+
+    const srd = await getStakingRewardsDistribution(hre);
+    const stakings = await getAllBDStableStakingRewards(hre);
+
+    contracts.push(...stables, ...stablePools, ...stakings, srd);
+
+    return contracts;
   }
 
   task("users:owner:set") //todo ag
@@ -120,12 +181,11 @@ export function load() {
       console.log(`All ownership transfered to ${owner}`);
     });
 
-  task("users:updater:set") //todo ag
+  task("users:updater:set")
     .addPositionalParam("newUpdater", "new updater address")
     .setAction(async ({ newUpdater }, hre) => {
       console.log("starting the setUpdaters to:", newUpdater);
 
-      const networkName = hre.network.name;
       const deployer = await getDeployer(hre);
       const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
       const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
@@ -133,24 +193,17 @@ export function load() {
       const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD, deployer)) as FiatToFiatPseudoOracleFeed;
       const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD, deployer)) as FiatToFiatPseudoOracleFeed;
 
-      if (networkName === "rsk") {
-        await (await oracleEthUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleEthUsd");
+      const recorder = await defaultRecorder(hre);
 
-        await (await oracleBtcEth.setUpdater(newUpdater)).wait();
-        console.log("updated oracleBtcEth");
+      const contracts = [oracleEthUsd, oracleBtcEth, oracleEurUsd, oracleGbpUsd, oracleXauUsd];
 
-        await (await oracleEurUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleEurUsd");
+      for (const contract of contracts) {
+        const contractRecordable = toRc(contract, recorder);
 
-        await (await oracleGbpUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleGbpUsd");
-
-        await (await oracleXauUsd.setUpdater(newUpdater)).wait();
-        console.log("updated oracleXauUsd");
+        await contractRecordable.record.setUpdater(newUpdater);
       }
 
-      console.log("updaters set");
+      await recorder.execute();
     });
 
   async function isSameTreasury(treasury: string, contract: Contract): Promise<boolean> {
@@ -158,25 +211,27 @@ export function load() {
     return currentTreasury.toLowerCase() === treasury.toLowerCase();
   }
 
-  task("users:treasury:set") //todo ag
+  task("users:treasury:set")
     .addPositionalParam("treasury", "new treasury address")
     .setAction(async ({ treasury }, hre) => {
       treasury = formatAddress(hre, treasury);
       console.log(`Setting the new treasury '${treasury}' on ${hre.network.name}`);
 
       const stables = await getAllBDStables(hre);
+      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
 
-      for (const stable of stables) {
-        if (!(await isSameTreasury(treasury, stable))) {
-          await (await stable.setTreasury(treasury)).wait();
-          console.log(`${await stable.symbol()} treasury set to ${treasury}`);
+      const contracts = [...stables, stakingRewardsDistribution];
+
+      const recorder = await defaultRecorder(hre);
+
+      for (const contract of contracts) {
+        const contractRecordable = toRc(contract, recorder);
+
+        if (!(await isSameTreasury(treasury, contractRecordable))) {
+          await contractRecordable.record.setTreasury(treasury);
         }
       }
 
-      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
-      if (!(await isSameTreasury(treasury, stakingRewardsDistribution))) {
-        await (await stakingRewardsDistribution.setTreasury(treasury)).wait();
-        console.log(`StakingRewardsDistribution treasury set to ${treasury}`);
-      }
+      await recorder.execute();
     });
 }

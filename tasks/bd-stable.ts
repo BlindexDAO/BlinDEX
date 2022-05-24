@@ -9,6 +9,7 @@ import {
   toggleBdusCrPaused
 } from "../test/helpers/bdStable";
 import { getAllBdStables, getAllBDStables } from "../utils/DeployedContractsHelpers";
+import { toRc } from "../utils/Recorder/RecordableContract";
 import { defaultRecorder } from "../utils/Recorder/Recorder";
 
 export function load() {
@@ -91,16 +92,19 @@ export function load() {
     }
   });
 
-  task("bds:all:setCrPriceBand") ///todo ag
+  task("bds:all:setCrPriceBand")
     .addPositionalParam("newPriceBand", "The desired CR price band")
     .setAction(async ({ newPriceBand }, hre) => {
+      const recorder = await defaultRecorder(hre);
+
       const stables = await getAllBDStables(hre);
       for (const stable of stables) {
         const symbol = await stable.symbol();
         console.log(`\n${symbol} CR price band is ${await stable.price_band_d12()}`);
         console.log(`Changing CR price band to ${newPriceBand}`);
-        await (await stable.set_price_band_d12(newPriceBand)).wait();
-        console.log(`CR price band is now ${await stable.price_band_d12()}`);
+        await toRc(stable, recorder).record.set_price_band_d12(newPriceBand);
       }
+
+      await recorder.execute();
     });
 }

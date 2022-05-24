@@ -3,6 +3,8 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import { getDeployer, getAllBDStableStakingRewards, getStakingRewardsDistribution, formatAddress } from "../utils/DeployedContractsHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
+import { toRc } from "../utils/Recorder/RecordableContract";
+import { defaultRecorder } from "../utils/Recorder/Recorder";
 
 export function load() {
   task("staking:single:unlock")
@@ -33,58 +35,74 @@ export function load() {
       }
     });
 
-  task("staking:single:pause") //todo ag
+  task("staking:single:pause")
     .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
     .setAction(async ({ stakingRewardAddress }, hre) => {
       const deployer = await getDeployer(hre);
-      const stakingRewardContract = (await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards;
+      const recorder = await defaultRecorder(hre);
+
+      const stakingRewardContract = toRc((await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards, recorder);
       if (!(await stakingRewardContract.connect(deployer).paused())) {
-        await (await stakingRewardContract.pause()).wait();
+        await stakingRewardContract.record.pause();
         console.log(`StakingPool ${stakingRewardAddress} is now paused!`);
       } else {
         console.log(`StakingPool ${stakingRewardAddress} is already paused`);
       }
+
+      await recorder.execute();
     });
 
-  task("staking:single:unpause") //todo ag
+  task("staking:single:unpause")
     .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
     .setAction(async ({ stakingRewardAddress }, hre) => {
       const deployer = await getDeployer(hre);
-      const stakingRewardContract = (await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards;
+      const recorder = await defaultRecorder(hre);
+
+      const stakingRewardContract = toRc((await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards, recorder);
       if (await stakingRewardContract.connect(deployer).paused()) {
-        await (await stakingRewardContract.unpause()).wait();
+        await (await stakingRewardContract.record.unpause()).wait();
         console.log(`StakingPool ${stakingRewardAddress} is now unpaused!`);
       } else {
         console.log(`StakingPool ${stakingRewardAddress} is already unpaused`);
       }
+
+      await recorder.execute();
     });
 
   task("staking:all:pause").setAction(async (args, hre) => {
-    //todo ag
+    const recorder = await defaultRecorder(hre);
+
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
-      if (!(await staking.paused())) {
-        await staking.pause();
-        console.log("paused", staking.address);
+      const stikingRecordable = toRc(staking, recorder);
+      if (!(await stikingRecordable.paused())) {
+        await stikingRecordable.record.pause();
+        console.log("paused", stikingRecordable.address);
       } else {
-        console.log("already paused", staking.address);
+        console.log("already paused", stikingRecordable.address);
       }
     }
+
+    await recorder.execute();
   });
 
   task("staking:all:unpause").setAction(async (args, hre) => {
-    //todo ag
+    const recorder = await defaultRecorder(hre);
+
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
-      if (await staking.paused()) {
-        const transaction = await staking.unpause();
+      const stikingRecordable = toRc(staking, recorder);
+      if (await stikingRecordable.paused()) {
+        const transaction = await stikingRecordable.record.unpause();
         console.log(`Unpause transaction submitted: ${transaction.hash}. Waiting for it to finish.`);
         await transaction.wait();
-        console.log("unpaused", staking.address);
+        console.log("unpaused", stikingRecordable.address);
       } else {
-        console.log("already unpaused", staking.address);
+        console.log("already unpaused", stikingRecordable.address);
       }
     }
+
+    await recorder.execute();
   });
 
   task("staking:show-paused").setAction(async (args, hre) => {
@@ -109,16 +127,18 @@ export function load() {
     console.log("Total rewards", (await srd.stakingRewardsWeightsTotal()).toString());
   });
 
-  task("staking:update-weight") //todo ag
+  task("staking:update-weight")
     .addPositionalParam("poolAddress", "Pool to update addresss")
     .addPositionalParam("newWeight", "New pool weight")
     .setAction(async ({ poolAddress, newWeight }, hre) => {
       const rewardsBeforeCollect = await getStakingPoolsRewardPerToken(hre);
       console.log("Rewards before sync", rewardsBeforeCollect);
 
-      const stakingRewardsDistribution = await getStakingRewardsDistribution(hre);
+      const recorder = await defaultRecorder(hre);
+
+      const stakingRewardsDistribution = toRc(await getStakingRewardsDistribution(hre), recorder);
       const numberOfStakingPools = rewardsBeforeCollect.length;
-      await (await stakingRewardsDistribution.collectAllRewards(0, numberOfStakingPools - 1)).wait();
+      await stakingRewardsDistribution.record.collectAllRewards(0, numberOfStakingPools - 1);
 
       const rewardsAfterCollect = await getStakingPoolsRewardPerToken(hre);
       console.log("Rewards after sync", rewardsAfterCollect);
@@ -130,8 +150,10 @@ export function load() {
       console.log("Are all staking pools synced?", isStakingPoolsSynced);
 
       if (isStakingPoolsSynced) {
-        await (await stakingRewardsDistribution.registerPools([poolAddress], [newWeight])).wait();
+        await (await stakingRewardsDistribution.record.registerPools([poolAddress], [newWeight])).wait();
       }
+
+      await recorder.execute();
     });
 
   task("staking:show-rewards-earned")
