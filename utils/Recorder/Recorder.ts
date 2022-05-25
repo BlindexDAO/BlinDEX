@@ -47,7 +47,7 @@ type DefaultRecorderParams = {
   singer: SignerWithAddress | null;
 };
 
-export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
+export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | undefined = undefined) {
   return defaultTimelockRecorder(hre, params);
 
   //todo ag
@@ -62,7 +62,7 @@ export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: De
   // }
 }
 
-export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
+export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | undefined = undefined) {
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
 

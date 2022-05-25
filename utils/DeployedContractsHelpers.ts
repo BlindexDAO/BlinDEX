@@ -504,7 +504,7 @@ export async function getContratAddress(hre: HardhatRuntimeEnvironment, contract
   return (await hre.ethers.getContract(contractName)).address;
 }
 
-export async function getBlindexUpdater(hre: HardhatRuntimeEnvironment, signer: Signer): Promise<BlindexUpdater> {
+export async function getBlindexUpdater(hre: HardhatRuntimeEnvironment, signer: Signer | undefined): Promise<BlindexUpdater> {
   // On RSK we deployed the updater with a name that fits only RSK. On other chains it's a different more general name
   const updaterContractName = hre.network.name === "rsk" ? "UpdaterRSK" : "BlindexUpdater";
 

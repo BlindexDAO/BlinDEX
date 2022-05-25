@@ -11,12 +11,13 @@ import {
   getUniswapPairOracle,
   getWeth,
   formatAddress,
-  getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
-  getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
+  getSovrynFeed_RbtcUsd,
+  getSovrynFeed_RbtcEths,
   getFiatToFiat_EurUsd,
   getTokenData,
   getTimelock,
-  getBlindexUpdater
+  getBlindexUpdater,
+  getExecutor
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -52,8 +53,10 @@ export function load() {
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
       const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
+      const signer = await getExecutor(hre);
+
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
+      await (await timelock.connect(signer).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
 
   task("update:all")

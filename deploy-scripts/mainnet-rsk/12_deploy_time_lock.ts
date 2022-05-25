@@ -16,7 +16,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: [
       proposer.address,
       executor.address,
-      day * 1, // min delay
+      hre.network.name === "rsk" ? day * 1 : 0, // min delay limit
+      hre.network.name === "rsk" ? day * 1 : 0, // min delay
       day * 30, // max delay
       day * 7 // grace period
     ]
