@@ -5,8 +5,7 @@ import cap from "chai-as-promised";
 import { d18_ToNumber, to_d18 } from "../../utils/NumbersHelpers";
 import { getBdEu, getBdx, getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import type { BigNumber } from "ethers";
-import { getPools } from "../../utils/UniswapPoolsHelpers";
+import { chooseBestPath, generatePaths } from "../../utils/UniswapPoolsHelpers";
 
 chai.use(cap);
 
@@ -67,7 +66,7 @@ describe("Swaps", () => {
 
     const amountIn = to_d18(0.0001);
 
-    const pathsPrices = await generatePaths(amountIn, weth.address, bdx.address);
+    const pathsPrices = await generatePaths(hre, amountIn, weth.address, bdx.address);
     console.log(
       pathsPrices.map(x => ({
         path: x.path,
@@ -82,65 +81,4 @@ describe("Swaps", () => {
     await weth.approve(router.address, amountIn);
     await router.swapExactTokensForTokens(amountIn, 0, bestPath.path, deployer.address, currentBlock.timestamp + 1e5);
   });
-
-  async function getAvailableSwapLinks() {
-    const pools = await getPools(hre);
-
-    const availableLinks = [];
-
-    for (const pool of pools) {
-      availableLinks.push({ from: pool[0].token.address, to: pool[1].token.address });
-      availableLinks.push({ from: pool[1].token.address, to: pool[0].token.address });
-    }
-
-    return availableLinks;
-  }
-
-  async function generatePaths(amountIn: BigNumber, addressIn: string, addressOut: string): Promise<{ path: string[]; amountOut: BigNumber }[]> {
-    const availableSwapLinks = await getAvailableSwapLinks();
-
-    const midTokens = [];
-
-    for (const link1 of availableSwapLinks) {
-      if (link1.from !== addressIn) {
-        continue;
-      }
-      for (const link2 of availableSwapLinks) {
-        if (link1.to !== link2.from) {
-          continue;
-        }
-        if (link2.to !== addressOut) {
-          continue;
-        }
-
-        midTokens.push(link1.to);
-      }
-    }
-
-    const paths = [[addressIn, addressOut], ...midTokens.map(x => [addressIn, x, addressOut])];
-
-    const router = await getUniswapRouter(hre);
-    const pathsPrices = [];
-
-    for (const path of paths) {
-      let amountsOut;
-      try {
-        amountsOut = await router.getAmountsOut(amountIn, path);
-      } catch {
-        continue; // handle unsupported paths like [wrbtc -> eths -> bdx]
-      }
-
-      pathsPrices.push({
-        path: path,
-        amountOut: amountsOut[amountsOut.length - 1]
-      });
-    }
-
-    return pathsPrices;
-  }
-
-  async function chooseBestPath(pathsPrices: { amountOut: BigNumber; path: string[] }[]) {
-    const bestPath = pathsPrices.reduce((prev, current) => (prev.amountOut.gt(current.amountOut) ? prev : current));
-    return bestPath;
-  }
 });

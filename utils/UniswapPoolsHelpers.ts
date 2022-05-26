@@ -1,10 +1,13 @@
+import { EXTERNAL_SUPPORTED_TOKENS } from "./Constants";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getAllBDStables, formatAddress } from "./DeployedContractsHelpers";
+import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getAllBDStables, formatAddress, getUniswapRouter } from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
 import { Recorder } from "./Recorder/Recorder";
 import { toRc } from "./Recorder/RecordableContract";
 import { getListOfSupportedLiquidityPools } from "../utils/Constants";
+import { BigNumber } from "ethers";
+import { to_d18 } from "./NumbersHelpers";
 
 export async function recordUpdateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, recorder: Recorder) {
   const pools = await getPools(hre);
@@ -65,7 +68,6 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
   const bdxPoolData = { name: bdxSymbol, token: bdx };
   const wethPoolData = { name: "WETH", token: weth };
   const wbtcPoolData = { name: "WBTC", token: wbtc };
-
   const externalUsdStable = constants.EXTERNAL_USD_STABLE[hre.network.name];
   const externalUsdStableContract = (await hre.ethers.getContractAt("IERC20", hre.ethers.utils.getAddress(externalUsdStable.address))) as IERC20;
   const externalUsdStablePoolData = { name: externalUsdStable.symbol, token: externalUsdStableContract };
@@ -75,7 +77,6 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
     hre.ethers.utils.getAddress(formatAddress(hre, secondaryExternalUsdStable.address))
   )) as IERC20;
   const secondaryExternalUsdStablePoolData = { name: secondaryExternalUsdStable.symbol, token: secondaryExternalUsdStableContract };
-
   const tokenToPoolTokenData: { [symbol: string]: PoolTokenData } = {
     ["WETH"]: wethPoolData,
     ["WBTC"]: wbtcPoolData,
@@ -83,7 +84,6 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
     [secondaryExternalUsdStable.symbol]: secondaryExternalUsdStablePoolData,
     [bdxSymbol]: bdxPoolData
   };
-
   await Promise.all(
     bdStables.map(async bdStable => {
       const symbol = await bdStable.symbol();
@@ -110,9 +110,131 @@ export async function getPools(hre: HardhatRuntimeEnvironment): Promise<{ name: 
     pools.push([data0, data1]);
     registeredPools.add(poolKey);
   }
-
   const supportedLiquidityPools = getListOfSupportedLiquidityPools(hre.network.name);
   supportedLiquidityPools.forEach(({ tokenA, tokenB }) => registerPool(tokenToPoolTokenData[tokenA], tokenToPoolTokenData[tokenB]));
-
   return pools;
+}
+
+export async function getAvailableSwapLinks(hre: HardhatRuntimeEnvironment) {
+  const pools = await getPools(hre);
+
+  const availableLinks = [];
+
+  for (const pool of pools) {
+    availableLinks.push({ from: pool[0].token.address, to: pool[1].token.address });
+    availableLinks.push({ from: pool[1].token.address, to: pool[0].token.address });
+  }
+
+  return availableLinks;
+}
+
+export async function generatePaths(
+  hre: HardhatRuntimeEnvironment,
+  amountIn: BigNumber,
+  addressIn: string,
+  addressOut: string
+): Promise<{ path: string[]; amountOut: BigNumber }[]> {
+  const availableSwapLinks = await getAvailableSwapLinks(hre);
+
+  const midTokens = [];
+
+  for (const link1 of availableSwapLinks) {
+    if (link1.from !== addressIn) {
+      continue;
+    }
+    for (const link2 of availableSwapLinks) {
+      if (link1.to !== link2.from) {
+        continue;
+      }
+      if (link2.to !== addressOut) {
+        continue;
+      }
+
+      midTokens.push(link1.to);
+    }
+  }
+
+  const paths = [[addressIn, addressOut], ...midTokens.map(x => [addressIn, x, addressOut])];
+
+  const router = await getUniswapRouter(hre);
+  const pathsPrices = [];
+
+  for (const path of paths) {
+    let amountsOut;
+    try {
+      amountsOut = await router.getAmountsOut(amountIn, path);
+    } catch {
+      continue; // handle unsupported paths like [wrbtc -> eths -> bdx]
+    }
+
+    pathsPrices.push({
+      path: path,
+      amountOut: amountsOut[amountsOut.length - 1]
+    });
+  }
+
+  return pathsPrices;
+}
+
+export async function generateAllPaths(
+  hre: HardhatRuntimeEnvironment,
+  excludeAsInputToken: string,
+  requiredTokensOut: string[]
+): Promise<string[][]> {
+  const allTokensAddresses = await getAllTokensAddresses(hre, [excludeAsInputToken]);
+  let allRequiredPaths: string[][] = [];
+  for (const tokenAddressIn of allTokensAddresses) {
+    for (const requiredTokenOut of requiredTokensOut) {
+      if (requiredTokensOut.includes(tokenAddressIn)) {
+        continue;
+      }
+      const pathsWithAmountOut = await generatePaths(hre, to_d18(1), tokenAddressIn, requiredTokenOut);
+      const paths = pathsWithAmountOut.map(pathWithAmountOut => pathWithAmountOut.path);
+      allRequiredPaths.push(...paths);
+    }
+  }
+
+  const supportedPools = await getAvailableSwapLinks(hre);
+  console.log("length1: " + allRequiredPaths.length);
+  allRequiredPaths = allRequiredPaths.filter(path => {
+    const isFirstPairSupported = supportedPools.some(pool => pool.from === path[0] && pool.to === path[1]);
+    const isSecondPairSupported = path.length > 2 ? supportedPools.some(pool => pool.from === path[1] && pool.to === path[2]) : true;
+    console.log(
+      "issupported: " +
+        path[0] +
+        " " +
+        path[1] +
+        "---" +
+        supportedPools[0].from +
+        " " +
+        supportedPools[0].to +
+        (isFirstPairSupported && isSecondPairSupported)
+    );
+    return isFirstPairSupported && isSecondPairSupported;
+  });
+
+  console.log("length2: " + allRequiredPaths.length);
+  return allRequiredPaths;
+}
+
+export async function chooseBestPath(pathsPrices: { amountOut: BigNumber; path: string[] }[]) {
+  const bestPath = pathsPrices.reduce((prev, current) => (prev.amountOut.gt(current.amountOut) ? prev : current));
+  return bestPath;
+}
+
+export async function getAllTokensAddresses(hre: HardhatRuntimeEnvironment, excludeAddresses: string[]): Promise<string[]> {
+  const weth = await getWeth(hre);
+  const wbtc = await getWbtc(hre);
+  const bdx = await getBdx(hre);
+  const allStables = await getAllBDStables(hre);
+  let addresses = [
+    bdx.address,
+    weth.address,
+    wbtc.address,
+    ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
+    ...allStables.map(stable => stable.address)
+  ];
+
+  addresses = addresses.filter(address => !excludeAddresses.find(excludeAddress => excludeAddress === address));
+  return addresses;
 }
