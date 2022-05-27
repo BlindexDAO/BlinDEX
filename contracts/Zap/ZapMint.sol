@@ -11,6 +11,10 @@ import "../BdStable/Pools/BdStablePool.sol";
 import "../BSM/Investors/AMM/AMMInvestorsHelper.sol";
 import "hardhat/console.sol";
 
+//todo
+//use PausableUpgradeable?
+//optimise gas usage
+//use AMMInvestorsHelper (test for sovryn router)
 contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -52,82 +56,6 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
         zapMintPaused = !zapMintPaused;
     }
 
-    function swapToZapMintAndMintAllPairsTest(
-        address router,
-        uint256 amountIn,
-        address[] calldata path,
-        uint256 deadline,
-        address poolAddress,
-        bool useNativeToken
-    ) external payable {
-        require(zapMintPaused == false, "ZapMint: status is paused");
-        console.log("router address", router);
-        console.log("sender address", msg.sender);
-        console.log("deployer allows router to withdraw that amount of token1:", IERC20(path[0]).allowance(msg.sender, router));
-        console.log("deployer allows router to withdraw that amount of token2:", IERC20(path[1]).allowance(msg.sender, router));
-        console.log("deployer allows this to withdraw that amount of token1:", IERC20(path[0]).allowance(msg.sender, address(this)));
-        console.log("deployer allows this to withdraw that amount of token2:", IERC20(path[1]).allowance(msg.sender, address(this)));
-        console.log("this balance of token1:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2:", IERC20(path[1]).balanceOf(address(this)));
-        console.log("amountin", amountIn);
-        console.log("path0", path[0]);
-        console.log("path1", path[1]);
-        console.log("deadline", deadline);
-        if (path.length > 2) {
-            console.log("path2", path[2]);
-        }
-
-        address tokenToSwapFrom = path[0];
-        address tokenToMint = path[path.length - 1];
-        IERC20(tokenToSwapFrom).safeTransferFrom(msg.sender, payable(address(this)), amountIn); //get token from sender
-
-        console.log("this balance of token1 after transfer from sender:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after transfer from sender:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after transfer from sender:", IERC20(path[2]).balanceOf(address(this)));
-        }
-
-        IERC20(tokenToSwapFrom).approve(router, amountIn); //approve token for use in router
-        if (useNativeToken) {
-            IUniswapV2Router02(router).swapExactTokensForETH(amountIn, 0, path, address(this), deadline);
-        } else {
-            console.log("swapping exact tokens for tokens");
-            IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, 0, path, address(this), deadline); // swap methods spends token from sender (which is ZapMint)
-        }
-
-        console.log("this balance of token1 after swap:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after swap:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after swap:", IERC20(path[2]).balanceOf(address(this)));
-        }
-
-        uint256 thisAmountOfTokenToMint = IERC20(tokenToMint).balanceOf(address(this));
-        IERC20(tokenToMint).approve(poolAddress, thisAmountOfTokenToMint); //approve token for use in bdstablePool
-        BdStablePool bdstablePool = BdStablePool(payable(poolAddress));
-
-        uint256 amountForMint = IERC20(tokenToMint).balanceOf(address(this));
-        bdstablePool.mintFractionalBdStable(amountForMint, 0, 0, false);
-
-        address mintedStableAddress = address(bdstablePool.BDSTABLE());
-        console.log("this balance of token1 after mint:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after mint:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after mint:", IERC20(path[2]).balanceOf(address(this)));
-        }
-        console.log("this balance of stable after mint:", IERC20(mintedStableAddress).balanceOf(address(this)));
-
-        uint256 thisBalanceOfStable = IERC20(mintedStableAddress).balanceOf(address(this));
-        IERC20(mintedStableAddress).approve(msg.sender, thisBalanceOfStable);
-        IERC20(mintedStableAddress).safeTransfer(payable(msg.sender), thisBalanceOfStable);
-
-        console.log("this balance of token1 after transfer back to sender:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after transfer back to sender:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after transfer back to sender:", IERC20(path[2]).balanceOf(address(this)));
-        }
-        console.log("this balance of stable after transfer back to sender:", IERC20(mintedStableAddress).balanceOf(address(this)));
-    }
-
     function mintUniswapRouterOnly(
         uint256 bdxInMax,
         uint256 amountOutMin,
@@ -143,129 +71,20 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
         require(path.length > 0, "ZapMint: Path is empty");
         require(mapZapMintSupportedTokens[path[0]], "ZapMint: Token not supported for zap minting");
 
-        console.log("router address", router);
-        console.log("sender address", msg.sender);
-        console.log("this address", address(this));
-        console.log("deployer allows router to withdraw that amount of token1:", IERC20(path[0]).allowance(msg.sender, router));
-        console.log("deployer allows router to withdraw that amount of token2:", IERC20(path[1]).allowance(msg.sender, router));
-        console.log("deployer allows this to withdraw that amount of token1:", IERC20(path[0]).allowance(msg.sender, address(this)));
-        console.log("deployer allows this to withdraw that amount of token2:", IERC20(path[1]).allowance(msg.sender, address(this)));
-        console.log("this balance of token1:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2:", IERC20(path[1]).balanceOf(address(this)));
-        console.log("amountin", amountIn);
-        console.log("path0", path[0]);
-        console.log("path1", path[1]);
-        console.log("deadline", deadline);
-        if (path.length > 2) {
-            console.log("path2", path[2]);
-        }
-
         IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), amountIn); //get token from sender
 
-        console.log("this balance of token1 after transfer from sender:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after transfer from sender:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after transfer from sender:", IERC20(path[2]).balanceOf(address(this)));
-        }
-        console.log("this balance of native token after transfer from sender: ", address(this).balance);
         bool shouldSwap = path.length > 1;
 
-        console.log("shouldSwap: ", shouldSwap);
         if (shouldSwap) {
             swapInternal(useNativeToken, path, amountIn, router, deadline);
         }
 
-        console.log("this balance of token1 after swap:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after swap:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after swap:", IERC20(path[2]).balanceOf(address(this)));
-        }
-        console.log("this balance of native token after swap:", address(this).balance);
         address tokenToUseForMint = path[path.length - 1];
-
-        uint256 amountOfTokenToUseForMint = useNativeToken ? address(this).balance : IERC20(tokenToUseForMint).balanceOf(address(this));
-        console.log("minting bro");
-        console.log("amountoftokenformint: ", amountOfTokenToUseForMint);
+        uint256 amountOfTokenToUseForMint = useNativeToken ? address(this).balance : IERC20(tokenToUseForMint).balanceOf(address(this)); //todo add and use return value for swapInternal?
         mintInternal(tokenToUseForMint, amountOfTokenToUseForMint, bdxInMax, amountOutMin, useNativeToken, bdstablePoolAddress);
 
-        console.log("this balance of token1 after mint:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2 after mint:", IERC20(path[1]).balanceOf(address(this)));
-        if (path.length > 2) {
-            console.log("this balance of token3 after mint:", IERC20(path[2]).balanceOf(address(this)));
-        }
-        console.log("this balance of native after mint:", address(this).balance);
-        console.log("this balance of stable after mint:", IERC20(bdstableToMint).balanceOf(address(this)));
         uint256 thisBalanceOfStable = IERC20(bdstableToMint).balanceOf(address(this));
-        console.log("mint result: ", thisBalanceOfStable);
         IERC20(bdstableToMint).safeTransfer(payable(msg.sender), thisBalanceOfStable);
-    }
-
-    function swapTest(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 amountIn,
-        address router,
-        uint256 deadline
-    ) external {
-        console.log("router address", router);
-        console.log("sender address", msg.sender);
-        console.log("deployer allows router to withdraw that amount of token1:", IERC20(path[0]).allowance(msg.sender, router));
-        console.log("deployer allows router to withdraw that amount of token2:", IERC20(path[1]).allowance(msg.sender, router));
-        console.log("deployer allows this to withdraw that amount of token1:", IERC20(path[0]).allowance(msg.sender, address(this)));
-        console.log("deployer allows this to withdraw that amount of token2:", IERC20(path[1]).allowance(msg.sender, address(this)));
-        console.log("this balance of token1:", IERC20(path[0]).balanceOf(address(this)));
-        console.log("this balance of token2:", IERC20(path[1]).balanceOf(address(this)));
-        console.log("amountin", amountIn);
-        console.log("path0", path[0]);
-        console.log("path1", path[1]);
-        console.log("deadline", deadline);
-
-        //    IERC20(token1).approve(address(this), 9e18);
-        //    IERC20(token2).approve(address(this), 9e18);
-        //    IERC20(token1).approve(address(router), 9e18);
-        //    IERC20(token2).approve(address(router), 9e18);
-        IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), 1e18); //get token from sender
-        IERC20(path[0]).approve(router, amountIn); //approve token for use in router
-
-        IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, amountOutMin, path, address(this), deadline); // this method spends token from sender (which is ZapMintTest)
-    }
-
-    function swapTest2(
-        bool useNativeToken,
-        address[] calldata path,
-        uint256 amountIn,
-        address router,
-        uint256 deadline
-    ) external {
-        console.log("ETH balance before swap: ", address(this).balance);
-        IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), 1e18); //todo remove this line
-        // console.log("swapping");
-        // console.log("path", path[0]);
-        // console.log("this address inside swap ", address(this));
-        // console.log("sender address inside swap ", msg.sender);
-        IERC20(path[0]).approve(router, amountIn);
-        // console.log("zap mint allows router to withdraw that amount of token1:", IERC20(path[0]).allowance(address(this), router));
-        // if (useNativeToken) {
-        IUniswapV2Router02(router).swapExactTokensForETH(amountIn, 0, path, address(this), deadline);
-        //     console.log("amounts: ", amounts[0]);
-        //     console.log("amounts: ", amounts[1]);
-        //     if(amounts.length > 2){
-        //         console.log("amounts: ", amounts[2]);
-        //     }
-        // } else {
-        // IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, 0, path, address(this), deadline); // swap methods spends token from sender (which is ZapMint)
-        // }
-
-        //             console.log("this balance of token1 after swap:", IERC20(path[0]).balanceOf(address(this)));
-        //             console.log("this balance of token2 after swap:", IERC20(path[1]).balanceOf(address(this)));
-        //             if (path.length > 2) {
-        //                 console.log("this balance of token3 after swap:", IERC20(path[2]).balanceOf(address(this)));
-        //             }
-
-        // address payable self = address(this);
-        // uint256 balance = self.balance;
-        console.log("ETH balance after swap: ", address(this).balance);
     }
 
     function swapInternal(
@@ -279,7 +98,7 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
         if (useNativeToken) {
             IUniswapV2Router02(router).swapExactTokensForETH(amountIn, 0, path, address(this), deadline);
         } else {
-            IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, 0, path, address(this), deadline); // swap methods spends token from sender (which is ZapMint)
+            IUniswapV2Router02(router).swapExactTokensForTokens(amountIn, 0, path, address(this), deadline);
         }
     }
 
