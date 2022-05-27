@@ -71,7 +71,7 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
         require(path.length > 0, "ZapMint: Path is empty");
         require(mapZapMintSupportedTokens[path[0]], "ZapMint: Token not supported for zap minting");
 
-        IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), amountIn); //get token from sender
+        IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), amountIn);
 
         bool shouldSwap = path.length > 1;
 

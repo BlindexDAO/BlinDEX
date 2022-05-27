@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const deployer = await getDeployer(hre);
 
-  const updater: DeployResult = await hre.deployments.deploy("ZapMint", {
+  const zapMint: DeployResult = await hre.deployments.deploy("ZapMint", {
     from: deployer.address,
     proxy: {
       proxyContract: "OptimizedTransparentProxy",
@@ -23,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     args: []
   });
 
-  console.log("deployed ZapMint to: " + updater.address);
+  console.log("deployed ZapMint to: " + zapMint.address);
   console.log("finished deployment: ZapMint");
 
   // One time migration
