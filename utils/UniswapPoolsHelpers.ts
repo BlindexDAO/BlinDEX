@@ -178,10 +178,10 @@ export async function generatePaths(
 
 export async function generateAllPaths(
   hre: HardhatRuntimeEnvironment,
-  excludeAsInputToken: string,
+  excludeAsInputTokens: string[],
   requiredTokensOut: string[]
 ): Promise<string[][]> {
-  const allTokensAddresses = await getAllTokensAddresses(hre, [excludeAsInputToken]);
+  const allTokensAddresses = await getAllTokensAddresses(hre, excludeAsInputTokens);
   let allRequiredPaths: string[][] = [];
   for (const tokenAddressIn of allTokensAddresses) {
     for (const requiredTokenOut of requiredTokensOut) {

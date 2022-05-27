@@ -1,3 +1,4 @@
+import { EXTERNAL_USD_STABLE } from "./../../utils/Constants";
 import { BigNumber } from "ethers";
 import hre from "hardhat";
 import { ZapMint } from "./../../typechain/ZapMint";
@@ -32,31 +33,17 @@ const { expect } = chai;
 
 describe.only("Zap mint", () => {
   beforeEach(async () => {
-    console.log("fixture");
     await hre.deployments.fixture();
-
-    // console.log("starting deployment: ZapMint");
-
-    // const deployer = await getDeployer(hre);
-    // await hre.deployments.deploy("ZapMint", {
-    //   from: deployer.address,
-    //   proxy: {
-    //     proxyContract: "OptimizedTransparentProxy"
-    //   },
-    //   contract: "ZapMint",
-    //   args: []
-    // });
-
     const deployer = await getDeployer(hre);
-    console.log("setup system");
     await setUpFunctionalSystemForTests(hre, 1);
-    console.log("setuped system");
     const treasury = await getTreasurySigner(hre);
     const bdx = await getBdx(hre);
-    const allInputTokens = await getAllTokensAddresses(hre, [bdx.address]);
+    const weth = await getWeth(hre);
+    const wbtc = await getWbtc(hre);
+    const allInputTokens = await getAllTokensAddresses(hre, [bdx.address, weth.address, wbtc.address]); //tu sie moglo cos zepsuc ale w swpaie? hmm
     for (const token of allInputTokens) {
-      console.log("transferring token: " + (await getTokenData(token, hre)).symbol);
       const erc20 = await getERC20(hre, token);
+
       const decimals = await erc20.decimals();
       erc20.connect(treasury).transfer(deployer.address, numberToBigNumberFixed(10, decimals));
     }
@@ -72,7 +59,8 @@ describe.only("Zap mint", () => {
 
     const wbtc = await getWbtc(hre);
     const collateralTokens = [weth.address, wbtc.address];
-    const allPossibleZapMintPaths = await generateAllPaths(hre, bdx.address, collateralTokens);
+    const excludedInputTokens = [bdx.address, weth.address, wbtc.address];
+    const allPossibleZapMintPaths = await generateAllPaths(hre, excludedInputTokens, collateralTokens);
 
     console.log("All collateral pairs (pairs for swap): ");
     for (const path of allPossibleZapMintPaths) {
@@ -103,7 +91,8 @@ describe.only("Zap mint", () => {
       const poolsWithProperCollateral: BdStablePool[] = [];
       for (const pool of allBDStableCollateralPools) {
         const collateralTokenAddress = await pool.collateral_token();
-        if (collateralTokenAddress === swapTo) {
+        const stableTokenAddress = await pool.BDSTABLE();
+        if (collateralTokenAddress === swapTo && stableTokenAddress !== swapFrom) {
           poolsWithProperCollateral.push(pool);
         }
       }
@@ -131,7 +120,7 @@ describe.only("Zap mint", () => {
             " " +
             (await getTokenData(await poolWithProperCollateral.collateral_token(), hre)).symbol
         );
-        const tokenToApproveAndTranfer = (await hre.ethers.getContractAt("IERC20", swapFrom)) as IERC20;
+        const tokenToApproveAndTranfer = await getERC20(hre, swapFrom);
 
         console.log(
           "deployer " + (await getTokenData(swapFrom, hre)).symbol + " balance " + (await tokenToApproveAndTranfer.balanceOf(deployer.address))
@@ -140,20 +129,20 @@ describe.only("Zap mint", () => {
         const decimals = await erc20.decimals();
         const amountIn = numberToBigNumberFixed(0.01, decimals);
 
-        let deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
-        if (stableExpectedFromMintAddress === possibleZapMintPath[0]) {
-          deployerStableBalanceBeforeMint = deployerStableBalanceBeforeMint.sub(amountIn);
-        }
+        const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
         await tokenToApproveAndTranfer.approve(zapMintTestContract.address, amountIn);
-        await zapMintTestContract.swapToZapMintAndMintAllPairsTest(
-          await router.resolvedAddress,
-          amountIn,
-          possibleZapMintPath,
-          currentBlock.timestamp + 1e5,
+        await zapMintTestContract.addTokenSupportForMinting(possibleZapMintPath[0]);
+        await zapMintTestContract.mintUniswapRouterOnly(
+          0,
+          0,
+          possibleZapMintPath[possibleZapMintPath.length - 1] === weth.address,
+          stableExpectedFromMintAddress,
           poolWithProperCollateral.address,
-          possibleZapMintPath[possibleZapMintPath.length - 1] === weth.address
+          possibleZapMintPath,
+          amountIn,
+          await router.resolvedAddress,
+          currentBlock.timestamp + 1e5
         );
-
         const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
         const stableDiff = deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint);
         expect(stableDiff).to.be.gt(BigNumber.from(0), "Zap mint did not mint anything");
@@ -161,7 +150,113 @@ describe.only("Zap mint", () => {
     }
   });
 
-  it("Should mint supported token", async () => {
+  it.skip("Should mint supported non-direct path", async () => {
+    const deployer = await getDeployer(hre);
+    const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
+    const swapFrom = EXTERNAL_USD_STABLE[hre.network.name];
+    const midToken = await getBdUs(hre);
+    const swapTo = await getWeth(hre);
+    console.log("path: " + swapFrom.address + " " + swapTo.address);
+    const path = [swapFrom.address, midToken.address, swapTo.address];
+    const router = await getUniswapRouter(hre);
+    const decimals = swapFrom.decimals;
+    const amountIn = numberToBigNumberFixed(0.01, decimals);
+    const currentBlock = await hre.ethers.provider.getBlock("latest");
+    const wethBdeuPool = await getBDStableWethPool(hre, "BDEU");
+    const stableExpectedFromMint = await getBdEu(hre);
+    await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
+
+    const tokenIn = await getERC20(hre, swapFrom.address);
+    await tokenIn.approve(zapMintTestContract.address, amountIn);
+
+    const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
+    await zapMintTestContract.mintUniswapRouterOnly(
+      0,
+      0,
+      true,
+      stableExpectedFromMint.address,
+      wethBdeuPool.address,
+      path,
+      amountIn,
+      await router.resolvedAddress,
+      currentBlock.timestamp + 1e5
+    );
+
+    const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
+    const stableDiff = deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint);
+    expect(stableDiff).to.be.gt(BigNumber.from(0), "Zap mint did not mint anything");
+  });
+
+  it.skip("TEST Should swap zap mint direct path - working", async () => {
+    const deployer = await getDeployer(hre);
+    const currentBlock = await hre.ethers.provider.getBlock("latest");
+
+    const bdx = await getBdx(hre);
+    const weth = await getWeth(hre);
+    const router = await getUniswapRouter(hre);
+
+    const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
+    const amountIn = to_d18(1);
+    await weth.approve(zapMintTestContract.address, amountIn);
+    console.log("bdx balance before: " + (await bdx.balanceOf(zapMintTestContract.address)));
+    await zapMintTestContract.swapTest(
+      0,
+      [weth.address, bdx.address],
+      deployer.address,
+      amountIn,
+      await router.resolvedAddress,
+      currentBlock.timestamp + 1e5
+    );
+    console.log("bdx balance after: " + (await bdx.balanceOf(zapMintTestContract.address)));
+  });
+
+  it.skip("TEST Should swap zap mint direct path - tokens", async () => {
+    const deployer = await getDeployer(hre);
+    const currentBlock = await hre.ethers.provider.getBlock("latest");
+
+    const bdeu = await getBdEu(hre);
+    const weth = await getWeth(hre);
+    const router = await getUniswapRouter(hre);
+
+    const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
+    const amountIn = to_d18(1);
+    await bdeu.approve(zapMintTestContract.address, amountIn);
+    console.log("weth balance before: " + (await weth.balanceOf(zapMintTestContract.address)));
+    await zapMintTestContract.swapTest(
+      0,
+      [bdeu.address, weth.address],
+      deployer.address,
+      amountIn,
+      await router.resolvedAddress,
+      currentBlock.timestamp + 1e5
+    );
+    console.log("weth balance after: " + (await weth.balanceOf(zapMintTestContract.address)));
+  });
+
+  // it.skip("TEST Should swap", async () => {
+  //   const deployer = await getDeployer(hre);
+  //   const currentBlock = await hre.ethers.provider.getBlock("latest");
+
+  //   const bdeu = await getBdEu(hre);
+  //   const weth = await getWeth(hre);
+  //   const router = await getUniswapRouter(hre);
+
+  //   const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
+
+  //   const amountIn = to_d18(1);
+  //   await bdeu.approve(zapMintTestContract.address, amountIn);
+  //   console.log("weth balance before: " + (await weth.balanceOf(zapMintTestContract.address)));
+  //   await zapMintTestContract.swapInternal(
+  //     true,
+  //     [bdeu.address, weth.address],
+  //     amountIn,
+  //     await router.resolvedAddress,
+  //     currentBlock.timestamp + 1e5
+  //   );
+  //   console.log("weth balance after: " + (await weth.balanceOf(zapMintTestContract.address)));
+  // });
+
+  it("Should mint supported direct path", async () => {
     const deployer = await getDeployer(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
@@ -172,26 +267,30 @@ describe.only("Zap mint", () => {
     const amountIn = numberToBigNumberFixed(1, decimals);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
-    const bdus = await getBdUs(hre);
     await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
 
-    const bdeu = await getERC20(hre, swapFrom.address);
-    await bdeu.approve(zapMintTestContract.address, amountIn);
+    await swapFrom.approve(zapMintTestContract.address, amountIn);
 
+    const stableExpectedFromMint = await getBdUs(hre);
+    const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
     await zapMintTestContract.mintUniswapRouterOnly(
       to_d18(0),
       0,
       true,
-      bdus.address,
+      stableExpectedFromMint.address,
       wethBdusPool.address,
       path,
       amountIn,
-      await router.resolvedAddress,
+      router.address,
       currentBlock.timestamp + 1e5
     );
+
+    const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
+    const stableDiff = deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint);
+    expect(stableDiff).to.be.gt(BigNumber.from(0), "Zap mint did not mint anything");
   });
 
-  it("Should not mint after toggle zap mint", async () => {
+  it.skip("Should not mint after toggle zap mint", async () => {
     const deployer = await getDeployer(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     await zapMintTestContract.connect(deployer).toggleZapMinting();
@@ -219,7 +318,7 @@ describe.only("Zap mint", () => {
     await expectToFail(() => mintPromise, "ZapMint: Status is paused");
   });
 
-  it("Should not mint not supported token", async () => {
+  it.skip("Should not mint not supported token", async () => {
     const deployer = await getDeployer(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
