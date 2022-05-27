@@ -367,6 +367,13 @@ export function load() {
     console.log("bot     : " + bot.address);
   });
 
+  task("show:all:ef-bdx-cov").setAction(async (args, hre) => {
+    const allBdStables = await getAllBDStables(hre);
+    for (let index = 0; index < allBdStables.length; index++) {
+      await show_efBDXCov(allBdStables[index]);
+    }
+  });
+
   task("show:bdeu:ef-bdx-cov").setAction(async (args, hre) => {
     await show_efBDXCov(await getBdEu(hre));
   });
