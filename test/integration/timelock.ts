@@ -42,9 +42,6 @@ describe("Execute with timelock", () => {
     const executor = await getExecutor(hre);
     const randomUser = await getUser3(hre);
 
-    await timelock.setProposer(proposer.address);
-    await timelock.addExecutor(executor.address);
-
     expect((await stakingRewardsDistribution.vestingRewardRatio_percent()).toNumber()).to.not.eq(expectedVestingRewardRatio);
 
     const now = (await hre.ethers.provider.getBlock("latest")).timestamp;
