@@ -212,7 +212,6 @@ export async function generateAllPaths(
     return isFirstPairSupported && isSecondPairSupported;
   });
 
-  console.log("length2: " + allRequiredPaths.length);
   return allRequiredPaths;
 }
 
