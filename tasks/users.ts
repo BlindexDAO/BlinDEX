@@ -104,12 +104,11 @@ export function load() {
     .setAction(async ({ newUpdater }, hre) => {
       console.log("starting the setUpdaters to:", newUpdater);
 
-      const deployer = await getDeployer(hre);
-      const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
-      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH, deployer)) as SovrynSwapPriceFeed;
-      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed;
-      const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD, deployer)) as FiatToFiatPseudoOracleFeed;
-      const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD, deployer)) as FiatToFiatPseudoOracleFeed;
+      const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD)) as SovrynSwapPriceFeed;
+      const oracleBtcEth = (await hre.ethers.getContract(PriceFeedContractNames.BTC_ETH)) as SovrynSwapPriceFeed;
+      const oracleEurUsd = (await hre.ethers.getContract(PriceFeedContractNames.EUR_USD)) as FiatToFiatPseudoOracleFeed;
+      const oracleGbpUsd = (await hre.ethers.getContract(PriceFeedContractNames.GBP_USD)) as FiatToFiatPseudoOracleFeed;
+      const oracleXauUsd = (await hre.ethers.getContract(PriceFeedContractNames.XAU_USD)) as FiatToFiatPseudoOracleFeed;
 
       const recorder = await defaultRecorder(hre);
 

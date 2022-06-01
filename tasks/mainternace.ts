@@ -167,21 +167,19 @@ export function load() {
     });
 
   task("reset:uniswap-oracles").setAction(async (args, hre) => {
-    const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+    const recorder = await defaultRecorder(hre);
 
     await recordResetUniswapPairsOracles(hre, recorder);
 
     await recorder.execute();
   });
 
-  task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
-    const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+  task("update:uniswap-oracles-as-owner").setAction(async (args, hre) => {
+    const recorder = await defaultRecorder(hre);
 
     await recordUpdateUniswapPairsOracles(hre, recorder);
 
-    recorder.execute();
+    await recorder.execute();
   });
 
   task("update:all-with-updater")

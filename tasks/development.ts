@@ -39,7 +39,13 @@ export function load() {
   task("dev:move-time-by-days")
     .addPositionalParam("days")
     .setAction(async ({ days }, hre_) => {
-      await simulateTimeElapseInDays(days);
+      await simulateTimeElapseInDays(Number(days));
+    });
+
+  task("dev:move-time-by-seconds")
+    .addPositionalParam("seconds")
+    .setAction(async ({ seconds }, hre_) => {
+      await simulateTimeElapseInSeconds(Number(seconds));
     });
 
   task("dev:mint-wrbtc-rsk", "", async (args_, hre) => {

@@ -38,30 +38,26 @@ export function load() {
   task("staking:single:pause")
     .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
     .setAction(async ({ stakingRewardAddress }, hre) => {
-      const deployer = await getDeployer(hre);
       const recorder = await defaultRecorder(hre);
 
       const stakingRewardContract = toRc((await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards, recorder);
-      if (!(await stakingRewardContract.connect(deployer).paused())) {
+      if (!(await stakingRewardContract.paused())) {
         await stakingRewardContract.record.pause();
         console.log(`StakingPool ${stakingRewardAddress} is now paused!`);
       } else {
         console.log(`StakingPool ${stakingRewardAddress} is already paused`);
       }
-
       await recorder.execute();
     });
 
   task("staking:single:unpause")
     .addPositionalParam("stakingRewardAddress", "Staking reward pool contract address")
     .setAction(async ({ stakingRewardAddress }, hre) => {
-      const deployer = await getDeployer(hre);
       const recorder = await defaultRecorder(hre);
 
       const stakingRewardContract = toRc((await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards, recorder);
-      if (await stakingRewardContract.connect(deployer).paused()) {
-        await (await stakingRewardContract.record.unpause()).wait();
-        console.log(`StakingPool ${stakingRewardAddress} is now unpaused!`);
+      if (await stakingRewardContract.paused()) {
+        await stakingRewardContract.record.unpause();
       } else {
         console.log(`StakingPool ${stakingRewardAddress} is already unpaused`);
       }
@@ -77,7 +73,6 @@ export function load() {
       const stikingRecordable = toRc(staking, recorder);
       if (!(await stikingRecordable.paused())) {
         await stikingRecordable.record.pause();
-        console.log("paused", stikingRecordable.address);
       } else {
         console.log("already paused", stikingRecordable.address);
       }
@@ -93,10 +88,7 @@ export function load() {
     for (const staking of stakings) {
       const stikingRecordable = toRc(staking, recorder);
       if (await stikingRecordable.paused()) {
-        const transaction = await stikingRecordable.record.unpause();
-        console.log(`Unpause transaction submitted: ${transaction.hash}. Waiting for it to finish.`);
-        await transaction.wait();
-        console.log("unpaused", stikingRecordable.address);
+        await stikingRecordable.record.unpause();
       } else {
         console.log("already unpaused", stikingRecordable.address);
       }
@@ -150,7 +142,7 @@ export function load() {
       console.log("Are all staking pools synced?", isStakingPoolsSynced);
 
       if (isStakingPoolsSynced) {
-        await (await stakingRewardsDistribution.record.registerPools([poolAddress], [newWeight])).wait();
+        await stakingRewardsDistribution.record.registerPools([poolAddress], [newWeight]);
       }
 
       await recorder.execute();
