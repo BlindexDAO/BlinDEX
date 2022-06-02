@@ -34,7 +34,7 @@ describe("Collateral price", () => {
 
     const wbtcPool = await getBdEuWbtcPool(hre);
 
-    const expectedWbtcPrice = 36000; // BTC-EUR for 2022-02-06
+    const expectedWbtcPrice = 28000; // BTC-EUR for 2022-06-02
     const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
     const wbtcInEurPrice = d12_ToNumber(await wbtcPool.getCollateralPrice_d12());
 
