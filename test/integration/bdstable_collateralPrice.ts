@@ -21,7 +21,7 @@ describe("Collateral price", () => {
 
     const wethPool = await getBdEuWethPool(hre);
 
-    const expectedWethPrice = 2600; // ETH-EUR for 2022-02-06
+    const expectedWethPrice = 1700; // ETH-EUR for 2022-06-02
     const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
     const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
 
