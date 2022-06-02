@@ -1,12 +1,13 @@
 import { ContractReceipt, UnsignedTransaction } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getProposer, getTimelock } from "../DeployedContractsHelpers";
+import { getDeployer, getProposer, getTimelock } from "../DeployedContractsHelpers";
 import { Strategy } from "./strategies/Strategy.interface";
 import { TimelockStrategy } from "./strategies/TimelockStrategy";
 import { ImmediateExecutionStrategy } from "./strategies/ImmediateExecutionStrategy";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { blockTimeSeconds } from "../Constants";
+import { blockTimeSeconds, chainNames } from "../Constants";
 import { Signer } from "ethers";
+import { mineBlock } from "../HelpersHardhat";
 
 // class responsible for recoding and executing transactions
 // construction:
@@ -48,21 +49,25 @@ type DefaultRecorderParams = {
 };
 
 export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | undefined = undefined) {
-  return defaultTimelockRecorder(hre, params);
-
-  //todo ag
-  // if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
-  //   return new Recorder(
-  //     new ImmediateExecutionStrategy({
-  //       signer: params?.singer ?? (await getDeployer(hre))
-  //     })
-  //   );
-  // } else {
-  //   return defaultTimelockRecorder(hre, params);
-  // }
+  if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
+    return new Recorder(
+      new ImmediateExecutionStrategy({
+        signer: params?.singer ?? (await getDeployer(hre))
+      })
+    );
+  } else {
+    return defaultTimelockRecorder(hre, params);
+  }
 }
 
 export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | undefined = undefined) {
+  if (hre.network.name === "mainnetFork") {
+    // on local env blocks are mined non-deterministically
+    // we need to mine the block right before we queue a timelock transaction
+    // to make sure we fit into the minimum delay window
+    await mineBlock();
+  }
+
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
 
