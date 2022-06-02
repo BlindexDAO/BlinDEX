@@ -22,10 +22,12 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
 
     mapping(address => bool) private mapZapMintSupportedTokens;
     address[] public zapMintSupportedTokens;
+    address bdxAddress;
 
-    function initialize() external initializer {
+    function initialize(address _bdxAddress) external initializer {
         __Ownable_init();
         zapMintPaused = false;
+        bdxAddress = _bdxAddress;
     }
 
     function isSupportedForMinting(address _address) public view returns (bool) {
@@ -72,13 +74,13 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
         require(mapZapMintSupportedTokens[path[0]], "ZapMint: Token not supported for zap minting");
 
         IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), amountIn);
+        IERC20(bdxAddress).safeTransferFrom(msg.sender, payable(address(this)), bdxInMax);
 
         bool shouldSwap = path.length > 1;
 
         if (shouldSwap) {
             swapInternal(useNativeToken, path, amountIn, router, deadline);
         }
-
         address tokenToUseForMint = path[path.length - 1];
         uint256 amountOfTokenToUseForMint = useNativeToken ? address(this).balance : IERC20(tokenToUseForMint).balanceOf(address(this)); //todo add and use return value for swapInternal?
         mintInternal(tokenToUseForMint, amountOfTokenToUseForMint, bdxInMax, amountOutMin, useNativeToken, bdstablePoolAddress);
@@ -112,6 +114,7 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
     ) private {
         BdStablePool bdstablePool = BdStablePool(payable(bdstablePoolAddress));
 
+        IERC20(bdxAddress).approve(bdstablePoolAddress, bdxInMax);
         if (useNativeToken) {
             bdstablePool.mintFractionalBdStable{value: amountIn}(amountIn, bdxInMax, amountOutMin, useNativeToken);
         } else {

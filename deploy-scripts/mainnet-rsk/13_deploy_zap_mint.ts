@@ -1,13 +1,13 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
 import type { DeployResult } from "hardhat-deploy/dist/types";
-import { getDeployer } from "../../utils/DeployedContractsHelpers";
+import { getBdx, getDeployer } from "../../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: ZapMint");
 
   const deployer = await getDeployer(hre);
-
+  const bdx = await getBdx(hre);
   const zapMint: DeployResult = await hre.deployments.deploy("ZapMint", {
     from: deployer.address,
     proxy: {
@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: []
+          args: [bdx.address]
         }
       }
     },
