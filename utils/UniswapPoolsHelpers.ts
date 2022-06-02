@@ -195,7 +195,6 @@ export async function generateAllPaths(
   }
 
   const supportedPools = await getAvailableSwapLinks(hre);
-  console.log("length1: " + allRequiredPaths.length);
   allRequiredPaths = allRequiredPaths.filter(path => {
     const isFirstPairSupported = supportedPools.some(pool => pool.from === path[0] && pool.to === path[1]);
     const isSecondPairSupported = path.length > 2 ? supportedPools.some(pool => pool.from === path[1] && pool.to === path[2]) : true;
@@ -213,7 +212,6 @@ export async function generateAllPaths(
     return isFirstPairSupported && isSecondPairSupported;
   });
 
-  console.log("length2: " + allRequiredPaths.length);
   return allRequiredPaths;
 }
 
