@@ -13,7 +13,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("BdStable emergency", () => {
+describe("BdStable emergency", () => {
   let randomUser: SignerWithAddress;
   let emergencyExecutor: SignerWithAddress;
   let owner: SignerWithAddress;
@@ -40,6 +40,10 @@ describe.only("BdStable emergency", () => {
     await deploy();
 
     await stable.connect(owner).setEmergencyExecutor(emergencyExecutor.address);
+  });
+
+  it("Toggling recollateralize paused", async () => {
+    expectToFail(() => stable.connect(randomUser).setEmergencyExecutor(randomUser.address), "Ownable: caller is not the owner");
   });
 
   it("Toggling recollateralize paused", async () => {
