@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../BdStable/Pools/BdStablePool.sol";
-import "../BSM/Investors/AMM/AMMInvestorsHelper.sol";
 import "hardhat/console.sol";
 
 //todo
@@ -69,9 +68,10 @@ contract ZapMint is OwnableUpgradeable, ReentrancyGuard {
         address router,
         uint256 deadline
     ) external payable nonReentrant {
-        require(zapMintPaused == false, "ZapMint: Status is paused");
-        require(path.length > 0, "ZapMint: Path is empty");
-        require(mapZapMintSupportedTokens[path[0]], "ZapMint: Token not supported for zap minting");
+        require(zapMintPaused == false, "ZapMint: Contract is paused");
+        require(path.length > 0, "ZapMint: Path cannot be empty");
+        require(mapZapMintSupportedTokens[path[0]], "ZapMint: Token is not supported for zap minting");
+        require(amountIn > 0, "ZapMint: Input amount has to be greater than zero");
 
         IERC20(path[0]).safeTransferFrom(msg.sender, payable(address(this)), amountIn);
         IERC20(bdxAddress).safeTransferFrom(msg.sender, payable(address(this)), bdxInMax);

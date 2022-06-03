@@ -198,17 +198,6 @@ export async function generateAllPaths(
   allRequiredPaths = allRequiredPaths.filter(path => {
     const isFirstPairSupported = supportedPools.some(pool => pool.from === path[0] && pool.to === path[1]);
     const isSecondPairSupported = path.length > 2 ? supportedPools.some(pool => pool.from === path[1] && pool.to === path[2]) : true;
-    console.log(
-      "issupported: " +
-        path[0] +
-        " " +
-        path[1] +
-        "---" +
-        supportedPools[0].from +
-        " " +
-        supportedPools[0].to +
-        (isFirstPairSupported && isSecondPairSupported)
-    );
     return isFirstPairSupported && isSecondPairSupported;
   });
 

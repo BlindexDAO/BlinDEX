@@ -13,18 +13,26 @@ import {
   getBdx,
   getDeployer,
   getERC20,
+  getOnChainWethFiatPrice,
   getTreasurySigner,
   getUniswapRouter,
   getWbtc,
   getWeth
 } from "../../utils/DeployedContractsHelpers";
-import { d18_ToNumber, numberToBigNumberFixed, to_d18, to_d8 } from "../../utils/NumbersHelpers";
+import { d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "../../utils/NumbersHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { generateAllPaths, getAllTokensAddresses } from "../../utils/UniswapPoolsHelpers";
 import { IERC20 } from "../../typechain/IERC20";
 import { BdStablePool } from "../../typechain/BdStablePool";
 import { expectToFail } from "../helpers/common";
 import { lockBdusCrAt } from "../helpers/bdStable";
+
+function valueToSlippedValue(input: BigNumber) {
+  const one_d12 = to_d12(1);
+  const slippage_d12 = to_d12(0.02);
+  const multiplier_d12 = one_d12.sub(slippage_d12);
+  return input.mul(multiplier_d12).div(1e12);
+}
 
 chai.use(cap);
 
@@ -207,7 +215,7 @@ describe("Zap mint", () => {
       router.address,
       currentBlock.timestamp + 1e5
     );
-    await expectToFail(() => mintPromise, "ZapMint: Status is paused");
+    await expectToFail(() => mintPromise, "ZapMint: Contract is paused");
   });
 
   it("Should not mint not supported token", async () => {
@@ -234,10 +242,10 @@ describe("Zap mint", () => {
       router.address,
       currentBlock.timestamp + 1e5
     );
-    await expectToFail(() => mintPromise, "ZapMint: Token not supported for zap minting");
+    await expectToFail(() => mintPromise, "ZapMint: Token is not supported for zap minting");
   });
 
-  it("Should not mint supported token when collateral ratio < 100% and bdx was not provided", async () => {
+  it("Should not mint supported token when 0% < collateral ratio < 100% and bdx was not provided", async () => {
     const deployer = await getDeployer(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
@@ -271,7 +279,7 @@ describe("Zap mint", () => {
     await expectToFail(() => mintPromise, "Not enough BDX inputted");
   });
 
-  it("Should mint supported token when collateral ratio < 100% and bdx was provided", async () => {
+  it("Should mint supported token when 0% < collateral ratio < 100% and bdx was provided", async () => {
     const deployer = await getDeployer(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
@@ -339,5 +347,48 @@ describe("Zap mint", () => {
       0.001,
       "Deployer should spend bdxInMax input token"
     );
+  });
+
+  it("Should swap supported token when mint result satisfies minAmountOut", async () => {
+    const deployer = await getDeployer(hre);
+    const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
+    const swapFrom = await getBdEu(hre);
+    const swapTo = await getWeth(hre);
+    const path = [swapFrom.address, swapTo.address];
+    const router = await getUniswapRouter(hre);
+    const decimals = await swapFrom.decimals();
+    const amountIn = numberToBigNumberFixed(1, decimals);
+    const currentBlock = await hre.ethers.provider.getBlock("latest");
+    const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
+    await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
+
+    await swapFrom.approve(zapMintTestContract.address, amountIn);
+
+    const swapsAmountsOut = await router.getAmountsOut(amountIn, path);
+    const swapAmountOut = swapsAmountsOut[swapsAmountsOut.length - 1];
+    const stableExpectedFromMint = await getBdUs(hre);
+    const wethPriceInUsd_d18 = to_d18((await getOnChainWethFiatPrice(hre, "EUR")).price);
+    console.log("wethPriceInUsd_d18: " + d18_ToNumber(wethPriceInUsd_d18));
+    console.log("swapAmountOut: " + d18_ToNumber(swapAmountOut));
+    const mintMinAmountOut = wethPriceInUsd_d18.div(1e9).mul(swapAmountOut).div(1e9);
+    console.log("mintMinamountout: " + d18_ToNumber(mintMinAmountOut));
+    const slippedMintMinAmountOut = valueToSlippedValue(mintMinAmountOut);
+    console.log("slippedMintMinAmountOut: " + d18_ToNumber(slippedMintMinAmountOut));
+    const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
+    await zapMintTestContract.mintUniswapRouterOnly(
+      0,
+      mintMinAmountOut,
+      true,
+      stableExpectedFromMint.address,
+      wethBdusPool.address,
+      path,
+      amountIn,
+      router.address,
+      currentBlock.timestamp + 1e5
+    );
+
+    const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
+    const stableDiff = d18_ToNumber(deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint));
+    expect(stableDiff).to.be.greaterThan(d18_ToNumber(mintMinAmountOut), "Deployer should get minimal expected amount out of minted bdstable");
   });
 });
