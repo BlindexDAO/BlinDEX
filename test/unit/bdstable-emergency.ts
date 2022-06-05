@@ -13,7 +13,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe("BdStable emergency", () => {
+describe("BDStable emergency", () => {
   let randomUser: SignerWithAddress;
   let emergencyExecutor: SignerWithAddress;
   let owner: SignerWithAddress;
@@ -42,12 +42,12 @@ describe("BdStable emergency", () => {
     await stable.connect(owner).setEmergencyExecutor(emergencyExecutor.address);
   });
 
-  it("Toggling recollateralize paused", async () => {
+  it("Setting emergency executor", async () => {
     expectToFail(() => stable.connect(randomUser).setEmergencyExecutor(randomUser.address), "Ownable: caller is not the owner");
   });
 
   it("Toggling recollateralize paused", async () => {
-    expectToFail(() => stable.connect(randomUser).toggleCollateralRatioPaused(), "You are not the owner or an emergency executor");
+    expectToFail(() => stable.connect(randomUser).toggleCollateralRatioPaused(), "BDStable: You are not the owner or an emergency executor");
 
     await stable.connect(emergencyExecutor).toggleCollateralRatioPaused();
 
@@ -58,7 +58,7 @@ describe("BdStable emergency", () => {
   });
 
   it("Locking collateral ratio at", async () => {
-    expectToFail(() => stable.connect(randomUser).lockCollateralRatioAt(1e12), "You are not the owner or an emergency executor");
+    expectToFail(() => stable.connect(randomUser).lockCollateralRatioAt(1e12), "BDStable: You are not the owner or an emergency executor");
 
     await stable.connect(emergencyExecutor).lockCollateralRatioAt(1e12);
 

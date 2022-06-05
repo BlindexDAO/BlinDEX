@@ -18,6 +18,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       },
       contract: "BDStable"
     });
+
+    for (const poolName of [stableDetails.pools.weth.name, stableDetails.pools.wbtc.name]) {
+      await hre.deployments.deploy(poolName, {
+        from: deployer.address,
+        proxy: {
+          proxyContract: "OptimizedTransparentProxy"
+        },
+        contract: "BdStablePool",
+        libraries: {
+          BdPoolLibrary: (await hre.ethers.getContract("BdPoolLibrary")).address
+        }
+      });
+    }
   }
 
   console.log("finished deployment: introduce emergency executor");

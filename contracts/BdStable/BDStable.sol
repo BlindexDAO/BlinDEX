@@ -71,7 +71,7 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     modifier onlyOwnerOrEmergencyExecutor() {
-        require(msg.sender == owner() || msg.sender == emergencyExecutor, "You are not the owner or an emergency executor");
+        require(msg.sender == owner() || msg.sender == emergencyExecutor, "BDStable: You are not the owner or an emergency executor");
         _;
     }
 
