@@ -5,8 +5,9 @@ import cap from "chai-as-promised";
 import { getBdUs, getBdx, getDeployer, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { expectEventWithArgs, expectToFail } from "../helpers/common";
-import { BdStablePool, BDXShares, DummyERC20 } from "../../typechain";
+import { BdStablePool, BDXShares } from "../../typechain";
 import { to_d12 } from "../../utils/NumbersHelpers";
+import { deployDummyErc20 } from "./helpers";
 
 chai.use(cap);
 
@@ -23,10 +24,7 @@ describe("BdStablePool emergency", () => {
 
   async function deploy() {
     const bdUs = await getBdUs(hre);
-
-    const dummyErc20Factory = await hre.ethers.getContractFactory("DummyERC20");
-    const dummyErc20 = (await dummyErc20Factory.connect(owner).deploy()) as DummyERC20;
-    await dummyErc20.deployed();
+    const dummyErc20 = await deployDummyErc20(hre);
 
     const stablePoolFactory = await hre.ethers.getContractFactory("BdStablePool", {
       libraries: {
@@ -51,11 +49,11 @@ describe("BdStablePool emergency", () => {
   });
 
   it("Setting emergency executor", async () => {
-    expectToFail(() => stablePool.connect(randomUser).setEmergencyExecutor(randomUser.address), "Ownable: caller is not the owner");
+    await expectToFail(() => stablePool.connect(randomUser).setEmergencyExecutor(randomUser.address), "Ownable: caller is not the owner");
   });
 
   it("Toggling minting paused", async () => {
-    expectToFail(() => stablePool.connect(randomUser).toggleMintingPaused(), "BdStablePool: You are not the owner or an emergency executor");
+    await expectToFail(() => stablePool.connect(randomUser).toggleMintingPaused(), "BdStablePool: You are not the owner or an emergency executor");
 
     await stablePool.connect(emergencyExecutor).toggleMintingPaused();
 
@@ -66,7 +64,7 @@ describe("BdStablePool emergency", () => {
   });
 
   it("Toggling redeeming paused", async () => {
-    expectToFail(() => stablePool.connect(randomUser).toggleRedeemingPaused(), "BdStablePool: You are not the owner or an emergency executor");
+    await expectToFail(() => stablePool.connect(randomUser).toggleRedeemingPaused(), "BdStablePool: You are not the owner or an emergency executor");
 
     await stablePool.connect(emergencyExecutor).toggleRedeemingPaused();
 
@@ -77,7 +75,10 @@ describe("BdStablePool emergency", () => {
   });
 
   it("Toggle recollateralize paused", async () => {
-    expectToFail(() => stablePool.connect(randomUser).toggleRecollateralizePaused(), "BdStablePool: You are not the owner or an emergency executor");
+    await expectToFail(
+      () => stablePool.connect(randomUser).toggleRecollateralizePaused(),
+      "BdStablePool: You are not the owner or an emergency executor"
+    );
 
     await stablePool.connect(emergencyExecutor).toggleRecollateralizePaused();
 
@@ -88,7 +89,7 @@ describe("BdStablePool emergency", () => {
   });
 
   it("Toggle buyback paused", async () => {
-    expectToFail(() => stablePool.connect(randomUser).toggleBuybackPaused(), "BdStablePool: You are not the owner or an emergency executor");
+    await expectToFail(() => stablePool.connect(randomUser).toggleBuybackPaused(), "BdStablePool: You are not the owner or an emergency executor");
 
     await stablePool.connect(emergencyExecutor).toggleBuybackPaused();
 
@@ -99,7 +100,7 @@ describe("BdStablePool emergency", () => {
   });
 
   it("Toggle collateral price paused", async () => {
-    expectToFail(
+    await expectToFail(
       () => stablePool.connect(randomUser).toggleCollateralPricePaused(to_d12(10)),
       "BdStablePool: You are not the owner or an emergency executor"
     );

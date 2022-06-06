@@ -11,6 +11,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ["BDEU", "BDUS", "bXAU", "bGBP"].includes(stableDetails.symbol)
   );
   for (const stableDetails of initialDeployBDStables) {
+    console.log(`Upgrading bdStable: ${stableDetails.name}`);
+
     await hre.deployments.deploy(stableDetails.symbol, {
       from: deployer.address,
       proxy: {
@@ -20,6 +22,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     for (const poolName of [stableDetails.pools.weth.name, stableDetails.pools.wbtc.name]) {
+      console.log(`Upgrading bdStablePool: ${poolName}`);
+
       await hre.deployments.deploy(poolName, {
         from: deployer.address,
         proxy: {
@@ -32,6 +36,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       });
     }
   }
+
+  console.log(`Upgrading vesting`);
+  await hre.deployments.deploy("Vesting", {
+    from: deployer.address,
+    proxy: {
+      proxyContract: "OptimizedTransparentProxy"
+    },
+    contract: "Vesting"
+  });
 
   console.log("finished deployment: introduce emergency executor");
 

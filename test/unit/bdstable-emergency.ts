@@ -43,11 +43,11 @@ describe("BDStable emergency", () => {
   });
 
   it("Setting emergency executor", async () => {
-    expectToFail(() => stable.connect(randomUser).setEmergencyExecutor(randomUser.address), "Ownable: caller is not the owner");
+    await expectToFail(() => stable.connect(randomUser).setEmergencyExecutor(randomUser.address), "Ownable: caller is not the owner");
   });
 
   it("Toggling recollateralize paused", async () => {
-    expectToFail(() => stable.connect(randomUser).toggleCollateralRatioPaused(), "BDStable: You are not the owner or an emergency executor");
+    await expectToFail(() => stable.connect(randomUser).toggleCollateralRatioPaused(), "BDStable: You are not the owner or an emergency executor");
 
     await stable.connect(emergencyExecutor).toggleCollateralRatioPaused();
 
@@ -58,7 +58,7 @@ describe("BDStable emergency", () => {
   });
 
   it("Locking collateral ratio at", async () => {
-    expectToFail(() => stable.connect(randomUser).lockCollateralRatioAt(1e12), "BDStable: You are not the owner or an emergency executor");
+    await expectToFail(() => stable.connect(randomUser).lockCollateralRatioAt(1e12), "BDStable: You are not the owner or an emergency executor");
 
     await stable.connect(emergencyExecutor).lockCollateralRatioAt(1e12);
 
