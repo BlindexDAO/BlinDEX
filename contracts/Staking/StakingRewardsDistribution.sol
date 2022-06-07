@@ -44,6 +44,9 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
+    bool public isPaused;
+    address public emergencyExecutor;
+
     function initialize(
         address _rewardsToken,
         address _vesting,
@@ -139,6 +142,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function collectAllRewards(uint256 from, uint256 to) external {
+        require(!isPaused, "StakingRewardsDistribution: Contract is paused");
+
         to = to < stakingRewardsAddresses.length ? to : stakingRewardsAddresses.length;
 
         uint256 totalFee;
@@ -182,6 +187,10 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         return (reward * (HUNDRED_PERCENT - vestingRewardRatio_percent)) / HUNDRED_PERCENT;
     }
 
+    function getStakingRewardsAddressesLength() external view returns (uint256) {
+        return stakingRewardsAddresses.length;
+    }
+
     function releaseReward(
         address to,
         uint256 rewardToRelease,
@@ -209,8 +218,23 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit RewardFeeChanged(_rewardFee_d12);
     }
 
+    function toggleIsPaused() external onlyOwnerOrEmergencyExecutor {
+        isPaused = !isPaused;
+        emit IsPausedToggled(isPaused);
+    }
+
+    function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
+        emergencyExecutor = _emergencyExecutor;
+        emit EmergencyExecutorSet(_emergencyExecutor);
+    }
+
     modifier onlyStakingRewards() {
         require(stakingRewardsWeights[msg.sender] > 0, "Only registered staking rewards contracts allowed");
+        _;
+    }
+
+    modifier onlyOwnerOrEmergencyExecutor() {
+        require(msg.sender == owner() || msg.sender == emergencyExecutor, "Vesting: You are not the owner or an emergency executor");
         _;
     }
 
@@ -221,4 +245,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     event TreasuryChanged(address newTreasury);
     event VestingChanged(address newVesting);
     event RewardFeeChanged(uint256 newRewardFee_d12);
+    event EmergencyExecutorSet(address newEmergencyExecutor);
+    event IsPausedToggled(bool isPaused);
 }
