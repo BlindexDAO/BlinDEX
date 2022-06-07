@@ -88,7 +88,7 @@ export function load() {
       if (await stikingRecordable.paused()) {
         await stikingRecordable.record.unpause();
       } else {
-        console.log("already unpaused", stikingRecordable.address);
+        console.log("already unpaused", stakingRecordable.address);
       }
     }
 
