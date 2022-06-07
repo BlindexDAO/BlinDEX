@@ -86,7 +86,7 @@ export function load() {
     for (const staking of stakings) {
       const stakingRecordable = toRc(staking, recorder);
       if (await stikingRecordable.paused()) {
-        await stikingRecordable.record.unpause();
+        await stakingRecordable.record.unpause();
       } else {
         console.log("already unpaused", stakingRecordable.address);
       }
