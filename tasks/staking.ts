@@ -84,7 +84,7 @@ export function load() {
 
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
-      const stikingRecordable = toRc(staking, recorder);
+      const stakingRecordable = toRc(staking, recorder);
       if (await stikingRecordable.paused()) {
         await stikingRecordable.record.unpause();
       } else {
