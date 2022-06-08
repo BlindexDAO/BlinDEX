@@ -2,11 +2,12 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { getBdx, getDeployer, getTreasurySigner, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getTreasurySigner, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { expectEventWithArgs, expectToFail } from "../helpers/common";
-import { BDStable, BDXShares } from "../../typechain";
-import { to_d12, to_d18 } from "../../utils/NumbersHelpers";
+import { BDStable } from "../../typechain";
+import { to_d12 } from "../../utils/NumbersHelpers";
+import { deployDummyBdStable, deployDummyBdx } from "./helpers";
 
 chai.use(cap);
 
@@ -20,13 +21,10 @@ describe("BDStable emergency", () => {
   let treasury: SignerWithAddress;
 
   let stable: BDStable;
-  let bdx: BDXShares;
 
   async function deploy() {
-    const factory = await hre.ethers.getContractFactory("BDStable");
-    stable = (await factory.connect(owner).deploy()) as BDStable;
-    await stable.deployed();
-    await stable.initialize("BDTest", "BDDTest", treasury.address, bdx.address, to_d18(100));
+    const bdx = await deployDummyBdx(hre, owner);
+    stable = await deployDummyBdStable(hre, owner, treasury, bdx.address);
   }
 
   before(async () => {
@@ -34,8 +32,6 @@ describe("BDStable emergency", () => {
     emergencyExecutor = await getUser2(hre);
     owner = await getDeployer(hre);
     treasury = await getTreasurySigner(hre);
-
-    bdx = await getBdx(hre);
 
     await deploy();
 

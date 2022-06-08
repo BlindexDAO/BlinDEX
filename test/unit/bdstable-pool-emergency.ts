@@ -2,12 +2,12 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { getBdUs, getBdx, getDeployer, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getTreasurySigner, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { expectEventWithArgs, expectToFail } from "../helpers/common";
-import { BdStablePool, BDXShares } from "../../typechain";
+import { BdStablePool } from "../../typechain";
 import { to_d12 } from "../../utils/NumbersHelpers";
-import { deployDummyErc20 } from "./helpers";
+import { deployDummyBdStable, deployDummyBdx, deployDummyErc20 } from "./helpers";
 
 chai.use(cap);
 
@@ -18,12 +18,13 @@ describe("BdStablePool emergency", () => {
   let randomUser: SignerWithAddress;
   let emergencyExecutor: SignerWithAddress;
   let owner: SignerWithAddress;
+  let treasury: SignerWithAddress;
 
   let stablePool: BdStablePool;
-  let bdx: BDXShares;
 
   async function deploy() {
-    const bdUs = await getBdUs(hre); // todo ag deploy
+    const bdx = await deployDummyBdx(hre, owner);
+    const bdStable = await deployDummyBdStable(hre, owner, treasury, bdx.address);
     const dummyErc20 = await deployDummyErc20(hre);
 
     const stablePoolFactory = await hre.ethers.getContractFactory("BdStablePool", {
@@ -33,15 +34,14 @@ describe("BdStablePool emergency", () => {
     });
     stablePool = (await stablePoolFactory.connect(owner).deploy()) as BdStablePool;
     await stablePool.deployed();
-    await stablePool.initialize(bdUs.address, bdx.address, dummyErc20.address, await dummyErc20.decimals(), false);
+    await stablePool.initialize(bdStable.address, bdx.address, dummyErc20.address, await dummyErc20.decimals(), false);
   }
 
   before(async () => {
     randomUser = await getUser1(hre);
     emergencyExecutor = await getUser2(hre);
     owner = await getDeployer(hre);
-
-    bdx = await getBdx(hre);
+    treasury = await getTreasurySigner(hre);
 
     await deploy();
 

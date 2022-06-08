@@ -2,11 +2,11 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { getBdx, getDeployer, getTreasurySigner, getUser1, getUser2, getVesting } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getTreasurySigner, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { expectEventWithArgs, expectToFail } from "../helpers/common";
 import { StakingRewardsDistribution } from "../../typechain";
-import { BigNumber } from "ethers";
+import { deployDummyBdStable, deployDummyBdx, deployDummyStakingRewardsDistribution, deployDummyVesting } from "./helpers";
 
 chai.use(cap);
 
@@ -22,13 +22,10 @@ describe("Staking rewards distribution emergency", () => {
   let srd: StakingRewardsDistribution;
 
   async function deploy() {
-    const vesting = await getVesting(hre); // todo ag deploy
-    const bdx = await getBdx(hre); // todo ag deploy
-
-    const srdFactory = await hre.ethers.getContractFactory("StakingRewardsDistribution");
-    srd = (await srdFactory.connect(owner).deploy()) as StakingRewardsDistribution;
-    await srd.deployed();
-    await srd.initialize(bdx.address, vesting.address, treasury.address, BigNumber.from(100));
+    const bdx = await deployDummyBdx(hre, owner);
+    const bdStable = await deployDummyBdStable(hre, owner, treasury, bdx.address);
+    const vesting = await deployDummyVesting(hre, owner, bdStable.address);
+    srd = await deployDummyStakingRewardsDistribution(hre, owner, treasury, bdx.address, vesting.address);
 
     await srd.setEmergencyExecutor(emergencyExecutor.address);
   }

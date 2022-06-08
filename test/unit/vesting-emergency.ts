@@ -2,11 +2,11 @@ import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
-import { getDeployer, getStakingRewardsDistribution, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
+import { getDeployer, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { expectEventWithArgs, expectToFail } from "../helpers/common";
 import { Vesting } from "../../typechain";
-import { deployDummyErc20 } from "./helpers";
+import { deployDummyErc20, deployDummyVesting } from "./helpers";
 import { BigNumber } from "ethers";
 
 chai.use(cap);
@@ -23,12 +23,7 @@ describe("Vesting emergency", () => {
 
   async function deploy() {
     const dummyErc20 = await deployDummyErc20(hre);
-    const srd = await getStakingRewardsDistribution(hre); // todo ag deploy
-
-    const vestingFactory = await hre.ethers.getContractFactory("Vesting");
-    vesting = (await vestingFactory.connect(owner).deploy()) as Vesting;
-    await vesting.deployed();
-    await vesting.initialize(dummyErc20.address, srd.address, srd.address, 3600);
+    vesting = await deployDummyVesting(hre, owner, dummyErc20.address);
 
     await vesting.setEmergencyExecutor(emergencyExecutor.address);
   }
