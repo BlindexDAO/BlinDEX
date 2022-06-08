@@ -23,7 +23,7 @@ describe("BdStablePool emergency", () => {
   let bdx: BDXShares;
 
   async function deploy() {
-    const bdUs = await getBdUs(hre);
+    const bdUs = await getBdUs(hre); // todo ag deploy
     const dummyErc20 = await deployDummyErc20(hre);
 
     const stablePoolFactory = await hre.ethers.getContractFactory("BdStablePool", {

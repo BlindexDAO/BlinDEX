@@ -7,6 +7,7 @@ import {
   getDeployer,
   getExecutor,
   getProposer,
+  getStakingRewardsDistribution,
   getTreasurySigner,
   getWbtc,
   getWeth,
@@ -32,6 +33,19 @@ import { toRc } from "../utils/Recorder/RecordableContract";
 import { extractTimelockQueuedTransactionsBatchParamsDataAndHash, extractTxParamsHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
 
 export function load() {
+  task("tmp", "", async (args_, hre_) => {
+    const srd = await getStakingRewardsDistribution(hre_);
+    // for (let i = 0; i < 50; i++){
+    //   const addr = await srd.stakingRewardsAddresses(i);
+    //   const weight = await srd.stakingRewardsWeights(addr);
+
+    //   console.log(`${i} ${addr} ${weight}`);
+    // }
+
+    const totalWeights = await srd.stakingRewardsWeightsTotal();
+    console.log("" + totalWeights);
+  });
+
   task("dev:mine-block", "", async (args_, hre_) => {
     await mineBlock();
   });

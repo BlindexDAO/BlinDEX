@@ -490,6 +490,42 @@ describe("getReward interaction with vesting contract", () => {
   });
 });
 
+describe("Registering pools", () => {
+  beforeEach(async () => {
+    await hre.deployments.fixture();
+    await initialize();
+    await setUpFunctionalSystemForTests(hre, 1);
+  });
+
+  it("Should override pools", async () => {
+    const srd = await getStakingRewardsDistribution(hre);
+    const pool0Address = await srd.stakingRewardsAddresses(0);
+    const pool5Address = await srd.stakingRewardsAddresses(5);
+
+    const noPools1 = await srd.getStakingRewardsAddressesLength();
+    const pools1 = await Promise.all(Array.from(Array(noPools1.toNumber()).keys()).map(async i => await srd.stakingRewardsAddresses(i)));
+
+    await srd.registerPools([pool0Address, pool5Address], [0, 0]);
+
+    const noPools2 = await srd.getStakingRewardsAddressesLength();
+    const pools2 = await Promise.all(Array.from(Array(noPools2.toNumber()).keys()).map(async i => await srd.stakingRewardsAddresses(i)));
+
+    expect(noPools2).to.eq(noPools1);
+    expect(pools2).to.eql(pools1);
+    expect(await srd.stakingRewardsWeights(pool0Address)).to.eq(BigNumber.from(0));
+    expect(await srd.stakingRewardsWeights(pool5Address)).to.eq(BigNumber.from(0));
+
+    await srd.registerPools([pool0Address, pool5Address], [123, 234]);
+    const noPools3 = await srd.getStakingRewardsAddressesLength();
+    const pools3 = await Promise.all(Array.from(Array(noPools3.toNumber()).keys()).map(async i => await srd.stakingRewardsAddresses(i)));
+
+    expect(noPools3).to.eq(noPools1);
+    expect(pools3).to.eql(pools1);
+    expect(await srd.stakingRewardsWeights(pool0Address)).to.eq(BigNumber.from(123));
+    expect(await srd.stakingRewardsWeights(pool5Address)).to.eq(BigNumber.from(234));
+  });
+});
+
 describe("Unregistering pools", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
@@ -497,7 +533,7 @@ describe("Unregistering pools", () => {
     await setUpFunctionalSystemForTests(hre, 1);
   });
 
-  it("should unregister pool", async () => {
+  it("Should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
     const numberOfStakingPools = await getStakingRewardsCount(hre);
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));

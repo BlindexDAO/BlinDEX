@@ -13,7 +13,7 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Staking rewards distribution emergency", () => {
+describe("Staking rewards distribution emergency", () => {
   let randomUser: SignerWithAddress;
   let emergencyExecutor: SignerWithAddress;
   let owner: SignerWithAddress;
@@ -22,8 +22,8 @@ describe.only("Staking rewards distribution emergency", () => {
   let srd: StakingRewardsDistribution;
 
   async function deploy() {
-    const vesting = await getVesting(hre);
-    const bdx = await getBdx(hre);
+    const vesting = await getVesting(hre); // todo ag deploy
+    const bdx = await getBdx(hre); // todo ag deploy
 
     const srdFactory = await hre.ethers.getContractFactory("StakingRewardsDistribution");
     srd = (await srdFactory.connect(owner).deploy()) as StakingRewardsDistribution;

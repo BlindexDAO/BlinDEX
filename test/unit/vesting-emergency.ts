@@ -23,7 +23,7 @@ describe("Vesting emergency", () => {
 
   async function deploy() {
     const dummyErc20 = await deployDummyErc20(hre);
-    const srd = await getStakingRewardsDistribution(hre);
+    const srd = await getStakingRewardsDistribution(hre); // todo ag deploy
 
     const vestingFactory = await hre.ethers.getContractFactory("Vesting");
     vesting = (await vestingFactory.connect(owner).deploy()) as Vesting;

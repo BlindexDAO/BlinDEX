@@ -47,6 +47,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     bool public isPaused;
     address public emergencyExecutor;
 
+    mapping(address => bool) public poolsSet;
+
     function initialize(
         address _rewardsToken,
         address _vesting,
@@ -108,13 +110,14 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
         for (uint256 i = 0; i < _stakingRewardsAddresses.length; i++) {
-            if (stakingRewardsWeights[_stakingRewardsAddresses[i]] == 0) {
+            if (!poolsSet[_stakingRewardsAddresses[i]]) {
                 // to avoid duplicates
                 stakingRewardsAddresses.push(_stakingRewardsAddresses[i]);
             }
 
             stakingRewardsWeightsTotal -= stakingRewardsWeights[_stakingRewardsAddresses[i]]; // to support override
             stakingRewardsWeights[_stakingRewardsAddresses[i]] = _stakingRewardsWeights[i];
+            poolsSet[_stakingRewardsAddresses[i]] = true;
             stakingRewardsWeightsTotal += _stakingRewardsWeights[i];
             emit PoolRegistered(_stakingRewardsAddresses[i], _stakingRewardsWeights[i]);
         }
@@ -134,6 +137,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             if (stakingRewardsAddresses[i] == pool) {
                 stakingRewardsAddresses[i] = stakingRewardsAddresses[stakingRewardsAddresses.length - 1];
                 stakingRewardsAddresses.pop();
+                delete poolsSet[pool];
 
                 emit PoolRemoved(pool);
                 return;
@@ -226,6 +230,29 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
         emergencyExecutor = _emergencyExecutor;
         emit EmergencyExecutorSet(_emergencyExecutor);
+    }
+
+    // a fix to duplicated pools created due a former bug, it can be removed in the future
+    function removeDuplicatePool(uint256 indexToKeep, uint256 indexToRemove) external onlyOwner {
+        require(indexToKeep != indexToRemove, "StakingRewardsDistribution: Index to keep must be different than index to remove");
+        require(
+            stakingRewardsAddresses[indexToKeep] != address(0) && stakingRewardsAddresses[indexToRemove] != address(0),
+            "StakingRewardsDistribution: Both indices must point to an existing pool"
+        );
+        require(
+            stakingRewardsAddresses[indexToKeep] == stakingRewardsAddresses[indexToRemove],
+            "StakingRewardsDistribution: index to keep and index to remove must point to the same pool"
+        );
+
+        stakingRewardsAddresses[indexToRemove] = stakingRewardsAddresses[stakingRewardsAddresses.length - 1];
+        stakingRewardsAddresses.pop();
+    }
+
+    // a fix to duplicated pools created due a former bug, it can be removed in the future
+    function onUpgrade() external onlyOwner {
+        for (uint256 i = 0; i < stakingRewardsAddresses.length; ++i) {
+            poolsSet[stakingRewardsAddresses[i]] = true;
+        }
     }
 
     modifier onlyStakingRewards() {

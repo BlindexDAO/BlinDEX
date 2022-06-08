@@ -41,7 +41,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await hre.deployments.deploy("StakingRewardsDistribution", {
     from: deployer.address,
     proxy: {
-      proxyContract: "OptimizedTransparentProxy"
+      proxyContract: "OptimizedTransparentProxy",
+      execute: {
+        methodName: "onUpgrade",
+        args: []
+      }
     },
     contract: "StakingRewardsDistribution"
   });
