@@ -249,7 +249,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     // a fix to duplicated pools created due a former bug, it can be removed in the future
-    function onUpgrade() external onlyOwner {
+    function onUpgrade() external onlyProxyAdmin {
         for (uint256 i = 0; i < stakingRewardsAddresses.length; ++i) {
             poolsSet[stakingRewardsAddresses[i]] = true;
         }
@@ -261,7 +261,21 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     modifier onlyOwnerOrEmergencyExecutor() {
-        require(msg.sender == owner() || msg.sender == emergencyExecutor, "Vesting: You are not the owner or an emergency executor");
+        require(
+            msg.sender == owner() || msg.sender == emergencyExecutor,
+            "StakingRewardsDistribution: You are not the owner or an emergency executor"
+        );
+        _;
+    }
+
+    modifier onlyProxyAdmin() {
+        bytes32 proxyAdminSlot = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
+        address proxyAdmin;
+        assembly {
+            proxyAdmin := sload(proxyAdminSlot) // extract proxy admin from proxy
+        }
+
+        require(msg.sender == proxyAdmin, "StakingRewardsDistribution: You're not the proxy admin");
         _;
     }
 

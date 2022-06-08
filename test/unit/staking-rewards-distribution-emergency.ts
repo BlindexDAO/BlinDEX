@@ -47,7 +47,7 @@ describe("Staking rewards distribution emergency", () => {
   });
 
   it("Toggling paused", async () => {
-    await expectToFail(() => srd.connect(randomUser).toggleIsPaused(), "Vesting: You are not the owner or an emergency executor");
+    await expectToFail(() => srd.connect(randomUser).toggleIsPaused(), "StakingRewardsDistribution: You are not the owner or an emergency executor");
 
     const isPausedBefore = await srd.isPaused();
     const tx1 = await srd.connect(owner).toggleIsPaused();
