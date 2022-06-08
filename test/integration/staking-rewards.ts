@@ -20,7 +20,9 @@ import {
   mintWbtc,
   mintWeth,
   getStakingRewardsCount,
-  getTreasurySigner
+  getTreasurySigner,
+  getUser1,
+  getUser2
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
@@ -30,7 +32,7 @@ import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { Vesting } from "../../typechain/Vesting";
 import type { StakingRewards } from "../../typechain/StakingRewards";
 import type { IERC20 } from "../../typechain/IERC20";
-import { provideBdEu, subtractionOverflowExceptionMessage } from "../helpers/common";
+import { expectToFail, provideBdEu, subtractionOverflowExceptionMessage } from "../helpers/common";
 
 chai.use(cap);
 
@@ -654,6 +656,30 @@ describe("Claiming all rewards", () => {
     expect(treasuryBalanceDiff).to.gt(0, "invalid treasury balance diff");
     expect(d18_ToNumber(totalUserRewards)).to.be.closeTo(d18_ToNumber(treasuryBalanceDiff.mul(9)), 0.1, "invalid users rewards, fee ration");
     expect(d18_ToNumber(totalUserRewards.add(treasuryBalanceDiff))).to.be.closeTo(d18_ToNumber(wethRewards), 0.1, "invalid reward + fee sum");
+  });
+
+  describe("Post upgrade function", () => {
+    beforeEach(async () => {
+      await hre.deployments.fixture();
+      await initialize();
+      await setUpFunctionalSystemForTests(hre, 1);
+    });
+
+    it("Post upgrade function should not execute for nobody but proxy owner", async () => {
+      // proxy owner executes on deployment
+
+      const randomUser = await getUser1(hre);
+      const emergencyExecutor = await getUser2(hre);
+
+      await stakingRewardsDistribution.setEmergencyExecutor(emergencyExecutor.address);
+
+      await expectToFail(() => stakingRewardsDistribution.connect(deployer).onUpgrade(), "StakingRewardsDistribution: You're not the proxy admin");
+      await expectToFail(() => stakingRewardsDistribution.connect(randomUser).onUpgrade(), "StakingRewardsDistribution: You're not the proxy admin");
+      await expectToFail(
+        () => stakingRewardsDistribution.connect(emergencyExecutor).onUpgrade(),
+        "StakingRewardsDistribution: You're not the proxy admin"
+      );
+    });
   });
 });
 
