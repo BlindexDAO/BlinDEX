@@ -1,4 +1,3 @@
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { BDStable } from "../../typechain/BDStable";
 import { bigNumberToDecimal, to_d18 } from "../../utils/NumbersHelpers";
@@ -10,6 +9,7 @@ import { getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedCont
 import { UniswapV2Router02__factory } from "../../typechain/factories/UniswapV2Router02__factory";
 import type { BigNumber } from "ethers";
 import type { IERC20 } from "../../typechain/IERC20";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 
 export async function updateWethPair(hre: HardhatRuntimeEnvironment, tokenName: string) {
   const oracle = await getWethPairOracle(hre, tokenName);

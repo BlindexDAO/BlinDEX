@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { getDeployer, getUser1, getUser2 } from "../../utils/DeployedContractsHelpers";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import { expectEventWithArgs, expectToFail } from "../helpers/common";
 import { Vesting } from "../../typechain";
 import { deployDummyErc20, deployDummyVesting } from "./helpers";

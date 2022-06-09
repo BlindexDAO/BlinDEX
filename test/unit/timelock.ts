@@ -5,7 +5,7 @@ import { BigNumber, ContractReceipt, ContractTransaction } from "ethers";
 import { Flipper, Timelock } from "../../typechain";
 import { expect } from "chai";
 import hre from "hardhat";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import { simulateTimeElapseInSeconds } from "../../utils/HelpersHardhat";
 import {
   decodeTimelockQueuedTransactions,
@@ -156,12 +156,11 @@ describe("Timelock", () => {
     it("Add and remove executors", async () => {
       await expectToFail(() => timelock.connect(user2).addExecutor(user.address), "Ownable: caller is not the owner");
       await expectToFail(() => timelock.connect(user2).removeExecutor(user.address), "Ownable: caller is not the owner");
-
       await expectToFail(() => timelock.connect(owner).addExecutor(hre.ethers.constants.AddressZero), "Timelock: executor cannot be 0 address");
 
       await timelock.connect(owner).removeExecutor(executor.address); // remove the original executor to start with a blank page
 
-      expectToFail(() => timelock.executorAt(0), "Timelock: executors index out of range");
+      await expectToFail(() => timelock.executorAt(0), "Timelock: executors index out of range");
 
       const receiptForAdded1 = await (await timelock.connect(owner).addExecutor(user.address)).wait();
       expectEventWithArgs(receiptForAdded1, "NewExecutorAdded", [user.address]);
@@ -177,7 +176,7 @@ describe("Timelock", () => {
       expectEventWithArgs(receiptForRemoved, "ExecutorRemoved", [user2.address]);
       expect(await timelock.executorsCount()).to.eq(1);
       expect(await timelock.executorAt(0)).to.eq(user.address);
-      expectToFail(() => timelock.executorAt(1), "Timelock: executors index out of range");
+      await expectToFail(() => timelock.executorAt(1), "Timelock: executors index out of range");
     });
   });
 
@@ -451,11 +450,11 @@ describe("Timelock", () => {
 
       expect(await timelock.pendingTransactions(txParamsHash)).to.eq(TransactionStatus.Approved);
 
-      expectToFail(
+      await expectToFail(
         () => timelock.connect(user).executeTransactionsBatch(queuedTransactions, eta),
         "Timelock: only the executor or owner can perform this action"
       );
-      expectToFail(
+      await expectToFail(
         () => timelock.connect(proposer).executeTransactionsBatch(queuedTransactions, eta),
         "Timelock: only the executor or owner can perform this action"
       );

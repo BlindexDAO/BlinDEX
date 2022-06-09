@@ -1,5 +1,5 @@
 import { BigNumber } from "ethers";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BDStable, BdStablePool, BDXShares, DummyERC20, StakingRewardsDistribution, Vesting } from "../../typechain";
 import { getDeployer } from "../../utils/DeployedContractsHelpers";

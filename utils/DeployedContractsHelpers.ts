@@ -11,7 +11,6 @@ import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { UniswapV2Router02 } from "../typechain/UniswapV2Router02";
 import type { BigNumber } from "@ethersproject/bignumber";
 import * as constants from "./Constants";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { bigNumberToDecimal, to_d12, to_d18 } from "./NumbersHelpers";
 import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDistribution";
 import type { Vesting } from "../typechain/Vesting";
@@ -25,6 +24,7 @@ import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOr
 import { Timelock } from "../typechain";
 import { wrappedSecondaryTokenData, wrappedNativeTokenData, PriceFeedContractNames, getListOfSupportedLiquidityPools } from "./Constants";
 import { Signer } from "ethers";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 
 interface BDStableContractDetail {
   [key: string]: {
