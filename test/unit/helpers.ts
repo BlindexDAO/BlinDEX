@@ -1,7 +1,7 @@
 import { BigNumber } from "ethers";
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { BDStable, BDXShares, DummyERC20, StakingRewardsDistribution, Vesting } from "../../typechain";
+import { BDStable, BdStablePool, BDXShares, DummyERC20, StakingRewardsDistribution, Vesting } from "../../typechain";
 import { getDeployer } from "../../utils/DeployedContractsHelpers";
 import { to_d18 } from "../../utils/NumbersHelpers";
 
@@ -55,4 +55,27 @@ export async function deployDummyStakingRewardsDistribution(
   await contract.initialize(bdxAddress, vestingAddress, treasury.address, BigNumber.from(100));
 
   return contract;
+}
+
+export async function deployDummyBdStablePool(
+  hre: HardhatRuntimeEnvironment,
+  owner: SignerWithAddress,
+  bdxAddress: string,
+  bdStableAddress: string,
+  collaterAddress: string
+) {
+  const bdPoolLibraryFactory = await hre.ethers.getContractFactory("BdPoolLibrary");
+  const bdPoolLibrary = await bdPoolLibraryFactory.deploy();
+  await bdPoolLibrary.deployed();
+
+  const stablePoolFactory = await hre.ethers.getContractFactory("BdStablePool", {
+    libraries: {
+      BdPoolLibrary: bdPoolLibrary.address
+    }
+  });
+  const stablePool = (await stablePoolFactory.connect(owner).deploy()) as BdStablePool;
+  await stablePool.deployed();
+  await stablePool.initialize(bdStableAddress, bdxAddress, collaterAddress, 18, false);
+
+  return stablePool;
 }
