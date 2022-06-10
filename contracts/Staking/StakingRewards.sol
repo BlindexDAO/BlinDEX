@@ -50,6 +50,8 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
 
     bool public unlockedStakes; // Release lock stakes in case of system migration
 
+    address public emergencyExecutor;
+
     struct LockedStake {
         bytes32 kek_id;
         uint256 start_timestamp;
@@ -218,7 +220,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
         emit StakeLocked(msg.sender, amount, secs);
     }
 
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) public nonReentrant whenNotPaused updateReward(msg.sender) {
         require(amount > 0, "Cannot withdraw 0");
 
         // Staking token balance and boosted balance
@@ -238,7 +240,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
         bytes32 kek_id,
         uint256 from,
         uint256 to
-    ) external nonReentrant updateReward(msg.sender) {
+    ) external nonReentrant whenNotPaused updateReward(msg.sender) {
         // from & to parameters serve as an optinal range,
         // to prevent the loop from running out of gas
         // when user has too many stakes
@@ -374,11 +376,11 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
         }
     }
 
-    function pause() external onlyOwner {
+    function pause() external onlyOwnerOrEmergencyExecutor {
         _pause();
     }
 
-    function unpause() external onlyOwner {
+    function unpause() external onlyOwnerOrEmergencyExecutor {
         _unpause();
     }
 
@@ -414,6 +416,11 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
         updateUserRewardInternal(account);
     }
 
+    function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
+        emergencyExecutor = _emergencyExecutor;
+        emit EmergencyExecutorSet(_emergencyExecutor);
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier updateReward(address account) {
@@ -423,6 +430,11 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
 
     modifier onlyStakingRewardsDistribution() {
         require(msg.sender == address(stakingRewardsDistribution), "Only staking rewards distribution allowed");
+        _;
+    }
+
+    modifier onlyOwnerOrEmergencyExecutor() {
+        require(msg.sender == owner() || msg.sender == emergencyExecutor, "StakingRewards: You are not the owner or an emergency executor");
         _;
     }
 
@@ -438,4 +450,5 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
     event RewardsPeriodRenewed(address token);
     event RewardVested(address user, uint256 amount);
     event ExistingStakeLocked(address indexed user, uint256 amount, uint256 secs);
+    event EmergencyExecutorSet(address newEmergencyExecutor);
 }
