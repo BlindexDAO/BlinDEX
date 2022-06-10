@@ -248,7 +248,12 @@ export function load() {
     const stakingRewardsAddresses = [];
     const stakingRewardsMap: { [key: string]: boolean } = {};
 
-    for (let i = 0; i < 100; i++) {
+    // todo replace after deployment
+    // also remove try-catch
+    // const poolsNo = (await stakingRewardsDistribution.getStakingRewardsAddressesLength()).toNumber();
+    const poolsNo = 100;
+
+    for (let i = 0; i < poolsNo; i++) {
       try {
         const address = await stakingRewardsDistribution.stakingRewardsAddresses(i);
 

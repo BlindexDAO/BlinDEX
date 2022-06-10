@@ -560,6 +560,9 @@ export async function getTokenData(tokenAddress: string, hre: HardhatRuntimeEnvi
 export async function getStakingRewardsCount(hre: HardhatRuntimeEnvironment): Promise<number> {
   const srd = await getStakingRewardsDistribution(hre);
 
+  // todo replace after deployment
+  // return (await stakingRewardsDistribution.getStakingRewardsAddressesLength()).toNumber();
+
   let poolsCount = 0;
   let noMorePools = false;
   while (!noMorePools) {
