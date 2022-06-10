@@ -96,7 +96,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`Upgrading staking rewards`);
 
-  // We want to be very explicit. These very pools need too be upgraded
+  // We can to be very explicit. These very pools need too be upgraded
   const rskStakingRewardsToUpgrade = [
     "StakingRewards_WRBTC_BDX",
     "StakingRewards_ETHS_BDX",
