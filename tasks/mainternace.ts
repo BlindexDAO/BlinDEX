@@ -11,12 +11,13 @@ import {
   getUniswapPairOracle,
   getWeth,
   formatAddress,
-  getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
-  getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
+  getSovrynFeed_RbtcUsd,
+  getSovrynFeed_RbtcEths,
   getFiatToFiat_EurUsd,
   getTokenData,
   getTimelock,
-  getBlindexUpdater
+  getBlindexUpdater,
+  getExecutor
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -32,53 +33,12 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { getAllUniswapPairsData } from "./liquidity-pools";
 import * as constants from "../utils/Constants";
 import moment from "moment";
-import { defaultRecorder, defaultTimelockRecorder } from "../utils/Recorder/Recorder";
+import { defaultRecorder } from "../utils/Recorder/Recorder";
 import { toRc } from "../utils/Recorder/RecordableContract";
-import {
-  decodeTimelockQueuedTransactions,
-  extractTxParamsHashAndTxHashFromSingleTransaction,
-  extractTimelockQueuedTransactionsBatchParamsDataAndHash
-} from "../utils/TimelockHelpers";
+import { decodeTimelockQueuedTransactions } from "../utils/TimelockHelpers";
 import { Timelock } from "../typechain/Timelock";
 
 export function load() {
-  task("change-owner-to-timelock").setAction(async (args, hre) => {
-    const timelock = await getTimelock(hre);
-
-    //todo ag change for all contracts? Or maybe add an address parameter? - LAGO-835
-
-    const deployer = await getDeployer(hre);
-
-    const pools = await getPools(hre);
-    for (const pool of pools) {
-      const oracle = await getUniswapPairOracle(hre, pool[0].name, pool[1].name);
-      await (await oracle.connect(deployer).transferOwnership(timelock.address)).wait();
-    }
-
-    console.log("owner changed to timelock");
-  });
-
-  task("queue-change-owner-to-deployer").setAction(async (args_, hre) => {
-    //todo ag change for all contracts? Or maybe add an address parameter? LAGO-835
-
-    const pools = await getPools(hre);
-
-    const deployer = await getDeployer(hre);
-    const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, singer: deployer });
-    for (const pool of pools) {
-      const oracle = toRc(await getUniswapPairOracle(hre, pool[0].name, pool[1].name), recorder);
-      await oracle.record.transferOwnership(deployer.address);
-    }
-
-    const receipt = await recorder.execute();
-    const { txParamsHash, txHash } = extractTxParamsHashAndTxHashFromSingleTransaction(receipt, "QueuedTransactionsBatch");
-    const { txParamsData } = await extractTimelockQueuedTransactionsBatchParamsDataAndHash(hre, txHash);
-
-    console.log("txHash:", txHash);
-    console.log("txParamsHash:", txParamsHash);
-    console.log("txParamsData:", txParamsData);
-  });
-
   task("get-timelock-transaction-status")
     .addPositionalParam("txParamsHash", "Transaction input data hash")
     .setAction(async ({ txParamsHash }, hre) => {
@@ -93,8 +53,10 @@ export function load() {
       const timelockFactory = await hre.ethers.getContractFactory("Timelock");
       const timelock = timelockFactory.attach(timelockaddress) as Timelock;
 
+      const signer = await getExecutor(hre);
+
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
-      await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
+      await (await timelock.connect(signer).executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
 
   task("update:all")
@@ -104,7 +66,7 @@ export function load() {
     .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
       const signer = await getBot(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: signer });
 
       if (hre.network.name === "rsk") {
         console.log("starting sovryn swap price oracles updates");
@@ -146,7 +108,7 @@ export function load() {
 
       const signer = await getBot(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: signer });
 
       const oracleBtcEth = toRc((await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed, recorder);
       await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
@@ -165,7 +127,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: deployer });
 
       const oracleEurUsd = toRc(
         (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
@@ -191,7 +153,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: deployer });
 
       const oracleEurUsd = toRc(
         (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
@@ -205,21 +167,19 @@ export function load() {
     });
 
   task("reset:uniswap-oracles").setAction(async (args, hre) => {
-    const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+    const recorder = await defaultRecorder(hre);
 
     await recordResetUniswapPairsOracles(hre, recorder);
 
     await recorder.execute();
   });
 
-  task("update:uniswap-oracles-as-deployer").setAction(async (args, hre) => {
-    const deployer = await getDeployer(hre);
-    const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+  task("update:uniswap-oracles-as-owner").setAction(async (args, hre) => {
+    const recorder = await defaultRecorder(hre);
 
     await recordUpdateUniswapPairsOracles(hre, recorder);
 
-    recorder.execute();
+    await recorder.execute();
   });
 
   task("update:all-with-updater")
@@ -261,7 +221,7 @@ export function load() {
       const pools = await getPools(hre);
 
       const deployer = await getDeployer(hre);
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: deployer });
 
       console.log("setting consultLeniency to: " + newVal);
 

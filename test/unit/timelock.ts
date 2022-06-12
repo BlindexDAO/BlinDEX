@@ -29,6 +29,7 @@ const MIN_DELAY = EXECUTION_DELAY;
 const MAX_DELAY = 30 * DAY;
 const MARGIN_SECONDS = 10;
 const GRACE_PERIOD_SECONDS = 14 * DAY;
+const MINIMUM_EXECUTION_DELAY_LIMIT = 1 * DAY;
 
 describe("Timelock", () => {
   let owner: SignerWithAddress;
@@ -45,7 +46,14 @@ describe("Timelock", () => {
     flipper = (await flipperFactory.deploy()) as Flipper;
     await flipper.deployed();
     const timeLockFactory = await hre.ethers.getContractFactory("Timelock");
-    timelock = (await timeLockFactory.deploy(proposer.address, executor.address, MIN_DELAY, MAX_DELAY, GRACE_PERIOD_SECONDS)) as Timelock;
+    timelock = (await timeLockFactory.deploy(
+      proposer.address,
+      executor.address,
+      MINIMUM_EXECUTION_DELAY_LIMIT,
+      MIN_DELAY,
+      MAX_DELAY,
+      GRACE_PERIOD_SECONDS
+    )) as Timelock;
 
     await timelock.deployed();
     await flipper.transferOwnership(timelock.address);
@@ -87,11 +95,11 @@ describe("Timelock", () => {
     let minimumExecutionDelay: number;
 
     it("Set execution minimum delay", async () => {
-      minimumExecutionDelay = 1 * DAY;
+      minimumExecutionDelay = MINIMUM_EXECUTION_DELAY_LIMIT;
 
       await expectToFail(
         () => timelock.connect(owner).setMinimumExecutionDelay(minimumExecutionDelay - 1),
-        "Timelock: Minimum execution delay must be >= 1 day."
+        "Timelock: The minimum execution delay cannot be smaller than minimum execution delay limit"
       );
 
       await expectToFail(() => timelock.connect(proposer).setMinimumExecutionDelay(minimumExecutionDelay), "Ownable: caller is not the owner");

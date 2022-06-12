@@ -7,6 +7,7 @@ import { ImmediateExecutionStrategy } from "./strategies/ImmediateExecutionStrat
 import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { blockTimeSeconds, chainNames } from "../Constants";
 import { Signer } from "ethers";
+import { mineBlock } from "../HelpersHardhat";
 
 // class responsible for recoding and executing transactions
 // construction:
@@ -33,7 +34,7 @@ export class Recorder {
     this.recordedTransactions = [];
     this.executedTransactions.concat(response);
 
-    console.log(`${transactionsToExecuteCount} transactions were executed`);
+    console.log(`${transactionsToExecuteCount} transactions were queued/executed`);
     return response;
   }
 
@@ -44,14 +45,14 @@ export class Recorder {
 
 type DefaultRecorderParams = {
   executionStartInDays: number | null;
-  singer: SignerWithAddress | null;
+  signer: SignerWithAddress | null;
 };
 
-export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
+export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params?: DefaultRecorderParams) {
   if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
     return new Recorder(
       new ImmediateExecutionStrategy({
-        signer: params?.singer ?? (await getDeployer(hre))
+        signer: params?.signer ?? (await getDeployer(hre))
       })
     );
   } else {
@@ -59,14 +60,21 @@ export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: De
   }
 }
 
-export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
+export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params?: DefaultRecorderParams) {
+  if (hre.network.name === "mainnetFork") {
+    // on local env blocks are mined non-deterministically
+    // we need to mine the block right before we queue a timelock transaction
+    // to make sure we fit into the minimum delay window
+    await mineBlock();
+  }
+
   const blockBefore = await hre.ethers.provider.getBlock("latest");
   const timestamp = blockBefore.timestamp;
 
   // the default use of the timlock recorder is to queue the transactions
   // be default they will be executed by the multisig
   // if we want to execute the approved transactions batch from terminal we should specify the signer explicitly (the executor)
-  const signer = params?.singer ?? (await getProposer(hre));
+  const signer = params?.signer ?? (await getProposer(hre));
 
   const timelock = (await getTimelock(hre)).connect(signer);
 

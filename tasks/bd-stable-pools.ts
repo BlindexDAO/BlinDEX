@@ -2,6 +2,8 @@ import { task } from "hardhat/config";
 import { getAllBDStablePools, getBdx, getCollateralContract, getTokenData } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
 import { utils } from "ethers";
+import { toRc } from "../utils/Recorder/RecordableContract";
+import { defaultRecorder } from "../utils/Recorder/Recorder";
 
 export function load() {
   task("bdsp:all:show").setAction(async (args, hre) => {
@@ -80,27 +82,33 @@ export function load() {
     });
 
   task("bdsp:all:toggle:buybackOnlyForOwner").setAction(async (args, hre) => {
+    const recorder = await defaultRecorder(hre);
+
     const stablePools = await getAllBDStablePools(hre);
 
     for (let index = 0; index < stablePools.length; index++) {
       const stablePool = stablePools[index];
       console.log("\nBDStablePool address:", stablePool.address);
       console.log("Before: buybackOnlyForOwner:", await stablePool.buybackOnlyForOwner());
-      await (await stablePool.toggleBuybackOnlyForOwner()).wait();
-      console.log("After: buybackOnlyForOwner:", await stablePool.buybackOnlyForOwner());
+      await toRc(stablePool, recorder).record.toggleBuybackOnlyForOwner();
     }
+
+    await recorder.execute();
   });
 
   task("bdsp:all:toggle:recollateralizeOnlyForOwner").setAction(async (args, hre) => {
+    const recorder = await defaultRecorder(hre);
+
     const stablePools = await getAllBDStablePools(hre);
 
     for (let index = 0; index < stablePools.length; index++) {
       const stablePool = stablePools[index];
       console.log("\nBDStablePool address:", stablePool.address);
       console.log("Before: recollateralizeOnlyForOwner:", await stablePool.recollateralizeOnlyForOwner());
-      await (await stablePool.toggleRecollateralizeOnlyForOwner()).wait();
-      console.log("After: recollateralizeOnlyForOwner:", await stablePool.recollateralizeOnlyForOwner());
+      await toRc(stablePool, recorder).record.toggleRecollateralizeOnlyForOwner();
     }
+
+    await recorder.execute();
   });
 
   task("bdsp:all:recollateralize:set:fee")

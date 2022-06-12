@@ -26,6 +26,7 @@ contract Timelock is Ownable, ReentrancyGuard {
         TransactionStatus status;
     }
 
+    uint256 public immutable minimumExecutionDelayLimit;
     uint256 public minimumExecutionDelay;
     uint256 public maximumExecutionDelay;
     uint256 public executionGracePeriod;
@@ -51,11 +52,14 @@ contract Timelock is Ownable, ReentrancyGuard {
     constructor(
         address _proposer,
         address _executor,
+        uint256 _minimumExecutionDelayLimit,
         uint256 _minimumExecutionDelay,
         uint256 _maximumExecutionDelay,
         uint256 _executionGracePeriod
     ) {
         require(_minimumExecutionDelay <= _maximumExecutionDelay, "Timelock: The minimum delay cannot be larger than the maximum execution delay");
+
+        minimumExecutionDelayLimit = _minimumExecutionDelayLimit;
 
         setMinimumExecutionDelay(_minimumExecutionDelay);
         setMaximumExecutionDelay(_maximumExecutionDelay);
@@ -99,7 +103,10 @@ contract Timelock is Ownable, ReentrancyGuard {
     }
 
     function setMinimumExecutionDelay(uint256 _minimumExecutionDelay) public onlyOwner {
-        require(_minimumExecutionDelay >= 3600 * 24, "Timelock: Minimum execution delay must be >= 1 day.");
+        require(
+            _minimumExecutionDelay >= minimumExecutionDelayLimit,
+            "Timelock: The minimum execution delay cannot be smaller than minimum execution delay limit"
+        );
 
         minimumExecutionDelay = _minimumExecutionDelay;
 

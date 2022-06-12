@@ -5,10 +5,13 @@ Preparation
 - Deploy Timelock contract
 - Transfer Timelock contract ownership to multisig
 - Transfer contracts' ownerships to Timelock
+- If you want to run tasks locally with a Timelock, consider changing `defaultRecorder()` function to always return `defaultTimelockRecorder()`
 
 Workflow:
 
 - Use RecordableContract, Recorder and TimelockStrategy classes to prepare transaction batch
+- [if running locally]:
+  - execute `npx hardhat --network mainnetFork dev:mine-block` task to bump the timelock
 - Queue transaction batch using Recorder
 - Approve transaction batch
   - With multisig (if running on production)

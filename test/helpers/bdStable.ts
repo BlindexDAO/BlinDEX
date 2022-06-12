@@ -2,36 +2,38 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import { to_d12 } from "../../utils/NumbersHelpers";
 import { getBdEu, getBdUs, getBgbp, getBxau } from "../../utils/DeployedContractsHelpers";
 import type { BDStable } from "../../typechain/BDStable";
+import { Recorder } from "../../utils/Recorder/Recorder";
+import { toRc } from "../../utils/Recorder/RecordableContract";
 
-export async function lockBdeuCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+export async function lockBdeuCrAt(hre: HardhatRuntimeEnvironment, targetCR: number, recorder: Recorder | null = null) {
   console.log("Lock BDEU CR at", targetCR);
   const bdEu = await getBdEu(hre);
-  await lockBdStableCrAt(targetCR, bdEu);
+  await lockBdStableCrAt(targetCR, bdEu, recorder);
   console.log("Lock BDEU completed!");
 }
 
-export async function lockBdusCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+export async function lockBdusCrAt(hre: HardhatRuntimeEnvironment, targetCR: number, recorder: Recorder | null = null) {
   console.log("Lock BDUS CR at", targetCR);
   const bdUs = await getBdUs(hre);
-  await lockBdStableCrAt(targetCR, bdUs);
+  await lockBdStableCrAt(targetCR, bdUs, recorder);
   console.log("Lock BDUS completed!");
 }
 
-export async function lockBxauCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+export async function lockBxauCrAt(hre: HardhatRuntimeEnvironment, targetCR: number, recorder: Recorder | null = null) {
   console.log("Lock bXAU CR at", targetCR);
   const bxau = await getBxau(hre);
-  await lockBdStableCrAt(targetCR, bxau);
+  await lockBdStableCrAt(targetCR, bxau, recorder);
   console.log("Lock bXAU completed!");
 }
 
-export async function lockBgbpCrAt(hre: HardhatRuntimeEnvironment, targetCR: number) {
+export async function lockBgbpCrAt(hre: HardhatRuntimeEnvironment, targetCR: number, recorder: Recorder | null = null) {
   console.log("Lock bGBP CR at", targetCR);
   const bgbp = await getBgbp(hre);
-  await lockBdStableCrAt(targetCR, bgbp);
+  await lockBdStableCrAt(targetCR, bgbp, recorder);
   console.log("Lock bGBP completed!");
 }
 
-async function lockBdStableCrAt(targetCR: number, bdStable: BDStable) {
+export async function lockBdStableCrAt(targetCR: number, bdStable: BDStable, recorder: Recorder | null) {
   if (targetCR < 0) {
     throw new Error("targetCR must >= 0");
   }
@@ -40,7 +42,11 @@ async function lockBdStableCrAt(targetCR: number, bdStable: BDStable) {
     throw new Error("targetCR must <= 1");
   }
 
-  await (await bdStable.lockCollateralRatioAt(to_d12(targetCR))).wait();
+  if (recorder) {
+    await toRc(bdStable, recorder).record.lockCollateralRatioAt(to_d12(targetCR));
+  } else {
+    await (await bdStable.lockCollateralRatioAt(to_d12(targetCR))).wait();
+  }
 }
 
 export async function toggleBdeuCrPaused(hre: HardhatRuntimeEnvironment) {
