@@ -35,7 +35,7 @@ describe("Chainlink besed Oracles", () => {
     expect(priceDecimal).to.be.lt(5000);
   });
 
-  it("should get btc/eth price", async () => {
+  it.only("should get btc/eth price", async () => {
     const ownerUser = await hre.ethers.getNamedSigner("DEPLOYER");
     const btcToEthOracle = (await hre.ethers.getContract("BtcToEthOracle", ownerUser)) as BtcToEthOracleChinlink;
 
@@ -45,6 +45,6 @@ describe("Chainlink besed Oracles", () => {
 
     console.log("BTC / ETH price: " + priceDecimal);
 
-    expect(priceDecimal).to.be.closeTo(12.0, 5);
+    expect(priceDecimal).to.be.closeTo(19.0, 5);
   });
 });
