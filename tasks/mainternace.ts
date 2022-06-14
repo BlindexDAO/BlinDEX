@@ -469,7 +469,7 @@ export function load() {
         const expectedBdx_d18 = expectedBdxValue_d18.mul(PRICE_PRECISION).div(bdxPrice_d12);
 
         const effectiveBdxCR_d12 = PRICE_PRECISION.mul(bdxSupply_d18).div(expectedBdx_d18);
-        console.log(`${symbol} efBDXCov: ${d12_ToNumber(effectiveBdxCR_d12.mul(100))}% | BDX supply: ${bdxSupplyString}`);
+        console.log(`${symbol} efBDXCov: ${d12_ToNumber(effectiveBdxCR_d12.mul(100)).toLocaleString()}% | BDX supply: ${bdxSupplyString}`);
       }
     }
   }
