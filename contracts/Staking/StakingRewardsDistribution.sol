@@ -268,6 +268,13 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         _;
     }
 
+    // This modifier allows the implementation contract to reach into proxy contract memory sloat
+    // and read the proxy admin address. This slot has a known address - defined in eip1967.
+    // The modifier is needed to secure an post-upgrade function executed by a deployment script.
+    // The script is executed by the deployer, but the upgrade itself transitions through the ProxyAdmin contract.
+    // Contract upgrade and post-upgrde function are executed in a single transaction. This prevents
+    // the contract form getting into an invalid state.
+    // Reference TransparentUpgradeableProxy implementation for deeper understanding
     modifier onlyProxyAdmin() {
         bytes32 proxyAdminSlot = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
         address proxyAdmin;
