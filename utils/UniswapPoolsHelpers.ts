@@ -188,7 +188,7 @@ export async function generateAllPaths(
       if (requiredTokensOut.includes(tokenAddressIn)) {
         continue;
       }
-      const pathsWithAmountOut = await generatePaths(hre, to_d18(1), tokenAddressIn, requiredTokenOut);
+      const pathsWithAmountOut = await generatePaths(hre, to_d18(1e-5), tokenAddressIn, requiredTokenOut);
       const paths = pathsWithAmountOut.map(pathWithAmountOut => pathWithAmountOut.path);
       allRequiredPaths.push(...paths);
     }

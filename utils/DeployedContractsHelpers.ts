@@ -138,19 +138,6 @@ export async function getAllBDStablePools(hre: HardhatRuntimeEnvironment): Promi
   return allStablePools;
 }
 
-export async function getAllExistingBDStablePools(hre: HardhatRuntimeEnvironment): Promise<BdStablePool[]> {
-  const allStablePools = [];
-
-  for (const symbol of getAllBDStablesSymbols()) {
-    if (symbol !== "bGPB" && symbol !== "bXAU") {
-      allStablePools.push(await getBDStableWbtcPool(hre, symbol));
-    }
-    allStablePools.push(await getBDStableWethPool(hre, symbol));
-  }
-
-  return allStablePools;
-}
-
 export function getDeployer(hre: HardhatRuntimeEnvironment) {
   return hre.ethers.getNamedSigner("DEPLOYER");
 }

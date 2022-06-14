@@ -1,11 +1,14 @@
+import { BdStablePool } from "./../../typechain/BdStablePool";
+import { BDStable } from "./../../typechain/BDStable";
 import { EXTERNAL_USD_STABLE } from "./../../utils/Constants";
 import { BigNumber } from "ethers";
 import hre from "hardhat";
-import { ZapMint } from "./../../typechain/ZapMint";
+import { ZapMint, ZapMintParametersStruct } from "./../../typechain/ZapMint";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import {
+  formatAddress,
   getAllBDStablePools,
   getBdEu,
   getBDStableWethPool,
@@ -16,16 +19,16 @@ import {
   getOnChainWethFiatPrice,
   getTreasurySigner,
   getUniswapRouter,
+  getUser1,
   getWbtc,
   getWeth
 } from "../../utils/DeployedContractsHelpers";
 import { d18_ToNumber, numberToBigNumberFixed, to_d12, to_d18, to_d8 } from "../../utils/NumbersHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import { generateAllPaths, getAllTokensAddresses } from "../../utils/UniswapPoolsHelpers";
-import { IERC20 } from "../../typechain/IERC20";
-import { BdStablePool } from "../../typechain/BdStablePool";
+import { chooseBestPath, generateAllPaths, generatePaths, getAllTokensAddresses } from "../../utils/UniswapPoolsHelpers";
 import { expectToFail } from "../helpers/common";
 import { lockBdusCrAt } from "../helpers/bdStable";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 function valueToSlippedValue(input: BigNumber) {
   const one_d12 = to_d12(1);
@@ -34,19 +37,45 @@ function valueToSlippedValue(input: BigNumber) {
   return input.mul(multiplier_d12).div(1e12);
 }
 
+async function getBestBdxPath(
+  hre: HardhatRuntimeEnvironment,
+  swapFrom: string,
+  amountIn: BigNumber,
+  collateralRatio: number,
+  stableToMint: string | BDStable,
+  bdstablePool: string | BdStablePool
+) {
+  if (collateralRatio === 1) {
+    return [];
+  }
+
+  const stable =
+    typeof stableToMint === "string" ? ((await hre.ethers.getContractAt("BDStable", formatAddress(hre, stableToMint))) as BDStable) : stableToMint;
+  const stablePool =
+    typeof bdstablePool === "string"
+      ? ((await hre.ethers.getContractAt("BDStablePool", formatAddress(hre, bdstablePool))) as BdStablePool)
+      : bdstablePool;
+  const bdxInStablePrice_d12 = await stable.BDX_price_d12();
+  const collateralInStablePrice_d12 = await stablePool.getCollateralPrice_d12();
+  const bdxPriceInCollateral_d12 = BigNumber.from(1e12).mul(collateralInStablePrice_d12).div(bdxInStablePrice_d12);
+  const bdxAmountIn = amountIn
+    .mul(to_d8(1 - collateralRatio))
+    .div(to_d8(collateralRatio))
+    .mul(bdxPriceInCollateral_d12)
+    .div(1e12);
+
+  const bdx = await getBdx(hre);
+  const allPossibleZapMintBdxPaths = await generatePaths(hre, bdxAmountIn, swapFrom, bdx.address);
+  const bdxBestPath = await chooseBestPath(allPossibleZapMintBdxPaths);
+  return bdxBestPath.path;
+}
+
 chai.use(cap);
 
 chai.use(solidity);
 const { expect } = chai;
 
-//todo
-//add test for collateral ratio < 100% (mint which use bdx)
-//use one initialized zapmint object for all tests..? (alternatively - move initialization to private method)
-//move common variables to constants (like deadline, router)
-//add test for zap minting directly from ETH/WBTC (ETH/WBTC in path[0], path.length = 1)
-//add tests for all require statements
-//add test for reentrancy?
-describe("Zap mint", () => {
+describe.only("Zap mint", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
     const deployer = await getDeployer(hre);
@@ -64,6 +93,7 @@ describe("Zap mint", () => {
 
   it("Should zap mint for every possible non-singular path", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const bdx = await getBdx(hre);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const weth = await getWeth(hre);
@@ -72,13 +102,13 @@ describe("Zap mint", () => {
     const wbtc = await getWbtc(hre);
     const collateralTokens = [weth.address, wbtc.address];
     const excludedInputTokens = [bdx.address, weth.address, wbtc.address];
-    const allPossibleZapMintPaths = await generateAllPaths(hre, excludedInputTokens, collateralTokens);
+    const allPossibleZapMintCollateralPaths = await generateAllPaths(hre, excludedInputTokens, collateralTokens);
 
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
 
     const allBDStableCollateralPools = await getAllBDStablePools(hre);
 
-    for (const possibleZapMintPath of allPossibleZapMintPaths) {
+    for (const possibleZapMintPath of allPossibleZapMintCollateralPaths) {
       const swapFrom = possibleZapMintPath[0];
       const swapTo = possibleZapMintPath[possibleZapMintPath.length - 1];
       const poolsWithProperCollateral: BdStablePool[] = [];
@@ -92,26 +122,29 @@ describe("Zap mint", () => {
 
       for (const poolWithProperCollateral of poolsWithProperCollateral) {
         const stableExpectedFromMintAddress = await poolWithProperCollateral.BDSTABLE();
-        const stableExpectedFromMint = (await hre.ethers.getContractAt("IERC20", stableExpectedFromMintAddress)) as IERC20;
+        const stableExpectedFromMint = await getERC20(hre, stableExpectedFromMintAddress);
         const tokenToApproveAndTranfer = await getERC20(hre, swapFrom);
         const erc20 = await getERC20(hre, swapFrom);
         const decimals = await erc20.decimals();
-        const amountIn = numberToBigNumberFixed(0.01, decimals);
+        const amountIn = numberToBigNumberFixed(0.001, decimals);
+        const bdxBestPath = await getBestBdxPath(hre, swapFrom, amountIn, 1, stableExpectedFromMintAddress, poolWithProperCollateral);
 
         const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
-        await tokenToApproveAndTranfer.approve(zapMintTestContract.address, amountIn);
+        await tokenToApproveAndTranfer.connect(user).approve(zapMintTestContract.address, amountIn);
         await zapMintTestContract.addTokenSupportForMinting(possibleZapMintPath[0]);
-        await zapMintTestContract.mintUniswapRouterOnly(
-          0,
-          0,
-          possibleZapMintPath[possibleZapMintPath.length - 1] === weth.address,
-          stableExpectedFromMintAddress,
-          poolWithProperCollateral.address,
-          possibleZapMintPath,
-          amountIn,
-          router.address,
-          currentBlock.timestamp + 1e5
-        );
+
+        const parameters = {
+          amountOutMin: 0,
+          bdstableToMintAddress: stableExpectedFromMintAddress,
+          bdstablePoolAddress: poolWithProperCollateral.address,
+          collateralSwapPath: possibleZapMintPath,
+          bdxSwapPath: bdxBestPath,
+          amountIn: amountIn,
+          router: router.address,
+          deadline: currentBlock.timestamp + 1e5
+        } as ZapMintParametersStruct;
+        await zapMintTestContract.connect(user).zapMint(parameters);
+
         const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
         const stableDiff = deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint);
         expect(stableDiff).to.be.gt(BigNumber.from(0), "Zap mint did not mint anything");
@@ -119,71 +152,77 @@ describe("Zap mint", () => {
     }
   });
 
-  it("Should mint supported direct path", async () => {
+  it.only("Should mint supported direct path", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
     const swapTo = await getWeth(hre);
-    const path = [swapFrom.address, swapTo.address];
+    const collateralPath = [swapFrom.address, swapTo.address];
     const router = await getUniswapRouter(hre);
     const decimals = await swapFrom.decimals();
-    const amountIn = numberToBigNumberFixed(1, decimals);
+    const amountIn = numberToBigNumberFixed(0.001, decimals);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
+    const stableExpectedFromMint = await getBdUs(hre);
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, 1, stableExpectedFromMint, wethBdusPool);
     await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
 
-    await swapFrom.approve(zapMintTestContract.address, amountIn);
+    await swapFrom.connect(user).approve(zapMintTestContract.address, amountIn);
 
-    const stableExpectedFromMint = await getBdUs(hre);
     const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
-    await zapMintTestContract.mintUniswapRouterOnly(
-      0,
-      0,
-      true,
-      stableExpectedFromMint.address,
-      wethBdusPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
+
+    const parameters = {
+      amountOutMin: 0,
+      bdstableToMintAddress: stableExpectedFromMint.address,
+      bdstablePoolAddress: wethBdusPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    await zapMintTestContract.connect(user).zapMint(parameters);
 
     const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
     const stableDiff = deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint);
     expect(stableDiff).to.be.gt(BigNumber.from(0), "Zap mint did not mint anything");
   });
 
-  it("Should mint supported non-direct path", async () => {
+  it("Should mint supported non-direct path when CR = 100%", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = EXTERNAL_USD_STABLE[hre.network.name];
     const midToken = await getBdUs(hre);
     const swapTo = await getWeth(hre);
     console.log("path: " + swapFrom.address + " " + swapTo.address);
-    const path = [swapFrom.address, midToken.address, swapTo.address];
+    const collateralPath = [swapFrom.address, midToken.address, swapTo.address];
     const router = await getUniswapRouter(hre);
     const decimals = swapFrom.decimals;
-    const amountIn = numberToBigNumberFixed(0.01, decimals);
+    const amountIn = numberToBigNumberFixed(0.001, decimals);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const wethBdeuPool = await getBDStableWethPool(hre, "BDEU");
     const stableExpectedFromMint = await getBdEu(hre);
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, 1, stableExpectedFromMint, wethBdeuPool);
     await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
 
     const tokenIn = await getERC20(hre, swapFrom.address);
-    await tokenIn.approve(zapMintTestContract.address, amountIn);
+    await tokenIn.connect(user).approve(zapMintTestContract.address, amountIn);
 
     const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
-    await zapMintTestContract.mintUniswapRouterOnly(
-      0,
-      0,
-      true,
-      stableExpectedFromMint.address,
-      wethBdeuPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
+
+    const parameters = {
+      amountOutMin: 0,
+      bdstableToMintAddress: stableExpectedFromMint.address,
+      bdstablePoolAddress: wethBdeuPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    await zapMintTestContract.connect(user).zapMint(parameters);
 
     const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
     const stableDiff = deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint);
@@ -192,169 +231,124 @@ describe("Zap mint", () => {
 
   it("Should not mint when zap mint is paused", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
-    await zapMintTestContract.connect(deployer).toggleZapMinting();
+    await zapMintTestContract.connect(deployer).pause();
     const swapFrom = await getBdEu(hre);
     const swapTo = await getWeth(hre);
-    const path = [swapFrom.address, swapTo.address];
+    const collateralPath = [swapFrom.address, swapTo.address];
     const router = await getUniswapRouter(hre);
     const decimals = await swapFrom.decimals();
     const amountIn = numberToBigNumberFixed(1, decimals);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
     const bdus = await getBdUs(hre);
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, 1, bdus, wethBdusPool);
 
-    const mintPromise = zapMintTestContract.mintUniswapRouterOnly(
-      to_d18(0),
-      0,
-      true,
-      bdus.address,
-      wethBdusPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
-    await expectToFail(() => mintPromise, "ZapMint: Contract is paused");
+    const parameters = {
+      amountOutMin: 0,
+      bdstableToMintAddress: bdus.address,
+      bdstablePoolAddress: wethBdusPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    const mintPromise = zapMintTestContract.connect(user).zapMint(parameters);
+    await expectToFail(() => mintPromise, "Pausable: paused");
   });
 
   it("Should not mint not supported token", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
     const swapTo = await getWeth(hre);
-    const path = [swapFrom.address, swapTo.address];
+    const collateralPath = [swapFrom.address, swapTo.address];
     const router = await getUniswapRouter(hre);
     const decimals = await swapFrom.decimals();
     const amountIn = numberToBigNumberFixed(1, decimals);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
     const bdus = await getBdUs(hre);
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, 1, bdus, wethBdusPool);
 
-    const mintPromise = zapMintTestContract.mintUniswapRouterOnly(
-      to_d18(0),
-      0,
-      true,
-      bdus.address,
-      wethBdusPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
-    await expectToFail(() => mintPromise, "ZapMint: Token is not supported for zap minting");
+    const tokenIn = await getERC20(hre, swapFrom.address);
+    await tokenIn.connect(user).approve(zapMintTestContract.address, amountIn);
+
+    const parameters = {
+      amountOutMin: 0,
+      bdstableToMintAddress: bdus.address,
+      bdstablePoolAddress: wethBdusPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    const mintPromise = zapMintTestContract.connect(user).zapMint(parameters);
+    await expectToFail(() => mintPromise, "ZapMint: Collateral path token is not supported for zap minting");
   });
 
-  it("Should not mint supported token when 0% < collateral ratio < 100% and bdx was not provided", async () => {
+  it("Should mint supported token when 0% < collateral ratio < 100%", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
     const swapTo = await getWeth(hre);
-    const path = [swapFrom.address, swapTo.address];
+    const collateralPath = [swapFrom.address, swapTo.address];
     const router = await getUniswapRouter(hre);
     const decimals = await swapFrom.decimals();
-    const amountIn = numberToBigNumberFixed(1, decimals);
+    const amountIn = numberToBigNumberFixed(0.001, decimals);
     const currentBlock = await hre.ethers.provider.getBlock("latest");
     const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
     await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
-
-    await swapFrom.approve(zapMintTestContract.address, amountIn);
 
     const cr = 0.7;
     await lockBdusCrAt(hre, cr);
 
     const stableExpectedFromMint = await getBdUs(hre);
-    const mintPromise = zapMintTestContract.mintUniswapRouterOnly(
-      0,
-      0,
-      true,
-      stableExpectedFromMint.address,
-      wethBdusPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, cr, stableExpectedFromMint, wethBdusPool);
 
-    await expectToFail(() => mintPromise, "Not enough BDX inputted");
-  });
-
-  it("Should mint supported token when 0% < collateral ratio < 100% and bdx was provided", async () => {
-    const deployer = await getDeployer(hre);
-    const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
-    const swapFrom = await getBdEu(hre);
-    const swapTo = await getWeth(hre);
-    const path = [swapFrom.address, swapTo.address];
-    const router = await getUniswapRouter(hre);
-    const decimals = await swapFrom.decimals();
-    const amountIn = numberToBigNumberFixed(0.01, decimals);
-    const currentBlock = await hre.ethers.provider.getBlock("latest");
-    const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
-    await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
-
-    const bdx = await getBdx(hre);
-
-    const cr = 0.7;
-    await lockBdusCrAt(hre, cr);
-
-    const bdus = await getBdUs(hre);
-    const bdxInUsdPrice_d12 = await bdus.BDX_price_d12();
-    const wethInUsdPrice_d12 = await wethBdusPool.getCollateralPrice_d12();
-    const bdxPriceInWeth_d12 = BigNumber.from(1e12).mul(wethInUsdPrice_d12).div(bdxInUsdPrice_d12);
-
-    const bdxInMax = amountIn
-      .mul(to_d8(1 - cr))
-      .div(to_d8(cr))
-      .mul(bdxPriceInWeth_d12)
-      .div(1e12); // the remaining 30% of value
-
-    const stableExpectedFromMint = await getBdUs(hre);
-
-    await bdx.approve(zapMintTestContract.address, bdxInMax.mul(2));
-    await swapFrom.approve(zapMintTestContract.address, amountIn);
+    await swapFrom.connect(user).approve(zapMintTestContract.address, amountIn);
 
     const bdeuBalanceBeforeMinting_d18 = await swapFrom.balanceOf(deployer.address);
     const bdusBalanceBeforeMinting_d18 = await stableExpectedFromMint.balanceOf(deployer.address);
-    const bdxBalanceBeforeMinting_d18 = await bdx.balanceOf(deployer.address);
 
-    await zapMintTestContract.mintUniswapRouterOnly(
-      bdxInMax,
-      0,
-      true,
-      stableExpectedFromMint.address,
-      wethBdusPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
+    const parameters = {
+      amountOutMin: 0,
+      bdstableToMintAddress: stableExpectedFromMint.address,
+      bdstablePoolAddress: wethBdusPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    await zapMintTestContract.connect(user).zapMint(parameters);
 
     const bdeuBalanceAfterMinting_d18 = await swapFrom.balanceOf(deployer.address);
     const bdusBalanceAfterMinting_d18 = await stableExpectedFromMint.balanceOf(deployer.address);
-    const bdxBalanceAfterMinting_d18 = await bdx.balanceOf(deployer.address);
 
     expect(d18_ToNumber(bdeuBalanceAfterMinting_d18)).to.be.closeTo(
       d18_ToNumber(bdeuBalanceBeforeMinting_d18.sub(amountIn)),
       0.001,
-      "Deployer should spend amountIn input token"
+      "User should spend amountIn input token"
     );
     expect(d18_ToNumber(bdusBalanceAfterMinting_d18)).to.be.greaterThan(
       d18_ToNumber(bdusBalanceBeforeMinting_d18),
-      "Deployer should have more minted token after mint"
-    );
-    expect(d18_ToNumber(bdxBalanceAfterMinting_d18)).to.be.closeTo(
-      d18_ToNumber(bdxBalanceBeforeMinting_d18.sub(bdxInMax)),
-      0.001,
-      "Deployer should spend bdxInMax input token"
+      "User should have more minted token after mint"
     );
   });
 
   it("Should swap supported token when mint result satisfies minAmountOut", async () => {
     const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = await getBdEu(hre);
     const swapTo = await getWeth(hre);
-    const path = [swapFrom.address, swapTo.address];
+    const collateralPath = [swapFrom.address, swapTo.address];
     const router = await getUniswapRouter(hre);
     const decimals = await swapFrom.decimals();
     const amountIn = numberToBigNumberFixed(1, decimals);
@@ -362,33 +356,73 @@ describe("Zap mint", () => {
     const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
     await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
 
-    await swapFrom.approve(zapMintTestContract.address, amountIn);
+    await swapFrom.connect(user).approve(zapMintTestContract.address, amountIn);
 
-    const swapsAmountsOut = await router.getAmountsOut(amountIn, path);
+    const swapsAmountsOut = await router.getAmountsOut(amountIn, collateralPath);
     const swapAmountOut = swapsAmountsOut[swapsAmountsOut.length - 1];
     const stableExpectedFromMint = await getBdUs(hre);
     const wethPriceInUsd_d18 = to_d18((await getOnChainWethFiatPrice(hre, "EUR")).price);
-    console.log("wethPriceInUsd_d18: " + d18_ToNumber(wethPriceInUsd_d18));
-    console.log("swapAmountOut: " + d18_ToNumber(swapAmountOut));
     const mintMinAmountOut = wethPriceInUsd_d18.div(1e9).mul(swapAmountOut).div(1e9);
-    console.log("mintMinamountout: " + d18_ToNumber(mintMinAmountOut));
     const slippedMintMinAmountOut = valueToSlippedValue(mintMinAmountOut);
-    console.log("slippedMintMinAmountOut: " + d18_ToNumber(slippedMintMinAmountOut));
     const deployerStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(deployer.address);
-    await zapMintTestContract.mintUniswapRouterOnly(
-      0,
-      mintMinAmountOut,
-      true,
-      stableExpectedFromMint.address,
-      wethBdusPool.address,
-      path,
-      amountIn,
-      router.address,
-      currentBlock.timestamp + 1e5
-    );
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, 1, stableExpectedFromMint, wethBdusPool);
+
+    const parameters = {
+      amountOutMin: slippedMintMinAmountOut,
+      bdstableToMintAddress: stableExpectedFromMint.address,
+      bdstablePoolAddress: wethBdusPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    await zapMintTestContract.connect(user).zapMint(parameters);
 
     const deployerStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(deployer.address);
     const stableDiff = d18_ToNumber(deployerStableBalanceAfterMint.sub(deployerStableBalanceBeforeMint));
-    expect(stableDiff).to.be.greaterThan(d18_ToNumber(mintMinAmountOut), "Deployer should get minimal expected amount out of minted bdstable");
+    expect(stableDiff).to.be.greaterThan(d18_ToNumber(mintMinAmountOut), "User should get minimal expected amount out of minted bdstable");
+  });
+
+  it("Should not swap supported token when mint result does not satisfy minAmountOut", async () => {
+    const deployer = await getDeployer(hre);
+    const user = await getUser1(hre);
+    const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
+    const swapFrom = await getBdEu(hre);
+    const swapTo = await getWeth(hre);
+    const collateralPath = [swapFrom.address, swapTo.address];
+    const router = await getUniswapRouter(hre);
+    const decimals = await swapFrom.decimals();
+    const amountIn = numberToBigNumberFixed(1, decimals);
+    const currentBlock = await hre.ethers.provider.getBlock("latest");
+    const wethBdusPool = await getBDStableWethPool(hre, "BDUS");
+    await zapMintTestContract.addTokenSupportForMinting(swapFrom.address);
+
+    await swapFrom.connect(user).approve(zapMintTestContract.address, amountIn);
+
+    const swapsAmountsOut = await router.getAmountsOut(amountIn, collateralPath);
+    const swapAmountOut = swapsAmountsOut[swapsAmountsOut.length - 1];
+    const stableExpectedFromMint = await getBdUs(hre);
+    const wethPriceInUsd_d18 = to_d18((await getOnChainWethFiatPrice(hre, "EUR")).price);
+    const mintMinAmountOut = wethPriceInUsd_d18.div(1e9).mul(swapAmountOut).div(1e9).sub(wethPriceInUsd_d18.mul(0.1));
+
+    // const bdeuBalanceBeforeMinting_d18 = await swapFrom.balanceOf(deployer.address);
+    const bdxPath = await getBestBdxPath(hre, swapFrom.address, amountIn, 1, stableExpectedFromMint, wethBdusPool);
+
+    const parameters = {
+      amountOutMin: mintMinAmountOut,
+      bdstableToMintAddress: stableExpectedFromMint.address,
+      bdstablePoolAddress: wethBdusPool.address,
+      collateralSwapPath: collateralPath,
+      bdxSwapPath: bdxPath,
+      amountIn: amountIn,
+      router: router.address,
+      deadline: currentBlock.timestamp + 1e5
+    } as ZapMintParametersStruct;
+    const mintPromise = zapMintTestContract.connect(user).zapMint(parameters);
+
+    // const bdeuBalanceAfterMinting_d18 = await swapFrom.balanceOf(deployer.address);
+    await expectToFail(() => mintPromise, "ZapMint: Slippage limit reached");
+    // expect(d18_ToNumber(bdeuBalanceBeforeMinting_d18)).to.be.closeTo(d18_ToNumber(bdeuBalanceAfterMinting_d18), 0.0001, "Input token should not be spent if mint fails");
   });
 });
