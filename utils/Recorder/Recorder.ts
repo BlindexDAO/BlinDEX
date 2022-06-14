@@ -45,14 +45,14 @@ export class Recorder {
 
 type DefaultRecorderParams = {
   executionStartInDays: number | null;
-  singer: SignerWithAddress | null;
+  signer: SignerWithAddress | null;
 };
 
-export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | undefined = undefined) {
+export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params?: DefaultRecorderParams) {
   if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
     return new Recorder(
       new ImmediateExecutionStrategy({
-        signer: params?.singer ?? (await getDeployer(hre))
+        signer: params?.signer ?? (await getDeployer(hre))
       })
     );
   } else {
@@ -60,7 +60,7 @@ export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: De
   }
 }
 
-export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | undefined = undefined) {
+export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params?: DefaultRecorderParams) {
   if (hre.network.name === "mainnetFork") {
     // on local env blocks are mined non-deterministically
     // we need to mine the block right before we queue a timelock transaction
@@ -74,7 +74,7 @@ export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, pa
   // the default use of the timlock recorder is to queue the transactions
   // be default they will be executed by the multisig
   // if we want to execute the approved transactions batch from terminal we should specify the signer explicitly (the executor)
-  const signer = params?.singer ?? (await getProposer(hre));
+  const signer = params?.signer ?? (await getProposer(hre));
 
   const timelock = (await getTimelock(hre)).connect(signer);
 

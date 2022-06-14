@@ -33,6 +33,7 @@ export function load() {
     const contracts = await getContractsToTransferOwnership(hre);
 
     for (const contract of contracts) {
+      console.log(`Transfering ownership of ${contract.address} to ${timelock.address}`);
       await (await contract.connect(deployer).transferOwnership(timelock.address)).wait();
     }
 
@@ -45,9 +46,10 @@ export function load() {
     const deployer = await getDeployer(hre);
     const proposer = await getProposer(hre);
 
-    const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, singer: proposer });
+    const recorder = await defaultTimelockRecorder(hre, { executionStartInDays: null, signer: proposer });
 
     for (const contract of contracts) {
+      console.log(`Transfering ownership of ${contract.address} to ${deployer.address}`);
       await toRc(contract, recorder).record.transferOwnership(deployer.address);
     }
 
@@ -117,6 +119,7 @@ export function load() {
       for (const contract of contracts) {
         const contractRecordable = toRc(contract, recorder);
 
+        console.log(`Changing updater for ${contract.address} to ${newUpdater.address}`);
         await contractRecordable.record.setUpdater(newUpdater);
       }
 
@@ -145,6 +148,7 @@ export function load() {
         const contractRecordable = toRc(contract, recorder);
 
         if (!(await isSameTreasury(treasury, contractRecordable))) {
+          console.log(`Changing treasury for ${contract.address} to ${treasury.address}`);
           await contractRecordable.record.setTreasury(treasury);
         }
       }

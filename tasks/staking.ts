@@ -43,11 +43,10 @@ export function load() {
       const stakingRewardContract = toRc((await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards, recorder);
       if (!(await stakingRewardContract.paused())) {
         await stakingRewardContract.record.pause();
-        console.log(`StakingPool ${stakingRewardAddress} is now paused!`);
+        await recorder.execute();
       } else {
         console.log(`StakingPool ${stakingRewardAddress} is already paused`);
       }
-      await recorder.execute();
     });
 
   task("staking:single:unpause")
@@ -58,11 +57,10 @@ export function load() {
       const stakingRewardContract = toRc((await hre.ethers.getContractAt("StakingRewards", stakingRewardAddress)) as StakingRewards, recorder);
       if (await stakingRewardContract.paused()) {
         await stakingRewardContract.record.unpause();
+        await recorder.execute();
       } else {
         console.log(`StakingPool ${stakingRewardAddress} is already unpaused`);
       }
-
-      await recorder.execute();
     });
 
   task("staking:all:pause").setAction(async (args, hre) => {
@@ -70,11 +68,11 @@ export function load() {
 
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
-      const stikingRecordable = toRc(staking, recorder);
-      if (!(await stikingRecordable.paused())) {
-        await stikingRecordable.record.pause();
+      const recordableStakingReward = toRc(staking, recorder);
+      if (!(await recordableStakingReward.paused())) {
+        await recordableStakingReward.record.pause();
       } else {
-        console.log("already paused", stikingRecordable.address);
+        console.log("already paused", recordableStakingReward.address);
       }
     }
 
@@ -86,11 +84,11 @@ export function load() {
 
     const stakings = await getAllBDStableStakingRewards(hre);
     for (const staking of stakings) {
-      const stikingRecordable = toRc(staking, recorder);
-      if (await stikingRecordable.paused()) {
-        await stikingRecordable.record.unpause();
+      const stakingRecordable = toRc(staking, recorder);
+      if (await stakingRecordable.paused()) {
+        await stakingRecordable.record.unpause();
       } else {
-        console.log("already unpaused", stikingRecordable.address);
+        console.log("already unpaused", stakingRecordable.address);
       }
     }
 
@@ -129,8 +127,7 @@ export function load() {
       const recorder = await defaultRecorder(hre);
 
       const stakingRewardsDistribution = toRc(await getStakingRewardsDistribution(hre), recorder);
-      const numberOfStakingPools = rewardsBeforeCollect.length;
-      await stakingRewardsDistribution.record.collectAllRewards(0, numberOfStakingPools - 1);
+      await stakingRewardsDistribution.record.collectAllRewards(0, 100);
 
       const rewardsAfterCollect = await getStakingPoolsRewardPerToken(hre);
       console.log("Rewards after sync", rewardsAfterCollect);

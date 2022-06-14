@@ -66,7 +66,7 @@ export function load() {
     .setAction(async ({ btcusd, btceth, eurusd }, hre) => {
       const signer = await getBot(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: signer });
 
       if (hre.network.name === "rsk") {
         console.log("starting sovryn swap price oracles updates");
@@ -108,7 +108,7 @@ export function load() {
 
       const signer = await getBot(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: signer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: signer });
 
       const oracleBtcEth = toRc((await hre.ethers.getContract(constants.PriceFeedContractNames.BTC_ETH, signer)) as SovrynSwapPriceFeed, recorder);
       await oracleBtcEth.record.updateOracleWithVerification(to_d12(btceth));
@@ -127,7 +127,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: deployer });
 
       const oracleEurUsd = toRc(
         (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
@@ -153,7 +153,7 @@ export function load() {
 
       const deployer = await getDeployer(hre);
 
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: deployer });
 
       const oracleEurUsd = toRc(
         (await hre.ethers.getContract(constants.PriceFeedContractNames.EUR_USD, deployer)) as FiatToFiatPseudoOracleFeed,
@@ -221,7 +221,7 @@ export function load() {
       const pools = await getPools(hre);
 
       const deployer = await getDeployer(hre);
-      const recorder = await defaultRecorder(hre, { executionStartInDays: null, singer: deployer });
+      const recorder = await defaultRecorder(hre, { executionStartInDays: null, signer: deployer });
 
       console.log("setting consultLeniency to: " + newVal);
 

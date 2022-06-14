@@ -5,6 +5,7 @@ Preparation
 - Deploy Timelock contract
 - Transfer Timelock contract ownership to multisig
 - Transfer contracts' ownerships to Timelock
+- If you want to run tasks locally with a Timelock, consider changing `defaultRecorder()` function to always return `defaultTimelockRecorder()`
 
 Workflow:
 
