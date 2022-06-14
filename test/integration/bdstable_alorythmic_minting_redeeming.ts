@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import cap from "chai-as-promised";
 import { d12_ToNumber, diffPct, to_d12 } from "../../utils/NumbersHelpers";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import { getBdEu, getBdx, getWeth, getBdEuWethPool, getUser1, getDeployer } from "../../utils/DeployedContractsHelpers";
 import { lockBdeuCrAt } from "../helpers/bdStable";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";

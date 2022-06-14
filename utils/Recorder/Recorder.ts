@@ -4,7 +4,7 @@ import { getDeployer, getProposer, getTimelock } from "../DeployedContractsHelpe
 import { Strategy } from "./strategies/Strategy.interface";
 import { TimelockStrategy } from "./strategies/TimelockStrategy";
 import { ImmediateExecutionStrategy } from "./strategies/ImmediateExecutionStrategy";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import { blockTimeSeconds, chainNames } from "../Constants";
 import { Signer } from "ethers";
 
