@@ -45,6 +45,6 @@ describe("Chainlink besed Oracles", () => {
 
     console.log("BTC / ETH price: " + priceDecimal);
 
-    expect(priceDecimal).to.be.closeTo(12.0, 5);
+    expect(priceDecimal).to.be.closeTo(19.0, 5);
   });
 });

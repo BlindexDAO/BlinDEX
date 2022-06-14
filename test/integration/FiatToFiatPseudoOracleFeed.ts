@@ -3,7 +3,7 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import hre, { ethers } from "hardhat";
 import { getDeployer } from "../../utils/DeployedContractsHelpers";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import type { FiatToFiatPseudoOracleFeed } from "../../typechain/FiatToFiatPseudoOracleFeed";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { to_d12 } from "../../utils/NumbersHelpers";
