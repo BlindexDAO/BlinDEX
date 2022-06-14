@@ -445,6 +445,11 @@ export function load() {
     ]);
 
     const bdxSupply_d18 = (await bdx.balanceOf(formatAddress(hre, stable.address))).sub(unclaimedPoolsBDX);
+    const bdxSupplyString = d18_ToNumber(bdxSupply_d18).toLocaleString(undefined, {
+      minimumFractionDigits: 5,
+      maximumFractionDigits: 5,
+      useGrouping: true
+    });
 
     const usedCr_d12 = cr_d12.gt(eCr) ? eCr : cr_d12;
     const COLLATERAL_RATIO_MAX = BigNumber.from(1e12);
@@ -455,16 +460,16 @@ export function load() {
 
     // If we don't need BDX, the coverage ratio is 100%
     if (expectedBdxValue_d18.eq(0)) {
-      console.log(`${symbol} efBDXCov: 100% | BDX supply: ${d18_ToNumber(bdxSupply_d18)}`);
+      console.log(`${symbol} efBDXCov: 100% | BDX supply: ${bdxSupplyString}`);
     } else {
       // BDX hit rock bottom
       if (bdxPrice_d12.eq(0)) {
-        console.log(`${symbol} efBDXCov: 0% | BDX supply: ${d18_ToNumber(bdxSupply_d18)}`);
+        console.log(`${symbol} efBDXCov: 0% | BDX supply: ${bdxSupplyString}`);
       } else {
         const expectedBdx_d18 = expectedBdxValue_d18.mul(PRICE_PRECISION).div(bdxPrice_d12);
 
         const effectiveBdxCR_d12 = PRICE_PRECISION.mul(bdxSupply_d18).div(expectedBdx_d18);
-        console.log(`${symbol} efBDXCov: ${d12_ToNumber(effectiveBdxCR_d12.mul(100))}% | BDX supply: ${d18_ToNumber(bdxSupply_d18)}`);
+        console.log(`${symbol} efBDXCov: ${d12_ToNumber(effectiveBdxCR_d12.mul(100))}% | BDX supply: ${bdxSupplyString}`);
       }
     }
   }
