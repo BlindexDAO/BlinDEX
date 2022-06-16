@@ -56,6 +56,8 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     // There needs to be a time interval that this can be called. Otherwise it can be called multiple times per expansion.
     uint256 public refreshCollateralRatio_last_call_time; // Last time the collateral ration was refreshed function was executed
 
+    address public emergencyExecutor;
+
     /* ========== MODIFIERS ========== */
 
     modifier onlyPools() {
@@ -65,6 +67,11 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
 
     modifier onlyOwnerOrPool() {
         require(msg.sender == owner() || bdstable_pools[msg.sender] == true, "You are not the owner or a pool");
+        _;
+    }
+
+    modifier onlyOwnerOrEmergencyExecutor() {
+        require(msg.sender == owner() || msg.sender == emergencyExecutor, "BDStable: You are not the owner or an emergency executor");
         _;
     }
 
@@ -350,13 +357,13 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
         emit PriceBandSet(_price_band_d12);
     }
 
-    function toggleCollateralRatioPaused() external onlyOwner {
+    function toggleCollateralRatioPaused() external onlyOwnerOrEmergencyExecutor {
         collateral_ratio_paused = !collateral_ratio_paused;
 
         emit CollateralRatioPausedToggled(collateral_ratio_paused);
     }
 
-    function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyOwner {
+    function lockCollateralRatioAt(uint256 wantedCR_d12) external onlyOwnerOrEmergencyExecutor {
         require(wantedCR_d12 <= BdPoolLibrary.COLLATERAL_RATIO_MAX, "CR must be <0;1>");
 
         global_collateral_ratio_d12 = wantedCR_d12;
@@ -368,6 +375,11 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     function setTreasury(address _treasury) external onlyOwner {
         treasury = _treasury;
         emit TreasuryChanged(_treasury);
+    }
+
+    function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
+        emergencyExecutor = _emergencyExecutor;
+        emit EmergencyExecutorSet(_emergencyExecutor);
     }
 
     function setMinimumSwapsDelayInBlocks(uint256 _minimumMintRedeemDelayInBlocks) external onlyOwner {
@@ -420,4 +432,5 @@ contract BDStable is ERC20Upgradeable, OwnableUpgradeable {
     event CollateralRatioLocked(uint256 lockedCR_d12);
     event MinimumMintRedeemDelayInBlocksSet(uint256 minimumMintRedeemDelayInBlocks);
     event TreasuryChanged(address newTreasury);
+    event EmergencyExecutorSet(address newEmergencyExecutor);
 }

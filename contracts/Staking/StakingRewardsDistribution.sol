@@ -44,6 +44,11 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
+    bool public isPaused;
+    address public emergencyExecutor;
+
+    mapping(address => bool) public poolsSet;
+
     function initialize(
         address _rewardsToken,
         address _vesting,
@@ -105,13 +110,14 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         require(_stakingRewardsAddresses.length == _stakingRewardsWeights.length, "Pools addresses and weights lengths should be the same");
 
         for (uint256 i = 0; i < _stakingRewardsAddresses.length; i++) {
-            if (stakingRewardsWeights[_stakingRewardsAddresses[i]] == 0) {
+            if (!poolsSet[_stakingRewardsAddresses[i]]) {
                 // to avoid duplicates
                 stakingRewardsAddresses.push(_stakingRewardsAddresses[i]);
             }
 
             stakingRewardsWeightsTotal -= stakingRewardsWeights[_stakingRewardsAddresses[i]]; // to support override
             stakingRewardsWeights[_stakingRewardsAddresses[i]] = _stakingRewardsWeights[i];
+            poolsSet[_stakingRewardsAddresses[i]] = true;
             stakingRewardsWeightsTotal += _stakingRewardsWeights[i];
             emit PoolRegistered(_stakingRewardsAddresses[i], _stakingRewardsWeights[i]);
         }
@@ -131,6 +137,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
             if (stakingRewardsAddresses[i] == pool) {
                 stakingRewardsAddresses[i] = stakingRewardsAddresses[stakingRewardsAddresses.length - 1];
                 stakingRewardsAddresses.pop();
+                delete poolsSet[pool];
 
                 emit PoolRemoved(pool);
                 return;
@@ -139,6 +146,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     function collectAllRewards(uint256 from, uint256 to) external {
+        require(!isPaused, "StakingRewardsDistribution: Contract is paused");
+
         to = to < stakingRewardsAddresses.length ? to : stakingRewardsAddresses.length;
 
         uint256 totalFee;
@@ -182,6 +191,10 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         return (reward * (HUNDRED_PERCENT - vestingRewardRatio_percent)) / HUNDRED_PERCENT;
     }
 
+    function getStakingRewardsAddressesLength() external view returns (uint256) {
+        return stakingRewardsAddresses.length;
+    }
+
     function releaseReward(
         address to,
         uint256 rewardToRelease,
@@ -209,8 +222,67 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         emit RewardFeeChanged(_rewardFee_d12);
     }
 
+    function toggleIsPaused() external onlyOwnerOrEmergencyExecutor {
+        isPaused = !isPaused;
+        emit IsPausedToggled(isPaused);
+    }
+
+    function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
+        emergencyExecutor = _emergencyExecutor;
+        emit EmergencyExecutorSet(_emergencyExecutor);
+    }
+
+    // a fix to duplicated pools created due a former bug, it can be removed in the future
+    function removeDuplicatePool(uint256 indexToKeep, uint256 indexToRemove) external onlyOwner {
+        require(indexToKeep != indexToRemove, "StakingRewardsDistribution: Index to keep must be different than index to remove");
+        require(
+            stakingRewardsAddresses[indexToKeep] != address(0) && stakingRewardsAddresses[indexToRemove] != address(0),
+            "StakingRewardsDistribution: Both indices must point to an existing pool"
+        );
+        require(
+            stakingRewardsAddresses[indexToKeep] == stakingRewardsAddresses[indexToRemove],
+            "StakingRewardsDistribution: index to keep and index to remove must point to the same pool"
+        );
+
+        stakingRewardsAddresses[indexToRemove] = stakingRewardsAddresses[stakingRewardsAddresses.length - 1];
+        stakingRewardsAddresses.pop();
+    }
+
+    // a fix to duplicated pools created due a former bug, it can be removed in the future
+    function onUpgrade() external onlyProxyAdmin {
+        for (uint256 i = 0; i < stakingRewardsAddresses.length; ++i) {
+            poolsSet[stakingRewardsAddresses[i]] = true;
+        }
+    }
+
     modifier onlyStakingRewards() {
         require(stakingRewardsWeights[msg.sender] > 0, "Only registered staking rewards contracts allowed");
+        _;
+    }
+
+    modifier onlyOwnerOrEmergencyExecutor() {
+        require(
+            msg.sender == owner() || msg.sender == emergencyExecutor,
+            "StakingRewardsDistribution: You are not the owner or an emergency executor"
+        );
+        _;
+    }
+
+    // This modifier allows the implementation contract to reach into proxy contract memory sloat
+    // and read the proxy admin address. This slot has a known address - defined in eip1967.
+    // The modifier is needed to secure an post-upgrade function executed by a deployment script.
+    // The script is executed by the deployer, but the upgrade itself transitions through the ProxyAdmin contract.
+    // Contract upgrade and post-upgrde function are executed in a single transaction. This prevents
+    // the contract form getting into an invalid state.
+    // Reference TransparentUpgradeableProxy implementation for deeper understanding
+    modifier onlyProxyAdmin() {
+        bytes32 proxyAdminSlot = bytes32(uint256(keccak256("eip1967.proxy.admin")) - 1);
+        address proxyAdmin;
+        assembly {
+            proxyAdmin := sload(proxyAdminSlot) // extract proxy admin from proxy
+        }
+
+        require(msg.sender == proxyAdmin, "StakingRewardsDistribution: You're not the proxy admin");
         _;
     }
 
@@ -221,4 +293,6 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     event TreasuryChanged(address newTreasury);
     event VestingChanged(address newVesting);
     event RewardFeeChanged(uint256 newRewardFee_d12);
+    event EmergencyExecutorSet(address newEmergencyExecutor);
+    event IsPausedToggled(bool isPaused);
 }

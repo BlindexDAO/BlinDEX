@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import type { BDStable } from "../../typechain/BDStable";
 import type { BDXShares } from "../../typechain/BDXShares";
 import cap from "chai-as-promised";
@@ -20,7 +20,9 @@ import {
   mintWbtc,
   mintWeth,
   getStakingRewardsCount,
-  getTreasurySigner
+  getTreasurySigner,
+  getUser1,
+  getUser2
 } from "../../utils/DeployedContractsHelpers";
 import { simulateTimeElapseInDays } from "../../utils/HelpersHardhat";
 import { BigNumber } from "ethers";
@@ -30,7 +32,7 @@ import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import type { Vesting } from "../../typechain/Vesting";
 import type { StakingRewards } from "../../typechain/StakingRewards";
 import type { IERC20 } from "../../typechain/IERC20";
-import { provideBdEu, subtractionOverflowExceptionMessage } from "../helpers/common";
+import { expectToFail, provideBdEu, subtractionOverflowExceptionMessage } from "../helpers/common";
 
 chai.use(cap);
 
@@ -490,6 +492,42 @@ describe("getReward interaction with vesting contract", () => {
   });
 });
 
+describe("Registering pools", () => {
+  beforeEach(async () => {
+    await hre.deployments.fixture();
+    await initialize();
+    await setUpFunctionalSystemForTests(hre, 1);
+  });
+
+  it("Should override pools", async () => {
+    const srd = await getStakingRewardsDistribution(hre);
+    const pool0Address = await srd.stakingRewardsAddresses(0);
+    const pool5Address = await srd.stakingRewardsAddresses(5);
+
+    const noPools1 = await srd.getStakingRewardsAddressesLength();
+    const pools1 = await Promise.all(Array.from(Array(noPools1.toNumber()).keys()).map(async i => await srd.stakingRewardsAddresses(i)));
+
+    await srd.registerPools([pool0Address, pool5Address], [0, 0]);
+
+    const noPools2 = await srd.getStakingRewardsAddressesLength();
+    const pools2 = await Promise.all(Array.from(Array(noPools2.toNumber()).keys()).map(async i => await srd.stakingRewardsAddresses(i)));
+
+    expect(noPools2).to.eq(noPools1);
+    expect(pools2).to.eql(pools1);
+    expect(await srd.stakingRewardsWeights(pool0Address)).to.eq(BigNumber.from(0));
+    expect(await srd.stakingRewardsWeights(pool5Address)).to.eq(BigNumber.from(0));
+
+    await srd.registerPools([pool0Address, pool5Address], [123, 234]);
+    const noPools3 = await srd.getStakingRewardsAddressesLength();
+    const pools3 = await Promise.all(Array.from(Array(noPools3.toNumber()).keys()).map(async i => await srd.stakingRewardsAddresses(i)));
+
+    expect(noPools3).to.eq(noPools1);
+    expect(pools3).to.eql(pools1);
+    expect(await srd.stakingRewardsWeights(pool0Address)).to.eq(BigNumber.from(123));
+    expect(await srd.stakingRewardsWeights(pool5Address)).to.eq(BigNumber.from(234));
+  });
+});
+
 describe("Unregistering pools", () => {
   beforeEach(async () => {
     await hre.deployments.fixture();
@@ -497,7 +535,7 @@ describe("Unregistering pools", () => {
     await setUpFunctionalSystemForTests(hre, 1);
   });
 
-  it("should unregister pool", async () => {
+  it("Should unregister pool", async () => {
     const srd = await getStakingRewardsDistribution(hre);
     const numberOfStakingPools = await getStakingRewardsCount(hre);
     const poolsAddresses = await Promise.all([...Array(numberOfStakingPools).keys()].map(async i => await srd.stakingRewardsAddresses(i)));
@@ -618,6 +656,30 @@ describe("Claiming all rewards", () => {
     expect(treasuryBalanceDiff).to.gt(0, "invalid treasury balance diff");
     expect(d18_ToNumber(totalUserRewards)).to.be.closeTo(d18_ToNumber(treasuryBalanceDiff.mul(9)), 0.1, "invalid users rewards, fee ration");
     expect(d18_ToNumber(totalUserRewards.add(treasuryBalanceDiff))).to.be.closeTo(d18_ToNumber(wethRewards), 0.1, "invalid reward + fee sum");
+  });
+
+  describe("Post upgrade function", () => {
+    beforeEach(async () => {
+      await hre.deployments.fixture();
+      await initialize();
+      await setUpFunctionalSystemForTests(hre, 1);
+    });
+
+    it("Post upgrade function should not execute for nobody but proxy owner", async () => {
+      // proxy owner executes on deployment
+
+      const randomUser = await getUser1(hre);
+      const emergencyExecutor = await getUser2(hre);
+
+      await stakingRewardsDistribution.setEmergencyExecutor(emergencyExecutor.address);
+
+      await expectToFail(() => stakingRewardsDistribution.connect(deployer).onUpgrade(), "StakingRewardsDistribution: You're not the proxy admin");
+      await expectToFail(() => stakingRewardsDistribution.connect(randomUser).onUpgrade(), "StakingRewardsDistribution: You're not the proxy admin");
+      await expectToFail(
+        () => stakingRewardsDistribution.connect(emergencyExecutor).onUpgrade(),
+        "StakingRewardsDistribution: You're not the proxy admin"
+      );
+    });
   });
 });
 

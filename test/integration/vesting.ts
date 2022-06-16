@@ -4,7 +4,7 @@ import { solidity } from "ethereum-waffle";
 import hre from "hardhat";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
 import { getBdx, getDeployer, getVesting } from "../../utils/DeployedContractsHelpers";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import type { Vesting } from "../../typechain/Vesting";
 import type { BDXShares } from "../../typechain/BDXShares";
 import { to_d18, d18_ToNumber } from "../../utils/NumbersHelpers";

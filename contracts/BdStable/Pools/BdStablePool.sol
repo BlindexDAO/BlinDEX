@@ -48,7 +48,7 @@ contract BdStablePool is OwnableUpgradeable {
     // Pool_ceiling is the total units of collateral that a pool contract can hold
     uint256 public pool_ceiling; // d18
 
-    // Stores price of the collateral, if price is paused
+    // Stores price of the collateral, if price is paused // d12
     uint256 public pausedPrice;
 
     // Bonus rate on BDX minted during recollateralizeBdStable(); 12 decimals of precision, set to 0.75% on genesis
@@ -56,6 +56,8 @@ contract BdStablePool is OwnableUpgradeable {
 
     // Number of blocks to wait before being able to collectRedemption()
     uint256 public redemption_delay;
+
+    address public emergencyExecutor;
 
     /* ========== MODIFIERS ========== */
 
@@ -66,6 +68,11 @@ contract BdStablePool is OwnableUpgradeable {
 
     modifier notMintPaused() {
         require(mintPaused == false, "Minting is paused");
+        _;
+    }
+
+    modifier onlyOwnerOrEmergencyExecutor() {
+        require(msg.sender == owner() || msg.sender == emergencyExecutor, "BdStablePool: You are not the owner or an emergency executor");
         _;
     }
 
@@ -427,25 +434,25 @@ contract BdStablePool is OwnableUpgradeable {
         emit CollateralWethOracleSet(_collateral_weth_oracle_address, _weth_address);
     }
 
-    function toggleMintingPaused() external onlyOwner {
+    function toggleMintingPaused() external onlyOwnerOrEmergencyExecutor {
         mintPaused = !mintPaused;
 
         emit MintingPausedToggled(mintPaused);
     }
 
-    function toggleRedeemingPaused() external onlyOwner {
+    function toggleRedeemingPaused() external onlyOwnerOrEmergencyExecutor {
         redeemPaused = !redeemPaused;
 
         emit RedeemingPausedToggled(redeemPaused);
     }
 
-    function toggleRecollateralizePaused() external onlyOwner {
+    function toggleRecollateralizePaused() external onlyOwnerOrEmergencyExecutor {
         recollateralizePaused = !recollateralizePaused;
 
         emit RecollateralizePausedToggled(recollateralizePaused);
     }
 
-    function toggleBuybackPaused() external onlyOwner {
+    function toggleBuybackPaused() external onlyOwnerOrEmergencyExecutor {
         buyBackPaused = !buyBackPaused;
 
         emit BuybackPausedToggled(buyBackPaused);
@@ -463,7 +470,7 @@ contract BdStablePool is OwnableUpgradeable {
         emit RecollateralizeOnlyForOwnerToggled(recollateralizeOnlyForOwner);
     }
 
-    function toggleCollateralPricePaused(uint256 _new_price) external onlyOwner {
+    function toggleCollateralPricePaused(uint256 _new_price) external onlyOwnerOrEmergencyExecutor {
         // If pausing, set paused price; else if unpausing, clear pausedPrice
         if (collateralPricePaused == false) {
             pausedPrice = _new_price;
@@ -472,7 +479,7 @@ contract BdStablePool is OwnableUpgradeable {
         }
         collateralPricePaused = !collateralPricePaused;
 
-        emit CollateralPriceToggled(collateralPricePaused);
+        emit CollateralPriceToggled(collateralPricePaused, pausedPrice);
     }
 
     // Combined into one function due to 24KiB contract memory limit
@@ -496,6 +503,11 @@ contract BdStablePool is OwnableUpgradeable {
         emit PoolParametersSet(new_ceiling, new_bonus_rate, new_redemption_delay, new_mint_fee, new_redeem_fee, new_buyback_fee, new_recollat_fee);
     }
 
+    function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
+        emergencyExecutor = _emergencyExecutor;
+        emit EmergencyExecutorSet(_emergencyExecutor);
+    }
+
     function safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
         require(success, "ETH transfer failed");
@@ -516,10 +528,11 @@ contract BdStablePool is OwnableUpgradeable {
     event RedeemingPausedToggled(bool toggled);
     event RecollateralizePausedToggled(bool toggled);
     event BuybackPausedToggled(bool toggled);
-    event CollateralPriceToggled(bool toggled);
+    event CollateralPriceToggled(bool toggled, uint256 pausedPrice);
     event CollateralWethOracleSet(address indexed collateral_weth_oracle_address, address indexed weth_address);
     event RecollateralizeOnlyForOwnerToggled(bool recollateralizeOnlyForOwner);
     event BuybackOnlyForOwnerToggled(bool buybackOnlyForOwner);
     event Recollateralized(uint256 indexed collateral_amount_paid, uint256 indexed bdx_paid_back);
     event BoughtBack(uint256 indexed bdx_amount_paid, uint256 indexed collateral_paid_back);
+    event EmergencyExecutorSet(address newEmergencyExecutor);
 }

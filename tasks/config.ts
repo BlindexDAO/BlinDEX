@@ -23,7 +23,7 @@ import { d12_ToNumber } from "../utils/NumbersHelpers";
 import type { BdStablePool } from "../typechain/BdStablePool";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
@@ -248,7 +248,12 @@ export function load() {
     const stakingRewardsAddresses = [];
     const stakingRewardsMap: { [key: string]: boolean } = {};
 
-    for (let i = 0; i < 100; i++) {
+    // todo replace after deployment
+    // also remove try-catch
+    // const poolsNo = (await stakingRewardsDistribution.getStakingRewardsAddressesLength()).toNumber();
+    const poolsNo = 100;
+
+    for (let i = 0; i < poolsNo; i++) {
       try {
         const address = await stakingRewardsDistribution.stakingRewardsAddresses(i);
 

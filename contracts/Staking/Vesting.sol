@@ -22,6 +22,13 @@ contract Vesting is OwnableUpgradeable {
     address public fundsProvider;
     uint256 public vestingTimeInSeconds;
     IERC20 public vestedToken;
+    bool public isPaused;
+    address public emergencyExecutor;
+
+    modifier onlyOwnerOrEmergencyExecutor() {
+        require(msg.sender == owner() || msg.sender == emergencyExecutor, "Vesting: You are not the owner or an emergency executor");
+        _;
+    }
 
     function initialize(
         address _vestedTokenAddress,
@@ -32,7 +39,7 @@ contract Vesting is OwnableUpgradeable {
         require(_vestedTokenAddress != address(0), "Vesting address cannot be 0");
         require(_vestingScheduler != address(0), "VestingScheduler address cannot be 0");
         require(_fundsProvider != address(0), "FundsProvider address cannot be 0");
-        require(_vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
+        require(_vestingTimeInSeconds > 0, "Vesting time cannot be set to 0");
 
         __Ownable_init();
 
@@ -56,6 +63,7 @@ contract Vesting is OwnableUpgradeable {
     }
 
     function claim(uint256 from, uint256 to) external {
+        require(!isPaused, "Vesting: Contract is paused");
         require(from < to, "Vesting: 'to' must be larger than 'from'");
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
 
@@ -118,7 +126,7 @@ contract Vesting is OwnableUpgradeable {
     }
 
     function setVestingTimeInSeconds(uint256 _vestingTimeInSeconds) external onlyOwner {
-        require(_vestingTimeInSeconds > 0, "Vesting timme cannot be set to 0");
+        require(_vestingTimeInSeconds > 0, "Vesting time cannot be set to 0");
         vestingTimeInSeconds = _vestingTimeInSeconds;
 
         emit VestingTimeInSecondsSet(_vestingTimeInSeconds);
@@ -130,7 +138,19 @@ contract Vesting is OwnableUpgradeable {
         fundsProvider = _fundsProvider;
     }
 
+    function toggleIsPaused() external onlyOwnerOrEmergencyExecutor {
+        isPaused = !isPaused;
+        emit IsPausedToggled(isPaused);
+    }
+
+    function setEmergencyExecutor(address _emergencyExecutor) external onlyOwner {
+        emergencyExecutor = _emergencyExecutor;
+        emit EmergencyExecutorSet(_emergencyExecutor);
+    }
+
     event ScheduleCreated(address user, uint256 amount);
     event RewardClaimed(address user, uint256 amount);
     event VestingTimeInSecondsSet(uint256 vestingTimeInSeconds);
+    event EmergencyExecutorSet(address newEmergencyExecutor);
+    event IsPausedToggled(bool isPaused);
 }
