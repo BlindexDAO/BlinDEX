@@ -219,7 +219,7 @@ export function load() {
 
     await recordUpdateUniswapPairsOracles(hre, recorder);
 
-    recorder.execute();
+    await recorder.execute();
   });
 
   task("update:all-with-updater")
