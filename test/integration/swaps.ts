@@ -5,7 +5,8 @@ import cap from "chai-as-promised";
 import { d18_ToNumber, to_d18 } from "../../utils/NumbersHelpers";
 import { getBdEu, getBdx, getDeployer, getUniswapRouter, getWeth } from "../../utils/DeployedContractsHelpers";
 import { setUpFunctionalSystemForTests } from "../../utils/SystemSetup";
-import { chooseBestPath, generatePaths } from "../../utils/UniswapPoolsHelpers";
+import type { BigNumber } from "ethers";
+import { generatePaths } from "../../utils/UniswapPoolsHelpers";
 
 chai.use(cap);
 
@@ -81,4 +82,9 @@ describe("Swaps", () => {
     await weth.approve(router.address, amountIn);
     await router.swapExactTokensForTokens(amountIn, 0, bestPath.path, deployer.address, currentBlock.timestamp + 1e5);
   });
+
+  async function chooseBestPath(pathsPrices: { amountOut: BigNumber; path: string[] }[]) {
+    const bestPath = pathsPrices.reduce((prev, current) => (prev.amountOut.gt(current.amountOut) ? prev : current));
+    return bestPath;
+  }
 });

@@ -26,12 +26,10 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
-import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";
+import { getPairsOraclesAndSymbols } from "../utils/UniswapPoolsHelpers";
 import { readFileSync, readdirSync } from "fs";
 import type { Contract } from "ethers";
 import {
-  NATIVE_TOKEN_NAME,
-  SECONDARY_COLLATERAL_TOKEN_NAME,
   EXTERNAL_USD_STABLE,
   PriceFeedContractNames,
   chainSpecificComponents,
@@ -194,52 +192,6 @@ export function load() {
 
     // TODO - Multichain: When adding support for a chain we're not the one who deployed the contract, then handle this case - https://lagoslabs.atlassian.net/browse/LAGO-890
     return 0;
-  }
-
-  async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
-    const factory = await getUniswapFactory(hre);
-    const pools = await getPools(hre);
-
-    const pairInfos: {
-      pair: { address: string; token0: string; token1: string; token0Symbol: string; token1Symbol: string };
-      pairOracle: { pairAddress: string; oracleAddress: string };
-      symbol: string;
-    }[] = [];
-    for (const poolPair of pools) {
-      let pairSymbol = getPoolKey(poolPair[0].token.address, poolPair[1].token.address, poolPair[0].name, poolPair[1].name);
-      let token0Symbol = poolPair[0].name;
-      let token1Symbol = poolPair[1].name;
-      const pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
-      const oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
-      const etherOriginalTokenNamesNetworks = ["mainnetFork", "ethereum"];
-
-      // Our uniswap contracts were deployed with the names WETH & WBTC instead of RSK's names (WRBTC & ETHs)
-      if (!etherOriginalTokenNamesNetworks.includes(hre.network.name)) {
-        pairSymbol = pairSymbol
-          .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
-          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
-        token0Symbol = token0Symbol
-          .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
-          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
-        token1Symbol = token1Symbol
-          .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
-          .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
-      }
-
-      pairInfos.push({
-        pair: {
-          address: pairAddress,
-          token0: poolPair[0].token.address,
-          token1: poolPair[1].token.address,
-          token0Symbol,
-          token1Symbol
-        },
-        pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress },
-        symbol: pairSymbol
-      });
-    }
-
-    return pairInfos;
   }
 
   async function getStakingsConfig(hre: HardhatRuntimeEnvironment) {

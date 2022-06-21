@@ -1,7 +1,17 @@
-import { EXTERNAL_SUPPORTED_TOKENS } from "./Constants";
+import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import { EXTERNAL_SUPPORTED_TOKENS, NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME } from "./Constants";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
-import { getBdx, getWeth, getWbtc, getUniswapPairOracle, getAllBDStables, formatAddress, getUniswapRouter } from "./DeployedContractsHelpers";
+import {
+  getBdx,
+  getWeth,
+  getWbtc,
+  getUniswapPairOracle,
+  getAllBDStables,
+  formatAddress,
+  getUniswapRouter,
+  getUniswapFactory
+} from "./DeployedContractsHelpers";
 import * as constants from "../utils/Constants";
 import { Recorder } from "./Recorder/Recorder";
 import { toRc } from "./Recorder/RecordableContract";
@@ -128,6 +138,23 @@ export async function getAvailableSwapLinks(hre: HardhatRuntimeEnvironment) {
   return availableLinks;
 }
 
+export async function getAllTokensAddresses(hre: HardhatRuntimeEnvironment, excludeAddresses: string[]): Promise<string[]> {
+  const weth = await getWeth(hre);
+  const wbtc = await getWbtc(hre);
+  const bdx = await getBdx(hre);
+  const allStables = await getAllBDStables(hre);
+  let addresses = [
+    bdx.address,
+    weth.address,
+    wbtc.address,
+    ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
+    ...allStables.map(stable => stable.address)
+  ];
+
+  addresses = addresses.filter(address => !excludeAddresses.find(excludeAddress => excludeAddress === address));
+  return addresses;
+}
+
 export async function generatePaths(
   hre: HardhatRuntimeEnvironment,
   amountIn: BigNumber,
@@ -204,24 +231,48 @@ export async function generateAllPaths(
   return allRequiredPaths;
 }
 
-export async function chooseBestPath(pathsPrices: { amountOut: BigNumber; path: string[] }[]) {
-  const bestPath = pathsPrices.reduce((prev, current) => (prev.amountOut.gt(current.amountOut) ? prev : current));
-  return bestPath;
-}
+export async function getPairsOraclesAndSymbols(hre: HardhatRuntimeEnvironment, deployer: SignerWithAddress) {
+  const factory = await getUniswapFactory(hre);
+  const pools = await getPools(hre);
 
-export async function getAllTokensAddresses(hre: HardhatRuntimeEnvironment, excludeAddresses: string[]): Promise<string[]> {
-  const weth = await getWeth(hre);
-  const wbtc = await getWbtc(hre);
-  const bdx = await getBdx(hre);
-  const allStables = await getAllBDStables(hre);
-  let addresses = [
-    bdx.address,
-    weth.address,
-    wbtc.address,
-    ...EXTERNAL_SUPPORTED_TOKENS.map(token => token[hre.network.name].address),
-    ...allStables.map(stable => stable.address)
-  ];
+  const pairInfos: {
+    pair: { address: string; token0: string; token1: string; token0Symbol: string; token1Symbol: string };
+    pairOracle: { pairAddress: string; oracleAddress: string };
+    symbol: string;
+  }[] = [];
+  for (const poolPair of pools) {
+    let pairSymbol = getPoolKey(poolPair[0].token.address, poolPair[1].token.address, poolPair[0].name, poolPair[1].name);
+    let token0Symbol = poolPair[0].name;
+    let token1Symbol = poolPair[1].name;
+    const pairAddress = await factory.getPair(poolPair[0].token.address, poolPair[1].token.address);
+    const oracleAddress = (await hre.ethers.getContract(`UniswapPairOracle_${pairSymbol}`, deployer)).address;
+    const etherOriginalTokenNamesNetworks = ["mainnetFork", "ethereum"];
 
-  addresses = addresses.filter(address => !excludeAddresses.find(excludeAddress => excludeAddress === address));
-  return addresses;
+    // Our uniswap contracts were deployed with the names WETH & WBTC instead of RSK's names (WRBTC & ETHs)
+    if (!etherOriginalTokenNamesNetworks.includes(hre.network.name)) {
+      pairSymbol = pairSymbol
+        .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
+        .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+      token0Symbol = token0Symbol
+        .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
+        .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+      token1Symbol = token1Symbol
+        .replace(NATIVE_TOKEN_NAME["mainnetFork"], NATIVE_TOKEN_NAME[hre.network.name])
+        .replace(`W${SECONDARY_COLLATERAL_TOKEN_NAME["mainnetFork"]}`, SECONDARY_COLLATERAL_TOKEN_NAME[hre.network.name]);
+    }
+
+    pairInfos.push({
+      pair: {
+        address: pairAddress,
+        token0: poolPair[0].token.address,
+        token1: poolPair[1].token.address,
+        token0Symbol,
+        token1Symbol
+      },
+      pairOracle: { pairAddress: pairAddress, oracleAddress: oracleAddress },
+      symbol: pairSymbol
+    });
+  }
+
+  return pairInfos;
 }
