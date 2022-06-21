@@ -32,7 +32,6 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
 
     EnumerableSet.AddressSet private supportedTokens;
     IERC20 private BDX;
-    uint256 private constant bdxCollateralAdjustment = 20000000000; //d12 2%
 
     function initialize(address _bdxAddress) external initializer {
         __Ownable_init();
