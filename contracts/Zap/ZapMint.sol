@@ -203,8 +203,6 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
         }
     }
 
-    // receive() external payable {}
-
     event TokenSupportAdded(address indexed token);
     event TokenSupportRemoved(address indexed token);
 }

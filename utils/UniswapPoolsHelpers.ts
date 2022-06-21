@@ -191,7 +191,7 @@ export async function generatePaths(
     try {
       amountsOut = await router.getAmountsOut(amountIn, path);
     } catch {
-      continue; // handle unsupported paths like [wrbtc -> eths -> bdx]
+      continue;
     }
 
     pathsPrices.push({
