@@ -70,8 +70,8 @@ export async function getRoutesWithAmount(
     try {
       amounts = invokeGetAmountsIn ? await router.getAmountsIn(amount, route) : await router.getAmountsOut(amount, route);
     } catch (e) {
-      console.log("error: " + e);
-      continue; // handle unsupported paths like [wrbtc -> eths -> bdx]
+      console.log("Error getting routes: " + e);
+      continue;
     }
 
     routesPrices.push({

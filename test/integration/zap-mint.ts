@@ -59,49 +59,6 @@ export async function getBestRouteWithExpectedAmounts(
   let collateralBestRoute: string[] = [];
   let bdxBestRoute: string[] = [];
 
-  // if (collateralRatio == 0) {
-  //   const bdxAddress = (await getBdx(hre)).address;
-  //   const bdxBestRouteWithAmounts = await getTestBestRoute(hre, amount, false, tokenIn, bdxAddress);
-  //   bdxBestRoute = bdxBestRouteWithAmounts.route;
-  //   bdxExpectedSwapAmount = bdxBestRouteWithAmounts.finalAmount;
-  // }
-  // else if (collateralRatio == 1) {
-  //   const collateralAddress = await bdStablePool.collateral_token();
-  //   const collateralBestRouteWithAmounts = await getTestBestRoute(hre, amount, false, tokenIn, collateralAddress);
-  //   collateralBestRoute = collateralBestRouteWithAmounts.route;
-  //   collateralExpectedSwapAmount = collateralBestRouteWithAmounts.finalAmount;
-  // }
-  // else {
-  //   const collateralAddress = await bdStablePool.collateral_token();
-  //   const amountForCollateral = amount.mul(to_d8(collateralRatio)).div(to_d8(1));
-  //   console.log("amountForCollateral: " + amountForCollateral);
-  //   const collateralBestRouteWithAmounts = await getTestBestRoute(hre, amountForCollateral, false, tokenIn, collateralAddress);
-  //   collateralBestRoute = collateralBestRouteWithAmounts.route;
-  //   collateralExpectedSwapAmount = collateralBestRouteWithAmounts.finalAmount;
-
-  //   //bdx calculated from swap
-  //   const bdxAddress = (await getBdx(hre)).address;
-  //   const amountForBdx = amount.mul(to_d8(1 - collateralRatio)).div(to_d8(1));
-  //   console.log("amountForBdx: " + amountForBdx);
-  //   const bdxBestRouteWithAmounts = await getTestBestRoute(hre, amountForBdx, false, tokenIn, bdxAddress);
-  //   bdxBestRoute = bdxBestRouteWithAmounts.route;
-
-  //   //bdx needed for mint
-  //   const collateralStablePrice_d12 = await bdStablePool.getCollateralPrice_d12();
-  //   const collateralStableValue = collateralExpectedSwapAmount.mul(collateralStablePrice_d12).div(1e12);
-  //   const bdxStableValue = collateralStableValue.mul(1e12).div(to_d12(collateralRatio)).sub(collateralStableValue);
-
-  //   const bdstableTokenAddress = await bdStablePool.BDSTABLE();
-
-  //   const stable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, bdstableTokenAddress))) as BDStable;
-
-  //   const bdxStablePrice_d12 = await stable.BDX_price_d12();
-  //   const bdxNeeded = bdxStableValue.div(bdxStablePrice_d12);
-  //   bdxExpectedSwapAmount = bdxStableValue;
-  //   console.log("collateralExpectedSwapAmounto: " + collateralExpectedSwapAmount);
-  //   console.log("bdxExpectedSwapAmounto: " + bdxExpectedSwapAmount);
-  // }
-
   const collateralRatio_d12 = to_d12(collateralRatio);
   const collateralValue = amount.mul(tokenInPrice).div(1e12).mul(collateralRatio_d12).div(1e12);
   const bdxValue = amount.mul(tokenInPrice).div(1e12).sub(collateralValue);
@@ -110,13 +67,10 @@ export async function getBestRouteWithExpectedAmounts(
   const bdxPart = bdxValue.add(tokenValue.div(1e12).sub(collateralValue.add(bdxValue)));
 
   amountForCollateral = amount.sub(bdxPart);
-  console.log("collateralPart: " + amount.sub(bdxPart));
   amountForBdx = bdxPart;
-  console.log("bdxPart: " + bdxPart);
-  //swap
+
   if (collateralRatio !== 0) {
     const collateralAddress = await bdStablePool.collateral_token();
-    console.log("amountForCollateral: " + amountForCollateral);
     const collateralBestRouteWithAmounts = await getTestBestRoute(hre, amountForCollateral, false, tokenIn, collateralAddress);
     collateralBestRoute = collateralBestRouteWithAmounts.route;
     collateralExpectedSwapAmount = collateralBestRouteWithAmounts.finalAmount;
@@ -125,31 +79,21 @@ export async function getBestRouteWithExpectedAmounts(
 
   if (collateralRatio !== 1) {
     const bdxAddress = (await getBdx(hre)).address;
-    console.log("amountForBdx: " + amountForBdx);
     const bdxBestRouteWithAmounts = await getTestBestRoute(hre, amountForBdx, false, tokenIn, bdxAddress);
     bdxBestRoute = bdxBestRouteWithAmounts.route;
     bdxExpectedSwapAmount = bdxBestRouteWithAmounts.finalAmount;
     bdxSwapMinAmountOut = valueToSlippedValue(bdxExpectedSwapAmount);
   }
 
-  //mint
   if (collateralRatio !== 0) {
     const collateralTokenAddress = await bdStablePool.collateral_token();
     const collateralTokenDecimals = await (await getERC20(hre, collateralTokenAddress)).decimals();
     const bdstableTokenAddress = await bdStablePool.BDSTABLE();
     const bdstableTokenDecimals = await (await getERC20(hre, bdstableTokenAddress)).decimals();
     const collateralStableDecimalsPowerDifference = Number(bdstableTokenDecimals) - Number(collateralTokenDecimals);
-
     const collateralStablePrice_d12 = await bdStablePool.getCollateralPrice_d12();
-    console.log("collateralStableDecimalsPowerDifference: " + collateralStableDecimalsPowerDifference);
     const collateralStableDecimalsDifferenceBigNumber = BigNumber.from(10).pow(collateralStableDecimalsPowerDifference);
-
-    console.log("collateralExpectedSwapAmount: " + collateralExpectedSwapAmount);
-    console.log("collateralStablePrice_d12: " + collateralStablePrice_d12);
-    console.log("collateralStableDecimalsDifferenceBigNumber: " + collateralStableDecimalsDifferenceBigNumber);
-    console.log("mintExpectedAmount: " + mintExpectedAmount);
     mintExpectedAmount = collateralExpectedSwapAmount.mul(collateralStablePrice_d12).div(to_d12(1)).mul(collateralStableDecimalsDifferenceBigNumber);
-
     mintMinAmountOut = collateralSwapMinAmountOut.mul(collateralStablePrice_d12).div(to_d12(1)).mul(collateralStableDecimalsDifferenceBigNumber);
   }
 
@@ -159,21 +103,12 @@ export async function getBestRouteWithExpectedAmounts(
     const bdstableTokenAddress = await bdStablePool.BDSTABLE();
     const bdstableTokenDecimals = await (await getERC20(hre, bdstableTokenAddress)).decimals();
     const bdxStableDecimalsPowerDifference = Number(bdstableTokenDecimals) - Number(bdxTokenDecimals);
-
     const stable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, bdstableTokenAddress))) as BDStable;
     const bdxStablePrice_d12 = await stable.BDX_price_d12();
     const bdxStableDecimalsDifferenceBigNumber = BigNumber.from(10).pow(bdxStableDecimalsPowerDifference);
-
-    console.log("bdxExpectedSwapAmount: " + bdxExpectedSwapAmount);
-    console.log("bdxStablePrice_d12: " + bdxStablePrice_d12);
-    console.log("bdxStableDecimalsDifferenceBigNumber: " + bdxStableDecimalsDifferenceBigNumber);
-    console.log("mintExpectedAmount: " + mintExpectedAmount);
     const bdxAmountInBdStable = bdxExpectedSwapAmount.mul(bdxStablePrice_d12).div(to_d12(1)).mul(bdxStableDecimalsDifferenceBigNumber);
-    console.log("bdxAmountInBdStable: " + bdxAmountInBdStable);
     mintExpectedAmount = mintExpectedAmount.add(bdxAmountInBdStable);
-
     const bdxMinAmountInBdStable = bdxSwapMinAmountOut.mul(bdxStablePrice_d12).div(to_d12(1)).mul(bdxStableDecimalsDifferenceBigNumber);
-
     mintMinAmountOut = mintMinAmountOut.add(bdxMinAmountInBdStable);
   }
 
@@ -182,16 +117,6 @@ export async function getBestRouteWithExpectedAmounts(
   mintExpectedAmount = mintExpectedAmount.mul(priceAfterMintingFeeBase).div(1e12);
   mintMinAmountOut = valueToSlippedValue(mintMinAmountOut.mul(priceAfterMintingFeeBase).div(1e12));
 
-  console.log(
-    "collateralBestRoute: " + collateralBestRoute[0] + " " + collateralBestRoute[1] + (collateralBestRoute.length > 2 ? collateralBestRoute[2] : "")
-  );
-  console.log("bdxBestRoute: " + bdxBestRoute[0] + " " + bdxBestRoute[1] + (bdxBestRoute.length > 2 ? bdxBestRoute[2] : ""));
-  console.log("collateralExpectedSwapAmount: " + collateralExpectedSwapAmount);
-  console.log("bdxExpectedSwapAmount: " + bdxExpectedSwapAmount);
-  console.log("mintExpectedAmount: " + mintExpectedAmount);
-  console.log("collateralSwapMinAmountOut: " + collateralSwapMinAmountOut);
-  console.log("bdxSwapMinAmountOut: " + bdxSwapMinAmountOut);
-  console.log("mintMinAmountOut: " + mintMinAmountOut);
   return {
     collateralBestRoute: collateralBestRoute,
     bdxBestRoute: bdxBestRoute,
@@ -203,6 +128,7 @@ export async function getBestRouteWithExpectedAmounts(
     mintMinAmountOut: mintMinAmountOut
   };
 }
+
 async function initialize() {
   await hre.deployments.fixture();
   const user = await getUser1(hre);
@@ -223,82 +149,10 @@ chai.use(cap);
 chai.use(solidity);
 const { expect } = chai;
 
-describe.only("Zap mint", () => {
+describe("Zap mint", () => {
   beforeEach(async () => {
     await initialize();
   });
-
-  // it("Should zap mint for every possible path", async () => {
-  //   const collateralRatio = 0.5;
-  //   const deployer = await getDeployer(hre);
-  //   const user = await getUser1(hre);
-  //   const bdx = await getBdx(hre);
-  //   const currentBlock = await hre.ethers.provider.getBlock("latest");
-  //   const weth = await getWeth(hre);
-  //   const router = await getUniswapRouter(hre);
-
-  //   const wbtc = await getWbtc(hre);
-  //   const collateralTokens = [weth.address, wbtc.address];
-  //   const excludedInputTokens = [bdx.address, weth.address, wbtc.address];
-  //   const allPossibleZapMintCollateralPaths = await generateAllPaths(hre, excludedInputTokens, collateralTokens);
-  //   const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
-
-  //   const allBDStableCollateralPools = await getAllBDStablePools(hre);
-  //   for (const possibleZapMintPath of allPossibleZapMintCollateralPaths) {
-  //     await initialize();
-  //     const swapFrom = possibleZapMintPath[0];
-  //     const swapTo = possibleZapMintPath[possibleZapMintPath.length - 1];
-  //     const poolsWithProperCollateral: BdStablePool[] = [];
-  //     for (const pool of allBDStableCollateralPools) {
-  //       const collateralTokenAddress = await pool.collateral_token();
-  //       const stableTokenAddress = await pool.BDSTABLE();
-  //       if (collateralTokenAddress === swapTo && stableTokenAddress !== swapFrom) {
-  //         poolsWithProperCollateral.push(pool);
-  //       }
-  //     }
-
-  //     for (const poolWithProperCollateral of poolsWithProperCollateral) {
-  //       const stableExpectedFromMintAddress = await poolWithProperCollateral.BDSTABLE();
-  //       const stableExpectedFromMint = await getERC20(hre, stableExpectedFromMintAddress);
-  //       const stableExpectedFromMintasBdStable = (await hre.ethers.getContractAt("BDStable", formatAddress(hre, stableExpectedFromMintAddress))) as BDStable;
-  //       await (await stableExpectedFromMintasBdStable.lockCollateralRatioAt(to_d12(collateralRatio))).wait();
-  //       const tokenToApproveAndTranfer = await getERC20(hre, swapFrom);
-  //       const erc20 = await getERC20(hre, swapFrom);
-  //       const decimals = await erc20.decimals();
-  //       const amountIn = numberToBigNumberFixed(0.001, decimals);
-
-  //       const bestRoutesWithExpectedAmounts = await getBestRouteWithExpectedAmounts(hre, amountIn, swapFrom, collateralRatio, poolWithProperCollateral);
-
-  //       const userStableBalanceBeforeMint = await stableExpectedFromMint.balanceOf(user.address);
-  //       await tokenToApproveAndTranfer.connect(user).approve(zapMintTestContract.address, amountIn);
-  //       await zapMintTestContract.addTokenSupport(possibleZapMintPath[0]);
-
-  //       const parameters = {
-  //         mintAmountOutMin: bestRoutesWithExpectedAmounts.mintMinAmountOut,
-  //         collateralSwapAmountOutMin: bestRoutesWithExpectedAmounts.collateralSwapMinAmountOut,
-  //         bdxSwapAmountOutMin: bestRoutesWithExpectedAmounts.bdxSwapMinAmountOut,
-  //         bdstableToMintAddress: stableExpectedFromMintAddress,
-  //         bdstablePoolAddress: poolWithProperCollateral.address,
-  //         collateralSwapPath: possibleZapMintPath,
-  //         bdxSwapPath: bestRoutesWithExpectedAmounts.bdxBestRoute,
-  //         amountIn: amountIn,
-  //         router: router.address,
-  //         deadline: currentBlock.timestamp + 1e5
-  //       } as ZapMintParametersStruct;
-  //       await zapMintTestContract.connect(user).zapMint(parameters);
-
-  //       const userStableBalanceAfterMint = await stableExpectedFromMint.balanceOf(user.address);
-  //       const actualStableDiff = userStableBalanceAfterMint.sub(userStableBalanceBeforeMint);
-  //       console.log("actualStableDiff: " + actualStableDiff);
-  //       const expectedMintAmount = bestRoutesWithExpectedAmounts.mintExpectedAmount;
-  //       console.log("expectedMintAmount: " + expectedMintAmount);
-  //       console.log("mintMinAmountOut: " + bestRoutesWithExpectedAmounts.mintMinAmountOut);
-
-  //       const difference = diffPct(actualStableDiff, expectedMintAmount);
-  //       expect(difference).to.be.closeTo(0, slippagePct, "Zap mint did not mint enough tokens");
-  //     }
-  //   }
-  // });
 
   it("Should mint supported path when CR = 100%", async () => {
     const collateralRatio = 1;
@@ -307,8 +161,6 @@ describe.only("Zap mint", () => {
     const user = await getUser1(hre);
     const zapMintTestContract = (await hre.ethers.getContract("ZapMint", deployer)) as ZapMint;
     const swapFrom = EXTERNAL_USD_STABLE[hre.network.name];
-    const swapTo = await getWeth(hre);
-    console.log("path: " + swapFrom.address + " " + swapTo.address);
     const router = await getUniswapRouter(hre);
     const decimals = swapFrom.decimals;
     const amountIn = numberToBigNumberFixed(0.001, decimals);

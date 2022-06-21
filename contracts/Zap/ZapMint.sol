@@ -74,9 +74,7 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
                 address(BdStablePool(payable(parameters.bdstablePoolAddress)).collateral_token()),
             "ZapMint: Last address of path has to be equal to bdstable pool collateral address"
         );
-        console.log("before transferred funds");
         IERC20(parameters.collateralSwapPath[0]).safeTransferFrom(msg.sender, address(this), parameters.amountIn);
-        console.log("transferred funds");
         (uint256 amountForCollateralSwap, uint256 amountForBdxSwap) = getCollateralAndBdxAmountsForSwap(
             parameters.amountIn,
             parameters.tokenInStablePrice,
@@ -91,10 +89,6 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
         }
         uint256 collateralSwapResultAmount;
         uint256 bdxSwapResultAmount;
-        console.log("Collateral");
-        console.log("parameterscollateralSwapAmountOutMin: ", parameters.collateralSwapAmountOutMin);
-        console.log("parametersbdxSwapAmountOutMin: ", parameters.bdxSwapAmountOutMin);
-        console.log("amountForCollateralSwap: ", amountForCollateralSwap);
         if (amountForCollateralSwap > 0) {
             require(parameters.collateralSwapPath.length > 1, "ZapMint: Collateral path has to be longer than one");
             require(supportedTokens.contains(parameters.collateralSwapPath[0]), "ZapMint: Collateral path token is not supported for zap minting");
@@ -105,14 +99,12 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
                 parameters.router,
                 parameters.deadline
             );
-            console.log("collateral swap result: ", swapResultAmount);
             if (!success) {
                 IERC20(parameters.collateralSwapPath[0]).safeTransfer(payable(msg.sender), parameters.amountIn);
                 revert(errors);
             }
             collateralSwapResultAmount = swapResultAmount;
         }
-        console.log("BDX");
         if (amountForBdxSwap > 0) {
             require(parameters.bdxSwapPath.length > 1, "ZapMint: Bdx path has to be longer than one");
             require(supportedTokens.contains(parameters.bdxSwapPath[0]), "ZapMint: Bdx path token is not supported for zap minting");
@@ -123,15 +115,12 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
                 parameters.router,
                 parameters.deadline
             );
-            console.log("bdx swap result: ", swapResultAmount);
             if (!success) {
-                //swap collateral to input token back and return ?
                 IERC20(parameters.bdxSwapPath[0]).safeTransfer(payable(msg.sender), amountForBdxSwap);
                 revert(errors);
             }
             bdxSwapResultAmount = swapResultAmount;
         }
-        console.log("Mint");
         (bool success, uint256 mintResultAmount, string memory errors) = mint(
             parameters.collateralSwapPath[parameters.collateralSwapPath.length - 1],
             parameters.bdstableToMintAddress,
@@ -141,12 +130,8 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
             parameters.bdstablePoolAddress
         );
         if (!success) {
-            //swap bdx and colalteral back and return?
             revert(errors);
         }
-        console.log("Transfer");
-        console.log("mintResultAmount: ", mintResultAmount);
-        console.log("bdstableToMintAddress: ", parameters.bdstableToMintAddress);
         IERC20(parameters.bdstableToMintAddress).safeTransfer(payable(msg.sender), mintResultAmount);
     }
 
@@ -157,28 +142,11 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
         address bdstablePoolAddress
     ) private returns (uint256, uint256) {
         BDStable stableToMint = BDStable(bdstableToMintAddress);
-        // uint256 bdxPrice = stableToMint.BDX_price_d12();
-        // uint256 collateralPrice = BdStablePool(payable(bdstablePoolAddress)).getCollateralPrice_d12();
         uint256 collateralRatio = stableToMint.global_collateral_ratio_d12();
         uint256 tokenValue = amountIn * tokenPrice;
         uint256 collateralValue = (tokenValue * collateralRatio) / 1e24;
-        // uint256 collateralNeeded = collateralValue * 1e12 / collateralPrice;
         uint256 bdxValue = (tokenValue / 1e12) - collateralValue;
-        // uint256 bdxValue = ((amountIn * tokenPrice * (1e12 - collateralRatio)) / 1e24);
-        // uint256 bdxNeeded = bdxValue * 1e12 / bdxPrice;
-
-        console.log("amountIn: ", amountIn);
-        console.log("collateralRatio: ", collateralRatio);
-        // console.log("collateralPrice: ", collateralPrice);
-        console.log("tokenPrice: ", tokenPrice);
-        console.log("collateralValue: ", collateralValue);
-        // console.log("collateralNeeded: ", collateralNeeded);
-        console.log("bdxValue: ", bdxValue);
-        // console.log("bdxNeeded: ", bdxNeeded);
         uint256 bdxPart = bdxValue + ((tokenValue / 1e12) - collateralValue - bdxValue);
-        // uint256 collateralPart = collateralValue + (((tokenValue / 1e12) - collateralValue - bdxValue) * ((collateralValue * 1e12) / tokenValue)) / 1e12;
-        console.log("colalteralpart: ", amountIn - bdxPart);
-        console.log("bdxpart: ", bdxPart);
         return (amountIn - bdxPart, bdxPart);
     }
 
@@ -223,31 +191,19 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
             string memory
         )
     {
-        console.log("xd1");
         uint256 balanceBeforeMint = IERC20(bdstableToMint).balanceOf(address(this));
-        console.log("xd2");
-        console.log("balance before: ", IERC20(tokenToUseForMint).balanceOf(address(this)));
-        console.log("approv coll before: ", collateralSwapResultAmount);
         IERC20(tokenToUseForMint).approve(bdstablePoolAddress, collateralSwapResultAmount);
-        console.log("xd3");
-        console.log("balance before: ", BDX.balanceOf(address(this)));
-        console.log("approv bdx before: ", bdxSwapResultAmount);
         BDX.approve(bdstablePoolAddress, bdxSwapResultAmount);
-        console.log("xd4");
-        console.log("amountoutMin: ", amountOutMin);
         try BdStablePool(payable(bdstablePoolAddress)).mintFractionalBdStable(collateralSwapResultAmount, bdxSwapResultAmount, amountOutMin, false) {
-            console.log("xd6");
             return (true, IERC20(bdstableToMint).balanceOf(address(this)) - balanceBeforeMint, "");
         } catch Error(string memory reason) {
-            console.log("xd7");
             return (false, 0, string.concat("ZapMint: ", reason));
         } catch (bytes memory lowLevelData) {
-            console.log("xd8");
             return (false, 0, "");
         }
     }
 
-    receive() external payable {}
+    // receive() external payable {}
 
     event TokenSupportAdded(address indexed token);
     event TokenSupportRemoved(address indexed token);
