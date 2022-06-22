@@ -12,6 +12,26 @@ import "../BdStable/Pools/BdStablePool.sol";
 import "../BdStable/BDStable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+/* 
+!!! This contract is still Work-in-Progress and SHOULDN'T BE USED IN PRODUCTION SCENARIOS !!!
+
+TODO list:
+ * Test zap mint for 0% collateral ratio
+ * Optimise gas usage
+ * Provide multi-AMM functionality (each swap can be atomic and executed on different AMM)
+ * use one initialized zapmint object for all tests (alternatively - move initialization to private method - partially done)
+ * move common variables to constants (like deadline, router)
+ * in case bdx swap fails:
+      ** swap collateral token back to input token
+      ** return input token to user
+ * in case mint fails:
+      ** swap collateral token back to input token
+      ** swap bdx token back to input token
+      ** return input token to user
+ * implement functionality to zap mint based on 'required amount out' (more below)
+ * add tests for all new require statements
+ * add test for reentrancy */
+
 contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
     using SafeERC20 for IERC20;
