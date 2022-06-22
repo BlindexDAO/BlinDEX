@@ -30,7 +30,9 @@ TODO list:
       ** return input token to user
  * implement functionality to zap mint based on 'required amount out' (more below)
  * add tests for all new require statements
- * add test for reentrancy */
+ * add test for reentrancy 
+ * fix all compilation warnings (npm run compile)
+ */
 
 contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
