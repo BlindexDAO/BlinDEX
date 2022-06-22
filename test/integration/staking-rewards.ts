@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
+import type { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 import type { BDStable } from "../../typechain/BDStable";
 import type { BDXShares } from "../../typechain/BDXShares";
 import cap from "chai-as-promised";

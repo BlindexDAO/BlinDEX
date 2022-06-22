@@ -21,7 +21,7 @@ describe("Collateral price", () => {
 
     const wethPool = await getBdEuWethPool(hre);
 
-    const expectedWethPrice = 2600; // ETH-EUR for 2022-02-06
+    const expectedWethPrice = 1100; // ETH-EUR for 2022-06-20
     const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
     const wethInEurPrice = d12_ToNumber(await wethPool.getCollateralPrice_d12());
 
@@ -34,7 +34,7 @@ describe("Collateral price", () => {
 
     const wbtcPool = await getBdEuWbtcPool(hre);
 
-    const expectedWbtcPrice = 36000; // BTC-EUR for 2022-02-06
+    const expectedWbtcPrice = 21000; // BTC-EUR for 2022-06-20
     const precision = 0.33; // Big margin due to high crypto price volatility - can update the test less often
     const wbtcInEurPrice = d12_ToNumber(await wbtcPool.getCollateralPrice_d12());
 

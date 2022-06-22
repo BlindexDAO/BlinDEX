@@ -219,7 +219,7 @@ export function load() {
 
     await recordUpdateUniswapPairsOracles(hre, recorder);
 
-    recorder.execute();
+    await recorder.execute();
   });
 
   task("update:all-with-updater")
@@ -370,16 +370,16 @@ export function load() {
   task("show:all:ef-bdx-cov").setAction(async (args, hre) => {
     const allBdStables = await getAllBDStables(hre);
     for (let index = 0; index < allBdStables.length; index++) {
-      await show_efBDXCov(allBdStables[index]);
+      await show_efBDXCov(hre, allBdStables[index]);
     }
   });
 
   task("show:bdeu:ef-bdx-cov").setAction(async (args, hre) => {
-    await show_efBDXCov(await getBdEu(hre));
+    await show_efBDXCov(hre, await getBdEu(hre));
   });
 
   task("show:bdus:ef-bdx-cov").setAction(async (args, hre) => {
-    await show_efBDXCov(await getBdUs(hre));
+    await show_efBDXCov(hre, await getBdUs(hre));
   });
 
   task("show:rsk-eur-usd").setAction(async (args, hre) => {
@@ -419,7 +419,7 @@ export function load() {
     for (const stable of stables) {
       await show_efCR(stable);
       await show_CR(stable);
-      await show_efBDXCov(stable);
+      await show_efBDXCov(hre, stable);
     }
 
     console.log("==================================");
@@ -473,9 +473,45 @@ export function load() {
     console.log(`EUR/USD: ${price} last updated: ${new Date(lastUpdateTimestamp * 1000)}`);
   }
 
-  async function show_efBDXCov(stable: BDStable) {
-    const efBdxCov = await stable.get_effective_bdx_coverage_ratio();
-    console.log(`${await stable.symbol()} efBDXCov: ${d12_ToNumber(efBdxCov.mul(100))}%`);
+  async function show_efBDXCov(hre: HardhatRuntimeEnvironment, stable: BDStable) {
+    const [cr_d12, eCr, totalSupply, symbol, bdxPrice_d12, bdx, unclaimedPoolsBDX] = await Promise.all([
+      stable.global_collateral_ratio_d12(),
+      stable.effective_global_collateral_ratio_d12(),
+      stable.totalSupply(),
+      stable.symbol(),
+      stable.BDX_price_d12(),
+      getBdx(hre),
+      stable.unclaimedPoolsBDX()
+    ]);
+
+    const bdxSupply_d18 = (await bdx.balanceOf(formatAddress(hre, stable.address))).sub(unclaimedPoolsBDX);
+    const bdxSupplyString = d18_ToNumber(bdxSupply_d18).toLocaleString(undefined, {
+      minimumFractionDigits: 5,
+      maximumFractionDigits: 5,
+      useGrouping: true
+    });
+
+    const usedCr_d12 = cr_d12.gt(eCr) ? eCr : cr_d12;
+    const COLLATERAL_RATIO_MAX = BigNumber.from(1e12);
+    const COLLATERAL_RATIO_PRECISION = BigNumber.from(1e12);
+    const PRICE_PRECISION = BigNumber.from(1e12);
+
+    const expectedBdxValue_d18 = COLLATERAL_RATIO_MAX.sub(usedCr_d12).mul(totalSupply).div(COLLATERAL_RATIO_PRECISION);
+
+    // If we don't need BDX, the coverage ratio is 100%
+    if (expectedBdxValue_d18.eq(0)) {
+      console.log(`${symbol} efBDXCov: 100% | BDX supply: ${bdxSupplyString}`);
+    } else {
+      // BDX hit rock bottom
+      if (bdxPrice_d12.eq(0)) {
+        console.log(`${symbol} efBDXCov: 0% | BDX supply: ${bdxSupplyString}`);
+      } else {
+        const expectedBdx_d18 = expectedBdxValue_d18.mul(PRICE_PRECISION).div(bdxPrice_d12);
+
+        const effectiveBdxCR_d12 = PRICE_PRECISION.mul(bdxSupply_d18).div(expectedBdx_d18);
+        console.log(`${symbol} efBDXCov: ${d12_ToNumber(effectiveBdxCR_d12.mul(100)).toLocaleString()}% | BDX supply: ${bdxSupplyString}`);
+      }
+    }
   }
 
   async function show_efCR(stable: BDStable) {

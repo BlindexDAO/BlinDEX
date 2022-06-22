@@ -4,8 +4,8 @@ import { getDeployer, getProposer, getTimelock } from "../DeployedContractsHelpe
 import { Strategy } from "./strategies/Strategy.interface";
 import { TimelockStrategy } from "./strategies/TimelockStrategy";
 import { ImmediateExecutionStrategy } from "./strategies/ImmediateExecutionStrategy";
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { blockTimeSeconds, chainNames } from "../Constants";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
+import { blockTimeSeconds } from "../Constants";
 import { Signer } from "ethers";
 
 // class responsible for recoding and executing transactions
@@ -48,15 +48,22 @@ type DefaultRecorderParams = {
 };
 
 export async function defaultRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
-  if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
-    return new Recorder(
-      new ImmediateExecutionStrategy({
-        signer: params?.singer ?? (await getDeployer(hre))
-      })
-    );
-  } else {
-    return defaultTimelockRecorder(hre, params);
-  }
+  // todo ag replace when timelock is deployed
+  return new Recorder(
+    new ImmediateExecutionStrategy({
+      signer: params?.singer ?? (await getDeployer(hre))
+    })
+  );
+
+  // if ([chainNames.mainnetFork, chainNames.arbitrumTestnet, chainNames.goerli, chainNames.kovan].includes(hre.network.name)) {
+  //   return new Recorder(
+  //     new ImmediateExecutionStrategy({
+  //       signer: params?.singer ?? (await getDeployer(hre))
+  //     })
+  //   );
+  // } else {
+  //   return defaultTimelockRecorder(hre, params);
+  // }
 }
 
 export async function defaultTimelockRecorder(hre: HardhatRuntimeEnvironment, params: DefaultRecorderParams | null = null) {
