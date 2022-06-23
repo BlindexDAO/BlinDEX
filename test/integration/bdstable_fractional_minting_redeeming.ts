@@ -54,7 +54,7 @@ describe("BDStable fractional", () => {
     const cr = 0.7;
     await lockBdeuCrAt(hre, cr);
 
-    await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdeu to user, so user can mint
+    await provideBdx(hre, testUser.address, to_d18(1000)); // treasury gives some bdx to user, so user can mint
     await mintWeth(hre, testUser, to_d18(100));
 
     const wethBalanceBeforeMinting_d18 = await weth.balanceOf(testUser.address);
