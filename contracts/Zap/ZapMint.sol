@@ -99,8 +99,7 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
         (uint256 amountForCollateralSwap, uint256 amountForBdxSwap) = getCollateralAndBdxAmountsForSwap(
             parameters.amountIn,
             parameters.tokenInStablePrice,
-            parameters.bdstableToMintAddress,
-            parameters.bdstablePoolAddress
+            parameters.bdstableToMintAddress
         );
         if (amountForBdxSwap > 0 && amountForCollateralSwap > 0) {
             require(
@@ -159,8 +158,7 @@ contract ZapMint is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
     function getCollateralAndBdxAmountsForSwap(
         uint256 amountIn,
         uint256 tokenPrice,
-        address bdstableToMintAddress,
-        address bdstablePoolAddress
+        address bdstableToMintAddress
     ) private returns (uint256, uint256) {
         BDStable stableToMint = BDStable(bdstableToMintAddress);
         uint256 collateralRatio = stableToMint.global_collateral_ratio_d12();
