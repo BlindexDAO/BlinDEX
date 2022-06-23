@@ -1,4 +1,3 @@
-import { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
 import { EXTERNAL_SUPPORTED_TOKENS, NATIVE_TOKEN_NAME, SECONDARY_COLLATERAL_TOKEN_NAME } from "./Constants";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { IERC20 } from "../typechain/IERC20";
@@ -18,6 +17,7 @@ import { toRc } from "./Recorder/RecordableContract";
 import { getListOfSupportedLiquidityPools } from "../utils/Constants";
 import { BigNumber } from "ethers";
 import { to_d18 } from "./NumbersHelpers";
+import { SignerWithAddress } from "hardhat-deploy-ethers/signers";
 
 export async function recordUpdateUniswapPairsOracles(hre: HardhatRuntimeEnvironment, recorder: Recorder) {
   const pools = await getPools(hre);
