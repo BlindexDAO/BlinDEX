@@ -2,7 +2,22 @@ import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import { getDeployer, getAllBDStableStakingRewards, getStakingRewardsDistribution, formatAddress } from "../utils/DeployedContractsHelpers";
+import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
+
+export async function pauseAllStaking(hre: HardhatRuntimeEnvironment) {
+  const stakings = await getAllBDStableStakingRewards(hre);
+  for (let index = 0; index < stakings.length; index++) {
+    const staking = stakings[index];
+
+    if (!(await staking.paused())) {
+      console.log(`(${index + 1}) Pausing staking rewards pool: ${staking.address}`);
+      await printAndWaitOnTransaction(await staking.pause());
+    } else {
+      console.log(`(${index + 1}) Staking rewards pool already paused ${staking.address}`);
+    }
+  }
+}
 
 export function load() {
   task("staking:single:unlock")
@@ -60,15 +75,7 @@ export function load() {
     });
 
   task("staking:all:pause").setAction(async (args, hre) => {
-    const stakings = await getAllBDStableStakingRewards(hre);
-    for (const staking of stakings) {
-      if (!(await staking.paused())) {
-        await staking.pause();
-        console.log("paused", staking.address);
-      } else {
-        console.log("already paused", staking.address);
-      }
-    }
+    await pauseAllStaking(hre);
   });
 
   task("staking:all:unpause").setAction(async (args, hre) => {

@@ -16,7 +16,10 @@ import {
   getFiatToFiat_EurUsd,
   getTokenData,
   getTimelock,
-  getBlindexUpdater
+  getBlindexUpdater,
+  getAllBDStablePools,
+  getStakingRewardsDistribution,
+  getVesting
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -40,6 +43,8 @@ import {
   extractTimelockQueuedTransactionsBatchParamsDataAndHash
 } from "../utils/TimelockHelpers";
 import { Timelock } from "../typechain/Timelock";
+import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
+import { pauseAllStaking } from "./staking";
 
 export function load() {
   task("change-owner-to-timelock").setAction(async (args, hre) => {
@@ -96,6 +101,59 @@ export function load() {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
       await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
+
+  task("pause-system").setAction(async (_args, hre) => {
+    console.log("================================");
+    console.log("Pause minting and redeeming on all the BD-Stable Pools");
+    console.log("================================\n");
+
+    const bdstablePools = await getAllBDStablePools(hre);
+
+    for (let index = 0; index < bdstablePools.length; index++) {
+      const pool = bdstablePools[index];
+
+      if (await pool.mintPaused()) {
+        console.log(`(${index + 1}) Minting was already paused for pool: ${pool.address}`);
+      } else {
+        console.log(`(${index + 1}) Pausing minting for pool: ${pool.address}`);
+        await printAndWaitOnTransaction(await pool.toggleMintingPaused());
+      }
+
+      if (await pool.redeemPaused()) {
+        console.log(`(${index + 1}) Redeeming was already paused for pool: ${pool.address}`);
+      } else {
+        console.log(`(${index + 1}) Pausing redeeming for pool: ${pool.address}`);
+        await printAndWaitOnTransaction(await pool.toggleRedeemingPaused());
+      }
+    }
+
+    console.log("\n================================");
+    console.log("Pause all the staking pools");
+    console.log("================================\n");
+    await pauseAllStaking(hre);
+
+    console.log("\n================================");
+    console.log("Pause collecting - staking rewards distribution");
+    console.log("================================\n");
+    const srd = await getStakingRewardsDistribution(hre);
+
+    if (await srd.collectingPaused()) {
+      console.log("Collecting - Staking Rewards Distribution is already paused");
+    } else {
+      await printAndWaitOnTransaction(await srd.toggleCollectingPaused());
+    }
+
+    console.log("\n================================");
+    console.log("Pause claiming - vesting");
+    console.log("================================");
+    const vesting = await getVesting(hre);
+
+    if (await vesting.claimingPaused()) {
+      console.log("Claiming - Vesting is already paused");
+    } else {
+      await printAndWaitOnTransaction(await vesting.toggleClaimingPaused());
+    }
+  });
 
   task("update:all")
     .addParam("btcusd", "BTCUSD price")

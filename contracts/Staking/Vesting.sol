@@ -23,6 +23,8 @@ contract Vesting is OwnableUpgradeable {
     uint256 public vestingTimeInSeconds;
     IERC20 public vestedToken;
 
+    bool public claimingPaused;
+
     function initialize(
         address _vestedTokenAddress,
         address _vestingScheduler,
@@ -55,7 +57,7 @@ contract Vesting is OwnableUpgradeable {
         emit ScheduleCreated(_receiver, _amount_d18);
     }
 
-    function claim(uint256 from, uint256 to) external {
+    function claim(uint256 from, uint256 to) external claimingNotPaused {
         require(from < to, "Vesting: 'to' must be larger than 'from'");
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
 
@@ -130,7 +132,19 @@ contract Vesting is OwnableUpgradeable {
         fundsProvider = _fundsProvider;
     }
 
+    function toggleClaimingPaused() external onlyOwner {
+        claimingPaused = !claimingPaused;
+
+        emit ClaimingPausedToggled(claimingPaused);
+    }
+
+    modifier claimingNotPaused() {
+        require(claimingPaused == false, "Claiming is paused");
+        _;
+    }
+
     event ScheduleCreated(address user, uint256 amount);
     event RewardClaimed(address user, uint256 amount);
     event VestingTimeInSecondsSet(uint256 vestingTimeInSeconds);
+    event ClaimingPausedToggled(bool toggled);
 }
