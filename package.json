@@ -3,8 +3,8 @@
   "scripts": {
     "start": "npm-run-all deploy:fork:reset initialize",
     "prepare": "husky install",
-    "test": "npm run deploy:fork:reset && hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
-    "test-unit": "hardhat --network mainnetFork test:dir ./test/unit/",
+    "test": "NODE_ENV=test npm run deploy:fork:reset && hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
+    "test-unit": "NODE_ENV=test hardhat --network mainnetFork test:dir ./test/unit/",
     "test:gas": "npm run deploy:fork:reset && cross-env REPORT_GAS=true hardhat --network mainnetFork test:dir --deploy-fixture ./test/integration/",
     "node": "hardhat node --no-deploy",
     "deploy:fork": "hardhat --network mainnetFork deploy",
