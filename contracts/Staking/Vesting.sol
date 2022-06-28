@@ -23,6 +23,8 @@ contract Vesting is OwnableUpgradeable {
     uint256 public vestingTimeInSeconds;
     IERC20 public vestedToken;
 
+    bool public claimingPaused;
+
     function initialize(
         address _vestedTokenAddress,
         address _vestingScheduler,
@@ -130,7 +132,14 @@ contract Vesting is OwnableUpgradeable {
         fundsProvider = _fundsProvider;
     }
 
+    function toggleClaimingPaused() external onlyOwner {
+        claimingPaused = !claimingPaused;
+
+        emit ClaimingPausedToggled(claimingPaused);
+    }
+
     event ScheduleCreated(address user, uint256 amount);
     event RewardClaimed(address user, uint256 amount);
     event VestingTimeInSecondsSet(uint256 vestingTimeInSeconds);
+    event ClaimingPausedToggled(bool toggled);
 }

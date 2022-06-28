@@ -44,6 +44,8 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
+    bool public claimingPaused;
+
     function initialize(
         address _rewardsToken,
         address _vesting,
@@ -214,6 +216,12 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         _;
     }
 
+    function toggleClaimingPaused() external onlyOwner {
+        claimingPaused = !claimingPaused;
+
+        emit ClaimingPausedToggled(claimingPaused);
+    }
+
     // ---------- EVENTS ----------
     event PoolRemoved(address indexed pool);
     event PoolRegistered(address indexed stakingRewardsAddress, uint256 indexed stakingRewardsWeight);
@@ -221,4 +229,5 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     event TreasuryChanged(address newTreasury);
     event VestingChanged(address newVesting);
     event RewardFeeChanged(uint256 newRewardFee_d12);
+    event ClaimingPausedToggled(bool toggled);
 }
