@@ -17,7 +17,9 @@ import {
   getTokenData,
   getTimelock,
   getBlindexUpdater,
-  getAllBDStablePools
+  getAllBDStablePools,
+  getStakingRewardsDistribution,
+  getVesting
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -129,6 +131,28 @@ export function load() {
     console.log("Pause all the staking pools");
     console.log("================================");
     await pauseAllStaking(hre);
+
+    console.log("================================");
+    console.log("Pause claiming - staking rewards distribution");
+    console.log("================================");
+    const srd = await getStakingRewardsDistribution(hre);
+
+    if (await srd.claimingPaused()) {
+      console.log("Claiming - Staking Rewards Distribution is already paused");
+    } else {
+      await printAndWaitOnTransaction(await srd.toggleClaimingPaused());
+    }
+
+    console.log("================================");
+    console.log("Pause claiming - vesting");
+    console.log("================================");
+    const vesting = await getVesting(hre);
+
+    if (await vesting.claimingPaused()) {
+      console.log("Claiming - Vesting is already paused");
+    } else {
+      await printAndWaitOnTransaction(await vesting.toggleClaimingPaused());
+    }
   });
 
   task("update:all")
