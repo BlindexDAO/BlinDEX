@@ -16,7 +16,8 @@ import {
   getFiatToFiat_EurUsd,
   getTokenData,
   getTimelock,
-  getBlindexUpdater
+  getBlindexUpdater,
+  getAllBDStablePools
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -40,6 +41,8 @@ import {
   extractTimelockQueuedTransactionsBatchParamsDataAndHash
 } from "../utils/TimelockHelpers";
 import { Timelock } from "../typechain/Timelock";
+import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
+import { pauseAllStaking } from "./staking";
 
 export function load() {
   task("change-owner-to-timelock").setAction(async (args, hre) => {
@@ -96,6 +99,35 @@ export function load() {
       const decodedTransaction = await decodeTimelockQueuedTransactions(hre, txHash);
       await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
+
+  task("pause-system").setAction(async (_args, hre) => {
+    console.log("================================");
+    console.log("Pause minting and redeeming on all the BD-Stable Pools");
+    console.log("================================");
+
+    const bdstablePools = await getAllBDStablePools(hre);
+
+    for (const pool of bdstablePools) {
+      if (await pool.mintPaused()) {
+        console.log(`Minting was already paused for pool: ${pool.address}`);
+      } else {
+        console.log(`Pausing minting for pool: ${pool.address}`);
+        await printAndWaitOnTransaction(await pool.toggleMintingPaused());
+      }
+
+      if (await pool.redeemPaused()) {
+        console.log(`Redeeming was already paused for pool: ${pool.address}`);
+      } else {
+        console.log(`Pausing redeeming for pool: ${pool.address}`);
+        await printAndWaitOnTransaction(await pool.toggleRedeemingPaused());
+      }
+    }
+
+    console.log("================================");
+    console.log("Pause all the staking pools");
+    console.log("================================");
+    await pauseAllStaking(hre);
+  });
 
   task("update:all")
     .addParam("btcusd", "BTCUSD price")
