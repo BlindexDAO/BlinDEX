@@ -102,6 +102,29 @@ export function load() {
       await (await timelock.executeTransactionsBatch(decodedTransaction.queuedTransactions, decodedTransaction.eta)).wait();
     });
 
+  task("pause-vesting-and-srd").setAction(async (_args, hre) => {
+    console.log("\n================================");
+    console.log("Pause claiming - vesting");
+    console.log("================================");
+    const vesting = await getVesting(hre);
+    const vestingTimeInSeconds = 60 * 60 * 24 * 30 * 9; //9 months
+    await printAndWaitOnTransaction(await vesting.setVestingTimeInSeconds(BigNumber.from(vestingTimeInSeconds)));
+    // if (await vesting.claimingPaused()) {
+    // console.log("Claiming - Vesting is already paused");
+    // } else {
+    // await printAndWaitOnTransaction(await vesting.toggleClaimingPaused());
+    // }
+    // console.log("\n================================");
+    // console.log("Pause collecting - staking rewards distribution");
+    // console.log("================================\n");
+    // const srd = await getStakingRewardsDistribution(hre);
+    // if (await srd.collectingPaused()) {
+    //   console.log("Collecting - Staking Rewards Distribution is already paused");
+    // } else {
+    //   await printAndWaitOnTransaction(await srd.toggleCollectingPaused());
+    // }
+  });
+
   task("pause-system").setAction(async (_args, hre) => {
     console.log("================================");
     console.log("Pause minting and redeeming on all the BD-Stable Pools");
@@ -132,27 +155,27 @@ export function load() {
     console.log("================================\n");
     await pauseAllStaking(hre);
 
-    console.log("\n================================");
-    console.log("Pause collecting - staking rewards distribution");
-    console.log("================================\n");
-    const srd = await getStakingRewardsDistribution(hre);
+    // console.log("\n================================");
+    // console.log("Pause collecting - staking rewards distribution");
+    // console.log("================================\n");
+    // const srd = await getStakingRewardsDistribution(hre);
 
-    if (await srd.collectingPaused()) {
-      console.log("Collecting - Staking Rewards Distribution is already paused");
-    } else {
-      await printAndWaitOnTransaction(await srd.toggleCollectingPaused());
-    }
+    // if (await srd.collectingPaused()) {
+    //   console.log("Collecting - Staking Rewards Distribution is already paused");
+    // } else {
+    //   await printAndWaitOnTransaction(await srd.toggleCollectingPaused());
+    // }
 
-    console.log("\n================================");
-    console.log("Pause claiming - vesting");
-    console.log("================================");
-    const vesting = await getVesting(hre);
+    // console.log("\n================================");
+    // console.log("Pause claiming - vesting");
+    // console.log("================================");
+    // const vesting = await getVesting(hre);
 
-    if (await vesting.claimingPaused()) {
-      console.log("Claiming - Vesting is already paused");
-    } else {
-      await printAndWaitOnTransaction(await vesting.toggleClaimingPaused());
-    }
+    // if (await vesting.claimingPaused()) {
+    //   console.log("Claiming - Vesting is already paused");
+    // } else {
+    //   await printAndWaitOnTransaction(await vesting.toggleClaimingPaused());
+    // }
   });
 
   task("update:all")

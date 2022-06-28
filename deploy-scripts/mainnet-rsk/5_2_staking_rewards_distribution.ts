@@ -4,13 +4,15 @@ import type { StakingRewardsDistribution } from "../../typechain/StakingRewardsD
 import { to_d18 } from "../../utils/NumbersHelpers";
 import { getBdx, getTreasuryAddress, getTreasurySigner, getVesting } from "../../utils/DeployedContractsHelpers";
 
+export const srdContractName = "StakingRewardsDistribution";
+
 async function feedStakeRewardsDistribution(hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: staking rewards distribution");
 
   const treasury = await getTreasurySigner(hre);
 
   const bdx = await getBdx(hre);
-  const stakingRewardsDistribution = (await hre.ethers.getContract("StakingRewardsDistribution")) as StakingRewardsDistribution;
+  const stakingRewardsDistribution = (await hre.ethers.getContract(srdContractName)) as StakingRewardsDistribution;
 
   // For RSK we were able to do this because back then the treasury wasn't in a multisig
   await (await bdx.connect(treasury).transfer(stakingRewardsDistribution.address, to_d18(21).mul(1e6).div(2))).wait();
@@ -23,7 +25,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const vesting = await getVesting(hre);
   const treasuryAddress = await getTreasuryAddress(hre);
 
-  const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy("StakingRewardsDistribution", {
+  const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy(srdContractName, {
     from: (await hre.getNamedAccounts()).DEPLOYER,
     proxy: {
       proxyContract: "OptimizedTransparentProxy",
@@ -34,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }
       }
     },
-    contract: "StakingRewardsDistribution",
+    contract: srdContractName,
     args: []
   });
 
