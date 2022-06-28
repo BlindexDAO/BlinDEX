@@ -223,7 +223,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     }
 
     modifier collectingNotPaused() {
-        require(collectingPaused == false, "Claiming is paused");
+        require(collectingPaused == false, "Collecting is paused");
         _;
     }
 
