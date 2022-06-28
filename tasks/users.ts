@@ -30,6 +30,8 @@ export function load() {
       console.log(`set:owner ${owner} on ${hre.network.name}`);
       const deployer = await getDeployer(hre);
 
+      owner = formatAddress(hre, owner);
+
       if (hre.network.name === "rsk") {
         const oracleEthUsd = (await hre.ethers.getContract(PriceFeedContractNames.ETH_USD, deployer)) as SovrynSwapPriceFeed;
         if (!(await isSameOwner(owner, oracleEthUsd))) {
