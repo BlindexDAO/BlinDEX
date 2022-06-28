@@ -133,14 +133,14 @@ export function load() {
     await pauseAllStaking(hre);
 
     console.log("================================");
-    console.log("Pause claiming - staking rewards distribution");
+    console.log("Pause collecting - staking rewards distribution");
     console.log("================================");
     const srd = await getStakingRewardsDistribution(hre);
 
-    if (await srd.claimingPaused()) {
-      console.log("Claiming - Staking Rewards Distribution is already paused");
+    if (await srd.collectingPaused()) {
+      console.log("Collecting - Staking Rewards Distribution is already paused");
     } else {
-      await printAndWaitOnTransaction(await srd.toggleClaimingPaused());
+      await printAndWaitOnTransaction(await srd.toggleCollectingPaused());
     }
 
     console.log("================================");

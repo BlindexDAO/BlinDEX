@@ -57,7 +57,7 @@ contract Vesting is OwnableUpgradeable {
         emit ScheduleCreated(_receiver, _amount_d18);
     }
 
-    function claim(uint256 from, uint256 to) external {
+    function claim(uint256 from, uint256 to) external claimingNotPaused {
         require(from < to, "Vesting: 'to' must be larger than 'from'");
         VestingSchedule[] storage userVestingSchedules = vestingSchedules[msg.sender];
 
@@ -136,6 +136,11 @@ contract Vesting is OwnableUpgradeable {
         claimingPaused = !claimingPaused;
 
         emit ClaimingPausedToggled(claimingPaused);
+    }
+
+    modifier claimingNotPaused() {
+        require(claimingPaused == false, "Claiming is paused");
+        _;
     }
 
     event ScheduleCreated(address user, uint256 amount);

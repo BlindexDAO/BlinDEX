@@ -44,7 +44,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     address[] public stakingRewardsAddresses;
     uint256 public stakingRewardsWeightsTotal;
 
-    bool public claimingPaused;
+    bool public collectingPaused;
 
     function initialize(
         address _rewardsToken,
@@ -140,7 +140,7 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         }
     }
 
-    function collectAllRewards(uint256 from, uint256 to) external {
+    function collectAllRewards(uint256 from, uint256 to) external collectingNotPaused {
         to = to < stakingRewardsAddresses.length ? to : stakingRewardsAddresses.length;
 
         uint256 totalFee;
@@ -216,10 +216,15 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
         _;
     }
 
-    function toggleClaimingPaused() external onlyOwner {
-        claimingPaused = !claimingPaused;
+    function toggleCollectingPaused() external onlyOwner {
+        collectingPaused = !collectingPaused;
 
-        emit ClaimingPausedToggled(claimingPaused);
+        emit CollectingPausedToggled(collectingPaused);
+    }
+
+    modifier collectingNotPaused() {
+        require(collectingPaused == false, "Claiming is paused");
+        _;
     }
 
     // ---------- EVENTS ----------
@@ -229,5 +234,5 @@ contract StakingRewardsDistribution is OwnableUpgradeable {
     event TreasuryChanged(address newTreasury);
     event VestingChanged(address newVesting);
     event RewardFeeChanged(uint256 newRewardFee_d12);
-    event ClaimingPausedToggled(bool toggled);
+    event CollectingPausedToggled(bool toggled);
 }
