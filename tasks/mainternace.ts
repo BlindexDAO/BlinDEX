@@ -107,18 +107,20 @@ export function load() {
 
     const bdstablePools = await getAllBDStablePools(hre);
 
-    for (const pool of bdstablePools) {
+    for (let index = 0; index < bdstablePools.length; index++) {
+      const pool = bdstablePools[index];
+
       if (await pool.mintPaused()) {
-        console.log(`Minting was already paused for pool: ${pool.address}`);
+        console.log(`(${index + 1}) Minting was already paused for pool: ${pool.address}`);
       } else {
-        console.log(`Pausing minting for pool: ${pool.address}`);
+        console.log(`(${index + 1}) Pausing minting for pool: ${pool.address}`);
         await printAndWaitOnTransaction(await pool.toggleMintingPaused());
       }
 
       if (await pool.redeemPaused()) {
-        console.log(`Redeeming was already paused for pool: ${pool.address}`);
+        console.log(`(${index + 1}) Redeeming was already paused for pool: ${pool.address}`);
       } else {
-        console.log(`Pausing redeeming for pool: ${pool.address}`);
+        console.log(`(${index + 1}) Pausing redeeming for pool: ${pool.address}`);
         await printAndWaitOnTransaction(await pool.toggleRedeemingPaused());
       }
     }

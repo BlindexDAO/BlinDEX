@@ -7,12 +7,14 @@ import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 
 export async function pauseAllStaking(hre: HardhatRuntimeEnvironment) {
   const stakings = await getAllBDStableStakingRewards(hre);
-  for (const staking of stakings) {
+  for (let index = 0; index < stakings.length; index++) {
+    const staking = stakings[index];
+
     if (!(await staking.paused())) {
-      console.log(`Pausing staking rewards pool: ${staking.address}`);
+      console.log(`(${index + 1}) Pausing staking rewards pool: ${staking.address}`);
       await printAndWaitOnTransaction(await staking.pause());
     } else {
-      console.log(`Staking rewards pool already paused ${staking.address}`);
+      console.log(`(${index + 1}) Staking rewards pool already paused ${staking.address}`);
     }
   }
 }
