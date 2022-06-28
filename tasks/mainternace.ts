@@ -105,7 +105,7 @@ export function load() {
   task("pause-system").setAction(async (_args, hre) => {
     console.log("================================");
     console.log("Pause minting and redeeming on all the BD-Stable Pools");
-    console.log("================================");
+    console.log("================================\n");
 
     const bdstablePools = await getAllBDStablePools(hre);
 
@@ -127,14 +127,14 @@ export function load() {
       }
     }
 
-    console.log("================================");
+    console.log("\n================================");
     console.log("Pause all the staking pools");
-    console.log("================================");
+    console.log("================================\n");
     await pauseAllStaking(hre);
 
-    console.log("================================");
+    console.log("\n================================");
     console.log("Pause collecting - staking rewards distribution");
-    console.log("================================");
+    console.log("================================\n");
     const srd = await getStakingRewardsDistribution(hre);
 
     if (await srd.collectingPaused()) {
@@ -143,7 +143,7 @@ export function load() {
       await printAndWaitOnTransaction(await srd.toggleCollectingPaused());
     }
 
-    console.log("================================");
+    console.log("\n================================");
     console.log("Pause claiming - vesting");
     console.log("================================");
     const vesting = await getVesting(hre);
