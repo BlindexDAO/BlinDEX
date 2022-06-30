@@ -14,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         proxyContract: "OptimizedTransparentProxy"
       },
       contract: vestingContractName,
-      args: []
+      log: true
     });
   });
 };
