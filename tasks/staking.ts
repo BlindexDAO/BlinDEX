@@ -1,7 +1,14 @@
 import { task } from "hardhat/config";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { StakingRewards } from "../typechain/StakingRewards";
-import { getDeployer, getAllBDStableStakingRewards, getStakingRewardsDistribution, formatAddress } from "../utils/DeployedContractsHelpers";
+import {
+  getDeployer,
+  getAllBDStableStakingRewards,
+  getStakingRewardsDistribution,
+  formatAddress,
+  getERC20,
+  getTreasuryAddress
+} from "../utils/DeployedContractsHelpers";
 import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
 import { bigNumberToDecimal } from "../utils/NumbersHelpers";
 
@@ -151,6 +158,44 @@ export function load() {
       }
 
       console.log("Total rewards", totalBDXRewards);
+    });
+
+  task("staking:all:printBalance").setAction(async (args, hre) => {
+    const stakingRewards = await getAllBDStableStakingRewards(hre);
+
+    for (const stakingPool of stakingRewards) {
+      console.log("\nStakingRewards address:", stakingPool.address);
+      const lpTokenAddress = await stakingPool.stakingToken();
+      console.log("LP address:", lpTokenAddress);
+
+      const lpToken = await getERC20(hre, lpTokenAddress);
+
+      console.log("Balance of lp token in the StakingRewards", await lpToken.balanceOf(stakingPool.address));
+    }
+  });
+
+  task("staking:withdrawLpTokens")
+    .addPositionalParam("stakingRewardsAddress", "The staking rewards pool")
+    .addPositionalParam("withdrawAmount", "The withdrawal amount")
+    .setAction(async ({ stakingRewardsAddress, withdrawAmount }, hre) => {
+      const treasuryAddress = await getTreasuryAddress(hre);
+
+      const stakingPool = (await hre.ethers.getContractAt("StakingRewards", stakingRewardsAddress)) as StakingRewards;
+
+      const lpTokenAddress = await stakingPool.stakingToken();
+      const lpToken = await getERC20(hre, lpTokenAddress);
+
+      console.log("\nBefore withdrawal:");
+      console.log("LP token: " + lpTokenAddress);
+      console.log("LP token balance - Treasury: " + (await lpToken.balanceOf(treasuryAddress)));
+      console.log(`LP token balance - Staking pool - ${stakingPool.address} : ${await lpToken.balanceOf(stakingPool.address)}`);
+
+      console.log(`\nWithdraw lp tokens from staking pool: ${stakingPool.address} ...`);
+      printAndWaitOnTransaction(await stakingPool.withdrawLockedLPTokens(withdrawAmount, treasuryAddress));
+
+      console.log("\nBalances after withdrawal");
+      console.log("LP token balance - Treasury: " + (await lpToken.balanceOf(treasuryAddress)));
+      console.log(`LP token balance - Staking pool - ${stakingPool.address} : ${await lpToken.balanceOf(stakingPool.address)}`);
     });
 
   async function getStakingPoolsRewardPerToken(
