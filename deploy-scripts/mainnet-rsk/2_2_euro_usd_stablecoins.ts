@@ -5,6 +5,8 @@ import * as constants from "../../utils/Constants";
 import type { BdStablePool } from "../../typechain/BdStablePool";
 import { bdStablesContractsDetails, formatAddress, getBdx, getDeployer, getTreasurySigner } from "../../utils/DeployedContractsHelpers";
 
+export const bdStablePoolContractName = "BdStablePool";
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const initialDeployBDStables = Object.values(bdStablesContractsDetails).filter(stableDetails => ["BDEU", "BDUS"].includes(stableDetails.symbol));
   for (const stableDetails of initialDeployBDStables) {
@@ -57,7 +59,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           }
         }
       },
-      contract: "BdStablePool",
+      contract: bdStablePoolContractName,
       args: [],
       libraries: {
         BdPoolLibrary: bdPoolLibraryDeployment.address
@@ -84,7 +86,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           }
         }
       },
-      contract: "BdStablePool",
+      contract: bdStablePoolContractName,
       args: [],
       libraries: {
         BdPoolLibrary: bdPoolLibraryDeployment.address

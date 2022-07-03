@@ -501,6 +501,20 @@ contract BdStablePool is OwnableUpgradeable {
         require(success, "ETH transfer failed");
     }
 
+    function withdrawCollateral(uint256 withdrawAmount, address withdrawalAddress) external onlyOwner {
+        require(withdrawAmount > 0, "Amount to withdraw is missing");
+
+        uint256 totalCollateralAmount = collateral_token.balanceOf(address(this));
+        require(withdrawAmount <= totalCollateralAmount, "Insufficient collateral to withdraw");
+
+        if (is_collateral_wrapping_native_token) {
+            NativeTokenWrapper.withdraw(withdrawAmount);
+            safeTransferETH(withdrawalAddress, withdrawAmount);
+        } else {
+            collateral_token.safeTransfer(withdrawalAddress, withdrawAmount);
+        }
+    }
+
     /* ========== EVENTS ========== */
 
     event PoolParametersSet(

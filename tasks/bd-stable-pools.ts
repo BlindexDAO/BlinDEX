@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { getAllBDStablePools, getBdx, getCollateralContract, getTokenData } from "../utils/DeployedContractsHelpers";
+import { getAllBDStablePools, getBdx, getCollateralContract, getTokenData, getUser1, getWbtc, getWeth } from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
 import { utils } from "ethers";
 
@@ -165,5 +165,58 @@ export function load() {
         ).wait();
         console.log("Bonus after:", `${d12_ToNumber(await stablePool.bonus_rate()) * 100}%`);
       }
+    });
+
+  task("bdsp:all:printBalance").setAction(async (args, hre) => {
+    const stablePools = await getAllBDStablePools(hre);
+    const wbtc = await getWbtc(hre);
+    const weth = await getWeth(hre);
+
+    for (let index = 0; index < stablePools.length; index++) {
+      const stablePool = stablePools[index];
+      console.log("\nBDStablePool address:", stablePool.address);
+      console.log("BDStable address:", await stablePool.BDSTABLE());
+
+      const collateralToken = await stablePool.collateral_token();
+
+      if (collateralToken === wbtc.address) {
+        console.log("Balance of wrapped secondary token", (await wbtc.balanceOf(stablePool.address)).toString());
+      } else if (collateralToken === weth.address) {
+        console.log("Balance of wrapped native token", (await weth.balanceOf(stablePool.address)).toString());
+      } else {
+        throw new Error("Invalid collateral token");
+      }
+    }
+  });
+
+  task("bdsp:withdrawCollateral")
+    .addPositionalParam("stablePoolAddress", "The BDStablePool contract address")
+    .addPositionalParam("withdrawAmount", "The withdrawal amount")
+    .setAction(async ({ stablePoolAddress, withdrawAmount }, hre) => {
+      const stablePools = await getAllBDStablePools(hre);
+
+      const stablePool = stablePools.find(pool => pool.address.toLowerCase() === stablePoolAddress.toLowerCase());
+      if (!stablePool) {
+        console.log(`Couldn't find pool ${stablePoolAddress}`);
+        return;
+      }
+
+      const wbtc = await getWbtc(hre);
+      const weth = await getWeth(hre);
+
+      const wallet = await getUser1(hre);
+
+      console.log("Balances before withdrawal");
+      console.log("Native Token: " + (await wallet.getBalance()).toString());
+      console.log("Wrapped Native Token: " + (await weth.balanceOf(wallet.address)));
+      console.log("Wrapped Secondary Token: " + (await wbtc.balanceOf(wallet.address)));
+
+      console.log("\nWithdraw collateral...\n");
+      await stablePool.withdrawCollateral(withdrawAmount, wallet.address);
+
+      console.log("Balances after withdrawal");
+      console.log("Native Token: " + (await wallet.getBalance()).toString());
+      console.log("Wrapped Native Token: " + (await weth.balanceOf(wallet.address)));
+      console.log("Wrapped Secondary Token: " + (await wbtc.balanceOf(wallet.address)));
     });
 }
