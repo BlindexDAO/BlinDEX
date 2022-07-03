@@ -184,6 +184,16 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
         emit Staked(msg.sender, amount);
     }
 
+    function withdrawLockedLPTokens(uint256 withdrawAmount, address withdrawalAddress) external onlyOwner {
+        require(withdrawAmount > 0, "Amount to withdraw is missing");
+        require(withdrawalAddress != address(0), "Withdrawl address must not be zero");
+
+        uint256 totalLpTokenAmount = stakingToken.balanceOf(address(this));
+        require(withdrawAmount <= totalLpTokenAmount, "Insufficient lp tokens to withdraw");
+
+        stakingToken.safeTransfer(withdrawalAddress, withdrawAmount);
+    }
+
     function stakeLocked(uint256 amount, uint256 yearsNo) external nonReentrant whenNotPaused updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
         if (yearsNo == 10) {
