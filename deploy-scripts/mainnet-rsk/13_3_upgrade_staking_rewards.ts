@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const stakingRewardsContractName = `StakingRewards_${poolKey}`;
 
-    await deployContract(`Upgrade staking rewards ${stakingRewardsContractName}`, async () => {
+    await deployContract(`Upgrade staking rewards: ${stakingRewardsContractName}\n`, async () => {
       await hre.deployments.deploy(stakingRewardsContractName, {
         from: deployer.address,
         proxy: {
