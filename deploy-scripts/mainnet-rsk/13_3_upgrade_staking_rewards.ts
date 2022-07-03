@@ -16,13 +16,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const stakingRewardsContractName = `StakingRewards_${poolKey}`;
 
-    await deployContract("Upgrade staking rewards", async () => {
+    await deployContract(`Upgrade staking rewards ${stakingRewardsContractName}`, async () => {
       await hre.deployments.deploy(stakingRewardsContractName, {
         from: deployer.address,
         proxy: {
           proxyContract: "OptimizedTransparentProxy"
         },
-        contract: stakingRewardsContractName,
+        contract: "StakingRewards",
         log: true
       });
     });
@@ -34,5 +34,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 func.id = __filename;
 func.tags = ["StakingRewards-Upgrade-V2"];
 func.dependencies = ["StakingRewards", "bXAU_Staking_Pools", "bGBP_Staking_Pools", "BDUS_DOC_POOL"];
-func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(true);
+func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(false);
 export default func;
