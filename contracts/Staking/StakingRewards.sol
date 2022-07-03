@@ -10,17 +10,22 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./StakingRewardsDistribution.sol";
 
-contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGuard {
+contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
     using SafeERC20 for ERC20;
 
     // Constant for various precisions
     uint256 public constant LOCK_MULTIPLIER_PRECISION = 1e6;
 
     uint256 public constant REWARD_PRECISION = 1e18;
+
+    uint256 private constant _REENTRY_GUARD_NOT_ENTERED = 1;
+    uint256 private constant _REENTRY_GUARD_ENTERED = 2;
+
+    // uint256 is cheaper than bool
+    uint256 private _reentry_guard_status;
 
     /* ========== STATE VARIABLES ========== */
 
@@ -80,6 +85,8 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + rewardsDurationSeconds;
+
+        _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
     }
 
     /* ========== VIEWS ========== */
@@ -434,6 +441,20 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable, ReentrancyGu
     modifier onlyStakingRewardsDistribution() {
         require(msg.sender == address(stakingRewardsDistribution), "Only staking rewards distribution allowed");
         _;
+    }
+
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_reentry_guard_status != _REENTRY_GUARD_ENTERED, "ReentrancyGuard: reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _reentry_guard_status = _REENTRY_GUARD_ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _reentry_guard_status = _REENTRY_GUARD_NOT_ENTERED;
     }
 
     /* ========== EVENTS ========== */
