@@ -1,7 +1,17 @@
 import { task } from "hardhat/config";
-import { getAllBDStablePools, getBdx, getCollateralContract, getTokenData, getUser1, getWbtc, getWeth } from "../utils/DeployedContractsHelpers";
+import {
+  getAllBDStablePools,
+  getBdx,
+  getCollateralContract,
+  getTokenData,
+  getTreasuryAddress,
+  getWbtc,
+  getWeth
+} from "../utils/DeployedContractsHelpers";
 import { d12_ToNumber, d18_ToNumber, to_d18 } from "../utils/NumbersHelpers";
-import { utils } from "ethers";
+import { BigNumber, utils } from "ethers";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
 
 export function load() {
   task("bdsp:all:show").setAction(async (args, hre) => {
@@ -193,30 +203,56 @@ export function load() {
     .addPositionalParam("stablePoolAddress", "The BDStablePool contract address")
     .addPositionalParam("withdrawAmount", "The withdrawal amount")
     .setAction(async ({ stablePoolAddress, withdrawAmount }, hre) => {
-      const stablePools = await getAllBDStablePools(hre);
+      await withdrawCollateral(hre, stablePoolAddress, withdrawAmount);
+    });
 
-      const stablePool = stablePools.find(pool => pool.address.toLowerCase() === stablePoolAddress.toLowerCase());
-      if (!stablePool) {
-        console.log(`Couldn't find pool ${stablePoolAddress}`);
-        return;
+  task("bdsp:all:withdrawCollateral").setAction(async (args, hre) => {
+    const stablePools = await getAllBDStablePools(hre);
+    const wbtc = await getWbtc(hre);
+    const weth = await getWeth(hre);
+
+    for (let index = 0; index < stablePools.length; index++) {
+      const stablePool = stablePools[index];
+      const collateralToken = await stablePool.collateral_token();
+
+      let withdrawAmount;
+      if (collateralToken === wbtc.address) {
+        withdrawAmount = await wbtc.balanceOf(stablePool.address);
+      } else if (collateralToken === weth.address) {
+        withdrawAmount = await weth.balanceOf(stablePool.address);
+      } else {
+        throw new Error("Invalid collateral token");
       }
 
-      const wbtc = await getWbtc(hre);
-      const weth = await getWeth(hre);
+      if (withdrawAmount.isZero()) {
+        console.log(`There is no collateral to withdraw from ${stablePool.address}`);
+      } else {
+        await withdrawCollateral(hre, stablePool.address, withdrawAmount);
+      }
+    }
+  });
 
-      const wallet = await getUser1(hre);
+  async function withdrawCollateral(hre: HardhatRuntimeEnvironment, stablePoolAddress: string, withdrawAmount: BigNumber) {
+    const stablePools = await getAllBDStablePools(hre);
 
-      console.log("Balances before withdrawal");
-      console.log("Native Token: " + (await wallet.getBalance()).toString());
-      console.log("Wrapped Native Token: " + (await weth.balanceOf(wallet.address)));
-      console.log("Wrapped Secondary Token: " + (await wbtc.balanceOf(wallet.address)));
+    const stablePool = stablePools.find(pool => pool.address.toLowerCase() === stablePoolAddress.toLowerCase());
+    if (!stablePool) {
+      console.log(`Couldn't find pool ${stablePoolAddress}`);
+      return;
+    }
 
-      console.log("\nWithdraw collateral...\n");
-      await stablePool.withdrawCollateral(withdrawAmount, wallet.address);
+    const wbtc = await getWbtc(hre);
+    const treasuryAddress = await getTreasuryAddress(hre);
 
-      console.log("Balances after withdrawal");
-      console.log("Native Token: " + (await wallet.getBalance()).toString());
-      console.log("Wrapped Native Token: " + (await weth.balanceOf(wallet.address)));
-      console.log("Wrapped Secondary Token: " + (await wbtc.balanceOf(wallet.address)));
-    });
+    console.log("\nBalances in treasury before withdrawal");
+    console.log("Native Token: " + (await hre.ethers.provider.getBalance(treasuryAddress)).toString());
+    console.log("Wrapped Secondary Token: " + (await wbtc.balanceOf(treasuryAddress)).toString());
+
+    console.log(`\nWithdraw collateral... ${withdrawAmount}\n`);
+    await printAndWaitOnTransaction(await stablePool.withdrawCollateral(withdrawAmount, treasuryAddress));
+
+    console.log("Balances in treasury after withdrawal");
+    console.log("Native Token: " + (await hre.ethers.provider.getBalance(treasuryAddress)).toString());
+    console.log("Wrapped Secondary Token: " + (await wbtc.balanceOf(treasuryAddress)).toString());
+  }
 }

@@ -502,6 +502,7 @@ contract BdStablePool is OwnableUpgradeable {
     }
 
     function withdrawCollateral(uint256 withdrawAmount, address withdrawalAddress) external onlyOwner {
+        require(withdrawalAddress != address(0), "Cannot withdraw to zero address");
         require(withdrawAmount > 0, "Amount to withdraw is missing");
 
         uint256 totalCollateralAmount = collateral_token.balanceOf(address(this));
