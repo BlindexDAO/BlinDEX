@@ -1,5 +1,6 @@
 {
   "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\1_deploy_vesting.ts": 1656814302,
   "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\2_staking_rewards_distribution.ts": 1656814521,
-  "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\3_staking_rewards.ts": 1656856447
+  "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\3_staking_rewards.ts": 1656856447,
+  "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\4_upgrade.ts": 1656953587
 }

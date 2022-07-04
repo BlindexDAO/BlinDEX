@@ -1,13 +1,12 @@
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { DeployFunction } from "hardhat-deploy/types";
-import * as constants from "../../utils/Constants";
 import { getTreasurySigner, getVesting } from "../../utils/DeployedContractsHelpers";
 
 const bdxAddress = "0x6542a10E68cEAc1Fa0641ec0D799a7492795AAC1";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const vesting = await getVesting(hre);
-  const devTreasuryAddress = hre.network.name === "rsk" ? constants.rskDevTreasuryAddress : (await getTreasurySigner(hre)).address;
+  const devTreasuryAddress = (await getTreasurySigner(hre)).address;
 
   const stakingRewardsDistribution_ProxyDeployment = await hre.deployments.deploy("StakingRewardsDistribution", {
     from: (await hre.getNamedAccounts()).DEPLOYER,

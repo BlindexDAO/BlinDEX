@@ -1,0 +1,30 @@
+PS D:\dev\Blindex> npx hardhat --network rsk get-test-states
+vesting
+0x6b7fC9AAB64C12666ddc97a43049E0901BC264F8
+0x6b7fC9AAB64C12666ddc97a43049E0901BC264F8
+BigNumber { _hex: '0x0163f500', _isBigNumber: true }
+0x6542a10E68cEAc1Fa0641ec0D799a7492795AAC1
+[
+  BigNumber { _hex: '0x62c1a1a4', _isBigNumber: true },
+  BigNumber { _hex: '0x642596a4', _isBigNumber: true },
+  BigNumber { _hex: '0x2ac59317b2e7340000', _isBigNumber: true },
+  BigNumber { _hex: '0x00', _isBigNumber: true },
+  vestingStartedTimeStamp: BigNumber { _hex: '0x62c1a1a4', _isBigNumber: true },
+  vestingEndTimeStamp: BigNumber { _hex: '0x642596a4', _isBigNumber: true },
+  totalVestedAmount_d18: BigNumber { _hex: '0x2ac59317b2e7340000', _isBigNumber: true },
+  releasedAmount_d18: BigNumber { _hex: '0x00', _isBigNumber: true }
+]
+srd
+BigNumber { _hex: '0x115eec47f6cf7e35000000', _isBigNumber: true }
+BigNumber { _hex: '0x6f2c4e995ec98e200000', _isBigNumber: true }
+BigNumber { _hex: '0x012c', _isBigNumber: true }
+BigNumber { _hex: '0xc8', _isBigNumber: true }
+sr
+0x6542a10E68cEAc1Fa0641ec0D799a7492795AAC1
+BigNumber { _hex: '0x62cad9d3', _isBigNumber: true }
+false
+BigNumber { _hex: '0x093a80', _isBigNumber: true }
+BigNumber { _hex: '0x62c19f53', _isBigNumber: true }
+BigNumber { _hex: '0x7b', _isBigNumber: true }
+BigNumber { _hex: '0x7b', _isBigNumber: true }
+BigNumber { _hex: '0x7b', _isBigNumber: true }

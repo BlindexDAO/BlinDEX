@@ -7,7 +7,9 @@ import {
   getDeployer,
   getExecutor,
   getProposer,
+  getStakingRewardsDistribution,
   getTreasurySigner,
+  getVesting,
   getWbtc,
   getWeth,
   getWethConcrete,
@@ -30,8 +32,40 @@ import { Recorder } from "../utils/Recorder/Recorder";
 import { TimelockStrategy } from "../utils/Recorder/strategies/TimelockStrategy";
 import { toRc } from "../utils/Recorder/RecordableContract";
 import { extractTimelockQueuedTransactionsBatchParamsDataAndHash, extractTxParamsHashAndTxHashFromSingleTransaction } from "../utils/TimelockHelpers";
+import { StakingRewards } from "../typechain/StakingRewards";
 
 export function load() {
+  task("get-test-states", "", async (args, hre) => {
+    const deployer = await getDeployer(hre);
+
+    const vesting = await getVesting(hre);
+    const srd = await getStakingRewardsDistribution(hre);
+    const sr = (await hre.ethers.getContract("StakingRewards", deployer)) as StakingRewards;
+
+    console.log("vesting");
+    console.log(await vesting.vestingScheduler());
+    console.log(await vesting.fundsProvider());
+    console.log(await vesting.vestingTimeInSeconds());
+    console.log(await vesting.vestedToken());
+    console.log(await vesting.vestingSchedules(vesting.address, 0));
+
+    console.log("srd");
+    console.log(await srd.TOTAL_BDX_SUPPLY());
+    console.log(await srd.BDX_MINTING_SCHEDULE_YEAR_5());
+    console.log(await srd.stakingRewardsWeightsTotal());
+    console.log(await srd.stakingRewardsWeights(sr.address));
+
+    console.log("sr");
+    console.log(await sr.stakingToken());
+    console.log(await sr.periodFinish());
+    console.log(await sr.isTrueBdPool());
+    console.log(await sr.rewardsDurationSeconds());
+    console.log(await sr.lastUpdateTime());
+    console.log(await sr.totalSupply());
+    console.log(await sr.totalBoostedSupply());
+    console.log(await sr.balanceOf(deployer.address));
+  });
+
   task("dev:mine-block", "", async (args_, hre_) => {
     await mineBlock();
   });
