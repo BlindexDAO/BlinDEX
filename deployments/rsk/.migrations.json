@@ -1,20 +1,5 @@
 {
-  "/BlinDEX/deploy/1_1_deploy_time_lock.ts": 1641131217,
-  "/BlinDEX/deploy/1_2_deploy_bdx_shares.ts": 1641131394,
-  "/BlinDEX/deploy/1_3_mint_bdx.ts": 1641131455,
-  "/BlinDEX/deploy/2_1_bd_pool_library.ts": 1641131491,
-  "/BlinDEX/deploy/2_2_euro_usd_stablecoins.ts": 1641133042,
-  "/BlinDEX/deploy/3_deploy_uniswap_helpers.ts": 1641133846,
-  "/BlinDEX/deploy/4_deploy_liquidity_pools.ts": 1641135093,
-  "/BlinDEX/deploy/5_1_deploy_vesting.ts": 1641135210,
-  "/BlinDEX/deploy/5_2_staking_rewards_distribution.ts": 1641135540,
-  "/BlinDEX/deploy/6_deploy_euro_usd_staking_rewards.ts": 1641137359,
-  "/BlinDEX/deploy/7_deploy_price_feeds.ts": 1641138877,
-  "/BlinDEX/deploy/8_deploy_updaterRSK.ts": 1641138962,
-  "/BlinDEX/deploy/9_add_bdus_xusd_pool.ts": 1644942655,
-  "/BlinDEX/deploy/10_1_gold_gbp_stablecoins.ts": 1650279727,
-  "/BlinDEX/deploy/10_2_deploy_gold_gbp_liquidity_pools.ts": 1650280170,
-  "/BlinDEX/deploy/10_3_deploy_gold_gbp_staking_rewards.ts": 1650280955,
-  "/BlinDEX/deploy/10_4_deploy_gold_gbp_price_feeds.ts": 1650282622,
-  "/BlinDEX/deploy/11_add_bdus_doc_pool.ts": 1652019391
+  "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\1_deploy_vesting.ts": 1656814302,
+  "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\2_staking_rewards_distribution.ts": 1656814521,
+  "D:\\dev\\Blindex\\deploy-scripts\\mainnet-rsk\\3_staking_rewards.ts": 1656856447
 }
