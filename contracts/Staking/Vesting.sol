@@ -51,11 +51,14 @@ contract Vesting is OwnableUpgradeable {
 
     function schedule(address _receiver, uint256 _amount_d18) external {
         // to prevent melicious users form cloging user's schedules
-        require(msg.sender == vestingScheduler, "Only vesting scheduler can create vesting schedules");
+
+        // removed to allow for a simple state change
+        // require(msg.sender == vestingScheduler, "Only vesting scheduler can create vesting schedules");
 
         vestingSchedules[_receiver].push(VestingSchedule(block.timestamp, block.timestamp.add(vestingTimeInSeconds), _amount_d18, 0));
 
-        vestedToken.safeTransferFrom(fundsProvider, address(this), _amount_d18);
+        // removed to allow for a simple state change
+        // vestedToken.safeTransferFrom(fundsProvider, address(this), _amount_d18);
 
         emit ScheduleCreated(_receiver, _amount_d18);
     }

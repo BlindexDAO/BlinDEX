@@ -10,7 +10,8 @@ import {
   getBDStableWethPool,
   getBDStableWbtcPool,
   getBDStableFiat,
-  getAllBDStables
+  getAllBDStables,
+  PriceFeedContractNames
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import type { ERC20 } from "../typechain/ERC20";
@@ -19,7 +20,6 @@ import type { BdStablePool } from "../typechain/BdStablePool";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { SignerWithAddress } from "hardhat-deploy-ethers/dist/src/signers";
-import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import { cleanStringify } from "../utils/StringHelpers";
 import type { BDStable } from "../typechain/BDStable";
 import { getPoolKey, getPools } from "../utils/UniswapPoolsHelpers";

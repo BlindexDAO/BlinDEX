@@ -1,12 +1,12 @@
 import type { DeployFunction } from "hardhat-deploy/types";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getBdx, getDeployer } from "../utils/DeployedContractsHelpers";
+import { getDeployer } from "../utils/DeployedContractsHelpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: vesting");
 
   const deployer = await getDeployer(hre);
-  const bdx = await getBdx(hre);
+  const bdxAddress = "0x6542a10E68cEAc1Fa0641ec0D799a7492795AAC1";
   const vestingTimeInSeconds = 60 * 60 * 24 * 30 * 9; //9 months
 
   const vesting_ProxyDeployment = await hre.deployments.deploy("Vesting", {
@@ -16,7 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [bdx.address, deployer.address, deployer.address, vestingTimeInSeconds]
+          args: [bdxAddress, deployer.address, deployer.address, vestingTimeInSeconds]
         }
       }
     },
@@ -33,5 +33,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 func.id = __filename;
 func.tags = ["Vesting"];
-func.dependencies = ["BDX"];
+func.dependencies = [];
 export default func;

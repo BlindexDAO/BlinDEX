@@ -181,7 +181,7 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function stake(uint256 amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
+    function stake(uint256 amount) external {
         require(amount > 0, "Cannot stake 0");
         require(greylist[msg.sender] == false, "address has been greylisted");
 
@@ -194,7 +194,9 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(amount);
 
         // Pull the tokens from the staker
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+
+        // removed to allow for a simple state change
+        // stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit Staked(msg.sender, amount);
     }
@@ -234,7 +236,9 @@ contract StakingRewards is PausableUpgradeable, OwnableUpgradeable {
         _boosted_balances[msg.sender] = _boosted_balances[msg.sender].add(boostedAmount);
 
         // Pull the tokens from the staker
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+
+        // removed to allow for a simple state change
+        // stakingToken.safeTransferFrom(msg.sender, address(this), amount);
 
         emit StakeLocked(msg.sender, amount, secs);
     }

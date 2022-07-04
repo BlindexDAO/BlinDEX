@@ -19,7 +19,8 @@ import {
   formatAddress,
   getSovrynFeed_RbtcUsd as getSovrynFeed_RbtcUsd,
   getSovrynFeed_RbtcEths as getSovrynFeed_RbtcEths,
-  getFiatToFiat_EurUsd
+  getFiatToFiat_EurUsd,
+  PriceFeedContractNames
 } from "../utils/DeployedContractsHelpers";
 import type { UniswapV2Pair } from "../typechain/UniswapV2Pair";
 import { bigNumberToDecimal, d12_ToNumber, d18_ToNumber, to_d12, to_d18 } from "../utils/NumbersHelpers";
@@ -33,7 +34,6 @@ import type { IPriceFeed } from "../typechain/IPriceFeed";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
 import { BigNumber } from "@ethersproject/bignumber";
-import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { Contract } from "ethers";
 
 export function load() {

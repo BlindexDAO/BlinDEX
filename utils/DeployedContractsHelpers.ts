@@ -17,13 +17,66 @@ import type { StakingRewardsDistribution } from "../typechain/StakingRewardsDist
 import type { Vesting } from "../typechain/Vesting";
 import type { UniswapPairOracle } from "../typechain/UniswapPairOracle";
 import type { IWETH } from "../typechain/IWETH";
-import { ContractsDetails as bdstablesContractsDetails } from "../deploy/2_2_euro_usd_stablecoins";
 import { getPoolKey } from "./UniswapPoolsHelpers";
 import type { StakingRewards } from "../typechain/StakingRewards";
 import type { UpdaterRSK } from "../typechain/UpdaterRSK";
-import { ContractsNames as PriceFeedContractNames } from "../deploy/7_deploy_price_feeds";
 import type { SovrynSwapPriceFeed } from "../typechain/SovrynSwapPriceFeed";
 import type { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleFeed";
+
+export const PriceFeedContractNames = {
+  priceFeedEurUsdName: "PriceFeed_EUR_USD",
+  priceFeedETHUsdName: "PriceFeed_ETH_USD",
+  BtcToEthOracle: "BtcToEthOracle",
+  oracleEthEurName: "OracleBasedCryptoFiatFeed_ETH_EUR",
+  oracleEthUsdName: "OracleBasedWethUSDFeed_ETH_USD"
+};
+
+interface BDStableContractDetail {
+  [key: string]: {
+    symbol: string;
+    name: string;
+    fiat: string;
+    pools: {
+      weth: { name: string };
+      wbtc: { name: string };
+    };
+  };
+}
+
+function prepareStablesContractsDetails() {
+  const bdstablesDetails = [
+    {
+      symbol: "BDEU",
+      name: "Blindex Euro",
+      fiat: "EUR"
+    },
+    {
+      symbol: "BDUS",
+      name: "Blindex USD",
+      fiat: "USD"
+    }
+  ];
+
+  const stables: BDStableContractDetail = {};
+
+  for (const bdstable of bdstablesDetails) {
+    const pools = {
+      weth: {
+        name: `${bdstable.symbol}_WETH_POOL`
+      },
+      wbtc: {
+        name: `${bdstable.symbol}_WBTC_POOL`
+      }
+    };
+
+    stables[bdstable.symbol] = Object.assign(bdstable, { pools });
+  }
+
+  return stables;
+}
+
+const ContractsDetails: BDStableContractDetail = prepareStablesContractsDetails();
+const bdstablesContractsDetails = ContractsDetails;
 
 export function getAllBDStablesSymbols(): string[] {
   return Object.values(bdstablesContractsDetails).map(stable => stable.symbol);

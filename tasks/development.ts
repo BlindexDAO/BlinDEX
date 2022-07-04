@@ -5,7 +5,9 @@ import {
   getBdEu,
   getBdx,
   getDeployer,
+  getStakingRewardsDistribution,
   getTreasury,
+  getVesting,
   getWbtc,
   getWeth,
   getWethConcrete,
@@ -24,8 +26,63 @@ import { readdir, mkdirSync, writeFileSync } from "fs";
 import * as rimraf from "rimraf";
 import * as fsExtra from "fs-extra";
 import { default as klaw } from "klaw-sync";
+import type { StakingRewards } from "../typechain/StakingRewards";
 
 export function load() {
+  task("set-test-states", "", async (args, hre) => {
+    
+    const deployer = await getDeployer(hre);
+
+    const vesting = await getVesting(hre);
+    const srd = await getStakingRewardsDistribution(hre);
+
+    const sr = await hre.ethers.getContract("StakingRewards", deployer) as StakingRewards;
+
+    await (await srd.registerPools([sr.address], [200])).wait();
+    console.log("registerd sr in srd");
+
+    await (await srd.setVestingRewardRatio(47));
+    console.log("setVestingRewardRatio");
+
+    await (await sr.stake(123)).wait();
+    console.log("staked");
+
+    await (await vesting.schedule(vesting.address, to_d18(789))).wait();
+    console.log("vesting scheduled");
+
+  });
+
+  task("get-test-states", "", async (args, hre) => {
+    const deployer = await getDeployer(hre);
+
+    const vesting = await getVesting(hre);
+    const srd = await getStakingRewardsDistribution(hre);
+    const sr = await hre.ethers.getContract("StakingRewards", deployer) as StakingRewards;
+
+    console.log("vesting");
+    console.log(await vesting.vestingScheduler());
+    console.log(await vesting.fundsProvider());
+    console.log(await vesting.vestingTimeInSeconds());
+    console.log(await vesting.vestedToken());
+    console.log(await vesting.vestingSchedules(vesting.address, 0));
+
+    console.log("srd");
+    console.log(await srd.TOTAL_BDX_SUPPLY());
+    console.log(await srd.BDX_MINTING_SCHEDULE_YEAR_5());
+    console.log(await srd.stakingRewardsWeightsTotal());
+    console.log(await srd.stakingRewardsWeights(sr.address));
+
+    console.log("sr");
+    console.log(await sr.stakingToken());
+    console.log(await sr.periodFinish());
+    console.log(await sr.isTrueBdPool());
+    console.log(await sr.rewardsDurationSeconds());
+    console.log(await sr.lastUpdateTime());
+    console.log(await sr.totalSupply());
+    console.log(await sr.totalBoostedSupply());
+    console.log(await sr.balanceOf(deployer.address));
+  });
+  
   task("mint-wrbtc-rsk", "", async (args, hre) => {
     const treasury = await getTreasury(hre);
     const wrbtc = await getWethConcrete(hre);
