@@ -34,5 +34,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 func.id = __filename;
 func.tags = ["StakingRewards-Upgrade-V2"];
 func.dependencies = ["StakingRewards", "bXAU_Staking_Pools", "bGBP_Staking_Pools", "BDUS_DOC_POOL"];
-func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(false);
+func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(true);
 export default func;
