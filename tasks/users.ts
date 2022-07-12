@@ -17,6 +17,7 @@ import { FiatToFiatPseudoOracleFeed } from "../typechain/FiatToFiatPseudoOracleF
 import { getPools } from "../utils/UniswapPoolsHelpers";
 import { PriceFeedContractNames } from "../utils/Constants";
 import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
+import { getProxyAdminFactory } from "@openzeppelin/hardhat-upgrades/dist/utils/factories";
 
 export function load() {
   async function isSameOwner(owner: string, contract: Contract): Promise<boolean> {
@@ -119,6 +120,16 @@ export function load() {
       if (!(await isSameOwner(owner, updater))) {
         console.log(`transfer ownership on updater ${updater.address} to ${owner}`);
         await printAndWaitOnTransaction(await updater.transferOwnership(owner));
+      }
+
+      const adminFactory = await getProxyAdminFactory(hre, deployer);
+      const proxyAdminAddress = (await hre.ethers.getContract("DefaultProxyAdmin")).address;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const admin = adminFactory.attach(proxyAdminAddress) as any;
+
+      if (!(await isSameOwner(owner, admin))) {
+        console.log(`Updating DefaultProxyAdmin to the new owner: ${owner}`);
+        await printAndWaitOnTransaction(await admin.transferOwnership(owner));
       }
 
       console.log(`All ownership transfered to ${owner}`);
