@@ -2,6 +2,8 @@ import type { DeployFunction } from "hardhat-deploy/types";
 import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import { getBdx, getDeployer } from "../../utils/DeployedContractsHelpers";
 
+export const vestingContractName = "Vesting";
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("starting deployment: vesting");
 
@@ -9,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const bdx = await getBdx(hre);
   const vestingTimeInSeconds = 60 * 60 * 24 * 30 * 9; //9 months
 
-  const vesting_ProxyDeployment = await hre.deployments.deploy("Vesting", {
+  const vesting_ProxyDeployment = await hre.deployments.deploy(vestingContractName, {
     from: deployer.address,
     proxy: {
       proxyContract: "OptimizedTransparentProxy",
@@ -20,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }
       }
     },
-    contract: "Vesting",
+    contract: vestingContractName,
     args: []
   });
 

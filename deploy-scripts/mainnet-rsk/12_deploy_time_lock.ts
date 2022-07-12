@@ -28,4 +28,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 func.id = __filename;
 func.tags = ["Timelock"];
 func.dependencies = [];
+func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(process.env.NODE_ENV !== "test"); // Only enable it in testing mode
 export default func;
