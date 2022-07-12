@@ -70,11 +70,11 @@ export async function printAndWaitOnTransaction(transaction: ContractTransaction
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export async function deployContract(deploymentName: string, deploymentFunc: Function, oneTimeDeployment = true): Promise<boolean> {
-  console.log(`Starting the deployment: '${deploymentName}'`);
+  console.log(`Starting the deployment: '${deploymentName}'\n`);
 
   await deploymentFunc();
 
-  console.log(`Finished the deployment: '${deploymentName}`);
+  console.log(`Finished the deployment: '${deploymentName}\n`);
 
   return oneTimeDeployment;
 }

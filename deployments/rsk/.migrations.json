@@ -17,5 +17,6 @@
   "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/10_4_deploy_gold_gbp_price_feeds.ts": 1650282622,
   "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/11_add_bdus_doc_pool.ts": 1652019391,
   "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_1_upgrade_vesting.ts": 1657618045,
-  "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_2_upgrade_staking_rewards_distribution.ts": 1657618458
+  "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_2_upgrade_staking_rewards_distribution.ts": 1657618458,
+  "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_3_upgrade_staking_rewards.ts": 1657625812
 }
