@@ -118,13 +118,6 @@ export function load() {
         console.log(`(${index + 1}) Pausing minting for pool: ${pool.address}`);
         await printAndWaitOnTransaction(await pool.toggleMintingPaused());
       }
-
-      if (await pool.redeemPaused()) {
-        console.log(`(${index + 1}) Redeeming was already paused for pool: ${pool.address}`);
-      } else {
-        console.log(`(${index + 1}) Pausing redeeming for pool: ${pool.address}`);
-        await printAndWaitOnTransaction(await pool.toggleRedeemingPaused());
-      }
     }
 
     console.log("\n================================");
