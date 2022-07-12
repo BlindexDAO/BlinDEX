@@ -14,10 +14,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const tokenBAddress = await getContratAddress(hre, sr.tokenB);
     const poolKey = getPoolKey(tokenAAddress, tokenBAddress, sr.tokenA, sr.tokenB);
 
-    if (!poolKey.toLowerCase().includes("bgbp")) {
-      continue;
-    }
-
     const stakingRewardsContractName = `StakingRewards_${poolKey}`;
 
     await deployContract(`Upgrade staking rewards: ${stakingRewardsContractName}`, async () => {
