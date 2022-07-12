@@ -22,5 +22,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 func.id = __filename;
 func.tags = ["StakingRewardsDistribution-Upgrade-V2"];
 func.dependencies = ["StakingRewardsDistribution", "Vesting-Upgrade-V2"];
-func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(true);
+func.skip = (_env: HardhatRuntimeEnvironment) => Promise.resolve(false);
 export default func;
