@@ -1,6 +1,7 @@
 import { task } from "hardhat/config";
 import { Disperse } from "../typechain";
 import { getBdx, getUser1 } from "../utils/DeployedContractsHelpers";
+import { printAndWaitOnTransaction } from "../utils/DeploymentHelpers";
 import { to_d18 } from "../utils/NumbersHelpers";
 
 export function load() {
@@ -22,7 +23,7 @@ export function load() {
 
     console.log("disperseEther");
     const value = amounts_d18.reduce((totalValue, amount) => totalValue.add(amount), hre.ethers.constants.Zero);
-    await disperse.disperseEther(wallets, amounts_d18, { value });
+    await printAndWaitOnTransaction(await disperse.disperseEther(wallets, amounts_d18, { value }));
 
     console.log(`User ether balance is: ${(await user.getBalance()).toString()}`);
     for (let index = 0; index < wallets.length; index++) {
@@ -50,11 +51,10 @@ export function load() {
 
     console.log("Allowance");
     const totalAllowance = amounts_d18.reduce((totalAllowance, amount) => totalAllowance.add(amount), hre.ethers.constants.Zero);
-    await (await bdx.connect(user).approve(disperse.address, totalAllowance)).wait();
+    await printAndWaitOnTransaction(await bdx.connect(user).approve(disperse.address, totalAllowance));
 
     console.log("disperseBDX");
-    console.log(amounts_d18.map(x => x.toString()));
-    await (await disperse.disperseToken(bdx.address, wallets, amounts_d18)).wait();
+    await printAndWaitOnTransaction(await disperse.disperseToken(bdx.address, wallets, amounts_d18));
 
     console.log(`User BDX balance is: ${(await bdx.balanceOf(user.address)).toString()}`);
     for (let index = 0; index < wallets.length; index++) {
