@@ -18,5 +18,6 @@
   "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/11_add_bdus_doc_pool.ts": 1652019391,
   "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_1_upgrade_vesting.ts": 1657618045,
   "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_2_upgrade_staking_rewards_distribution.ts": 1657618458,
-  "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_3_upgrade_staking_rewards.ts": 1657625812
+  "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/13_3_upgrade_staking_rewards.ts": 1657625812,
+  "/<your absolute path>/BlinDEX/deploy-scripts/mainnet-rsk/14_deploy_disperse.ts": 1657733124
 }
