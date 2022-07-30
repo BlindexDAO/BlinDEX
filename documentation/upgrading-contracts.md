@@ -30,7 +30,7 @@ The upgrade script would look like this:
     from: deployerAddress,
     proxy: {
       proxyContract: "OptimizedTransparentProxy",
-      execute: { // optional post upgrade function
+      execute: { // optional post upgrade function 
         methodName: "postUpgrade",
         args: [12345]
       }
